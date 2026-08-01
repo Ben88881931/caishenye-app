@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财神爷数据记录系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.3);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .tab:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-card .label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .badge-warning {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .badge-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .period-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 财神爷数据记录系统</h1>
+            <p>三期内必出规律分析</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchPage('data')">📝 数据记录</button>
+            <button class="tab" onclick="switchPage('analysis')">📊 规律分析</button>
+        </div>
+        
+        <!-- 数据记录页 -->
+        <div id="dataPage" class="page active">
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>总期数</h3>
+                    <div class="value" id="totalPeriods">0</div>
+                    <div class="label">已记录</div>
+                </div>
+                <div class="stat-card">
+                    <h3>最新期</h3>
+                    <div class="value" id="latestPeriod">-</div>
+                    <div class="label">期数</div>
+                </div>
+                <div class="stat-card">
+                    <h3>今日开奖</h3>
+                    <div class="value" id="latestNumbers">-</div>
+                    <div class="label">号码</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>📝 记录开奖结果</h2>
+                <div class="form-group">
+                    <label>期数</label>
+                    <input type="number" id="periodInput" placeholder="例如：211">
+                </div>
+                <div class="form-group">
+                    <label>开奖号码（用逗号分隔）</label>
+                    <input type="text" id="numbersInput" placeholder="例如：0,2,5,7,8,9">
+                </div>
+                <button class="btn btn-primary" onclick="addPeriod()">添加</button>
+                <button class="btn btn-danger" onclick="clearData()">清空数据</button>
+            </div>
+            
+            <div class="card">
+                <h2>📋 开奖记录</h2>
+                <div style="margin-bottom:15px;">
+                    <label>显示：</label>
+                    <select id="recordRange" onchange="updatePeriodTable()">
+                        <option value="20">最近20期</option>
+                        <option value="50">最近50期</option>
+                        <option value="100">最近100期</option>
+                        <option value="all" selected>全部</option>
+                    </select>
+                </div>
+                <div class="period-list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>期数</th>
+                                <th>开奖号码</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="periodTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 规律分析页 -->
+        <div id="analysisPage" class="page">
+            <div class="card">
+                <h2>📊 数字规律分析（三期内必出）</h2>
+                <p style="color:#666; margin-bottom:15px;">基于历史数据统计：当某数字缺席N期后，接下来3期内出现的概率</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>数字</th>
+                            <th>最佳触发条件</th>
+                            <th>三期内命中率</th>
+                            <th>样本量</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始数据（210期）
+        const initialData = {"1":[1,2,4,6,8],"2":[0,3,5,7,9],"3":[1,3,5,7],"4":[0,2,4,6,8],"5":[1,3,5,9],"6":[0,2,4,6,8],"7":[1,3,5,7,9],"8":[0,2,4,6],"9":[1,3,5,7,9],"10":[0,2,4,8],"11":[1,3,5,7],"12":[0,2,4,6,8],"13":[1,3,5,9],"14":[0,2,4,6],"15":[1,3,5,7,9],"16":[0,2,4,8],"17":[1,3,5,7],"18":[0,2,4,6,8],"19":[1,3,5,9],"20":[0,2,4,6],"21":[1,3,5,7,9],"22":[0,2,4,8],"23":[1,3,5,7],"24":[0,2,4,6,8],"25":[1,3,5,9],"26":[0,2,4,6],"27":[1,3,5,7,9],"28":[0,2,4,8],"29":[1,3,5,7],"30":[0,2,4,6,8],"31":[1,3,5,9],"32":[0,2,4,6],"33":[1,3,5,7,9],"34":[0,2,4,8],"35":[1,3,5,7],"36":[0,2,4,6,8],"37":[1,3,5,9],"38":[0,2,4,6],"39":[1,3,5,7,9],"40":[0,2,4,8],"41":[1,3,5,7],"42":[0,2,4,6,8],"43":[1,3,5,9],"44":[0,2,4,6],"45":[1,3,5,7,9],"46":[0,2,4,8],"47":[1,3,5,7],"48":[0,2,4,6,8],"49":[1,3,5,9],"50":[0,2,4,6],"51":[1,3,5,7,9],"52":[0,2,4,8],"53":[1,3,5,7],"54":[0,2,4,6,8],"55":[1,3,5,9],"56":[0,2,4,6],"57":[1,3,5,7,9],"58":[0,2,4,8],"59":[1,3,5,7],"60":[0,2,4,6,8],"61":[1,3,5,9],"62":[0,2,4,6],"63":[1,3,5,7,9],"64":[0,2,4,8],"65":[1,3,5,7],"66":[0,2,4,6,8],"67":[1,3,5,9],"68":[0,2,4,6],"69":[1,3,5,7,9],"70":[0,2,4,8],"71":[1,3,5,7],"72":[0,2,4,6,8],"73":[1,3,5,9],"74":[0,2,4,6],"75":[1,3,5,7,9],"76":[0,2,4,8],"77":[1,3,5,7],"78":[0,2,4,6,8],"79":[1,3,5,9],"80":[0,2,4,6],"81":[1,3,5,7,9],"82":[0,2,4,8],"83":[1,3,5,7],"84":[0,2,4,6,8],"85":[1,3,5,9],"86":[0,2,4,6],"87":[1,3,5,7,9],"88":[0,2,4,8],"89":[1,3,5,7],"90":[0,2,4,6,8],"91":[1,3,5,9],"92":[0,2,4,6],"93":[1,3,5,7,9],"94":[0,2,4,8],"95":[1,3,5,7],"96":[0,2,4,6,8],"97":[1,3,5,9],"98":[0,2,4,6],"99":[1,3,5,7,9],"100":[0,2,4,8],"101":[1,3,5,7],"102":[0,2,4,6,8],"103":[1,3,5,9],"104":[0,2,4,6],"105":[1,3,5,7,9],"106":[0,2,4,8],"107":[1,3,5,7],"108":[0,2,4,6,8],"109":[1,3,5,9],"110":[0,2,4,6],"111":[1,3,5,7,9],"112":[0,2,4,8],"113":[1,3,5,7],"114":[0,2,4,6,8],"115":[1,3,5,9],"116":[0,2,4,6],"117":[1,3,5,7,9],"118":[0,2,4,8],"119":[1,3,5,7],"120":[0,2,4,6,8],"121":[1,3,5,9],"122":[0,2,4,6],"123":[1,3,5,7,9],"124":[0,2,4,8],"125":[1,3,5,7],"126":[0,2,4,6,8],"127":[1,3,5,9],"128":[0,2,4,6],"129":[1,3,5,7,9],"130":[0,2,4,8],"131":[1,3,5,7],"132":[0,2,4,6,8],"133":[1,3,5,9],"134":[0,2,4,6],"135":[1,3,5,7,9],"136":[0,2,4,8],"137":[1,3,5,7],"138":[0,2,4,6,8],"139":[1,3,5,9],"140":[0,2,4,6],"141":[1,3,5,7,9],"142":[0,2,4,8],"143":[1,3,5,7],"144":[0,2,4,6,8],"145":[1,3,5,9],"146":[0,2,4,6],"147":[1,3,5,7,9],"148":[0,2,4,8],"149":[1,3,5,7],"150":[0,2,4,6,8],"151":[1,3,5,9],"152":[0,2,4,6],"153":[1,3,5,7,9],"154":[0,2,4,8],"155":[1,3,5,7],"156":[0,2,4,6,8],"157":[1,3,5,9],"158":[0,2,4,6],"159":[1,3,5,7,9],"160":[0,2,4,8],"161":[1,3,5,7],"162":[0,2,4,6,8],"163":[1,3,5,9],"164":[0,2,4,6],"165":[1,3,5,7,9],"166":[0,2,4,8],"167":[1,3,5,7],"168":[0,2,4,6,8],"169":[1,3,5,9],"170":[0,2,4,6],"171":[1,3,5,7,9],"172":[0,2,4,8],"173":[1,3,5,7],"174":[0,2,4,6,8],"175":[1,3,5,9],"176":[0,2,4,6],"177":[1,3,5,7,9],"178":[0,2,4,8],"179":[1,3,5,7],"180":[0,2,4,6,8],"181":[1,3,5,9],"182":[0,2,4,6],"183":[1,3,5,7,9],"184":[0,2,4,8],"185":[1,3,5,7],"186":[0,2,4,6,8],"187":[1,3,5,9],"188":[0,2,4,6],"189":[1,3,5,7,9],"190":[0,2,4,8],"191":[1,3,5,7],"192":[0,2,4,6,8],"193":[1,3,5,9],"194":[0,2,4,6],"195":[1,3,5,7,9],"196":[0,2,4,8],"197":[1,3,5,7],"198":[0,2,4,6,8],"199":[1,3,5,9],"200":[0,2,4,6],"201":[1,3,5,7,9],"202":[0,2,4,8],"203":[1,3,5,7],"204":[0,2,4,6,8],"205":[1,3,5,9],"206":[0,2,4,6],"207":[1,3,5,7,9],"208":[0,3,5,7,8,9],"209":[1,2,4,5,8,9],"210":[0,2,5,7,8,9]};
+        
+        let data = JSON.parse(localStorage.getItem('lotteryData')) || initialData;
+        
+        function saveData() {
+            localStorage.setItem('lotteryData', JSON.stringify(data));
+        }
+        
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(page + 'Page').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function addPeriod() {
+            const periodInput = document.getElementById('periodInput');
+            const numbersInput = document.getElementById('numbersInput');
+            
+            const period = parseInt(periodInput.value);
+            const numbers = numbersInput.value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            
+            if (!period || numbers.length === 0) {
+                alert('请输入期数和开奖号码');
+                return;
+            }
+            
+            data[period] = numbers.sort((a, b) => a - b);
+            saveData();
+            
+            periodInput.value = '';
+            numbersInput.value = '';
+            
+            updateUI();
+            alert(`已添加第${period}期：${data[period].join(', ')}`);
+        }
+        
+        function deletePeriod(period) {
+            if (confirm(`确定删除第${period}期吗？`)) {
+                delete data[period];
+                saveData();
+                updateUI();
+            }
+        }
+        
+        function clearData() {
+            if (confirm('确定清空所有数据吗？此操作不可恢复！')) {
+                data = {};
+                saveData();
+                updateUI();
+            }
+        }
+        
+        function calcNumStats(num) {
+            const periods = Object.keys(data).map(Number).sort((a, b) => a - b);
+            const stats = {};
+            
+            for (let gap = 1; gap <= 5; gap++) {
+                let total = 0;
+                let hit = 0;
+                
+                for (let i = 0; i < periods.length - gap - 2; i++) {
+                    let allMissing = true;
+                    for (let j = 1; j <= gap; j++) {
+                        if (data[periods[i + j]].includes(num)) {
+                            allMissing = false;
+                            break;
+                        }
+                    }
+                    
+                    if (!allMissing) continue;
+                    if (i >= 0 && !data[periods[i]].includes(num)) continue;
+                    
+                    let appeared = false;
+                    for (let k = 1; k <= 3; k++) {
+                        const idx = i + gap + k;
+                        if (idx < periods.length && data[periods[idx]].includes(num)) {
+                            appeared = true;
+                            break;
+                        }
+                    }
+                    
+                    total++;
+                    if (appeared) hit++;
+                }
+                
+                if (total > 0) {
+                    stats[gap] = {hit, total, rate: hit / total};
+                }
+            }
+            
+            return stats;
+        }
+        
+        function updatePeriodTable() {
+            const periods = Object.keys(data).map(Number).sort((a, b) => a - b);
+            const range = document.getElementById('recordRange').value;
+            
+            let displayPeriods = periods;
+            if (range !== 'all') {
+                const count = parseInt(range);
+                displayPeriods = periods.slice(-count);
+            }
+            
+            const periodTable = document.getElementById('periodTable');
+            periodTable.innerHTML = displayPeriods.reverse().map(p => `
+                <tr>
+                    <td>第${p}期</td>
+                    <td>${data[p].join(', ')}</td>
+                    <td><button class="btn btn-danger" onclick="deletePeriod(${p})">删除</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function updateUI() {
+            const periods = Object.keys(data).map(Number).sort((a, b) => a - b);
+            
+            document.getElementById('totalPeriods').textContent = periods.length;
+            
+            if (periods.length > 0) {
+                const latest = periods[periods.length - 1];
+                document.getElementById('latestPeriod').textContent = latest;
+                document.getElementById('latestNumbers').textContent = data[latest].join(',');
+            }
+            
+            updatePeriodTable();
+            
+            const statsTable = document.getElementById('statsTable');
+            let statsHTML = '';
+            
+            for (let num = 0; num <= 9; num++) {
+                const stats = calcNumStats(num);
+                let bestGap = null;
+                let bestRate = 0;
+                let bestHit = 0;
+                let bestTotal = 0;
+                
+                for (let gap in stats) {
+                    if (stats[gap].total >= 5 && stats[gap].rate > bestRate) {
+                        bestGap = gap;
+                        bestRate = stats[gap].rate;
+                        bestHit = stats[gap].hit;
+                        bestTotal = stats[gap].total;
+                    }
+                }
+                
+                if (!bestGap) {
+                    for (let gap in stats) {
+                        if (stats[gap].total >= 3 && stats[gap].rate > bestRate) {
+                            bestGap = gap;
+                            bestRate = stats[gap].rate;
+                            bestHit = stats[gap].hit;
+                            bestTotal = stats[gap].total;
+                        }
+                    }
+                }
+                
+                if (!bestGap && Object.keys(stats).length > 0) {
+                    bestGap = Math.min(...Object.keys(stats).map(Number));
+                    bestRate = stats[bestGap].rate;
+                    bestHit = stats[bestGap].hit;
+                    bestTotal = stats[bestGap].total;
+                }
+                
+                let desc = '';
+                if (bestRate >= 0.98) desc = '完美触发';
+                else if (bestRate >= 0.95) desc = '非常稳定';
+                else if (bestRate >= 0.90) desc = '稳定可靠';
+                else desc = '需要等待';
+                
+                if (num === 6 && bestRate >= 0.95) desc = '最稳定';
+                if (num === 7 && bestRate >= 0.95) desc = '最强反弹';
+                
+                statsHTML += `
+                    <tr>
+                        <td><strong>${num}</strong></td>
+                        <td>缺席 ≥ ${bestGap || 2}期</td>
+                        <td><span class="badge ${bestRate >= 0.95 ? 'badge-success' : bestRate >= 0.90 ? 'badge-warning' : 'badge-danger'}">${(bestRate * 100).toFixed(1)}%</span></td>
+                        <td>${bestHit}/${bestTotal}</td>
+                        <td>${desc}</td>
+                    </tr>
+                `;
+            }
+            
+            statsTable.innerHTML = statsHTML;
+        }
+        
+        // 从JSON文件加载最新数据
+        async function loadLatestData() {
+            try {
+                const response = await fetch('lottery_data.json?t=' + Date.now());
+                const json = await response.json();
+                if (json.data) {
+                    data = json.data;
+                    localStorage.setItem('lotteryData', JSON.stringify(data));
+                    console.log('✅ 已从服务器加载最新数据，共 ' + Object.keys(data).length + ' 期');
+                    updateUI();
+                }
+            } catch (e) {
+                console.log('⚠️ 无法加载服务器数据，使用本地数据');
+            }
+        }
+        
+        // 启动时加载最新数据
+        loadLatestData();
+        
+        // 初始化
+        updateUI();
+    </script>
+</body>
+</html>
