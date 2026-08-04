@@ -43,6 +43,15 @@ var lastKey=Math.max.apply(null,Object.keys(RAW).map(Number));
 
 function draw(){
 var h='<tr><th>尾号</th><th>次数</th><th>最大</th><th>最近趋势</th><th>遗漏记录</th></tr>';
+var curMiss='当前遗漏: ';
+for(var d=0;d<10;d++){
+    var miss=0;
+    for(var k=lastKey;k>=1;k--){
+        if(RAW[k]&&RAW[k][d]==='1')break;
+        miss++;
+    }
+    curMiss+='尾'+d+' '+miss+'期  ';
+}
 for(var d=0;d<10;d++){
     var md=MISS[d];
     var recs=md.records;
@@ -55,7 +64,7 @@ for(var d=0;d<10;d++){
     h+='<tr><td class="fix">'+d+'</td><td>'+md.total+'次</td><td>'+md.max_miss+'期</td><td style="font-size:12px">'+md.trend+'</td><td class="l">'+recStr+'</td></tr>';
 }
 document.getElementById('tbl').innerHTML=h;
-document.getElementById('ft').textContent='数据: 第1-'+lastKey+'期 | 遗漏>3期规律分析';
+document.getElementById('ft').innerHTML=curMiss+'<br>数据: 第1-'+lastKey+'期';
 }
 draw();
 </script>
