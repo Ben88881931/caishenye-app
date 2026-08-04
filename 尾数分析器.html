@@ -7,7 +7,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:12px;max-width:1400px;margin:0 auto}
-h1{text-align:center;font-size:18px;color:#6c5ce7;margin-bottom:12px}
+h1{text-align:center;font-size:18px;color:#6c5ce7;margin-bottom:6px}
+.sub{text-align:center;font-size:11px;color:#aaa;margin-bottom:10px}
 .bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;align-items:center}
 .bar select{padding:6px 10px;border:1px solid #d5d5f0;border-radius:6px;font-size:13px;background:#fff;color:#444}
 .bar button{padding:6px 14px;border:1px solid #d5d5f0;border-radius:6px;font-size:13px;cursor:pointer;background:#fff;color:#444}
@@ -36,6 +37,7 @@ td{color:#222}
 </head>
 <body>
 <h1>尾数分段窗口分析</h1>
+<div class="sub">每段冷热 + 走势箭头 | 最后一段不满窗口标注(期数)</div>
 <div class="bar">
   <span style="font-size:13px;color:#999">每段</span>
   <select id="sz">
@@ -70,6 +72,7 @@ var H={};
 for(var k in RAW){var p=parseInt(k),a=[];for(var i=0;i<10;i++)if(RAW[k][i]==='1')a.push(i);H[p]=a;}
 function open(d,p){return H[p]&&H[p].indexOf(d)>=0;}
 function cls(r){if(r>=70)return'hot';if(r>=60)return'warm';if(r>=50)return'norm';if(r>=40)return'cool';if(r>=30)return'cold';return'ice';}
+function label(r){if(r>=70)return'热';if(r>=60)return'暖';if(r>=50)return'平';if(r>=40)return'凉';if(r>=30)return'冷';return'冰';}
 function segs(d,w){var s=[];for(var st=1;st<=N;st+=w){var en=Math.min(st+w-1,N),tot=en-st+1,c=0;for(var p=st;p<=en;p++)if(open(d,p))c++;s.push({st:st,en:en,tot:tot,w:w,cnt:c,rate:tot?(c/tot*100):0,full:tot===w});}return s;}
 function f1(v,d){return v.toFixed(d);}
 function draw(){
@@ -79,12 +82,16 @@ var all=[];
 for(var st=1;st<=N;st+=w)all.push({st:st,en:Math.min(st+w-1,N),tot:Math.min(w,N-st+1),w:w,full:Math.min(w,N-st+1)===w});
 var view=all;
 if(vr>0&&vr<view.length)view=view.slice(-vr);
+
+// 表头：段口 + 总段数
 var h='<tr><td class="fix">号</td>';
 for(var i=0;i<view.length;i++){
   var ci=view[i];
-  h+='<th>'+ci.st+'-'+ci.en+''+(ci.full?'':'<br><span class="dim">('+ci.tot+'期)</span>')+'</th>';
+  var segNum = 'S'+(all.indexOf(ci)+1);
+  h+='<th>'+segNum+'<br>'+ci.st+'-'+ci.en+''+(ci.full?'':'<br><span class="dim">('+ci.tot+'期)</span>')+'</th>';
 }
-h+='<th>全局</th><th>趋势</th>';
+h+='<th>全局</th>';
+
 var b='',arr=[];
 for(var di=0;di<sel.length;di++){
 var d=sel[di],sa=segs(d,w);
@@ -94,20 +101,37 @@ for(var i=0;i<dv.length;i++){
 var e=dv[i],a='';
 if(i>0){var pv=dv[i-1].rate;if(e.rate>pv+3)a='<span class="arr" style="color:#16a34a">&#9650;</span>';else if(e.rate<pv-3)a='<span class="arr" style="color:#dc2626">&#9660;</span>';else a='<span class="arr" style="color:#aaa">-</span>';}
 var dot=open(d,e.en)?' &#9679;':'';
-b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span><br>'+e.cnt+'/'+e.tot+dot+'</td>';
+var lb = label(e.rate);
+b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.tot+dot+'</td>';
 }
 var gc=0;for(var p=1;p<=N;p++)if(open(d,p))gc++;
-b+='<td>'+gc+'/'+N+'<br>'+f1(gc/N*100,1)+'%</td>';
-if(sa.length>=3){var l3=sa.slice(-3);var t=l3[2].rate>l3[1].rate&&l3[1].rate>l3[0].rate?'&#9650;':(l3[2].rate<l3[1].rate&&l3[1].rate<l3[0].rate?'&#9660;':'-');b+='<td>'+t+' '+f1(l3[0].rate,1)+'%\u2192'+f1(l3[1].rate,1)+'%\u2192'+f1(l3[2].rate,1)+'%</td>';}else b+='<td>-</td>';
-b+='</tr>';
+var gr = gc/N*100;
+b+='<td><b>'+f1(gr,1)+'%</b> '+label(gr)+'<br>'+gc+'/'+N+'</td>';
+
+// 下段预测
 var pd='';
-if(sa.length>=3){var l=sa.slice(-3),r=[l[0].rate,l[1].rate,l[2].rate];if(r[2]>r[1]&&r[1]>r[0]&&r[2]>=55)pd='&#9650; 回升看好';else if(r[2]<r[1]&&r[1]<r[0]&&r[2]<=45)pd='&#9660; 降温看冷';else if(r[2]<=25)pd='&#9650; 冰点反弹';else if(r[2]>=80)pd='&#9660; 过热回调';else pd='- 正常波动';}
+if(sa.length>=3){
+  var l3=sa.slice(-3),r=[l3[0].rate,l3[1].rate,l3[2].rate];
+  var cur = r[2];
+  if(r[2]>r[1]&&r[1]>r[0]&&cur>=60) pd='&#9650; 升温，可能维持热';
+  else if(r[2]>r[1]&&r[1]>r[0]&&cur<60) pd='&#9650; 升温，可能变暖';
+  else if(r[2]<r[1]&&r[1]<r[0]&&cur>=60) pd='&#9660; 降温，可能回调';
+  else if(r[2]<r[1]&&r[1]<r[0]&&cur<60) pd='&#9660; 降温，可能变冷';
+  else if(r[2]>r[1]&&cur>=60) pd='&#8599; 反弹，维持暖';
+  else if(r[2]>r[1]&&cur<60) pd='&#8599; 反弹，可能回暖';
+  else if(r[2]<r[1]&&cur>=60) pd='&#8600; 回落，仍暖';
+  else if(r[2]<r[1]&&cur<60) pd='&#8600; 回落，可能变冷';
+  else if(cur<=30) pd='&#9650; 冰点，大概率反弹';
+  else if(cur>=80) pd='&#9660; 过热，大概率回调';
+  else pd='- 持平，正常波动';
+}
 var sts=sa.slice(-3).map(function(x){return f1(x.rate,1)+'%';}).join(' \u2192 ');
 arr.push('<b style="color:#6c5ce7">\u5c3e'+d+'</b> '+pd+' <span style="color:#bbb">'+sts+'</span>');
+b+='</tr>';
 }
 document.getElementById('tbl').innerHTML=h+'</tr>'+b;
 document.getElementById('tips').innerHTML=arr.join('<br>');
-document.getElementById('ft').textContent='\u6570\u636e: \u7b2c1-'+N+'\u671f | \u5e73\u5747\u51fa\u53f7\u7387 55%';
+document.getElementById('ft').textContent='\u6570\u636e: \u7b2c1-'+N+'\u671f | \u5e73\u5747\u51fa\u53f7\u7387 55% | \u6bcf\u6bb5\u6807\u6ce8\u51b7\u70ed+\u8d70\u52bf\u7bad\u5934';
 document.getElementById('b7').className=sel.length===7&&sel[0]===0&&sel[6]===9?'on':'';
 document.getElementById('ball').className=sel.length===10?'on':'';
 var ns='';for(var i=0;i<10;i++){ns+='<button class="'+(sel.indexOf(i)>=0?'on':'')+'" onclick="tg('+i+')">'+i+'</button>';}
