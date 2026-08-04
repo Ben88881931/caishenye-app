@@ -50,7 +50,7 @@ for(var d=0;d<10;d++){
     for(var i=0;i<recs.length;i++){
         var r=recs[i];
         var cls=r.miss>=6?'badge-r':r.miss>=5?'badge-o':r.miss>=4?'badge-b':'badge-g';
-        recStr+='<span class="badge '+cls+'">'+r.miss+'期('+r.start+'-'+r.end+')</span> ';
+        recStr+='<span class="badge '+cls+'">'+r.miss+'期</span> ';
     }
     h+='<tr><td class="fix">'+d+'</td><td>'+md.total+'次</td><td>'+md.max_miss+'期</td><td>'+md.dist+'</td><td>'+md.seg_dist+'</td><td style="font-size:12px">'+md.trend+'</td><td class="l">'+recStr+'</td></tr>';
 }
