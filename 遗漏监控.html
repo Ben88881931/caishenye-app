@@ -42,7 +42,7 @@ var N=Object.keys(RAW).length;
 var lastKey=Math.max.apply(null,Object.keys(RAW).map(Number));
 
 function draw(){
-var h='<tr><th>尾号</th><th>次数</th><th>最大</th><th>遗漏分布</th><th>区间分布</th><th>最近趋势</th><th>遗漏记录</th></tr>';
+var h='<tr><th>尾号</th><th>次数</th><th>最大</th><th>遗漏规律</th><th>最近趋势</th><th>遗漏记录</th></tr>';
 for(var d=0;d<10;d++){
     var md=MISS[d];
     var recs=md.records;
@@ -52,7 +52,7 @@ for(var d=0;d<10;d++){
         var cls=r.miss>=6?'badge-r':r.miss>=5?'badge-o':r.miss>=4?'badge-b':'badge-g';
         recStr+='<span class="badge '+cls+'">'+r.miss+'期</span> ';
     }
-    h+='<tr><td class="fix">'+d+'</td><td>'+md.total+'次</td><td>'+md.max_miss+'期</td><td>'+md.dist+'</td><td>'+md.seg_dist+'</td><td style="font-size:12px">'+md.trend+'</td><td class="l">'+recStr+'</td></tr>';
+    h+='<tr><td class="fix">'+d+'</td><td>'+md.total+'次</td><td>'+md.max_miss+'期</td><td style="font-size:12px">'+md.dist+'</td><td style="font-size:12px">'+md.trend+'</td><td class="l">'+recStr+'</td></tr>';
 }
 document.getElementById('tbl').innerHTML=h;
 document.getElementById('ft').textContent='数据: 第1-'+lastKey+'期 | 遗漏>3期规律分析';
