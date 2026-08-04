@@ -1,196 +1,81 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.4, maximum-scale=3.0">
-    <title>财神爷追投跟踪系统</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            font-size: 18px;
-        }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .header h1 { color: #667eea; font-size: 42px; }
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .tab {
-            flex: 1;
-            padding: 16px;
-            background: rgba(255,255,255,0.3);
-            border: none;
-            border-radius: 12px;
-            font-size: 20px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-        }
-        .tab.active { background: white; color: #667eea; }
-        .page { display: none; }
-        .page.active { display: block; }
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
-        }
-        .card h2 {
-            color: #667eea;
-            font-size: 26px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-        .formula-box {
-            background: #f8f9fa;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .formula-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        .formula-row label {
-            font-weight: bold;
-            color: #333;
-            min-width: 80px;
-        }
-        .formula-row input, .formula-row select {
-            padding: 10px 14px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 18px;
-            width: 120px;
-        }
-        .formula-row input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .formula-display {
-            background: #667eea;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 8px;
-            font-size: 18px;
-            margin-top: 10px;
-        }
-        .order-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        .order-table th {
-            background: #667eea;
-            color: white;
-            padding: 10px 8px;
-            font-size: 13px;
-        }
-        .order-table td {
-            padding: 8px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-            font-size: 13px;
-        }
-        .order-table tr:hover { background: #f8f9fa; }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            margin-right: 8px;
-            margin-top: 8px;
-        }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-primary:hover { background: #5568d3; }
-        .btn-danger { background: #e74c3c; color: white; }
-        .btn-success { background: #27ae60; color: white; }
-        .btn-warning { background: #f39c12; color: white; }
-        .status-pending { color: #f39c12; font-weight: bold; }
-        .status-hit { color: #27ae60; font-weight: bold; }
-        .status-miss { color: #e74c3c; font-weight: bold; }
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .summary-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .summary-card .label { font-size: 12px; color: #666; }
-        .summary-card .value { font-size: 24px; font-weight: bold; color: #667eea; }
-        .zodiac-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        .zodiac-item {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-        .zodiac-item.selected {
-            border-color: #667eea;
-            background: #e8eaf6;
-        }
-        .zodiac-item .emoji { font-size: 24px; }
-        .zodiac-item .name { font-size: 12px; margin-top: 4px; }
-        .record-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        @media (max-width: 600px) {
-            .zodiac-grid { grid-template-columns: repeat(3, 1fr); }
-            .formula-row { flex-direction: column; align-items: flex-start; }
-            .formula-row input { width: 100%; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.4, maximum-scale=3.0">
+<title>财神爷下单系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei',Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px;font-size:18px}
+.container{max-width:1000px;margin:0 auto}
+.header{background:white;padding:20px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2);margin-bottom:15px;text-align:center}
+.header h1{color:#667eea;font-size:42px}
+.header p{color:#999;margin-top:6px;font-size:16px}
+.tabs{display:flex;gap:10px;margin-bottom:15px}
+.tab{flex:1;padding:16px;background:rgba(255,255,255,0.3);border:none;border-radius:12px;font-size:20px;cursor:pointer;color:white;font-weight:bold}
+.tab.active{background:white;color:#667eea}
+.page{display:none}
+.page.active{display:block}
+.card{background:white;padding:20px;border-radius:15px;box-shadow:0 5px 15px rgba(0,0,0,0.1);margin-bottom:15px}
+.card h2{color:#667eea;font-size:26px;margin-bottom:20px;border-bottom:2px solid #667eea;padding-bottom:10px}
+.formula-box{background:#f8f9fa;border:2px solid #667eea;border-radius:10px;padding:15px;margin-bottom:15px}
+.formula-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.formula-row label{font-weight:bold;color:#333;min-width:80px}
+.formula-row input,.formula-row select{padding:10px 14px;border:2px solid #ddd;border-radius:8px;font-size:18px;width:120px}
+.formula-row input:focus{outline:none;border-color:#667eea}
+.formula-display{background:#667eea;color:white;padding:12px 18px;border-radius:8px;font-size:18px;margin-top:10px}
+.order-table{width:100%;border-collapse:collapse;margin-top:10px}
+.order-table th{background:#667eea;color:white;padding:10px 8px;font-size:13px}
+.order-table td{padding:8px;text-align:center;border-bottom:1px solid #eee;font-size:13px}
+.order-table tr:hover{background:#f8f9fa}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-right:8px;margin-top:8px}
+.btn-primary{background:#667eea;color:white}
+.btn-primary:hover{background:#5568d3}
+.btn-danger{background:#e74c3c;color:white}
+.btn-success{background:#27ae60;color:white}
+.btn-warning{background:#f39c12;color:white}
+.status-pending{color:#f39c12;font-weight:bold}
+.status-hit{color:#27ae60;font-weight:bold}
+.status-miss{color:#e74c3c;font-weight:bold}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:15px}
+.summary-card{background:#f8f9fa;padding:15px;border-radius:10px;text-align:center}
+.summary-card .label{font-size:12px;color:#666}
+.summary-card .value{font-size:24px;font-weight:bold;color:#667eea}
+.zodiac-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:15px}
+.zodiac-item{background:#f8f9fa;padding:10px;border-radius:8px;text-align:center;cursor:pointer;border:2px solid transparent}
+.zodiac-item.selected{border-color:#667eea;background:#e8eaf6}
+.zodiac-item .emoji{font-size:24px}
+.zodiac-item .name{font-size:12px;margin-top:4px}
+.record-list{max-height:400px;overflow-y:auto}
+.record-item{background:#f8f9fa;border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.record-item .num{font-size:22px;font-weight:bold;color:#667eea}
+.record-input{width:80%}
+@media (max-width:600px){.zodiac-grid{grid-template-columns:repeat(3,1fr)}.formula-row{flex-direction:column;align-items:flex-start}.formula-row input{width:100%}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 财神爷追投跟踪系统</h1>
-            <p>三期追投策略 | 倍数可调 | 每期都下注</p>
-        </div>
+<div class="container">
+    <div class="header">
+        <h1>📊 财神爷下单系统</h1>
+        <p>下单工具 | 开奖记录</p>
+    </div>
 
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('order')">📝 下单</button>
+        <button class="tab" onclick="switchTab('record')">🎰 开奖记录</button>
+    </div>
+
+    <!-- 下单页 -->
+    <div id="orderPage" class="page active">
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('number')">🔢 数字版 (0-9)</button>
-            <button class="tab" onclick="switchTab('zodiac')">🐲 生肖版 (12)</button>
-            <button class="tab" onclick="switchTab('history')">📋 历史记录</button>
+            <button class="tab active" onclick="switchOrderType('number')" id="otNumber">🔢 数字版</button>
+            <button class="tab" onclick="switchOrderType('zodiac')" id="otZodiac">🐲 生肖版</button>
         </div>
 
-        <!-- 数字版 -->
-        <div id="numberPage" class="page active">
+        <!-- 数字下单 -->
+        <div id="numOrderBlock" class="block">
             <div class="card">
-                <h2>⚙️ 追投公式设置</h2>
+                <h2>⚙️ 投注公式设置</h2>
                 <div class="formula-box">
                     <div class="formula-row">
                         <label>基础金额：</label>
@@ -217,526 +102,351 @@
                         <input type="number" id="numReturn" value="1.8" min="1" step="0.1">
                         <span>倍</span>
                     </div>
-                    <div class="formula-display" id="numFormula">
-                        第1期：225元 | 第2期：225元 | 第3期：3000元 | 回报率：1.8倍
-                    </div>
+                    <div class="formula-display" id="numFormula">第1期：225元 | 第2期：225元 | 第3期：3000元 | 回报率：1.8倍</div>
                 </div>
             </div>
 
             <div class="card">
-                <h2>📝 新建追投单（数字）</h2>
+                <h2>📝 新建下单（数字）</h2>
                 <div class="formula-row">
                     <label>选择号码：</label>
                     <select id="numSelect" multiple size="3">
-                        <option value="0">0</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
+                        <option value="0">0</option><option value="1">1</option>
+                        <option value="2">2</option><option value="3">3</option>
+                        <option value="4">4</option><option value="5">5</option>
+                        <option value="6">6</option><option value="7">7</option>
+                        <option value="8">8</option><option value="9">9</option>
                     </select>
                 </div>
-                <div class="formula-row">
-                    <label>起始期数：</label>
-                    <input type="number" id="numStartPeriod" placeholder="例如：212">
-                </div>
-                <button class="btn btn-primary" onclick="createNumberOrder()">创建追投单</button>
+                <div class="formula-row"><label>起始期数：</label><input type="number" id="numStartPeriod" placeholder="例如：217"></div>
+                <button class="btn btn-primary" onclick="createNumberOrder()">创建下单</button>
             </div>
 
             <div class="card">
-                <h2>📊 当前追投单（数字）</h2>
+                <h2>📊 当前下单（数字）</h2>
                 <div id="numberOrders"></div>
             </div>
         </div>
 
-        <!-- 生肖版 -->
-        <div id="zodiacPage" class="page">
+        <!-- 生肖下单 -->
+        <div id="zodiacOrderBlock" class="block" style="display:none">
             <div class="card">
-                <h2>⚙️ 追投公式设置</h2>
+                <h2>⚙️ 投注公式设置</h2>
                 <div class="formula-box">
                     <div class="formula-row">
                         <label>基础金额：</label>
-                        <input type="number" id="zodBase" value="100" min="1">
-                        <span>元</span>
+                        <input type="number" id="zodBase" value="100" min="1"><span>元</span>
                     </div>
                     <div class="formula-row">
                         <label>第1期倍数：</label>
-                        <input type="number" id="zodMult1" value="1" min="0.1" step="0.1">
-                        <span>倍</span>
+                        <input type="number" id="zodMult1" value="1" min="0.1" step="0.1"><span>倍</span>
                     </div>
                     <div class="formula-row">
                         <label>第2期倍数：</label>
-                        <input type="number" id="zodMult2" value="1" min="0.1" step="0.1">
-                        <span>倍</span>
+                        <input type="number" id="zodMult2" value="1" min="0.1" step="0.1"><span>倍</span>
                     </div>
                     <div class="formula-row">
                         <label>第3期倍数：</label>
-                        <input type="number" id="zodMult3" value="5" min="0.1" step="0.1">
-                        <span>倍</span>
+                        <input type="number" id="zodMult3" value="5" min="0.1" step="0.1"><span>倍</span>
                     </div>
                     <div class="formula-row">
                         <label>回报率：</label>
-                        <input type="number" id="zodReturn" value="5" min="1" step="0.1">
-                        <span>倍</span>
+                        <input type="number" id="zodReturn" value="5" min="1" step="0.1"><span>倍</span>
                     </div>
-                    <div class="formula-display" id="zodFormula">
-                        第1期：100元 | 第2期：100元 | 第3期：500元 | 回报率：5倍
-                    </div>
+                    <div class="formula-display" id="zodFormula">第1期：100元 | 第2期：100元 | 第3期：500元 | 回报率：5倍</div>
                 </div>
             </div>
 
             <div class="card">
-                <h2>📝 新建追投单（生肖）</h2>
+                <h2>📝 新建下单（生肖）</h2>
                 <div class="zodiac-grid" id="zodiacGrid"></div>
-                <div class="formula-row">
-                    <label>起始期数：</label>
-                    <input type="number" id="zodStartPeriod" placeholder="例如：1">
-                </div>
-                <button class="btn btn-primary" onclick="createZodiacOrder()">创建追投单</button>
+                <div class="formula-row"><label>起始期数：</label><input type="number" id="zodStartPeriod" placeholder="例如：1"></div>
+                <button class="btn btn-primary" onclick="createZodiacOrder()">创建下单</button>
             </div>
 
             <div class="card">
-                <h2>📊 当前追投单（生肖）</h2>
+                <h2>📊 当前下单（生肖）</h2>
                 <div id="zodiacOrders"></div>
-            </div>
-        </div>
-
-        <!-- 历史记录 -->
-        <div id="historyPage" class="page">
-            <div class="card">
-                <h2>📊 统计概览</h2>
-                <div class="summary-grid" id="summaryGrid"></div>
-            </div>
-            <div class="card">
-                <h2>📋 历史记录</h2>
-                <div class="record-list" id="historyList"></div>
-                <button class="btn btn-danger" onclick="clearHistory()">清空历史</button>
             </div>
         </div>
     </div>
 
-    <script>
-        const zodiacs = [
-            {name: '鼠', emoji: '🐭'}, {name: '牛', emoji: '🐮'},
-            {name: '虎', emoji: '🐯'}, {name: '兔', emoji: '🐰'},
-            {name: '龙', emoji: '🐲'}, {name: '蛇', emoji: '🐍'},
-            {name: '马', emoji: '🐴'}, {name: '羊', emoji: '🐑'},
-            {name: '猴', emoji: '🐵'}, {name: '鸡', emoji: '🐔'},
-            {name: '狗', emoji: '🐶'}, {name: '猪', emoji: '🐷'}
-        ];
+    <!-- 开奖记录页 -->
+    <div id="recordPage" class="page">
+        <div class="card">
+            <h2>📝 记录开奖</h2>
+            <div class="formula-row">
+                <label>期数：</label>
+                <input type="number" id="recPeriod" placeholder="例如：217">
+                <label>开奖号码：</label>
+                <input type="text" id="recNumbers" class="record-input" placeholder="用逗号分隔，例如 1,2,4,5,6,7,8">
+            </div>
+            <button class="btn btn-primary" onclick="addRecord()">保存开奖</button>
+        </div>
 
-        let selectedZodiacs = [];
-        let numberOrders = JSON.parse(localStorage.getItem('numberOrders') || '[]');
-        let zodiacOrders = JSON.parse(localStorage.getItem('zodiacOrders') || '[]');
-        let history = JSON.parse(localStorage.getItem('orderHistory') || '[]');
+        <div class="card">
+            <h2>📊 统计概览</h2>
+            <div class="summary-grid" id="recordSummary"></div>
+        </div>
 
-        // 初始化生肖选择
-        function initZodiacGrid() {
-            const grid = document.getElementById('zodiacGrid');
-            grid.innerHTML = zodiacs.map((z, i) => `
-                <div class="zodiac-item" onclick="toggleZodiac(${i})" id="zodiac-${i}">
-                    <div class="emoji">${z.emoji}</div>
-                    <div class="name">${z.name}</div>
-                </div>
-            `).join('');
-        }
+        <div class="card">
+            <h2>📋 开奖记录</h2>
+            <div class="record-list" id="recordList"></div>
+        </div>
+    </div>
+</div>
 
-        function toggleZodiac(idx) {
-            const item = document.getElementById(`zodiac-${idx}`);
-            if (selectedZodiacs.includes(idx)) {
-                selectedZodiacs = selectedZodiacs.filter(i => i !== idx);
-                item.classList.remove('selected');
-            } else {
-                selectedZodiacs.push(idx);
-                item.classList.add('selected');
-            }
-        }
+<script>
+const zodiacs = [
+    {name:'鼠',emoji:'🐭'},{name:'牛',emoji:'🐮'},{name:'虎',emoji:'🐯'},{name:'兔',emoji:'🐰'},
+    {name:'龙',emoji:'🐲'},{name:'蛇',emoji:'🐍'},{name:'马',emoji:'🐴'},{name:'羊',emoji:'🐑'},
+    {name:'猴',emoji:'🐵'},{name:'鸡',emoji:'🐔'},{name:'狗',emoji:'🐶'},{name:'猪',emoji:'🐷'}
+];
 
-        function switchTab(tab) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tab + 'Page').classList.add('active');
-            event.target.classList.add('active');
-            if (tab === 'history') updateHistory();
-        }
+let selectedZodiacs = [];
+let numberOrders = JSON.parse(localStorage.getItem('numberOrders') || '[]');
+let zodiacOrders = JSON.parse(localStorage.getItem('zodiacOrders') || '[]');
+let records = JSON.parse(localStorage.getItem('drawRecords') || '[]');
+let history = JSON.parse(localStorage.getItem('orderHistory') || '[]');
 
-        // 更新公式显示
-        function updateFormula(type) {
-            if (type === 'number') {
-                const base = parseFloat(document.getElementById('numBase').value);
-                const mult1 = parseFloat(document.getElementById('numMult1').value);
-                const mult2 = parseFloat(document.getElementById('numMult2').value);
-                const mult3 = parseFloat(document.getElementById('numMult3').value);
-                const ret = parseFloat(document.getElementById('numReturn').value);
-                const bet1 = base * mult1;
-                const bet2 = base * mult2;
-                const bet3 = base * mult3;
-                document.getElementById('numFormula').innerHTML = 
-                    `第1期：${bet1}元 | 第2期：${bet2}元 | 第3期：${bet3}元 | 回报率：${ret}倍`;
-            } else {
-                const base = parseFloat(document.getElementById('zodBase').value);
-                const mult1 = parseFloat(document.getElementById('zodMult1').value);
-                const mult2 = parseFloat(document.getElementById('zodMult2').value);
-                const mult3 = parseFloat(document.getElementById('zodMult3').value);
-                const ret = parseFloat(document.getElementById('zodReturn').value);
-                const bet1 = base * mult1;
-                const bet2 = base * mult2;
-                const bet3 = base * mult3;
-                document.getElementById('zodFormula').innerHTML = 
-                    `第1期：${bet1}元 | 第2期：${bet2}元 | 第3期：${bet3}元 | 回报率：${ret}倍`;
-            }
-        }
+// ===== Tab 切换 =====
+function switchTab(tab) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tab + 'Page').classList.add('active');
+    event.target.classList.add('active');
+    if (tab === 'record') renderRecords();
+}
 
-        // 创建数字追投单
-        function createNumberOrder() {
-            const select = document.getElementById('numSelect');
-            const nums = Array.from(select.selectedOptions).map(o => o.value);
-            const startPeriod = parseInt(document.getElementById('numStartPeriod').value);
-            
-            if (nums.length === 0 || !startPeriod) {
-                alert('请选择号码并输入起始期数');
-                return;
-            }
+function switchOrderType(type) {
+    document.getElementById('numOrderBlock').style.display = type === 'number' ? 'block' : 'none';
+    document.getElementById('zodiacOrderBlock').style.display = type === 'zodiac' ? 'block' : 'none';
+    document.getElementById('otNumber').classList.toggle('active', type === 'number');
+    document.getElementById('otZodiac').classList.toggle('active', type === 'zodiac');
+}
 
-            const base = parseFloat(document.getElementById('numBase').value);
-            const mult1 = parseFloat(document.getElementById('numMult1').value);
-            const mult2 = parseFloat(document.getElementById('numMult2').value);
-            const mult3 = parseFloat(document.getElementById('numMult3').value);
-            const ret = parseFloat(document.getElementById('numReturn').value);
+function initZodiacGrid() {
+    const grid = document.getElementById('zodiacGrid');
+    grid.innerHTML = zodiacs.map((z, i) =>
+        `<div class="zodiac-item" onclick="toggleZodiac(${i})" id="zodiac-${i}">
+            <div class="emoji">${z.emoji}</div><div class="name">${z.name}</div>
+        </div>`).join('');
+}
+function toggleZodiac(idx) {
+    const item = document.getElementById('zodiac-' + idx);
+    if (selectedZodiacs.includes(idx)) { selectedZodiacs = selectedZodiacs.filter(i => i !== idx); item.classList.remove('selected'); }
+    else { selectedZodiacs.push(idx); item.classList.add('selected'); }
+}
 
-            const order = {
-                id: Date.now(),
-                type: 'number',
-                numbers: nums,
-                startPeriod: startPeriod,
-                base: base,
-                mult1: mult1,
-                mult2: mult2,
-                mult3: mult3,
-                returnRate: ret,
-                periods: [
-                    {period: startPeriod, status: 'pending', bet: base * mult1 * nums.length},
-                    {period: startPeriod + 1, status: 'pending', bet: base * mult2 * nums.length},
-                    {period: startPeriod + 2, status: 'pending', bet: base * mult3 * nums.length}
-                ],
-                createdAt: new Date().toISOString()
-            };
+// ===== 公式显示 =====
+function updateFormula(type) {
+    const prefix = type === 'number' ? 'num' : 'zod';
+    const base = parseFloat(document.getElementById(prefix + 'Base').value);
+    const m1 = parseFloat(document.getElementById(prefix + 'Mult1').value);
+    const m2 = parseFloat(document.getElementById(prefix + 'Mult2').value);
+    const m3 = parseFloat(document.getElementById(prefix + 'Mult3').value);
+    const ret = parseFloat(document.getElementById(prefix + 'Return').value);
+    document.getElementById(prefix + 'Formula').innerHTML =
+        `第1期：${base*m1}元 | 第2期：${base*m2}元 | 第3期：${base*m3}元 | 回报率：${ret}倍`;
+}
 
-            numberOrders.push(order);
-            localStorage.setItem('numberOrders', JSON.stringify(numberOrders));
-            renderNumberOrders();
-            
-            select.selectedIndex = -1;
-            document.getElementById('numStartPeriod').value = '';
-            alert(`已创建追投单：${nums.join(',')} 从第${startPeriod}期开始`);
-        }
+// ===== 创建数字下单 =====
+function createNumberOrder() {
+    const sel = document.getElementById('numSelect');
+    const nums = Array.from(sel.selectedOptions).map(o => o.value);
+    const startPeriod = parseInt(document.getElementById('numStartPeriod').value);
+    if (nums.length === 0 || !startPeriod) { alert('请选择号码并输入起始期数'); return; }
+    const base = parseFloat(document.getElementById('numBase').value);
+    const m1 = parseFloat(document.getElementById('numMult1').value);
+    const m2 = parseFloat(document.getElementById('numMult2').value);
+    const m3 = parseFloat(document.getElementById('numMult3').value);
+    const ret = parseFloat(document.getElementById('numReturn').value);
+    const order = {
+        id: Date.now(), type: 'number', numbers: nums, startPeriod: startPeriod,
+        base, mult1: m1, mult2: m2, mult3: m3, returnRate: ret,
+        periods: [
+            {period: startPeriod, status: 'pending', bet: base*m1*nums.length},
+            {period: startPeriod+1, status: 'pending', bet: base*m2*nums.length},
+            {period: startPeriod+2, status: 'pending', bet: base*m3*nums.length}
+        ],
+        createdAt: new Date().toISOString()
+    };
+    numberOrders.push(order);
+    localStorage.setItem('numberOrders', JSON.stringify(numberOrders));
+    renderNumberOrders();
+    sel.selectedIndex = -1;
+    document.getElementById('numStartPeriod').value = '';
+    alert('已创建下单：' + nums.join(',') + ' 从第' + startPeriod + '期开始');
+}
 
-        // 创建生肖追投单
-        function createZodiacOrder() {
-            const zodNames = selectedZodiacs.map(i => zodiacs[i].name);
-            const startPeriod = parseInt(document.getElementById('zodStartPeriod').value);
-            
-            if (zodNames.length === 0 || !startPeriod) {
-                alert('请选择生肖并输入起始期数');
-                return;
-            }
+// ===== 创建生肖下单 =====
+function createZodiacOrder() {
+    const zodNames = selectedZodiacs.map(i => zodiacs[i].name);
+    const startPeriod = parseInt(document.getElementById('zodStartPeriod').value);
+    if (zodNames.length === 0 || !startPeriod) { alert('请选择生肖并输入起始期数'); return; }
+    const base = parseFloat(document.getElementById('zodBase').value);
+    const m1 = parseFloat(document.getElementById('zodMult1').value);
+    const m2 = parseFloat(document.getElementById('zodMult2').value);
+    const m3 = parseFloat(document.getElementById('zodMult3').value);
+    const ret = parseFloat(document.getElementById('zodReturn').value);
+    const order = {
+        id: Date.now(), type: 'zodiac', zodiacs: zodNames, startPeriod: startPeriod,
+        base, mult1: m1, mult2: m2, mult3: m3, returnRate: ret,
+        periods: [
+            {period: startPeriod, status: 'pending', bet: base*m1*zodNames.length},
+            {period: startPeriod+1, status: 'pending', bet: base*m2*zodNames.length},
+            {period: startPeriod+2, status: 'pending', bet: base*m3*zodNames.length}
+        ],
+        createdAt: new Date().toISOString()
+    };
+    zodiacOrders.push(order);
+    localStorage.setItem('zodiacOrders', JSON.stringify(zodiacOrders));
+    renderZodiacOrders();
+    selectedZodiacs = [];
+    document.querySelectorAll('.zodiac-item').forEach(i => i.classList.remove('selected'));
+    document.getElementById('zodStartPeriod').value = '';
+    alert('已创建下单：' + zodNames.join(',') + ' 从第' + startPeriod + '期开始');
+}
 
-            const base = parseFloat(document.getElementById('zodBase').value);
-            const mult1 = parseFloat(document.getElementById('zodMult1').value);
-            const mult2 = parseFloat(document.getElementById('zodMult2').value);
-            const mult3 = parseFloat(document.getElementById('zodMult3').value);
-            const ret = parseFloat(document.getElementById('zodReturn').value);
-
-            const order = {
-                id: Date.now(),
-                type: 'zodiac',
-                zodiacs: zodNames,
-                startPeriod: startPeriod,
-                base: base,
-                mult1: mult1,
-                mult2: mult2,
-                mult3: mult3,
-                returnRate: ret,
-                periods: [
-                    {period: startPeriod, status: 'pending', bet: base * mult1 * zodNames.length},
-                    {period: startPeriod + 1, status: 'pending', bet: base * mult2 * zodNames.length},
-                    {period: startPeriod + 2, status: 'pending', bet: base * mult3 * zodNames.length}
-                ],
-                createdAt: new Date().toISOString()
-            };
-
-            zodiacOrders.push(order);
-            localStorage.setItem('zodiacOrders', JSON.stringify(zodiacOrders));
-            renderZodiacOrders();
-            
-            selectedZodiacs = [];
-            document.querySelectorAll('.zodiac-item').forEach(i => i.classList.remove('selected'));
-            document.getElementById('zodStartPeriod').value = '';
-            alert(`已创建追投单：${zodNames.join(',')} 从第${startPeriod}期开始`);
-        }
-
-        // 渲染数字追投单
-        function renderNumberOrders() {
-            const container = document.getElementById('numberOrders');
-            if (numberOrders.length === 0) {
-                container.innerHTML = '<p style="color:#999;text-align:center;">暂无追投单</p>';
-                return;
-            }
-
-            container.innerHTML = numberOrders.map(order => `
-                <div style="border:2px solid #667eea;border-radius:10px;padding:15px;margin-bottom:15px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <strong>号码：${order.numbers.join(', ')}</strong>
-                        <span>起始：第${order.startPeriod}期</span>
-                    </div>
-                    <table class="order-table">
-                        <thead>
-                            <tr>
-                                <th>期数</th>
-                                <th>下注金额</th>
-                                <th>状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${order.periods.map((p, i) => `
-                                <tr>
-                                    <td>第${p.period}期</td>
-                                    <td>${p.bet}元</td>
-                                    <td class="status-${p.status}">
-                                        ${p.status === 'pending' ? '⏳ 待开奖' : p.status === 'hit' ? '✅ 中奖' : '❌ 未中'}
-                                    </td>
-                                    <td>
-                                        ${p.status === 'pending' ? `
-                                            <button class="btn btn-success" style="padding:4px 8px;font-size:12px;" onclick="setResult(${order.id}, ${i}, 'hit')">中</button>
-                                            <button class="btn btn-danger" style="padding:4px 8px;font-size:12px;" onclick="setResult(${order.id}, ${i}, 'miss')">未中</button>
-                                        ` : '-'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    <button class="btn btn-danger" style="margin-top:10px;padding:6px 12px;font-size:12px;" onclick="deleteOrder(${order.id}, 'number')">删除</button>
-                </div>
-            `).join('');
-        }
-
-        // 渲染生肖追投单
-        function renderZodiacOrders() {
-            const container = document.getElementById('zodiacOrders');
-            if (zodiacOrders.length === 0) {
-                container.innerHTML = '<p style="color:#999;text-align:center;">暂无追投单</p>';
-                return;
-            }
-
-            container.innerHTML = zodiacOrders.map(order => `
-                <div style="border:2px solid #f39c12;border-radius:10px;padding:15px;margin-bottom:15px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                        <strong>生肖：${order.zodiacs.join(', ')}</strong>
-                        <span>起始：第${order.startPeriod}期</span>
-                    </div>
-                    <table class="order-table">
-                        <thead>
-                            <tr>
-                                <th>期数</th>
-                                <th>下注金额</th>
-                                <th>状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${order.periods.map((p, i) => `
-                                <tr>
-                                    <td>第${p.period}期</td>
-                                    <td>${p.bet}元</td>
-                                    <td class="status-${p.status}">
-                                        ${p.status === 'pending' ? '⏳ 待开奖' : p.status === 'hit' ? '✅ 中奖' : '❌ 未中'}
-                                    </td>
-                                    <td>
-                                        ${p.status === 'pending' ? `
-                                            <button class="btn btn-success" style="padding:4px 8px;font-size:12px;" onclick="setZodiacResult(${order.id}, ${i}, 'hit')">中</button>
-                                            <button class="btn btn-danger" style="padding:4px 8px;font-size:12px;" onclick="setZodiacResult(${order.id}, ${i}, 'miss')">未中</button>
-                                        ` : '-'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    <button class="btn btn-danger" style="margin-top:10px;padding:6px 12px;font-size:12px;" onclick="deleteOrder(${order.id}, 'zodiac')">删除</button>
-                </div>
-            `).join('');
-        }
-
-        // 设置数字开奖结果
-        function setResult(orderId, periodIdx, result) {
-            const order = numberOrders.find(o => o.id === orderId);
-            if (!order) return;
-            
-            order.periods[periodIdx].status = result;
-            
-            // 检查是否完成所有期
-            const allDone = order.periods.every(p => p.status !== 'pending');
-            if (allDone) {
-                history.push({
-                    ...order,
-                    completedAt: new Date().toISOString()
-                });
-                localStorage.setItem('orderHistory', JSON.stringify(history));
-                numberOrders = numberOrders.filter(o => o.id !== orderId);
-                localStorage.setItem('numberOrders', JSON.stringify(numberOrders));
-            }
-            
-            renderNumberOrders();
-        }
-
-        // 设置生肖开奖结果
-        function setZodiacResult(orderId, periodIdx, result) {
-            const order = zodiacOrders.find(o => o.id === orderId);
-            if (!order) return;
-            
-            order.periods[periodIdx].status = result;
-            
-            const allDone = order.periods.every(p => p.status !== 'pending');
-            if (allDone) {
-                history.push({
-                    ...order,
-                    completedAt: new Date().toISOString()
-                });
-                localStorage.setItem('orderHistory', JSON.stringify(history));
-                zodiacOrders = zodiacOrders.filter(o => o.id !== orderId);
-                localStorage.setItem('zodiacOrders', JSON.stringify(zodiacOrders));
-            }
-            
-            renderZodiacOrders();
-        }
-
-        // 删除订单
-        function deleteOrder(orderId, type) {
-            if (!confirm('确定删除这个追投单吗？')) return;
-            
-            if (type === 'number') {
-                numberOrders = numberOrders.filter(o => o.id !== orderId);
-                localStorage.setItem('numberOrders', JSON.stringify(numberOrders));
-                renderNumberOrders();
-            } else {
-                zodiacOrders = zodiacOrders.filter(o => o.id !== orderId);
-                localStorage.setItem('zodiacOrders', JSON.stringify(zodiacOrders));
-                renderZodiacOrders();
-            }
-        }
-
-        // 更新历史记录
-        function updateHistory() {
-            const grid = document.getElementById('summaryGrid');
-            const total = history.length;
-            const hitCount = history.filter(h => h.periods.some(p => p.status === 'hit')).length;
-            const missCount = total - hitCount;
-            const totalBet = history.reduce((sum, h) => sum + h.periods.reduce((s, p) => s + p.bet, 0), 0);
-            const totalReturn = history.reduce((sum, h) => {
-                return sum + h.periods.reduce((s, p) => {
-                    if (p.status === 'hit') return s + p.bet * h.returnRate;
-                    return s;
-                }, 0);
-            }, 0);
-            const profit = totalReturn - totalBet;
-
-            grid.innerHTML = `
-                <div class="summary-card">
-                    <div class="label">总订单</div>
-                    <div class="value">${total}</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">中奖</div>
-                    <div class="value" style="color:#27ae60;">${hitCount}</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">未中</div>
-                    <div class="value" style="color:#e74c3c;">${missCount}</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">命中率</div>
-                    <div class="value">${total > 0 ? (hitCount/total*100).toFixed(1) : 0}%</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">总投入</div>
-                    <div class="value">${totalBet}元</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">总盈亏</div>
-                    <div class="value" style="color:${profit >= 0 ? '#27ae60' : '#e74c3c'};">${profit >= 0 ? '+' : ''}${profit}元</div>
-                </div>
-            `;
-
-            const list = document.getElementById('historyList');
-            if (history.length === 0) {
-                list.innerHTML = '<p style="color:#999;text-align:center;">暂无历史记录</p>';
-                return;
-            }
-
-            list.innerHTML = `
-                <table class="order-table">
-                    <thead>
+// ===== 渲染数字下单 =====
+function renderNumberOrders() {
+    const c = document.getElementById('numberOrders');
+    if (numberOrders.length === 0) { c.innerHTML = '<p style="color:#999;text-align:center;">暂无下单</p>'; return; }
+    c.innerHTML = numberOrders.map(order => `
+        <div style="border:2px solid #667eea;border-radius:10px;padding:15px;margin-bottom:15px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong>号码：${order.numbers.join(', ')}</strong>
+                <span>起始：第${order.startPeriod}期</span>
+            </div>
+            <table class="order-table">
+                <thead><tr><th>期数</th><th>下注金额</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                    ${order.periods.map((p, i) => `
                         <tr>
-                            <th>类型</th>
-                            <th>号码/生肖</th>
-                            <th>起始期</th>
-                            <th>结果</th>
-                            <th>盈亏</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${history.slice().reverse().map(h => {
-                            const bet = h.periods.reduce((s, p) => s + p.bet, 0);
-                            const ret = h.periods.reduce((s, p) => {
-                                if (p.status === 'hit') return s + p.bet * h.returnRate;
-                                return s;
-                            }, 0);
-                            const profit = ret - bet;
-                            const target = h.type === 'number' ? h.numbers.join(',') : h.zodiacs.join(',');
-                            return `
-                                <tr>
-                                    <td>${h.type === 'number' ? '🔢 数字' : '🐲 生肖'}</td>
-                                    <td>${target}</td>
-                                    <td>第${h.startPeriod}期</td>
-                                    <td class="${profit >= 0 ? 'status-hit' : 'status-miss'}">
-                                        ${profit >= 0 ? '✅ 盈利' : '❌ 亏损'}
-                                    </td>
-                                    <td style="color:${profit >= 0 ? '#27ae60' : '#e74c3c'};font-weight:bold;">
-                                        ${profit >= 0 ? '+' : ''}${profit}元
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
+                            <td>${p.period}期</td>
+                            <td>${p.bet}元</td>
+                            <td class="status-${p.status}">${p.status==='pending'?'⏳ 待开奖':p.status==='hit'?'✅ 中奖':'❌ 未中'}</td>
+                            <td>${p.status==='pending'?`
+                                <button class="btn btn-success" style="padding:4px 8px;font-size:12px;" onclick="setResult(${order.id},${i},'hit')">中</button>
+                                <button class="btn btn-danger" style="padding:4px 8px;font-size:12px;" onclick="setResult(${order.id},${i},'miss')">未中</button>`:'-'}
+                            </td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+            <button class="btn btn-danger" style="margin-top:10px;padding:6px 12px;font-size:12px;" onclick="deleteOrder(${order.id},'number')">删除</button>
+        </div>`).join('');
+}
 
-        function clearHistory() {
-            if (!confirm('确定清空所有历史记录吗？此操作不可恢复！')) return;
-            history = [];
-            localStorage.setItem('orderHistory', JSON.stringify(history));
-            updateHistory();
-        }
+// ===== 渲染生肖下单 =====
+function renderZodiacOrders() {
+    const c = document.getElementById('zodiacOrders');
+    if (zodiacOrders.length === 0) { c.innerHTML = '<p style="color:#999;text-align:center;">暂无下单</p>'; return; }
+    c.innerHTML = zodiacOrders.map(order => `
+        <div style="border:2px solid #f39c12;border-radius:10px;padding:15px;margin-bottom:15px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong>生肖：${order.zodiacs.join(', ')}</strong>
+                <span>起始：第${order.startPeriod}期</span>
+            </div>
+            <table class="order-table">
+                <thead><tr><th>期数</th><th>下注金额</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                    ${order.periods.map((p, i) => `
+                        <tr>
+                            <td>${p.period}期</td>
+                            <td>${p.bet}元</td>
+                            <td class="status-${p.status}">${p.status==='pending'?'⏳ 待开奖':p.status==='hit'?'✅ 中奖':'❌ 未中'}</td>
+                            <td>${p.status==='pending'?`
+                                <button class="btn btn-success" style="padding:4px 8px;font-size:12px;" onclick="setZodiacResult(${order.id},${i},'hit')">中</button>
+                                <button class="btn btn-danger" style="padding:4px 8px;font-size:12px;" onclick="setZodiacResult(${order.id},${i},'miss')">未中</button>`:'-'}
+                            </td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+            <button class="btn btn-danger" style="margin-top:10px;padding:6px 12px;font-size:12px;" onclick="deleteOrder(${order.id},'zodiac')">删除</button>
+        </div>`).join('');
+}
 
-        // 绑定公式更新事件
-        ['numBase', 'numMult1', 'numMult2', 'numMult3', 'numReturn'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => updateFormula('number'));
-        });
-        ['zodBase', 'zodMult1', 'zodMult2', 'zodMult3', 'zodReturn'].forEach(id => {
-            document.getElementById(id).addEventListener('input', () => updateFormula('zodiac'));
-        });
+// ===== 标记结果 =====
+function setResult(orderId, idx, res) {
+    const o = numberOrders.find(x => x.id === orderId);
+    if (!o) return;
+    o.periods[idx].status = res;
+    if (o.periods.every(p => p.status !== 'pending')) {
+        history.push({...o, completedAt: new Date().toISOString()});
+        localStorage.setItem('orderHistory', JSON.stringify(history));
+        numberOrders = numberOrders.filter(x => x.id !== orderId);
+        localStorage.setItem('numberOrders', JSON.stringify(numberOrders));
+    }
+    renderNumberOrders();
+}
+function setZodiacResult(orderId, idx, res) {
+    const o = zodiacOrders.find(x => x.id === orderId);
+    if (!o) return;
+    o.periods[idx].status = res;
+    if (o.periods.every(p => p.status !== 'pending')) {
+        history.push({...o, completedAt: new Date().toISOString()});
+        localStorage.setItem('orderHistory', JSON.stringify(history));
+        zodiacOrders = zodiacOrders.filter(x => x.id !== orderId);
+        localStorage.setItem('zodiacOrders', JSON.stringify(zodiacOrders));
+    }
+    renderZodiacOrders();
+}
+function deleteOrder(id, type) {
+    if (!confirm('确定删除这个下单吗？')) return;
+    if (type === 'number') { numberOrders = numberOrders.filter(o => o.id !== id); localStorage.setItem('numberOrders', JSON.stringify(numberOrders)); renderNumberOrders(); }
+    else { zodiacOrders = zodiacOrders.filter(o => o.id !== id); localStorage.setItem('zodiacOrders', JSON.stringify(zodiacOrders)); renderZodiacOrders(); }
+}
 
-        // 初始化
-        initZodiacGrid();
-        renderNumberOrders();
-        renderZodiacOrders();
-        updateFormula('number');
-        updateFormula('zodiac');
-    </script>
+// ===== 开奖记录 =====
+function addRecord() {
+    const p = parseInt(document.getElementById('recPeriod').value);
+    const numsStr = document.getElementById('recNumbers').value;
+    if (!p || !numsStr.trim()) { alert('请输入期数和开奖号码'); return; }
+    const nums = numsStr.split(/[,，\s]+/).map(x => parseInt(x.trim())).filter(x => !isNaN(x)).sort((a,b)=>a-b);
+    records = records.filter(r => r.period !== p);
+    records.push({period: p, numbers: nums, time: new Date().toISOString()});
+    localStorage.setItem('drawRecords', JSON.stringify(records));
+    document.getElementById('recPeriod').value = '';
+    document.getElementById('recNumbers').value = '';
+    renderRecords();
+}
+
+function renderRecords() {
+    records.sort((a,b) => b.period - a.period);
+    // 统计
+    const total = records.length;
+    document.getElementById('recordSummary').innerHTML = `
+        <div class="summary-card"><div class="label">总期数</div><div class="value">${total}</div></div>
+        <div class="summary-card"><div class="label">平均开奖号</div><div class="value">${total>0 ? (records.reduce((s,r)=>s+r.numbers.length,0)/total).toFixed(1) : 0}</div></div>
+        <div class="summary-card"><div class="label">最新期</div><div class="value">${total>0 ? records[0].period : '-'}</div></div>
+        <div class="summary-card"><div class="label">中奖下单</div><div class="value" style="color:#27ae60;">${history.filter(h=>h.periods.some(p=>p.status==='hit')).length}</div></div>`;
+    // 列表
+    const list = document.getElementById('recordList');
+    if (records.length === 0) { list.innerHTML = '<p style="color:#999;text-align:center;">暂无开奖记录</p>'; return; }
+    list.innerHTML = records.map(r => `
+        <div class="record-item">
+            <div><strong>第${r.period}期</strong></div>
+            <div class="num">${r.numbers.join(', ')}</div>
+            <button class="btn btn-danger" style="padding:4px 8px;font-size:12px;" onclick="delRecord(${r.period})">删</button>
+        </div>`).join('');
+}
+function delRecord(p) {
+    if (!confirm('确定删除第' + p + '期记录？')) return;
+    records = records.filter(r => r.period !== p);
+    localStorage.setItem('drawRecords', JSON.stringify(records));
+    renderRecords();
+}
+
+// ===== 初始化 =====
+['numBase','numMult1','numMult2','numMult3','numReturn'].forEach(id =>
+    document.getElementById(id).addEventListener('input', () => updateFormula('number')));
+['zodBase','zodMult1','zodMult2','zodMult3','zodReturn'].forEach(id =>
+    document.getElementById(id).addEventListener('input', () => updateFormula('zodiac')));
+initZodiacGrid();
+renderNumberOrders();
+renderZodiacOrders();
+updateFormula('number');
+updateFormula('zodiac');
+</script>
 </body>
 </html>
