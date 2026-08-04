@@ -117,7 +117,9 @@ if(i>0){var pv=dv[i-1].rate;if(e.rate>pv+3)a='<span class="arr" style="color:#16
 var dot=open(d,e.en)?' &#9679;':'';
 var lb = label(e.rate);
 var pred = wdata ? getPred(d, segIdx, w) : null;
-b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.tot+dot+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
+// 累计：第1期到该段口末期的总开次数
+var totalHits=0;for(var p=1;p<=e.en;p++)if(open(d,p))totalHits++;
+b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.tot+dot+'<br><span style="font-size:10px;color:#999">累计'+totalHits+'次</span>'+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
 }
 
 // 出号规律
