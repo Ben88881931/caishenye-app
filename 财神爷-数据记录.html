@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.4, maximum-scale=3.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, viewport-fit=cover">
     <title>财神爷数据记录系统</title>
     <style>
         * {
@@ -20,7 +20,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
         }
         
@@ -229,6 +229,82 @@
             max-height: 400px;
             overflow-y: auto;
         }
+        /* ===== 手机端适配 ===== */
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
+                font-size: 15px;
+            }
+            .container, .card, .header, .stats {
+                max-width: 100%;
+            }
+            .header {
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+            .header h1 {
+                font-size: 26px;
+            }
+            .tabs {
+                gap: 6px;
+                margin-bottom: 12px;
+                flex-wrap: wrap;
+            }
+            .tab {
+                flex: 1 1 auto;
+                padding: 12px 10px;
+                font-size: 15px;
+                white-space: nowrap;
+            }
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 12px;
+            }
+            .stat-card {
+                padding: 14px 10px;
+            }
+            .stat-card h3 {
+                font-size: 14px;
+            }
+            .stat-card .value {
+                font-size: 28px;
+            }
+            .card {
+                padding: 14px;
+                margin-bottom: 12px;
+            }
+            .card h2 {
+                font-size: 18px;
+                margin-bottom: 12px;
+            }
+            .form-group {
+                margin-bottom: 14px;
+            }
+            .form-group input, .form-group select, .form-group button {
+                width: 100%;
+                font-size: 15px;
+                padding: 10px;
+            }
+            /* 表格超宽时横向滑动,避免撑破页面 */
+            .table-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            table {
+                min-width: 520px;
+                font-size: 13px;
+            }
+        }
+        @media (max-width: 380px) {
+            .tab {
+                font-size: 13px;
+                padding: 10px 6px;
+            }
+            .stat-card .value {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -288,7 +364,7 @@
                         <option value="all" selected>全部</option>
                     </select>
                 </div>
-                <div class="period-list">
+                <div class="period-list table-wrap">
                     <table>
                         <thead>
                             <tr>
@@ -309,10 +385,11 @@
             <div class="card">
                 <h2>📊 数字规律分析（三期内必出）</h2>
                 <p style="color:#666; margin-bottom:15px;">基于历史数据统计：当某数字缺席N期后，接下来3期内出现的概率</p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>数字</th>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>数字</th>
                             <th>最佳触发条件</th>
                             <th>三期内命中率</th>
                             <th>样本量</th>
@@ -321,7 +398,8 @@
                     </thead>
                     <tbody id="statsTable">
                     </tbody>
-                </table>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
