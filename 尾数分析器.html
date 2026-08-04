@@ -102,7 +102,7 @@ for(var i=0;i<view.length;i++){
   var segIdx = all.indexOf(ci);
   h+='<th>S'+(segIdx+1)+'<br>'+ci.st+'-'+ci.en+''+(ci.full?'':'<br><span class="dim">('+ci.tot+'期)</span>')+'</th>';
 }
-h+='<th>出号规律</th><th>波动</th><th>下段预测</th>';
+h+='<th>全局总数</th><th>出号规律</th><th>波动</th><th>下段预测</th>';
 
 var b='',arr=[];
 for(var di=0;di<sel.length;di++){
@@ -117,10 +117,12 @@ if(i>0){var pv=dv[i-1].rate;if(e.rate>pv+3)a='<span class="arr" style="color:#16
 var dot=open(d,e.en)?' &#9679;':'';
 var lb = label(e.rate);
 var pred = wdata ? getPred(d, segIdx, w) : null;
-// 累计：第1期到该段口末期的总开次数
-var totalHits=0;for(var p=1;p<=e.en;p++)if(open(d,p))totalHits++;
-b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.tot+dot+'<br><span style="font-size:10px;color:#999">累计'+totalHits+'次</span>'+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
+b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.tot+dot+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
 }
+
+// 全局总数
+var totalHits=0;for(var p=1;p<=N;p++)if(open(d,p))totalHits++;
+b+='<td style="font-size:14px;font-weight:bold;color:#6c5ce7">'+totalHits+'/'+N+'</td>';
 
 // 出号规律
 var st = wdata ? wdata.stats[String(d)] : null;
