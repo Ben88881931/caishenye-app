@@ -6,55 +6,55 @@
 <title>遗漏监控</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:12px;max-width:800px;margin:0 auto}
-h1{text-align:center;font-size:18px;color:#6c5ce7;margin-bottom:6px}
-.sub{text-align:center;font-size:11px;color:#aaa;margin-bottom:14px}
-.card{border:1px solid #e8e4f0;background:#fff;border-radius:10px;padding:14px;margin-bottom:12px}
-.card h2{font-size:15px;color:#6c5ce7;margin-bottom:10px}
-.list{list-style:none}
-.list li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px}
-.list li:last-child{border-bottom:none}
-.num{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;background:#fca5a5;color:#fff;flex-shrink:0}
-.num.done{background:#cbd5e1;color:#666}
-.detail{flex:1;line-height:1.6}
-.detail .miss{font-weight:bold;color:#dc2626}
-.detail .ok{font-weight:bold;color:#16a34a}
-.detail .dim{color:#999;font-size:12px}
-.bar{display:flex;gap:4px;margin-top:4px}
-.cell{width:14px;height:14px;border-radius:3px;background:#e5e7eb}
-.cell.hit{background:#86efac}
-.cell.miss{background:#fca5a5}
-.foot{text-align:center;font-size:11px;color:#ccc;margin-top:10px}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:12px;max-width:1000px;margin:0 auto}
+h1{text-align:center;font-size:18px;color:#6c5ce7;margin-bottom:14px}
+.nav{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.nav a{text-decoration:none;padding:6px 14px;border-radius:8px;font-size:13px;background:#fff;border:1px solid #d5d5f0;color:#6c5ce7}
+.nav a.on{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e8e4f0;margin-bottom:12px}
+th,td{padding:6px 8px;text-align:center;border:1px solid #e8e4f0}
+th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500}
+td{color:#222}
+td.fix{font-size:16px;font-weight:700;color:#6c5ce7;background:#f5f3ff}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold}
+.badge-r{background:#fca5a5;color:#fff}
+.badge-o{background:#fde68a;color:#333}
+.badge-g{background:#86efac;color:#333}
+.foot{text-align:center;font-size:11px;color:#ccc;margin-top:6px}
+.dim{color:#999;font-size:10px}
 </style>
 </head>
 <body>
 <h1>遗漏监控</h1>
-<div class="sub">最近出现超过3期遗漏的5个尾号</div>
-
-<div class="card">
-<h2>最近遗漏>3期</h2>
-<ul class="list" id="lst"></ul>
+<div class="nav">
+  <a href="开奖历史记录.html">开奖记录</a>
+  <a href="尾数分析器.html">尾数分析器</a>
+  <a href="遗漏监控.html" class="on">遗漏监控</a>
 </div>
-
+<div style="overflow-x:auto"><table id="tbl"></table></div>
 <div class="foot" id="ft"></div>
 <script>
 var RAW={"1":"0111000111","2":"0111110110","3":"1010110101","4":"0010011101","5":"1001001101","6":"0101011000","7":"1100110010","8":"0100011001","9":"0010001111","10":"1101100111","11":"1110010110","12":"1101011000","13":"0100101101","14":"0111001010","15":"1101010010","16":"1010101010","17":"0111100010","18":"1111010001","19":"0010011101","20":"0110100101","21":"1011110100","22":"1000001111","23":"0100001111","24":"1001110010","25":"1100101101","26":"0011100101","27":"1100011011","28":"0011000111","29":"0101110110","30":"0101111100","31":"0100011111","32":"1101001101","33":"0111101010","34":"1001110011","35":"0110101101","36":"1100100111","37":"0011110001","38":"1010101001","39":"1100100011","40":"0100001111","41":"0010101110","42":"0110001111","43":"1011010001","44":"0000001111","45":"1111000110","46":"1011001001","47":"1011011101","48":"0010101011","49":"0111000011","50":"1001100100","51":"1110101010","52":"1001111010","53":"0111011110","54":"1110000111","55":"1100100011","56":"1000011111","57":"1101101001","58":"1101000010","59":"1011100011","60":"1100110101","61":"0010011111","62":"0010111001","63":"0110101110","64":"1011100010","65":"0011110110","66":"1010101110","67":"1100011001","68":"0111001011","69":"1001101010","70":"1101010100","71":"1100110010","72":"0110111010","73":"0101101101","74":"1110110001","75":"1111001101","76":"0111100100","77":"1010011101","78":"1011001110","79":"1001111001","80":"0111000111","81":"0100111100","82":"0101010100","83":"1101011010","84":"1110111100","85":"1001101101","86":"0010111000","87":"0110001101","88":"1010001110","89":"0110111001","90":"1010001111","91":"0010110110","92":"0010011110","93":"1001101110","94":"0001111110","95":"0100010011","96":"0001011100","97":"0100101011","98":"0011100111","99":"1010000110","100":"0011110010","101":"1010100011","102":"1011001101","103":"1101101001","104":"1101010011","105":"0110101111","106":"1110011010","107":"1101111001","108":"1000111010","109":"0001101111","110":"1001010001","111":"0101100010","112":"1000110101","113":"0010010101","114":"1100011000","115":"0100111111","116":"1011011010","117":"0011011101","118":"1010001111","119":"1110000010","120":"1001101110","121":"1100111010","122":"0111010010","123":"0011101101","124":"1010011101","125":"1100001111","126":"1101010001","127":"0001110111","128":"0010011100","129":"1100110100","130":"0100011001","131":"1110010100","132":"1100110001","133":"0101101110","134":"1010101101","135":"1000010111","136":"0110110110","137":"1010111101","138":"1010101011","139":"1100111010","140":"1011101000","141":"0011100110","142":"0101011010","143":"0011101010","144":"0111001101","145":"0011011110","146":"1110011001","147":"1101001011","148":"0101100110","149":"1000110110","150":"0110110001","151":"1110010101","152":"0100111100","153":"1101001010","154":"0111101010","155":"1101001100","156":"0111001100","157":"1101010100","158":"0111001010","159":"0010101111","160":"1110001011","161":"1010101011","162":"0111101100","163":"1101000111","164":"0111101010","165":"0111000101","166":"1100111010","167":"1101000101","168":"1101110100","169":"1010100110","170":"1001101110","171":"1110101010","172":"0010110110","173":"1001001001","174":"0101110010","175":"1000011111","176":"1110011010","177":"0110110001","178":"0110101110","179":"1100011001","180":"1100100101","181":"0000111101","182":"0101110001","183":"0011101101","184":"1100111000","185":"1010011011","186":"0111010111","187":"0111001110","188":"1100111011","189":"1011010110","190":"0000101111","191":"0001101001","192":"1100010110","193":"0110010001","194":"1110111000","195":"0001111001","196":"1101100101","197":"1000100011","198":"0110110110","199":"0010011111","200":"0011011001","201":"0110011011","202":"1101010100","203":"0111100100","204":"1110011100","205":"1111001111","206":"1001010101","207":"1101101101","208":"1001010111","209":"0110110011","210":"1010010111","211":"0111000111","212":"0011001101","213":"0110010001","214":"1101100111","215":"1101100011","216":"0110111110"};
-var MISS=[{"digit": 0, "start": 28, "end": 31, "miss": 4, "hit_at": 32}, {"digit": 1, "start": 3, "end": 5, "miss": 3, "hit_at": 6}, {"digit": 2, "start": 5, "end": 8, "miss": 4, "hit_at": 9}, {"digit": 3, "start": 7, "end": 9, "miss": 3, "hit_at": 10}, {"digit": 4, "start": 4, "end": 6, "miss": 3, "hit_at": 7}, {"digit": 5, "start": 38, "end": 42, "miss": 5, "hit_at": 43}, {"digit": 6, "start": 1, "end": 3, "miss": 3, "hit_at": 4}, {"digit": 7, "start": 6, "end": 8, "miss": 3, "hit_at": 9}, {"digit": 8, "start": 3, "end": 6, "miss": 4, "hit_at": 7}, {"digit": 9, "start": 14, "end": 17, "miss": 4, "hit_at": 18}];
+var MISS={"0": {"records": [{"start": 28, "end": 31, "miss": 4}, {"start": 40, "end": 42, "miss": 3}, {"start": 61, "end": 63, "miss": 3}, {"start": 80, "end": 82, "miss": 3}, {"start": 94, "end": 98, "miss": 5}, {"start": 141, "end": 145, "miss": 5}, {"start": 181, "end": 183, "miss": 3}, {"start": 198, "end": 201, "miss": 4}, {"start": 211, "end": 213, "miss": 3}], "max_miss": 5, "total": 9}, "1": {"records": [{"start": 3, "end": 5, "miss": 3}, {"start": 46, "end": 48, "miss": 3}, {"start": 64, "end": 66, "miss": 3}, {"start": 77, "end": 79, "miss": 3}, {"start": 90, "end": 94, "miss": 5}, {"start": 98, "end": 102, "miss": 5}, {"start": 108, "end": 110, "miss": 3}, {"start": 116, "end": 118, "miss": 3}, {"start": 189, "end": 191, "miss": 3}], "max_miss": 5, "total": 9}, "2": {"records": [{"start": 5, "end": 8, "miss": 4}, {"start": 22, "end": 25, "miss": 4}, {"start": 29, "end": 32, "miss": 4}, {"start": 55, "end": 58, "miss": 4}, {"start": 69, "end": 71, "miss": 3}, {"start": 81, "end": 83, "miss": 3}, {"start": 93, "end": 97, "miss": 5}, {"start": 107, "end": 112, "miss": 6}, {"start": 125, "end": 127, "miss": 3}, {"start": 147, "end": 149, "miss": 3}, {"start": 166, "end": 168, "miss": 3}, {"start": 173, "end": 175, "miss": 3}, {"start": 179, "end": 182, "miss": 4}, {"start": 190, "end": 192, "miss": 3}, {"start": 195, "end": 197, "miss": 3}, {"start": 206, "end": 208, "miss": 3}], "max_miss": 6, "total": 16}, "3": {"records": [{"start": 7, "end": 9, "miss": 3}, {"start": 38, "end": 42, "miss": 5}, {"start": 54, "end": 56, "miss": 3}, {"start": 60, "end": 63, "miss": 4}, {"start": 86, "end": 92, "miss": 7}, {"start": 112, "end": 115, "miss": 4}, {"start": 128, "end": 132, "miss": 5}, {"start": 134, "end": 139, "miss": 6}, {"start": 149, "end": 152, "miss": 4}, {"start": 159, "end": 161, "miss": 3}, {"start": 175, "end": 181, "miss": 7}, {"start": 192, "end": 194, "miss": 3}, {"start": 197, "end": 199, "miss": 3}], "max_miss": 7, "total": 13}, "4": {"records": [{"start": 4, "end": 6, "miss": 3}, {"start": 42, "end": 47, "miss": 6}, {"start": 116, "end": 119, "miss": 4}, {"start": 124, "end": 126, "miss": 3}, {"start": 144, "end": 147, "miss": 4}, {"start": 155, "end": 158, "miss": 4}, {"start": 185, "end": 187, "miss": 3}, {"start": 199, "end": 202, "miss": 4}, {"start": 204, "end": 206, "miss": 3}, {"start": 210, "end": 213, "miss": 4}], "max_miss": 6, "total": 10}, "5": {"records": [{"start": 38, "end": 42, "miss": 5}, {"start": 44, "end": 46, "miss": 3}, {"start": 48, "end": 51, "miss": 4}, {"start": 57, "end": 59, "miss": 3}, {"start": 97, "end": 99, "miss": 3}, {"start": 101, "end": 103, "miss": 3}, {"start": 118, "end": 120, "miss": 3}, {"start": 153, "end": 156, "miss": 4}, {"start": 158, "end": 165, "miss": 8}, {"start": 169, "end": 171, "miss": 3}], "max_miss": 8, "total": 10}, "6": {"records": [{"start": 1, "end": 3, "miss": 3}, {"start": 58, "end": 60, "miss": 3}, {"start": 98, "end": 101, "miss": 4}, {"start": 110, "end": 113, "miss": 4}, {"start": 148, "end": 151, "miss": 4}, {"start": 167, "end": 169, "miss": 3}, {"start": 196, "end": 198, "miss": 3}, {"start": 208, "end": 211, "miss": 4}, {"start": 213, "end": 215, "miss": 3}], "max_miss": 4, "total": 9}, "7": {"records": [{"start": 6, "end": 8, "miss": 3}, {"start": 14, "end": 18, "miss": 5}, {"start": 37, "end": 39, "miss": 3}, {"start": 57, "end": 59, "miss": 3}, {"start": 67, "end": 69, "miss": 3}, {"start": 106, "end": 108, "miss": 3}, {"start": 138, "end": 140, "miss": 3}, {"start": 193, "end": 195, "miss": 3}], "max_miss": 5, "total": 8}, "8": {"records": [{"start": 3, "end": 6, "miss": 4}, {"start": 18, "end": 21, "miss": 4}, {"start": 73, "end": 77, "miss": 5}, {"start": 84, "end": 87, "miss": 4}, {"start": 112, "end": 114, "miss": 3}, {"start": 128, "end": 132, "miss": 5}, {"start": 150, "end": 152, "miss": 3}, {"start": 155, "end": 157, "miss": 3}, {"start": 179, "end": 184, "miss": 6}, {"start": 193, "end": 196, "miss": 4}, {"start": 202, "end": 204, "miss": 3}], "max_miss": 6, "total": 11}, "9": {"records": [{"start": 14, "end": 17, "miss": 4}, {"start": 50, "end": 53, "miss": 4}, {"start": 63, "end": 66, "miss": 4}, {"start": 69, "end": 72, "miss": 4}, {"start": 81, "end": 84, "miss": 4}, {"start": 91, "end": 94, "miss": 4}, {"start": 119, "end": 122, "miss": 4}, {"start": 139, "end": 143, "miss": 5}, {"start": 152, "end": 158, "miss": 7}, {"start": 168, "end": 172, "miss": 5}, {"start": 202, "end": 204, "miss": 3}], "max_miss": 7, "total": 11}};
 var N=Object.keys(RAW).length;
 var lastKey=Math.max.apply(null,Object.keys(RAW).map(Number));
 
 function draw(){
-var list=MISS.slice(0,5);
-var h='';
-for(var i=0;i<list.length;i++){
-    var r=list[i];
-    var isDone=r.hit_at!==null;
-    var cls=isDone?'num done':'num';
-    var status=isDone?'<span class="ok">已开出(第'+r.hit_at+'期)</span>':'<span class="miss">仍在遗漏中</span>';
-    h+='<li><div class="'+cls+'">'+r.digit+'</div><div class="detail"><div>尾'+r.digit+' 遗漏<span class="miss">'+r.miss+'期</span> ('+r.start+'-'+r.end+'期) '+status+'</div></div></li>';
+var h='<tr><th>尾号</th><th>遗漏>3期次数</th><th>最大遗漏</th><th>遗漏记录</th></tr>';
+for(var d=0;d<10;d++){
+    var md=MISS[d];
+    var cnt=md.total;
+    var max=md.max_miss;
+    var recs=md.records;
+    var recStr='';
+    for(var i=0;i<recs.length;i++){
+        var r=recs[i];
+        recStr+='<span class="badge badge-r">'+r.miss+'期('+r.start+'-'+r.end+')</span> ';
+    }
+    h+='<tr><td class="fix">'+d+'</td><td>'+cnt+'次</td><td>'+max+'期</td><td style="text-align:left;line-height:2.2">'+recStr+'</td></tr>';
 }
-document.getElementById('lst').innerHTML=h;
-document.getElementById('ft').textContent='数据: 第1-'+lastKey+'期 | 最近遗漏>3期跟进';
+document.getElementById('tbl').innerHTML=h;
+document.getElementById('ft').textContent='数据: 第1-'+lastKey+'期 | 所有遗漏超过3期记录';
 }
 draw();
 </script>
