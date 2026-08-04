@@ -84,8 +84,8 @@ for(var d=0;d<10;d++){
     h+='<tr><td class="fix">'+d+'</td><td>'+md.total+'次</td><td>'+md.max_miss+'期</td><td style="font-size:12px">'+md.trend+'</td><td class="l">'+recStr+'</td></tr>';
 }
 document.getElementById('tbl').innerHTML=h;
-var curMiss='<div style="margin-top:10px;padding:8px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px;font-size:14px;line-height:2"><b>当前遗漏</b><br>'+curMissStr+'</div>';
-document.getElementById('ft').innerHTML=curMiss+'<div style="margin-top:6px;font-size:12px;padding:8px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px;line-height:2"><b>最近遗漏>3期</b><br>'+recentStr+'</div><br>数据: 第1-'+lastKey+'期';
+var curMiss='<div style="margin-top:10px;padding:8px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px;font-size:14px;line-height:2;color:#333"><b>当前遗漏</b><br>'+curMissStr+'</div>';
+document.getElementById('ft').innerHTML=curMiss+'<div style="margin-top:6px;font-size:12px;padding:8px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px;line-height:2;color:#333"><b>最近遗漏>3期</b><br>'+recentStr+'</div><br>数据: 第1-'+lastKey+'期';
 }
 draw();
 </script>
