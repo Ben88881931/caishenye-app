@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>开奖历史记录</title>
+<title>遗漏颜色表</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:12px;max-width:800px;margin:0 auto}
@@ -16,18 +16,29 @@ th,td{padding:8px 6px;text-align:center;border:1px solid #e8e4f0}
 th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500}
 td{color:#222}
 .num{display:inline-block;width:26px;height:26px;line-height:26px;border-radius:6px;margin:1px;font-size:13px;font-weight:bold;text-align:center}
-.hit{background:#6c5ce7;color:#fff}
-.miss{background:#e5e7eb;color:#bbb}
+.hit{background:#dc2626;color:#fff}
+.miss1{background:#93c5fd;color:#333}
+.miss2{background:#86efac;color:#333}
+.miss3{background:#fde68a;color:#333}
+.legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:11px;color:#888;margin-bottom:10px}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px}
 .foot{text-align:center;font-size:11px;color:#ccc;margin-top:10px}
 </style>
 </head>
 <body>
-<h1>开奖历史记录</h1>
+<h1>遗漏颜色表</h1>
 <div class="nav">
-  <a href="开奖历史记录.html" class="on">开奖记录</a>
+  <a href="开奖历史记录.html">开奖记录</a>
   <a href="尾数分析器.html">尾数分析器</a>
   <a href="遗漏监控.html">遗漏监控</a>
-  <a href="遗漏颜色表.html">遗漏颜色</a>
+  <a href="遗漏颜色表.html" class="on">遗漏颜色</a>
+</div>
+<div class="legend">
+  <span><i style="background:#dc2626"></i>开出</span>
+  <span><i style="background:#93c5fd"></i>遗漏1期</span>
+  <span><i style="background:#86efac"></i>遗漏2期</span>
+  <span><i style="background:#fde68a"></i>遗漏3期+</span>
 </div>
 <div style="overflow-x:auto"><table id="tbl"></table></div>
 <div class="foot" id="ft"></div>
@@ -40,7 +51,19 @@ for(var i=0;i<keys.length;i++){
   for(var j=0;j<10;j++)if(row[j]==='1')arr.push(j);
   h+='<tr><td style="font-weight:bold">'+k+'</td><td>'+arr.join(' ')+'</td><td>'+arr.length+'</td>';
   for(var j=0;j<10;j++){
-    h+='<td><span class="num '+(row[j]==='1'?'hit':'miss')+'">'+j+'</span></td>';
+    if(row[j]==='1'){
+      h+='<td><span class="num hit">'+j+'</span></td>';
+    }else{
+      // 从当前期往前数遗漏
+      var miss=0;
+      var ki=parseInt(k);
+      for(var p=ki-1;p>=1;p--){
+        if(RAW[p]&&RAW[p][j]==='1')break;
+        miss++;
+      }
+      var cls=miss>=3?'miss3':miss>=2?'miss2':miss>=1?'miss1':'miss1';
+      h+='<td><span class="num '+cls+'">'+j+'</span></td>';
+    }
   }
   h+='</tr>';
 }
