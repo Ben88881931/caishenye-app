@@ -1,31 +1,647 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>接金蛋</title>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;padding:20px;background:#f0f2ff}
-        h1{text-align:center;color:#6c5ce7;font-size:24px;margin-bottom:20px}
-        a{display:block;padding:16px;background:#6c5ce7;color:white;text-decoration:none;border-radius:10px;margin:12px 0;text-align:center;font-size:17px;font-weight:bold}
-        a:hover{background:#5a4bd6}
-        .info{background:#fff;padding:16px;border-radius:10px;margin:16px 0;border:1px solid #e8e4f0}
-        .info p{font-size:14px;color:#666;margin:6px 0}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>接金蛋</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:12px;max-width:800px;margin:0 auto}
+h1{text-align:center;font-size:20px;color:#6c5ce7;margin-bottom:12px}
+.tabs{display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+.tab{flex:1;min-width:80px;padding:10px 8px;border:1px solid #d5d5f0;border-radius:8px;font-size:12px;cursor:pointer;background:#fff;color:#6c5ce7;text-align:center;white-space:nowrap}
+.tab.on{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
+.page{display:none}
+.page.on{display:block}
+.card{background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:14px;margin-bottom:12px}
+.card h2{font-size:14px;color:#6c5ce7;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e8e4f0}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.row label{font-size:13px;color:#666;min-width:70px}
+.row input{padding:6px 10px;border:1px solid #d5d5f0;border-radius:6px;font-size:14px;width:80px}
+.row input:focus{outline:none;border-color:#6c5ce7}
+.row span{font-size:12px;color:#999}
+.formula{background:#f5f3ff;border:1px solid #e8e4f0;border-radius:6px;padding:8px 12px;font-size:13px;color:#6c5ce7;margin-top:6px}
+.num-btns{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.num-btn{width:36px;height:36px;border:2px solid #d5d5f0;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;background:#fff;color:#555;display:flex;align-items:center;justify-content:center}
+.num-btn.sel{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
+.btn{padding:8px 16px;border:none;border-radius:6px;font-size:13px;cursor:pointer;font-weight:bold}
+.btn-p{background:#6c5ce7;color:#fff}
+.btn-p:hover{background:#5a4bd6}
+.btn-d{background:#fee2e2;color:#dc2626}
+.btn-s{background:#dcfce7;color:#16a34a}
+.btn-sm{padding:4px 8px;font-size:11px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th,td{padding:6px 8px;text-align:center;border:1px solid #e8e4f0}
+th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500}
+td{color:#333}
+.num{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:4px;margin:0;font-size:13px;font-weight:bold;text-align:center}
+.hit{background:#dc2626;color:#fff}
+.miss{background:#d1d5db;color:#6b7280;font-size:10px}
+.m1{background:#3b82f6}
+.m2{background:#22c55e}
+.m3{background:#eab308}
+.cell{padding:0;border:0;vertical-align:middle}
+.hot{background:#22c55e}.warm{background:#3b82f6}.norm{background:#94a3b8}
+.cool{background:#eab308}.cold{background:#ef4444}.ice{background:#ec4899}
+.st-p{color:#f59e0b;font-weight:bold}
+.st-h{color:#16a34a;font-weight:bold}
+.st-m{color:#dc2626;font-weight:bold}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#f5f3ff;padding:10px;border-radius:6px;text-align:center}
+.stat .lb{font-size:11px;color:#888}
+.stat .vl{font-size:18px;font-weight:bold;color:#6c5ce7}
+.stat .vl.green{color:#16a34a}
+.stat .vl.red{color:#dc2626}
+.order-card{border:1px solid #e8e4f0;border-radius:8px;padding:12px;margin-bottom:10px}
+.order-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.order-head .nums{font-size:16px;font-weight:bold;color:#6c5ce7}
+.order-head .info{font-size:12px;color:#888}
+.empty{text-align:center;color:#ccc;padding:20px;font-size:13px}
+.legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:11px;color:#888;margin-bottom:10px}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px}
+.foot{text-align:center;font-size:11px;color:#ccc;margin-top:10px}
+.seg-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+.seg-table th,.seg-table td{padding:4px 2px;text-align:center;border:1px solid #e8e4f0}
+.seg-table th{background:#f5f3ff;color:#888;font-size:10px}
+.seg-cell{display:inline-block;width:20px;height:20px;line-height:20px;border-radius:3px;font-size:10px;font-weight:bold;text-align:center}
+@media(max-width:500px){
+.stats{grid-template-columns:repeat(2,1fr)}
+.num-btn{width:32px;height:32px;font-size:14px}
+.tab{font-size:11px;padding:8px 4px}
+}
+</style>
 </head>
 <body>
-    <h1>🥚 接金蛋</h1>
-    
-    <a href="尾数分析器.html">📊 尾数分析器</a>
-    <a href="开奖历史记录.html">📋 开奖历史记录</a>
-    <a href="遗漏监控.html">📈 遗漏监控</a>
-    <a href="遗漏颜色表.html">🎨 遗漏颜色表</a>
-    <a href="下单系统.html">💰 下单系统</a>
-    
-    <div class="info">
-        <p>📱 手机访问：点击下方按钮即可打开</p>
-        <p>🔄 每天开奖后自动更新数据</p>
+<h1>🥚 接金蛋</h1>
+<div class="tabs">
+  <button class="tab on" onclick="switchPage(0)">尾数分析</button>
+  <button class="tab" onclick="switchPage(1)">开奖记录</button>
+  <button class="tab" onclick="switchPage(2)">遗漏监控</button>
+  <button class="tab" onclick="switchPage(3)">遗漏颜色</button>
+  <button class="tab" onclick="switchPage(4)">下单</button>
+</div>
+
+<!-- 页面0: 尾数分析器 -->
+<div class="page on" id="page0">
+  <div class="card">
+    <h2>窗口选择</h2>
+    <div class="num-btns" id="winBtns"></div>
+  </div>
+  <div class="card">
+    <h2>冷热分布</h2>
+    <div class="legend">
+      <span><i style="background:#22c55e"></i>热≥70%</span>
+      <span><i style="background:#3b82f6"></i>暖60-69%</span>
+      <span><i style="background:#94a3b8"></i>平50-59%</span>
+      <span><i style="background:#eab308"></i>凉40-49%</span>
+      <span><i style="background:#ef4444"></i>冷30-39%</span>
+      <span><i style="background:#ec4899"></i>冰<30%</span>
     </div>
+    <div id="segTable"></div>
+  </div>
+  <div class="card">
+    <h2>冰点反弹信号</h2>
+    <div id="iceSignals"></div>
+  </div>
+</div>
+
+<!-- 页面1: 开奖历史记录 -->
+<div class="page" id="page1">
+  <div class="card">
+    <h2>开奖历史</h2>
+    <div class="legend">
+      <span><i style="background:#dc2626"></i>开出</span>
+      <span><i style="background:#d1d5db"></i>未开出(遗漏期数)</span>
+    </div>
+    <div style="overflow-x:auto"><table id="histTable"></table></div>
+  </div>
+</div>
+
+<!-- 页面2: 遗漏监控 -->
+<div class="page" id="page2">
+  <div class="card">
+    <h2>遗漏监控</h2>
+    <div id="missMonitor"></div>
+  </div>
+</div>
+
+<!-- 页面3: 遗漏颜色表 -->
+<div class="page" id="page3">
+  <div class="card">
+    <h2>遗漏颜色表</h2>
+    <div class="legend">
+      <span><i style="background:#dc2626"></i>开出</span>
+      <span><i style="background:#3b82f6"></i>遗漏1期</span>
+      <span><i style="background:#22c55e"></i>遗漏2期</span>
+      <span><i style="background:#eab308"></i>遗漏3期+</span>
+    </div>
+    <div style="overflow-x:auto"><table id="colorTable"></table></div>
+  </div>
+</div>
+
+<!-- 页面4: 下单系统 -->
+<div class="page" id="page4">
+  <div class="card">
+    <h2>投注设置</h2>
+    <div class="row">
+      <label>基础金额</label>
+      <input type="number" id="base" value="1000" min="1">
+      <span>元</span>
+    </div>
+    <div class="row">
+      <label>第1期</label>
+      <input type="number" id="m1" value="1" min="0.1" step="0.1">
+      <span>倍</span>
+      <label style="margin-left:12px">第2期</label>
+      <input type="number" id="m2" value="2.25" min="0.1" step="0.1">
+      <span>倍</span>
+    </div>
+    <div class="row">
+      <label>第3期</label>
+      <input type="number" id="m3" value="30" min="0.1" step="0.1">
+      <span>倍</span>
+      <label style="margin-left:12px">回报率</label>
+      <input type="number" id="ret" value="1.8" min="1" step="0.1">
+      <span>倍</span>
+    </div>
+    <div class="formula" id="formula"></div>
+  </div>
+  <div class="card">
+    <h2>新建下单</h2>
+    <div class="row"><label>选择号码</label></div>
+    <div class="num-btns" id="orderNumBtns"></div>
+    <div class="row">
+      <label>起始期数</label>
+      <input type="number" id="startP" placeholder="自动填充">
+    </div>
+    <button class="btn btn-p" onclick="createOrder()">创建下单</button>
+  </div>
+  <div class="card">
+    <h2>当前下单</h2>
+    <div id="orderList"></div>
+  </div>
+  <div class="card">
+    <h2>历史统计</h2>
+    <div class="stats" id="orderStats"></div>
+    <div id="orderHistory"></div>
+  </div>
+</div>
+
+<script>
+// 全局数据
+let DATA = {};
+let KEYS = [];
+let currentWindow = 5;
+let orders = JSON.parse(localStorage.getItem('orders') || '[]');
+let orderHist = JSON.parse(localStorage.getItem('orderHist') || '[]');
+let selNums = new Set();
+
+// 加载数据
+function loadData() {
+  fetch('lottery_data.json')
+    .then(r => r.json())
+    .then(data => {
+      DATA = data;
+      KEYS = Object.keys(data).sort((a, b) => parseInt(a) - parseInt(b));
+      initAll();
+    })
+    .catch(e => console.error('加载数据失败', e));
+}
+
+// 页面切换
+function switchPage(idx) {
+  document.querySelectorAll('.page').forEach((p, i) => p.classList.toggle('on', i === idx));
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('on', i === idx));
+}
+
+// 初始化所有页面
+function initAll() {
+  initWindowBtns();
+  renderSegmentTable();
+  renderIceSignals();
+  renderHistoryTable();
+  renderMissMonitor();
+  renderColorTable();
+  initOrderNumBtns();
+  updateFormula();
+  renderOrders();
+  renderOrderStats();
+  autoFillStartP();
+}
+
+// ===== 页面0: 尾数分析器 =====
+function initWindowBtns() {
+  const wins = [5, 7, 10, 15, 20, 27, 30];
+  const c = document.getElementById('winBtns');
+  c.innerHTML = wins.map(w => 
+    `<button class="num-btn${w === currentWindow ? ' sel' : ''}" onclick="selectWindow(${w})">${w}</button>`
+  ).join('');
+}
+
+function selectWindow(w) {
+  currentWindow = w;
+  initWindowBtns();
+  renderSegmentTable();
+  renderIceSignals();
+}
+
+function renderSegmentTable() {
+  const w = currentWindow;
+  const N = KEYS.length;
+  let h = '<table class="seg-table"><tr><th>尾号</th>';
+  
+  // 生成段口
+  const segs = [];
+  for (let st = 1; st <= N; st += w) {
+    const en = Math.min(st + w - 1, N);
+    segs.push({ st, en });
+  }
+  
+  // 只显示最近6段
+  const showSegs = segs.slice(-6);
+  showSegs.forEach(s => h += `<th>${s.st}-${s.en}</th>`);
+  h += '<th>转换</th></tr>';
+  
+  // 每个尾号
+  for (let d = 0; d < 10; d++) {
+    h += `<tr><td style="font-weight:bold">${d}</td>`;
+    const rates = [];
+    showSegs.forEach(s => {
+      let cnt = 0;
+      for (let p = s.st; p <= s.en; p++) {
+        if (DATA[KEYS[p-1]][d] === '1') cnt++;
+      }
+      const rate = cnt / (s.en - s.st + 1) * 100;
+      rates.push(rate);
+      const cls = rate >= 70 ? 'hot' : rate >= 60 ? 'warm' : rate >= 50 ? 'norm' : rate >= 40 ? 'cool' : rate >= 30 ? 'cold' : 'ice';
+      h += `<td><span class="seg-cell ${cls}">${rate.toFixed(0)}%</span></td>`;
+    });
+    
+    // 转换预测
+    let trans = '-';
+    if (rates.length >= 2) {
+      const prev = rates[rates.length - 2];
+      const cur = rates[rates.length - 1];
+      const diff = cur - prev;
+      if (diff > 3) trans = '↑升';
+      else if (diff < -3) trans = '↓降';
+      else trans = '→平';
+    }
+    h += `<td style="font-size:11px">${trans}</td></tr>`;
+  }
+  h += '</table>';
+  document.getElementById('segTable').innerHTML = h;
+}
+
+function renderIceSignals() {
+  const w = currentWindow;
+  const N = KEYS.length;
+  let signals = [];
+  
+  for (let d = 0; d < 10; d++) {
+    const segs = [];
+    for (let st = 1; st <= N; st += w) {
+      const en = Math.min(st + w - 1, N);
+      let cnt = 0;
+      for (let p = st; p <= en; p++) {
+        if (DATA[KEYS[p-1]][d] === '1') cnt++;
+      }
+      segs.push({ st, en, rate: cnt / (en - st + 1) * 100 });
+    }
+    
+    if (segs.length >= 3) {
+      const prev = segs[segs.length - 3];
+      const cur = segs[segs.length - 2];
+      const drop = prev.rate - cur.rate;
+      
+      if (cur.rate < 40 && prev.rate > cur.rate && drop >= 30) {
+        signals.push({ d, cur: cur.rate, prev: prev.rate, drop });
+      }
+    }
+  }
+  
+  const c = document.getElementById('iceSignals');
+  if (signals.length === 0) {
+    c.innerHTML = '<div class="empty">当前无冰点信号</div>';
+    return;
+  }
+  
+  c.innerHTML = signals.map(s => 
+    `<div style="padding:8px;background:#f5f3ff;border-radius:6px;margin-bottom:6px">
+      <b>尾${s.d}</b> ${s.prev.toFixed(0)}%→${s.cur.toFixed(0)}% 降${s.drop.toFixed(0)}%
+    </div>`
+  ).join('');
+}
+
+// ===== 页面1: 开奖历史记录 =====
+function renderHistoryTable() {
+  let h = '<tr><th>期号</th><th>开奖尾号</th><th>个数</th>';
+  for (let d = 0; d < 10; d++) h += `<th>${d}</th>`;
+  h += '</tr>';
+  
+  // 从最新到最旧
+  for (let i = KEYS.length - 1; i >= 0; i--) {
+    const k = KEYS[i];
+    const row = DATA[k];
+    const nums = [];
+    for (let d = 0; d < 10; d++) {
+      if (row[d] === '1') nums.push(d);
+    }
+    
+    h += `<tr><td style="font-weight:bold">${k}</td><td>${nums.join(' ')}</td><td>${nums.length}</td>`;
+    
+    for (let d = 0; d < 10; d++) {
+      if (row[d] === '1') {
+        h += `<td><span class="num hit">${d}</span></td>`;
+      } else {
+        // 计算遗漏
+        let miss = 0;
+        for (let p = parseInt(k) - 1; p >= 1; p--) {
+          if (DATA[p] && DATA[p][d] === '1') break;
+          miss++;
+        }
+        h += `<td><span class="num miss">${miss + 1}</span></td>`;
+      }
+    }
+    h += '</tr>';
+  }
+  
+  document.getElementById('histTable').innerHTML = h;
+}
+
+// ===== 页面2: 遗漏监控 =====
+function renderMissMonitor() {
+  let h = '<table><tr><th>尾号</th><th>当前遗漏</th><th>最大遗漏</th><th>平均遗漏</th></tr>';
+  
+  for (let d = 0; d < 10; d++) {
+    let current = 0, max = 0, total = 0, count = 0, lastOpen = -1;
+    
+    for (let i = 0; i < KEYS.length; i++) {
+      const k = KEYS[i];
+      if (DATA[k][d] === '1') {
+        if (lastOpen >= 0) {
+          const gap = i - lastOpen - 1;
+          if (gap > max) max = gap;
+          total += gap;
+          count++;
+        }
+        lastOpen = i;
+        current = 0;
+      } else {
+        current++;
+      }
+    }
+    
+    // 最后一段遗漏
+    if (lastOpen >= 0) {
+      const gap = KEYS.length - 1 - lastOpen;
+      if (gap > max) max = gap;
+      if (gap > 0) {
+        total += gap;
+        count++;
+      }
+    }
+    
+    const avg = count > 0 ? (total / count).toFixed(1) : 0;
+    h += `<tr><td style="font-weight:bold">${d}</td><td style="color:#dc2626;font-weight:bold">${current}</td><td>${max}</td><td>${avg}</td></tr>`;
+  }
+  
+  h += '</table>';
+  document.getElementById('missMonitor').innerHTML = h;
+}
+
+// ===== 页面3: 遗漏颜色表 =====
+function renderColorTable() {
+  let h = '<tr><th>期号</th><th>开奖尾号</th><th>个数</th>';
+  for (let d = 0; d < 10; d++) h += `<th>${d}</th>`;
+  h += '</tr>';
+  
+  // 计算每个尾号的遗漏周期颜色
+  const missColor = {};
+  for (let d = 0; d < 10; d++) {
+    missColor[d] = {};
+    let lastOpen = -1;
+    
+    for (let i = 0; i < KEYS.length; i++) {
+      const k = KEYS[i];
+      if (DATA[k][d] === '1') {
+        if (lastOpen >= 0) {
+          const cycleLen = i - lastOpen - 1;
+          const cls = cycleLen >= 3 ? 'm3' : cycleLen === 2 ? 'm2' : 'm1';
+          for (let p = lastOpen + 1; p < i; p++) {
+            missColor[d][KEYS[p]] = cls;
+          }
+        }
+        lastOpen = i;
+      }
+    }
+    
+    // 最后一次遗漏
+    if (lastOpen >= 0) {
+      const cycleLen = KEYS.length - 1 - lastOpen;
+      const cls = cycleLen >= 3 ? 'm3' : cycleLen === 2 ? 'm2' : 'm1';
+      for (let p = lastOpen + 1; p < KEYS.length; p++) {
+        missColor[d][KEYS[p]] = cls;
+      }
+    }
+  }
+  
+  // 从最新到最旧
+  for (let i = KEYS.length - 1; i >= 0; i--) {
+    const k = KEYS[i];
+    const row = DATA[k];
+    const nums = [];
+    for (let d = 0; d < 10; d++) {
+      if (row[d] === '1') nums.push(d);
+    }
+    
+    h += `<tr><td style="font-weight:bold">${k}</td><td>${nums.join(' ')}</td><td>${nums.length}</td>`;
+    
+    for (let d = 0; d < 10; d++) {
+      if (row[d] === '1') {
+        h += `<td class="cell"><span class="num hit">${d}</span></td>`;
+      } else {
+        const cls = missColor[d][k] || 'm1';
+        h += `<td class="cell"><span class="num ${cls}"></span></td>`;
+      }
+    }
+    h += '</tr>';
+  }
+  
+  document.getElementById('colorTable').innerHTML = h;
+}
+
+// ===== 页面4: 下单系统 =====
+function initOrderNumBtns() {
+  const c = document.getElementById('orderNumBtns');
+  let h = '';
+  for (let i = 0; i < 10; i++) {
+    h += `<button class="num-btn" id="on${i}" onclick="toggleOrderNum(${i})">${i}</button>`;
+  }
+  c.innerHTML = h;
+}
+
+function toggleOrderNum(n) {
+  const btn = document.getElementById('on' + n);
+  if (selNums.has(n)) { selNums.delete(n); btn.classList.remove('sel'); }
+  else { selNums.add(n); btn.classList.add('sel'); }
+}
+
+function updateFormula() {
+  const base = parseFloat(document.getElementById('base').value) || 0;
+  const m1 = parseFloat(document.getElementById('m1').value) || 0;
+  const m2 = parseFloat(document.getElementById('m2').value) || 0;
+  const m3 = parseFloat(document.getElementById('m3').value) || 0;
+  const ret = parseFloat(document.getElementById('ret').value) || 0;
+  document.getElementById('formula').innerHTML =
+    `第1期：<b>${base * m1}元</b> | 第2期：<b>${base * m2}元</b> | 第3期：<b>${base * m3}元</b> | 回报率：<b>${ret}倍</b>`;
+}
+
+function autoFillStartP() {
+  const el = document.getElementById('startP');
+  if (!el.value && KEYS.length > 0) {
+    el.value = parseInt(KEYS[KEYS.length - 1]) + 1;
+  }
+}
+
+function createOrder() {
+  if (selNums.size === 0) { alert('请选择号码'); return; }
+  const startP = parseInt(document.getElementById('startP').value);
+  if (!startP) { alert('请输入起始期数'); return; }
+  const base = parseFloat(document.getElementById('base').value);
+  const m1 = parseFloat(document.getElementById('m1').value);
+  const m2 = parseFloat(document.getElementById('m2').value);
+  const m3 = parseFloat(document.getElementById('m3').value);
+  const ret = parseFloat(document.getElementById('ret').value);
+  const nums = Array.from(selNums).sort((a, b) => a - b);
+  const cnt = nums.length;
+  
+  const order = {
+    id: Date.now(),
+    nums: nums,
+    startP: startP,
+    base: base,
+    mult: [m1, m2, m3],
+    ret: ret,
+    periods: [
+      { p: startP, bet: base * m1 * cnt, status: 'pending' },
+      { p: startP + 1, bet: base * m2 * cnt, status: 'pending' },
+      { p: startP + 2, bet: base * m3 * cnt, status: 'pending' }
+    ],
+    created: new Date().toISOString()
+  };
+  
+  orders.push(order);
+  saveOrders();
+  selNums.clear();
+  document.querySelectorAll('#orderNumBtns .num-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('startP').value = '';
+  renderOrders();
+  autoFillStartP();
+}
+
+function markResult(id, idx, status) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  o.periods[idx].status = status;
+  if (o.periods.every(p => p.status !== 'pending')) {
+    o.completed = new Date().toISOString();
+    orderHist.push(o);
+    orders = orders.filter(x => x.id !== id);
+  }
+  saveOrders();
+  renderOrders();
+  renderOrderStats();
+}
+
+function deleteOrder(id) {
+  if (!confirm('确定删除？')) return;
+  orders = orders.filter(x => x.id !== id);
+  saveOrders();
+  renderOrders();
+}
+
+function deleteHist(id) {
+  if (!confirm('确定删除？')) return;
+  orderHist = orderHist.filter(x => x.id !== id);
+  saveOrders();
+  renderOrderStats();
+}
+
+function renderOrders() {
+  const c = document.getElementById('orderList');
+  if (orders.length === 0) { c.innerHTML = '<div class="empty">暂无下单</div>'; return; }
+  
+  let h = '';
+  orders.forEach(o => {
+    const totalBet = o.periods.reduce((s, p) => s + p.bet, 0);
+    h += `<div class="order-card">`;
+    h += `<div class="order-head"><span class="nums">尾${o.nums.join(' ')}</span><span class="info">起始第${o.startP}期 | 总投${totalBet}元</span></div>`;
+    h += `<table><tr><th>期数</th><th>下注</th><th>状态</th><th>操作</th></tr>`;
+    o.periods.forEach((p, i) => {
+      const stCls = p.status === 'pending' ? 'st-p' : p.status === 'hit' ? 'st-h' : 'st-m';
+      const stTxt = p.status === 'pending' ? '待开奖' : p.status === 'hit' ? '中奖' : '未中';
+      h += `<tr><td>${p.p}</td><td>${p.bet}元</td><td class="${stCls}">${stTxt}</td>`;
+      if (p.status === 'pending') {
+        h += `<td><button class="btn btn-s btn-sm" onclick="markResult(${o.id},${i},'hit')">中</button> `;
+        h += `<button class="btn btn-d btn-sm" onclick="markResult(${o.id},${i},'miss')">未中</button></td>`;
+      } else {
+        h += `<td>-</td>`;
+      }
+      h += `</tr>`;
+    });
+    h += `</table>`;
+    h += `<div style="margin-top:8px;text-align:right"><button class="btn btn-d btn-sm" onclick="deleteOrder(${o.id})">删除</button></div>`;
+    h += `</div>`;
+  });
+  
+  c.innerHTML = h;
+}
+
+function renderOrderStats() {
+  const totalOrders = orderHist.length;
+  const hitOrders = orderHist.filter(h => h.periods.some(p => p.status === 'hit')).length;
+  const totalBet = orderHist.reduce((s, h) => s + h.periods.reduce((ss, p) => ss + p.bet, 0), 0);
+  const totalReturn = orderHist.reduce((s, h) => {
+    return s + h.periods.reduce((ss, p) => {
+      if (p.status === 'hit') return ss + p.bet * h.ret;
+      return ss;
+    }, 0);
+  }, 0);
+  const profit = totalReturn - totalBet;
+  
+  document.getElementById('orderStats').innerHTML =
+    `<div class="stat"><div class="lb">完成订单</div><div class="vl">${totalOrders}</div></div>` +
+    `<div class="stat"><div class="lb">中奖订单</div><div class="vl green">${hitOrders}</div></div>` +
+    `<div class="stat"><div class="lb">总投入</div><div class="vl">${totalBet}</div></div>` +
+    `<div class="stat"><div class="lb">净利润</div><div class="vl ${profit >= 0 ? 'green' : 'red'}">${profit >= 0 ? '+' : ''}${profit}</div></div>`;
+  
+  const hc = document.getElementById('orderHistory');
+  if (orderHist.length === 0) { hc.innerHTML = '<div class="empty">暂无历史</div>'; return; }
+  
+  let h = '<table><tr><th>号码</th><th>期数</th><th>结果</th><th>操作</th></tr>';
+  orderHist.slice().reverse().forEach(o => {
+    const hitCount = o.periods.filter(p => p.status === 'hit').length;
+    const result = hitCount > 0 ? `<span class="st-h">中${hitCount}</span>` : `<span class="st-m">全未中</span>`;
+    h += `<tr><td>尾${o.nums.join(' ')}</td><td>${o.startP}-${o.startP + 2}</td><td>${result}</td>`;
+    h += `<td><button class="btn btn-d btn-sm" onclick="deleteHist(${o.id})">删</button></td></tr>`;
+  });
+  h += '</table>';
+  hc.innerHTML = h;
+}
+
+function saveOrders() {
+  localStorage.setItem('orders', JSON.stringify(orders));
+  localStorage.setItem('orderHist', JSON.stringify(orderHist));
+}
+
+// 初始化
+['base', 'm1', 'm2', 'm3', 'ret'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateFormula);
+});
+
+loadData();
+</script>
 </body>
 </html>
