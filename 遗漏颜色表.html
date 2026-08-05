@@ -17,7 +17,9 @@ th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500}
 td{color:#222}
 .num{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:4px;margin:0;font-size:13px;font-weight:bold;text-align:center}
 .hit{background:#dc2626;color:#fff}
-.miss{background:#93c5fd;color:#1e40af;font-size:10px}
+.miss1{background:#93c5fd}
+.miss2{background:#86efac}
+.miss3{background:#fde68a}
 .cell{padding:0;border:0;vertical-align:middle}
 .legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:11px;color:#888;margin-bottom:10px}
 .legend span{display:flex;align-items:center;gap:4px}
@@ -35,7 +37,9 @@ td{color:#222}
 </div>
 <div class="legend">
   <span><i style="background:#dc2626"></i>开出</span>
-  <span><i style="background:#93c5fd"></i>遗漏</span>
+  <span><i style="background:#93c5fd"></i>遗漏1期</span>
+  <span><i style="background:#86efac"></i>遗漏2期</span>
+  <span><i style="background:#fde68a"></i>遗漏3期+</span>
 </div>
 <div style="overflow-x:auto"><table id="tbl"></table></div>
 <div class="foot" id="ft"></div>
@@ -67,9 +71,8 @@ for(var i=0;i<keys.length;i++){
         if(RAW[p]&&RAW[p][j]==='1')break;
         miss++;
       }
-      var label='';
-      for(var n=1;n<=miss;n++)label+=n;
-      h+='<td class="cell"><span class="num miss">'+label+'</span></td>';
+      var cls=miss>=3?'miss3':miss>=2?'miss2':'miss1';
+      h+='<td class="cell"><span class="num '+cls+'"></span></td>';
     }
   }
   // 遗漏列只显示最后一行

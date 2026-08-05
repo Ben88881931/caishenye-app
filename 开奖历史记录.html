@@ -17,7 +17,7 @@ th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500}
 td{color:#222}
 .num{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:4px;margin:0;font-size:13px;font-weight:bold;text-align:center}
 .hit{background:#6c5ce7;color:#fff}
-.miss{background:#e5e7eb;color:#bbb}
+.miss{background:#e5e7eb;color:#bbb;font-size:10px}
 .foot{text-align:center;font-size:11px;color:#ccc;margin-top:10px}
 </style>
 </head>
@@ -59,9 +59,7 @@ for(var i=0;i<keys.length;i++){
         if(RAW[p]&&RAW[p][j]==='1')break;
         miss++;
       }
-      var label='';
-      for(var n=1;n<=miss;n++)label+=n;
-      h+='<td><span class="num miss">'+label+'</span></td>';
+      h+='<td><span class="num miss">'+(miss+1)+'</span></td>';
     }
   }
   if(i===keys.length-1){
