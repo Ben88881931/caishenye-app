@@ -1,36 +1,37 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>接金蛋</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:20px;max-width:800px;margin:0 auto}
-h1{text-align:center;font-size:24px;color:#6c5ce7;margin-bottom:20px}
-.menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
-.menu a{display:block;padding:20px;background:#fff;border:2px solid #e8e4f0;border-radius:12px;text-decoration:none;text-align:center;font-size:16px;font-weight:bold;color:#6c5ce7;transition:all 0.3s}
-.menu a:hover{border-color:#6c5ce7;transform:translateY(-2px);box-shadow:0 4px 12px rgba(108,92,231,0.2)}
-.menu a.full{grid-column:1/-1}
-.info{background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:16px;margin-top:20px}
-.info h3{color:#6c5ce7;font-size:14px;margin-bottom:10px}
-.info p{font-size:13px;color:#666;line-height:1.6}
-</style>
+    <meta charset="UTF-8">
+    <title>财神爷小程序</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .card { background: white; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        a { display: block; padding: 15px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 18px; }
+        a:hover { background: #5568d3; }
+        .info { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    </style>
 </head>
 <body>
-<h1>🥚 接金蛋</h1>
-<div class="menu">
-  <a href="尾数分析器.html">📊 尾数分析器</a>
-  <a href="开奖历史记录.html">📋 开奖历史记录</a>
-  <a href="遗漏监控.html">📈 遗漏监控</a>
-  <a href="遗漏颜色表.html">🎨 遗漏颜色表</a>
-  <a href="下单系统.html" class="full">💰 下单系统</a>
-</div>
-<div class="info">
-  <h3>📱 使用说明</h3>
-  <p>• 点击上方按钮进入对应功能页面<br>
-  • 所有数据每天自动更新<br>
-  • 手机访问：直接点击即可打开</p>
-</div>
+    <h1 style="text-align: center; color: #667eea;">📊 财神爷小程序</h1>
+    
+    <div class="info">
+        <strong>📱 手机访问：</strong><br>
+        点击下方按钮即可打开
+    </div>
+    
+    <a href="财神爷-数据记录.html">📝 数据记录小程序</a>
+    
+    <a href="财神爷-追投跟踪.html">📈 追投跟踪小程序</a>
+    
+    <a href="尾数分析器.html" style="background: #6c5ce7;">📊 尾数分段窗口分析</a>
+    
+    <div class="card">
+        <h3>💡 使用说明</h3>
+        <ul>
+            <li>每天22:00自动更新数据</li>
+            <li>手机刷新页面即可看到最新数据</li>
+            <li>数据保存在浏览器本地</li>
+        </ul>
+    </div>
 </body>
 </html>
