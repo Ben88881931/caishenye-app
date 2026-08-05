@@ -48,36 +48,31 @@ var RAW={"1":"0111000111","2":"0111110110","3":"1010110101","4":"0010011101","5"
 var keys=Object.keys(RAW).sort(function(a,b){return parseInt(a)-parseInt(b);});
 
 // 计算每个尾号每个遗漏周期的颜色
-// missColor[尾号][期号] = 颜色class
 var missColor = {};
 for(var d=0;d<10;d++){
   missColor[d] = {};
-  var lastOpenPeriod = -1;
+  var lastOpen = -1;
   
-  // 从最早期往最新期遍历
   for(var i=0;i<keys.length;i++){
     var period = parseInt(keys[i]);
     if(RAW[keys[i]][d]==='1'){
-      // 当前期开出了
-      if(lastOpenPeriod >= 0){
-        // 之前有开出，计算遗漏周期长度（不包含开出期）
-        var cycleLen = period - lastOpenPeriod - 1;
+      if(lastOpen >= 0){
+        var cycleLen = period - lastOpen - 1;
         var cls = cycleLen>=3?'m3':cycleLen===2?'m2':'m1';
-        // 标记这段时间内的所有期号（不包含开出期）
-        for(var p=lastOpenPeriod+1;p<period;p++){
+        for(var p=lastOpen+1;p<period;p++){
           missColor[d][p] = cls;
         }
       }
-      lastOpenPeriod = period;
+      lastOpen = period;
     }
   }
   
-  // 处理最后一次开出之后的遗漏（到最新期）
-  if(lastOpenPeriod >= 0){
+  // 最后一次开出后的遗漏
+  if(lastOpen >= 0){
     var latest = parseInt(keys[keys.length-1]);
-    var cycleLen = latest - lastOpenPeriod;
+    var cycleLen = latest - lastOpen;
     var cls = cycleLen>=3?'m3':cycleLen===2?'m2':'m1';
-    for(var p=lastOpenPeriod+1;p<=latest;p++){
+    for(var p=lastOpen+1;p<=latest;p++){
       missColor[d][p] = cls;
     }
   }
@@ -92,9 +87,7 @@ for(var i=0;i<keys.length;i++){
     if(row[j]==='1'){
       h+='<td class="cell"><span class="num hit">'+j+'</span></td>';
     }else{
-      var periodNum = parseInt(k);
-      var cls = missColor[j][periodNum];
-      if(!cls) cls = 'm1';
+      var cls = missColor[j][parseInt(k)] || 'm1';
       h+='<td class="cell"><span class="num '+cls+'"></span></td>';
     }
   }
