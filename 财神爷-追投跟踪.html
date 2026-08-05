@@ -132,16 +132,6 @@ td{color:#333}
 <!-- 开奖记录页 -->
 <div id="recordPage" style="display:none">
   <div class="card">
-    <h2>记录开奖</h2>
-    <div class="row">
-      <label>期数</label>
-      <input type="number" id="recP" placeholder="自动填充">
-    </div>
-    <div class="row"><label>开奖尾号</label></div>
-    <div class="num-btns" id="recBtns"></div>
-    <button class="btn btn-p" onclick="addRecord()">保存开奖</button>
-  </div>
-  <div class="card">
     <h2>开奖记录</h2>
     <div id="recList"></div>
   </div>
@@ -151,9 +141,29 @@ td{color:#333}
 // 数据
 let orders = JSON.parse(localStorage.getItem('orders') || '[]');
 let history = JSON.parse(localStorage.getItem('orderHist') || '[]');
-let records = JSON.parse(localStorage.getItem('recs') || '[]');
+let records = [];
 let selNums = new Set();
 let selRecNums = new Set();
+
+// 从lottery_data.json加载开奖记录
+function loadRecords() {
+  fetch('lottery_data.json')
+    .then(r => r.json())
+    .then(data => {
+      records = [];
+      Object.keys(data).sort((a, b) => parseInt(b) - parseInt(a)).forEach(k => {
+        const nums = [];
+        for (let i = 0; i < 10; i++) {
+          if (data[k][i] === '1') nums.push(i);
+        }
+        records.push({ period: parseInt(k), nums: nums });
+      });
+      renderRecords();
+      autoFillRecP();
+      autoFillStartP();
+    })
+    .catch(e => console.error('加载数据失败', e));
+}
 
 // 初始化号码按钮
 function initNumBtns(container, selSet, prefix) {
@@ -348,22 +358,6 @@ function renderStats() {
   hc.innerHTML = h;
 }
 
-// 保存开奖
-function addRecord() {
-  const p = parseInt(document.getElementById('recP').value);
-  if (!p) { alert('请输入期数'); return; }
-  if (selRecNums.size === 0) { alert('请选择开奖尾号'); return; }
-  const nums = Array.from(selRecNums).sort((a, b) => a - b);
-  records = records.filter(r => r.period !== p);
-  records.push({ period: p, nums: nums, time: new Date().toISOString() });
-  localStorage.setItem('recs', JSON.stringify(records));
-  selRecNums.clear();
-  document.querySelectorAll('#recBtns .num-btn').forEach(b => b.classList.remove('sel'));
-  document.getElementById('recP').value = '';
-  renderRecords();
-  autoFillRecP();
-}
-
 // 渲染开奖记录
 function renderRecords() {
   records.sort((a, b) => b.period - a.period);
@@ -374,17 +368,9 @@ function renderRecords() {
     h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #e8e4f0">';
     h += '<span style="font-weight:bold;color:#6c5ce7">第' + r.period + '期</span>';
     h += '<span style="font-size:15px;font-weight:bold">' + r.nums.join(' ') + '</span>';
-    h += '<button class="btn btn-d btn-sm" onclick="delRecord(' + r.period + ')">删</button>';
     h += '</div>';
   });
   c.innerHTML = h;
-}
-
-function delRecord(p) {
-  if (!confirm('删除第' + p + '期？')) return;
-  records = records.filter(r => r.period !== p);
-  localStorage.setItem('recs', JSON.stringify(records));
-  renderRecords();
 }
 
 // 保存
@@ -394,8 +380,8 @@ function save() {
 }
 
 // 初始化
+loadRecords();
 initNumBtns('numBtns', selNums, 'n');
-initNumBtns('recBtns', selRecNums, 'r');
 ['base', 'm1', 'm2', 'm3', 'ret'].forEach(id => document.getElementById(id).addEventListener('input', updateFormula));
 updateFormula();
 renderOrders();
