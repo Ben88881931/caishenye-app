@@ -51,9 +51,15 @@ for(var i=0;i<keys.length;i++){
   h+='<tr><td style="font-weight:bold">'+k+'</td><td>'+arr.join(' ')+'</td><td>'+arr.length+'</td>';
   for(var j=0;j<10;j++){
     if(row[j]==='1'){
-      h+='<td><span class="num hit">1</span></td>';
+      h+='<td><span class="num hit">'+j+'</span></td>';
     }else{
-      h+='<td><span class="num miss">'+j+'</span></td>';
+      var miss=0;
+      var ki=parseInt(k);
+      for(var p=ki-1;p>=1;p--){
+        if(RAW[p]&&RAW[p][j]==='1')break;
+        miss++;
+      }
+      h+='<td><span class="num miss">'+miss+'</span></td>';
     }
   }
   if(i===keys.length-1){
