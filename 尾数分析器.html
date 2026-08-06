@@ -171,20 +171,32 @@ b+='<td style="font-size:12px;color:#6c5ce7;font-weight:bold">'+(lastPred||'-')+
 b+='</tr>';
 
 var pd='';
-if(sa.length>=3){
-    var l3=sa.slice(-3),r=[l3[0].rate,l3[1].rate,l3[2].rate];
-    var cur = r[2];
-    if(r[2]>r[1]&&r[1]>r[0]&&cur>=60) pd='▲ 升温，可能维持热';
-    else if(r[2]>r[1]&&r[1]>r[0]&&cur<60) pd='▲ 升温，可能变暖';
-    else if(r[2]<r[1]&&r[1]<r[0]&&cur>=60) pd='▼ 降温，可能回调';
-    else if(r[2]<r[1]&&r[1]<r[0]&&cur<60) pd='▼ 降温，可能变冷';
-    else if(r[2]>r[1]&&cur>=60) pd='↗ 反弹，维持暖';
-    else if(r[2]>r[1]&&cur<60) pd='↗ 反弹，可能回暖';
-    else if(r[2]<r[1]&&cur>=60) pd='↘ 回落，仍暖';
-    else if(r[2]<r[1]&&cur<60) pd='↘ 回落，可能变冷';
-    else if(cur<=30) pd='▲ 冰点，大概率反弹';
-    else if(cur>=80) pd='▼ 过热，大概率回调';
-    else pd='- 持平，正常波动';
+if(sa.length>=2){
+    var curRate=sa[sa.length-1].rate;
+    var prevRate=sa[sa.length-2].rate;
+    var curCls=cls(curRate);
+    var prevCls=cls(prevRate);
+    var pattern=prevCls+curCls;
+    var transData=ALLDATA[String(w)].trans;
+    if(transData[pattern]&&transData[pattern].total>0){
+        var total=transData[pattern].total;
+        var upCount=0,downCount=0;
+        var clsValues={'I':0,'C':1,'L':2,'N':3,'W':4,'H':5};
+        var curValue=clsValues[curCls];
+        for(var nextCls in transData[pattern]){
+            if(nextCls==='total')continue;
+            var nextValue=clsValues[nextCls];
+            if(nextValue>curValue)upCount+=transData[pattern][nextCls];
+            else if(nextValue<curValue)downCount+=transData[pattern][nextCls];
+        }
+        var upPct=Math.round(upCount/total*100);
+        var downPct=Math.round(downCount/total*100);
+        if(upPct>downPct)pd='▲ 预测上升 '+upPct+'%';
+        else if(downPct>upPct)pd='▼ 预测下降 '+downPct+'%';
+        else pd='─ 持平 '+upPct+'%';
+    }else{
+        pd='- 数据不足';
+    }
 }
 var sts=sa.slice(-3).map(function(x){return f1(x.rate,1)+'%';}).join(' → ');
 arr.push('<b style="color:#6c5ce7">尾'+d+'</b> '+pd+' <span style="color:#bbb">'+sts+'</span>');
