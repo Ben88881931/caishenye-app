@@ -180,7 +180,7 @@ for(var i=0;i<view.length;i++){
     var dot=open(d,e.en)?' \u25cf':'';
     var lb = label(e.rate);
     var pred = wdata ? getPred(d, segIdx, w) : null;
-    b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.w+dot+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
+    b+='<td class="'+cls(e.rate)+'">'+a+f1(e.rate,0)+'% '+e.cnt+'/'+e.w+dot+'</td>';
   }
   b+='</tr>';
 }
