@@ -157,9 +157,9 @@ var h='<tr><th class="fix">段</th>';
 for(var di=0;di<sel.length;di++){
   h+='<th>尾'+sel[di]+'</th>';
 }
-h+='<th>预测</th></tr>';
+h+='</tr>';
 
-var b='',arr=[];
+var b='';
 for(var i=0;i<view.length;i++){
   var ci=view[i];
   var segIdx = all.indexOf(ci);
@@ -182,24 +182,68 @@ for(var i=0;i<view.length;i++){
     var pred = wdata ? getPred(d, segIdx, w) : null;
     b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.w+dot+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
   }
-  
-  // 预测列
-  var predHtml='';
-  for(var di=0;di<sel.length;di++){
-    var d=sel[di];
-    var dv=selSegs[d];
-    var e=dv[i];
-    if(!e)continue;
-    var p2=wdata?getPred(d,segIdx,w):null;
-    if(p2){
-      predHtml+='<span style="font-size:10px"><b>'+d+':</b> '+p2+'</span><br>';
-    }
-  }
-  b+='<td style="font-size:10px;line-height:1.4;color:#6c5ce7;white-space:normal;min-width:120px">'+(predHtml||'-')+'</td>';
   b+='</tr>';
 }
 
+// 添加全局总数汇总行
+b+='<tr style="background:#f5f3ff;border-top:2px solid #6c5ce7"><td class="fix" style="background:#f5f3ff;font-size:12px;font-weight:bold">全局总数</td>';
+for(var di=0;di<sel.length;di++){
+  var d=sel[di];
+  var totalHits=0;
+  for(var p=1;p<=N;p++)if(open(d,p))totalHits++;
+  b+='<td style="font-size:14px;font-weight:bold;color:#6c5ce7">'+totalHits+'/'+N+'</td>';
+}
+b+='</tr>';
+
+// 添加出号规律汇总行
+b+='<tr style="background:#faf8ff"><td class="fix" style="background:#faf8ff;font-size:12px;font-weight:bold">出号规律</td>';
+for(var di=0;di<sel.length;di++){
+  var d=sel[di];
+  var st = wdata ? wdata.stats[String(d)] : null;
+  if(st && st.rule){
+    b+='<td style="font-size:11px;line-height:1.4;color:#6c5ce7;font-weight:bold;text-align:left;padding:4px 6px">'+st.rule+'</td>';
+  }else{
+    b+='<td style="font-size:11px;color:#999">-</td>';
+  }
+}
+b+='</tr>';
+
+// 添加波动汇总行
+b+='<tr style="background:#f5f3ff"><td class="fix" style="background:#f5f3ff;font-size:12px;font-weight:bold">波动幅度</td>';
+for(var di=0;di<sel.length;di++){
+  var d=sel[di];
+  var st = wdata ? wdata.stats[String(d)] : null;
+  if(st){
+    var range = st.max - st.min;
+    var rangeLabel = range>=50?'大':range>=30?'中':'小';
+    b+='<td style="font-size:11px;line-height:1.4;text-align:left;padding:4px 6px"><b>'+st.max+'%</b>~<b>'+st.min+'%</b><br>幅度'+range+'% '+rangeLabel+'<br><span style="color:#999">'+st.most+'('+st.most_cnt+'/'+st.total+')</span></td>';
+  }else{
+    b+='<td style="font-size:11px;color:#999">-</td>';
+  }
+}
+b+='</tr>';
+
+// 添加下段预测汇总行
+b+='<tr style="background:#faf8ff"><td class="fix" style="background:#faf8ff;font-size:12px;font-weight:bold">下段预测</td>';
+for(var di=0;di<sel.length;di++){
+  var d=sel[di];
+  var sa=segs(d,w);
+  var lastSeg = sa[sa.length-1];
+  var lastSegIdx = all.indexOf(lastSeg);
+  var lastPred = wdata ? getPred(d, lastSegIdx, w) : null;
+  var cntPredData = CNTDATA[String(w)];
+  var cntPred = cntPredData ? cntPredData[String(d)] : null;
+  var predHtml = '';
+  if(lastPred) predHtml += lastPred;
+  if(cntPred) predHtml += (predHtml ? '<br>' : '') + '次数:' + cntPred.predict_cnt + '次(' + cntPred.predict_prob + '%)';
+  b+='<td style="font-size:11px;color:#6c5ce7;font-weight:bold;text-align:left;padding:4px 6px">'+(predHtml||'-')+'</td>';
+}
+b+='</tr>';
+
+document.getElementById('tbl').innerHTML=h+b;
+
 // 底部趋势摘要
+var arr=[];
 for(var di=0;di<sel.length;di++){
   var d=sel[di],sa=segs(d,w);
   var pd='';
@@ -232,8 +276,6 @@ for(var di=0;di<sel.length;di++){
   var sts=sa.slice(-3).map(function(x){return f1(x.rate,1)+'%';}).join(' \u2192 ');
   arr.push('<b style="color:#6c5ce7">尾'+d+'</b> '+pd+' <span style="color:#bbb">'+sts+'</span>');
 }
-
-document.getElementById('tbl').innerHTML=h+b;
 document.getElementById('tips').innerHTML=arr.join('<br>');
 
 // 冰点反弹信号
