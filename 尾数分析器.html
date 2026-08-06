@@ -174,15 +174,17 @@ var pd='';
 if(sa.length>=2){
     var curRate=sa[sa.length-1].rate;
     var prevRate=sa[sa.length-2].rate;
-    var curCls=cls(curRate);
-    var prevCls=cls(prevRate);
-    var pattern=prevCls+curCls;
+    // 用缩写而不是CSS类名
+    function getAbbr(r){if(r>=70)return'H';if(r>=60)return'W';if(r>=50)return'N';if(r>=40)return'L';if(r>=30)return'C';return'I';}
+    var curAbbr=getAbbr(curRate);
+    var prevAbbr=getAbbr(prevRate);
+    var pattern=prevAbbr+curAbbr;
     var transData=ALLDATA[String(w)].trans;
     if(transData[pattern]&&transData[pattern].total>0){
         var total=transData[pattern].total;
         var upCount=0,downCount=0;
         var clsValues={'I':0,'C':1,'L':2,'N':3,'W':4,'H':5};
-        var curValue=clsValues[curCls];
+        var curValue=clsValues[curAbbr];
         for(var nextCls in transData[pattern]){
             if(nextCls==='total')continue;
             var nextValue=clsValues[nextCls];
