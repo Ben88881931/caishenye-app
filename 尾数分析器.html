@@ -96,7 +96,7 @@ for(var k in RAW){var p=parseInt(k),a=[];for(var i=0;i<10;i++)if(RAW[k][i]==='1'
 function open(d,p){return H[p]&&H[p].indexOf(d)>=0;}
 function cls(r){if(r>=70)return'hot';if(r>=60)return'warm';if(r>=50)return'norm';if(r>=40)return'cool';if(r>=30)return'cold';return'ice';}
 function label(r){if(r>=70)return'热';if(r>=60)return'暖';if(r>=50)return'平';if(r>=40)return'凉';if(r>=30)return'冷';return'冰';}
-function segs(d,w){var s=[];for(var st=1;st<=N;st+=w){var en=Math.min(st+w-1,N),tot=en-st+1,c=0;for(var p=st;p<=en;p++)if(open(d,p))c++;s.push({st:st,en:en,tot:tot,w:w,cnt:c,rate:tot?(c/tot*100):0,full:tot===w});}return s;}
+function segs(d,w){var s=[];for(var st=1;st<=N;st+=w){var en=Math.min(st+w-1,N),tot=en-st+1,c=0;for(var p=st;p<=en;p++)if(open(d,p))c++;s.push({st:st,en:en,tot:tot,w:w,cnt:c,rate:w?(c/w*100):0,full:tot===w});}return s;}
 function f1(v,d){return v.toFixed(d);}
 function getPred(d,segIdx,w){
     var wdata = ALLDATA[String(w)];
@@ -138,7 +138,7 @@ if(i>0){var pv=dv[i-1].rate;if(e.rate>pv+3)a='<span class="arr" style="color:#16
 var dot=open(d,e.en)?' &#9679;':'';
 var lb = label(e.rate);
 var pred = wdata ? getPred(d, segIdx, w) : null;
-b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.tot+dot+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
+b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.w+dot+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
 }
 
 // 全局总数
