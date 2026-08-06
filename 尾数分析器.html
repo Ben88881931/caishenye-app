@@ -153,7 +153,7 @@ for(var di=0;di<sel.length;di++){
 }
 
 // 竖版：行=段，列=尾数
-var h='<tr><th class="fix">段</th>';
+var h='<tr>';
 for(var di=0;di<sel.length;di++){
   h+='<th>尾'+sel[di]+'</th>';
 }
@@ -163,7 +163,7 @@ var b='';
 for(var i=0;i<view.length;i++){
   var ci=view[i];
   var segIdx = all.indexOf(ci);
-  b+='<tr><td class="fix" style="writing-mode:vertical-lr;text-orientation:upright;letter-spacing:-1px;padding:1px">'+(segIdx+1)+' S'+(segIdx+2>99?' ':'')+ci.st+'-'+ci.en+'</td>';
+  b+='<tr>';
   
   for(var di=0;di<sel.length;di++){
     var d=sel[di];
@@ -186,7 +186,7 @@ for(var i=0;i<view.length;i++){
 }
 
 // 添加全局总数汇总行
-b+='<tr style="background:#f5f3ff;border-top:2px solid #6c5ce7"><td class="fix" style="background:#f5f3ff;font-size:12px;font-weight:bold">全局总数</td>';
+b+='<tr style="background:#f5f3ff;border-top:2px solid #6c5ce7">';
 for(var di=0;di<sel.length;di++){
   var d=sel[di];
   var totalHits=0;
@@ -196,7 +196,7 @@ for(var di=0;di<sel.length;di++){
 b+='</tr>';
 
 // 添加出号规律汇总行
-b+='<tr style="background:#faf8ff"><td class="fix" style="background:#faf8ff;font-size:12px;font-weight:bold">出号规律</td>';
+b+='<tr style="background:#faf8ff">';
 for(var di=0;di<sel.length;di++){
   var d=sel[di];
   var st = wdata ? wdata.stats[String(d)] : null;
@@ -209,7 +209,7 @@ for(var di=0;di<sel.length;di++){
 b+='</tr>';
 
 // 添加波动汇总行
-b+='<tr style="background:#f5f3ff"><td class="fix" style="background:#f5f3ff;font-size:12px;font-weight:bold">波动幅度</td>';
+b+='<tr style="background:#f5f3ff">';
 for(var di=0;di<sel.length;di++){
   var d=sel[di];
   var st = wdata ? wdata.stats[String(d)] : null;
@@ -224,7 +224,7 @@ for(var di=0;di<sel.length;di++){
 b+='</tr>';
 
 // 添加下段预测汇总行
-b+='<tr style="background:#faf8ff"><td class="fix" style="background:#faf8ff;font-size:12px;font-weight:bold">下段预测</td>';
+b+='<tr style="background:#faf8ff">';
 for(var di=0;di<sel.length;di++){
   var d=sel[di];
   var sa=segs(d,w);
