@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -13,7 +13,7 @@ h1{text-align:center;font-size:18px;color:#6c5ce7;margin-bottom:14px}
 .nav a.on{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
 table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e8e4f0;margin-bottom:12px}
 th,td{padding:6px 8px;text-align:center;border:1px solid #e8e4f0}
-th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500}
+th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500;position:sticky;top:0;z-index:10}
 td{color:#222}
 td.fix{font-size:16px;font-weight:700;color:#6c5ce7;background:#f5f3ff}
 td.l{text-align:left;line-height:2}
@@ -37,7 +37,7 @@ td.l{text-align:left;line-height:2}
   
   
 </div>
-<div style="overflow-x:auto"><table id="tbl"></table></div>
+<div style="overflow-x:auto;max-height:calc(100vh - 120px);overflow-y:auto"><table id="tbl"></table></div>
 <div class="legend" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:11px;color:#888;margin-bottom:8px">
 <span><span class="badge badge-r" style="font-size:11px">6期+</span> 严重</span>
 <span><span class="badge badge-o" style="font-size:11px">5期</span> 偏高</span>
