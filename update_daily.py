@@ -165,34 +165,77 @@ def calc_segment_stats(raw_data, window_size):
             'rule': f"最高{round(max(rates))}% 最低{round(min(rates))}% 最频{freq_period}期({most_cnt}次)"
         }
     
+    # 冰点反弹预测（当前处于冰点，预测下一段是否反弹）
     ice_signals = []
     for d in range(10):
         segs = digit_segs[d]
-        if len(segs) >= 2:
-            prev_seg = segs[-2]
+        if len(segs) >= 1:
             cur_seg = segs[-1]
-            prev_rate = prev_seg['rate']
             cur_rate = cur_seg['rate']
-            if prev_rate < 30 and cur_rate > prev_rate + 10:
+            # 当前段处于冰点（<30%）
+            if cur_rate < 30:
+                # 统计历史上冰点后反弹的概率
+                ice_rebound_count = 0
+                ice_total_count = 0
+                for i in range(len(segs) - 1):
+                    if segs[i]['rate'] < 30:
+                        ice_total_count += 1
+                        # 下一段比当前段高，视为反弹
+                        if segs[i + 1]['rate'] > segs[i]['rate']:
+                            ice_rebound_count += 1
+                rebound_prob = round(ice_rebound_count / ice_total_count * 100) if ice_total_count > 0 else 0
                 ice_signals.append({
                     'digit': d,
-                    'prev_rate': round(prev_rate),
                     'cur_rate': round(cur_rate),
                     'cur_st': cur_seg['st'],
                     'cur_en': cur_seg['en'],
                     'nxt_st': cur_seg['en'] + 1,
                     'nxt_en': min(cur_seg['en'] + window_size, N),
-                    'total': cur_seg['tot'],
-                    'hits': cur_seg['cnt'],
-                    'hit_rate': round(cur_rate)
+                    'rebound_prob': rebound_prob,
+                    'ice_total': ice_total_count,
+                    'rebound_count': ice_rebound_count
                 })
+    
+    # 趋势预测（基于最近2段模式，预测下一段升/降）
+    trend_preds = {}
+    for d in range(10):
+        segs = digit_segs[d]
+        if len(segs) >= 2:
+            prev2_cls = classify(segs[-2]['rate'])
+            prev1_cls = classify(segs[-1]['rate'])
+            key = prev2_cls + prev1_cls
+            if key in trans and trans[key].get('total', 0) > 0:
+                total = trans[key]['total']
+                # 计算上升概率（下一段比当前段高）
+                up_prob = 0
+                down_prob = 0
+                for cls_key, count in trans[key].items():
+                    if cls_key == 'total':
+                        continue
+                    # 分类对应的数值等级
+                    cls_values = {'H': 5, 'W': 4, 'N': 3, 'L': 2, 'C': 1, 'I': 0}
+                    cur_value = cls_values.get(prev1_cls, 0)
+                    next_value = cls_values.get(cls_key, 0)
+                    if next_value > cur_value:
+                        up_prob += count
+                    elif next_value < cur_value:
+                        down_prob += count
+                up_pct = round(up_prob / total * 100)
+                down_pct = round(down_prob / total * 100)
+                trend_preds[d] = {
+                    'pattern': f"{cls_names[prev2_cls]}→{cls_names[prev1_cls]}",
+                    'up': up_pct,
+                    'down': down_pct,
+                    'total': total
+                }
     
     return {
         'trans': trans,
         'preds': {str(k): v for k, v in preds.items()},
         'stats': {str(k): v for k, v in stats.items()},
         'segs': len(all_segs),
-        'ice': ice_signals
+        'ice': ice_signals,
+        'trend': {str(k): v for k, v in trend_preds.items()}
     }
 
 def update_analyzer_alldata(html_file, raw_data):
@@ -334,7 +377,7 @@ def verify_ice(html_file, raw_data):
     log(f"  ✓ 冰点信号: {total_signals}个")
     for w, signals in html_ice.items():
         for s in signals:
-            log(f"    窗口{w}期: 尾{s['digit']} 前段{s['prev_rate']}% → 当前{s['cur_rate']}%")
+            log(f"    窗口{w}期: 尾{s['digit']} 当前{s['cur_rate']}% 反弹概率{s['rebound_prob']}%")
 
 def git_push(period):
     try:
