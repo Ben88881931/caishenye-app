@@ -229,13 +229,48 @@ def calc_segment_stats(raw_data, window_size):
                     'total': total
                 }
     
+    # 窗口次数预测（基于最近2段模式，预测下一段开出次数）
+    cnt_preds = {}
+    for d in range(10):
+        segs = digit_segs[d]
+        if len(segs) >= 2:
+            prev2_cls = classify(segs[-2]['rate'])
+            prev1_cls = classify(segs[-1]['rate'])
+            key = prev2_cls + prev1_cls
+            
+            # 构建次数转换矩阵
+            cnt_trans = {}
+            for i in range(2, len(segs)):
+                k = classify(segs[i-2]['rate']) + classify(segs[i-1]['rate'])
+                if k not in cnt_trans:
+                    cnt_trans[k] = {}
+                c = segs[i]['cnt']
+                cnt_trans[k][c] = cnt_trans[k].get(c, 0) + 1
+            
+            if key in cnt_trans:
+                total = sum(cnt_trans[key].values())
+                if total >= 3:  # 样本量足够
+                    # 找最可能的次数
+                    best_cnt = max(cnt_trans[key], key=lambda k: cnt_trans[key][k])
+                    best_prob = cnt_trans[key][best_cnt] / total * 100
+                    # 计算期望值
+                    expected = sum(c * times for c, times in cnt_trans[key].items()) / total
+                    cnt_preds[d] = {
+                        'pattern': f"{cls_names[prev2_cls]}->{cls_names[prev1_cls]}",
+                        'predict_cnt': best_cnt,
+                        'predict_prob': round(best_prob),
+                        'expected': round(expected, 1),
+                        'sample': total
+                    }
+    
     return {
         'trans': trans,
         'preds': {str(k): v for k, v in preds.items()},
         'stats': {str(k): v for k, v in stats.items()},
         'segs': len(all_segs),
         'ice': ice_signals,
-        'trend': {str(k): v for k, v in trend_preds.items()}
+        'trend': {str(k): v for k, v in trend_preds.items()},
+        'cnt_pred': {str(k): v for k, v in cnt_preds.items()}
     }
 
 def update_analyzer_alldata(html_file, raw_data):
@@ -245,6 +280,7 @@ def update_analyzer_alldata(html_file, raw_data):
     windows = [5, 7, 10, 15, 20, 27, 30]
     all_data = {}
     all_ice = {}
+    all_cnt_pred = {}
     
     for w in windows:
         stats = calc_segment_stats(raw_data, w)
@@ -256,6 +292,8 @@ def update_analyzer_alldata(html_file, raw_data):
         }
         if stats['ice']:
             all_ice[str(w)] = stats['ice']
+        if stats['cnt_pred']:
+            all_cnt_pred[str(w)] = stats['cnt_pred']
     
     pattern = r'var ALLDATA=\{.*?\};'
     alldata_json = json.dumps(all_data, ensure_ascii=False, separators=(',', ':'))
@@ -264,6 +302,10 @@ def update_analyzer_alldata(html_file, raw_data):
     pattern = r'var ICE=\{.*?\};'
     ice_json = json.dumps(all_ice, ensure_ascii=False, separators=(',', ':'))
     content = re.sub(pattern, f'var ICE={ice_json};', content, flags=re.DOTALL)
+    
+    pattern = r'var CNTDATA=\{.*?\};'
+    cnt_json = json.dumps(all_cnt_pred, ensure_ascii=False, separators=(',', ':'))
+    content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
     
     with open(html_file, 'w', encoding='utf-8') as f:
         f.write(content)
