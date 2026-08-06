@@ -6,7 +6,7 @@
 <title>尾数分段窗口分析</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:2px;margin:0 auto}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:0 2px;margin:0 auto}
 h1{text-align:center;font-size:18px;color:#6c5ce7;margin-bottom:6px}
 .sub{text-align:center;font-size:11px;color:#aaa;margin-bottom:10px}
 .bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;align-items:center}
@@ -17,10 +17,10 @@ h1{text-align:center;font-size:18px;color:#6c5ce7;margin-bottom:6px}
 .nums button{width:34px;height:34px;border:1px solid #d5d5f0;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;background:#fff;color:#555}
 .nums button.on{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
 .box{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 180px);-webkit-overflow-scrolling:touch;margin-bottom:10px}
-table{table-layout:fixed;border-collapse:collapse;font-size:9px}
-th,td{padding:1px 1px;text-align:center;white-space:normal;word-break:break-all;border:1px solid #e8e4f0;font-size:9px;line-height:1.1;max-width:44px;overflow:hidden}
+table{table-layout:fixed;width:100%;border-collapse:collapse;font-size:9px}
+th,td{padding:1px 0;text-align:center;border:1px solid #e8e4f0;font-size:9px;line-height:1.15;width:12.5%}
 th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500;position:sticky;top:0;z-index:10}
-td.fix{font-size:11px;font-weight:700;color:#6c5ce7;background:#f5f3ff;position:sticky;left:0;z-index:5;box-shadow:2px 0 4px rgba(0,0,0,0.08)}
+td.fix{font-size:9px;font-weight:600;color:#6c5ce7;background:#f5f3ff;position:sticky;left:0;z-index:5;box-shadow:2px 0 4px rgba(0,0,0,0.08);width:12.5%}
 td{color:#222}
 .hot{background:#22c55e}.warm{background:#3b82f6}.norm{background:#94a3b8}
 .cool{background:#eab308}.cold{background:#ef4444}.ice{background:#ec4899}
@@ -180,7 +180,7 @@ for(var i=0;i<view.length;i++){
     var dot=open(d,e.en)?' \u25cf':'';
     var lb = label(e.rate);
     var pred = wdata ? getPred(d, segIdx, w) : null;
-    b+='<td class="'+cls(e.rate)+'">'+a+f1(e.rate,0)+'% '+e.cnt+'/'+e.w+dot+'</td>';
+    b+='<td class="'+cls(e.rate)+'">'+a+'<span class="big">'+f1(e.rate,1)+'%</span> '+lb+'<br>'+e.cnt+'/'+e.w+dot+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
   }
   b+='</tr>';
 }
