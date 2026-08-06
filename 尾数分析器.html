@@ -6,25 +6,25 @@
 <title>尾数分段窗口分析</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:0 2px;margin:0 auto}
-h1{text-align:center;font-size:18px;color:#6c5ce7;margin-bottom:6px}
-.sub{text-align:center;font-size:11px;color:#aaa;margin-bottom:10px}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f0f2ff;color:#333;padding:2px 0;margin:0 auto}
+h1{text-align:center;font-size:16px;color:#6c5ce7;margin-bottom:4px}
+.sub{text-align:center;font-size:10px;color:#aaa;margin-bottom:6px}
 .bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;align-items:center}
-.bar select{padding:6px 10px;border:1px solid #d5d5f0;border-radius:6px;font-size:11px;background:#fff;color:#444}
-.bar button{padding:6px 14px;border:1px solid #d5d5f0;border-radius:6px;font-size:11px;cursor:pointer;background:#fff;color:#444}
+.bar select{padding:4px 8px;border:1px solid #d5d5f0;border-radius:6px;font-size:11px;background:#fff;color:#444}
+.bar button{padding:4px 10px;border:1px solid #d5d5f0;border-radius:6px;font-size:11px;cursor:pointer;background:#fff;color:#444}
 .bar button.on{background:#6c5ce7;border-color:#6c5ce7;color:#fff;font-weight:bold}
 .nums{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
-.nums button{width:34px;height:34px;border:1px solid #d5d5f0;border-radius:6px;font-size:14px;font-weight:bold;cursor:pointer;background:#fff;color:#555}
+.nums button{width:28px;height:28px;border:1px solid #d5d5f0;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;background:#fff;color:#555}
 .nums button.on{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
-.box{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 180px);-webkit-overflow-scrolling:touch;margin-bottom:10px}
-table{table-layout:fixed;width:100%;border-collapse:collapse;font-size:9px}
-th,td{padding:1px 0;text-align:center;border:1px solid #e8e4f0;font-size:9px;line-height:1.15;width:12.5%}
-th{background:#f5f3ff;color:#888;font-size:11px;font-weight:500;position:sticky;top:0;z-index:10}
-td.fix{font-size:9px;font-weight:600;color:#6c5ce7;background:#f5f3ff;position:sticky;left:0;z-index:5;box-shadow:2px 0 4px rgba(0,0,0,0.08);width:12.5%}
+.box{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 180px);-webkit-overflow-scrolling:touch;margin:0 auto;display:flex;justify-content:center}
+table{table-layout:fixed;width:auto;margin:0 auto;border-collapse:collapse;font-size:9px}
+th,td{padding:1px 0;text-align:center;border:1px solid #e8e4f0;font-size:9px;line-height:1.2;width:12%}
+th{background:#f5f3ff;color:#888;font-size:9px;font-weight:500;position:sticky;top:0;z-index:10}
+td.fix{font-size:9px;font-weight:600;color:#6c5ce7;background:#f5f3ff;position:sticky;left:0;z-index:5;box-shadow:2px 0 4px rgba(0,0,0,0.08);width:22px;min-width:22px;max-width:22px;writing-mode:vertical-lr;text-orientation:upright}
 td{color:#222}
 .hot{background:#22c55e}.warm{background:#3b82f6}.norm{background:#94a3b8}
 .cool{background:#eab308}.cold{background:#ef4444}.ice{background:#ec4899}
-.big{font-weight:700;font-size:11px}
+.big{font-weight:700;font-size:10px}
 .arr{font-size:11px}
 .tip{border:1px solid #e8e4f0;padding:10px 12px;margin-bottom:10px;background:#fff;border-radius:8px;font-size:14px;line-height:1.8;position:sticky;bottom:0;z-index:8}
 .tip b{color:#6c5ce7}
@@ -33,9 +33,9 @@ td{color:#222}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px}
 .foot{text-align:center;font-size:11px;color:#ccc;margin-top:6px}
 .dim{color:#999;font-size:10px}
-.pred{font-size:10px;color:#6c5ce7;margin-top:2px}
-.nav{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
-.nav a{text-decoration:none;padding:6px 14px;border-radius:8px;font-size:11px;background:#fff;border:1px solid #d5d5f0;color:#6c5ce7}
+.pred{font-size:8px;color:#6c5ce7;line-height:1}
+.nav{display:flex;gap:4px;justify-content:center;margin-bottom:6px;flex-wrap:wrap}
+.nav a{text-decoration:none;padding:4px 10px;border-radius:6px;font-size:11px;background:#fff;border:1px solid #d5d5f0;color:#6c5ce7}
 .nav a.on{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
 /* 竖版卡片布局 */
 .v-cards{display:none;flex-direction:column;gap:12px;padding-bottom:20px}
@@ -163,7 +163,7 @@ var b='';
 for(var i=0;i<view.length;i++){
   var ci=view[i];
   var segIdx = all.indexOf(ci);
-  b+='<tr><td class="fix">S'+(segIdx+1)+'<br>'+ci.st+'-'+ci.en+''+(ci.full?'':'<br><span class="dim">('+ci.tot+'期)</span>')+'</td>';
+  b+='<tr><td class="fix" style="writing-mode:vertical-lr;text-orientation:upright;letter-spacing:-1px;padding:1px">'+(segIdx+1)+' S'+(segIdx+2>99?' ':'')+ci.st+'-'+ci.en+'</td>';
   
   for(var di=0;di<sel.length;di++){
     var d=sel[di];
@@ -286,7 +286,7 @@ if(iceData && iceData.length>0){
     for(var i=0;i<iceData.length;i++){
         var s=iceData[i];
         var clr=s.rebound_prob>=80?'#16a34a':s.rebound_prob>=60?'#6c5ce7':s.rebound_prob>=40?'#f59e0b':'#dc2626';
-        iceH+='<span style="display:inline-block;margin:4px 6px;padding:4px 10px;border-radius:6px;background:#f5f3ff;font-size:13px"><b>尾'+s.digit+'</b> 当前'+s.cur_rate+'% 反弹概率<b style="color:'+clr+'">'+s.rebound_prob+'%</b> ('+s.rebound_count+'/'+s.ice_total+')</span>';
+        iceH+='<span style="display:inline-block;margin:4px 6px;padding:4px 10px;border-radius:6px;background:#f5f3ff;font-size:11px"><b>尾'+s.digit+'</b> 当前'+s.cur_rate+'% 反弹概率<b style="color:'+clr+'">'+s.rebound_prob+'%</b> ('+s.rebound_count+'/'+s.ice_total+')</span>';
     }
     iceH+='</div>';
     iceDiv.innerHTML=iceH;
