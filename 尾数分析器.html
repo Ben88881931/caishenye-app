@@ -200,11 +200,11 @@ document.getElementById('nbs').innerHTML=ns;
 var iceDiv=document.getElementById('ice');
 var iceData=ICE[String(w)];
 if(iceData && iceData.length>0){
-    var iceH='<div style="margin-top:10px;padding:10px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px"><b style="color:#6c5ce7">冰点反弹信号</b> <span style="font-size:11px;color:#999">('+w+'期窗口 冰点+降势 三期内命中率)</span><br>';
+    var iceH='<div style="margin-top:10px;padding:10px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px"><b style="color:#6c5ce7">冰点反弹预测</b> <span style="font-size:11px;color:#999">('+w+'期窗口 当前冰点 历史反弹概率)</span><br>';
     for(var i=0;i<iceData.length;i++){
         var s=iceData[i];
-        var clr=s.hit_rate>=90?'#16a34a':s.hit_rate>=80?'#6c5ce7':s.hit_rate>=70?'#f59e0b':'#dc2626';
-        iceH+='<span style="display:inline-block;margin:4px 6px;padding:4px 10px;border-radius:6px;background:#f5f3ff;font-size:13px"><b>尾'+s.digit+'</b> '+s.prev_rate+'%->'+s.cur_rate+'% 命中率<b style="color:'+clr+'">'+s.hit_rate+'%</b> ('+s.hits+'/'+s.total+')</span>';
+        var clr=s.rebound_prob>=80?'#16a34a':s.rebound_prob>=60?'#6c5ce7':s.rebound_prob>=40?'#f59e0b':'#dc2626';
+        iceH+='<span style="display:inline-block;margin:4px 6px;padding:4px 10px;border-radius:6px;background:#f5f3ff;font-size:13px"><b>尾'+s.digit+'</b> 当前'+s.cur_rate+'% 反弹概率<b style="color:'+clr+'">'+s.rebound_prob+'%</b> ('+s.rebound_count+'/'+s.ice_total+')</span>';
     }
     iceH+='</div>';
     iceDiv.innerHTML=iceH;
