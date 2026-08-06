@@ -379,6 +379,126 @@ def verify_ice(html_file, raw_data):
         for s in signals:
             log(f"    窗口{w}期: 尾{s['digit']} 当前{s['cur_rate']}% 反弹概率{s['rebound_prob']}%")
 
+def calc_prediction(raw_data):
+    """计算下期预测（策略B：遗漏≥2期中反转率最高）"""
+    keys = sorted([k for k in raw_data.keys() if k.isdigit()], key=int)
+    N = len(keys)
+    
+    # 计算遗漏≥2期的反转率
+    rev2 = {d: 0 for d in range(10)}
+    rev2_t = {d: 0 for d in range(10)}
+    for i in range(2, N):
+        pb = raw_data[keys[i-1]]
+        ppb = raw_data[keys[i-2]]
+        cb = raw_data[keys[i]]
+        for d in range(10):
+            if pb[d] == '0' and ppb[d] == '0':
+                rev2_t[d] += 1
+                if cb[d] == '1':
+                    rev2[d] += 1
+    
+    # 当前遗漏期数
+    miss = {}
+    for d in range(10):
+        m = 0
+        for i in range(N-1, -1, -1):
+            if raw_data[keys[i]][d] == '0':
+                m += 1
+            else:
+                break
+        miss[d] = m
+    
+    # 上期未出的尾数
+    prev_bin = raw_data[keys[-1]]
+    missed_digits = [d for d in range(10) if prev_bin[d] == '0']
+    
+    # 遗漏≥2期的尾数
+    miss2 = [d for d in missed_digits if miss[d] >= 2]
+    if not miss2:
+        miss2 = missed_digits
+    
+    # 计算每个尾数的综合评分
+    candidates = []
+    for d in missed_digits:
+        rate = rev2[d] / rev2_t[d] * 100 if rev2_t[d] > 0 else 0
+        candidates.append({
+            'digit': d,
+            'rate': round(rate, 1),
+            'miss': miss[d],
+            'miss2_rate': round(rev2[d] / rev2_t[d] * 100, 1) if rev2_t[d] > 0 else 0,
+            'miss2_hit': rev2[d],
+            'miss2_total': rev2_t[d]
+        })
+    
+    # 按遗漏≥2期反转率排序
+    candidates.sort(key=lambda x: x['miss2_rate'], reverse=True)
+    
+    # 筛选满足条件的（反转率≥55% 且 遗漏≥2期）
+    qualified = [c for c in candidates if c['miss2_rate'] >= 55 and c['miss'] >= 2]
+    
+    # 推荐结果
+    result = {
+        'next_period': N + 1,
+        'prev_opened': [d for d in range(10) if prev_bin[d] == '1'],
+        'prev_missed': missed_digits,
+        'candidates': candidates,
+        'qualified': qualified,
+        'recommend': None,
+        'skip': False,
+        'reason': ''
+    }
+    
+    if qualified:
+        # 满足条件，推荐反转率最高的
+        best = qualified[0]
+        result['recommend'] = best
+        result['reason'] = f"反转率{best['miss2_rate']}%≥55% 且 遗漏{best['miss']}期≥2期"
+    else:
+        # 不满足条件，建议跳过
+        result['skip'] = True
+        result['reason'] = '无尾数同时满足：反转率≥55% 且 遗漏≥2期'
+    
+    return result
+
+def show_prediction(raw_data):
+    """显示预测结果"""
+    log(f"\n{'='*50}")
+    log(f"📊 下期预测分析（策略B：遗漏≥2期反转率）")
+    log(f"{'='*50}")
+    
+    pred = calc_prediction(raw_data)
+    
+    log(f"\n上期开出: {pred['prev_opened']}")
+    log(f"上期未出: {pred['prev_missed']}")
+    
+    log(f"\n各尾数分析:")
+    log(f"  尾数 | 遗漏期数 | 反转率(≥2期) | 样本")
+    log(f"  -----|----------|--------------|-----")
+    for c in pred['candidates']:
+        mark = '✓' if c in pred['qualified'] else ' '
+        log(f"  {mark}尾{c['digit']}  |   {c['miss']}期    |    {c['miss2_rate']}%    | {c['miss2_hit']}/{c['miss2_total']}")
+    
+    log(f"\n筛选条件: 反转率≥55% 且 遗漏≥2期")
+    
+    if pred['skip']:
+        log(f"\n🚫 建议: 跳过不下注")
+        log(f"   原因: {pred['reason']}")
+    else:
+        rec = pred['recommend']
+        log(f"\n🎯 推荐: 尾{rec['digit']}")
+        log(f"   反转率: {rec['miss2_rate']}%")
+        log(f"   遗漏期数: {rec['miss']}期")
+        log(f"   历史样本: {rec['miss2_hit']}/{rec['miss2_total']}")
+        log(f"   原因: {pred['reason']}")
+        log(f"\n💰 下注方案（1.8x赔率）:")
+        log(f"   第1期: 1000元 → 中了+800元")
+        log(f"   第2期: 2250元 → 中了+800元")
+        log(f"   第3期: 30000元 → 中了+20750元")
+        log(f"   3期不中: -33250元")
+    
+    log(f"\n{'='*50}")
+    return pred
+
 def git_push(period):
     try:
         subprocess.run(['git', 'add', '.'], check=True)
@@ -449,6 +569,10 @@ def main():
     else:
         log(f"✓ 全部检测通过，开始推送...")
         git_push(period)
+        
+        # 显示下期预测
+        show_prediction(data)
+        
         log(f"\n{'='*50}")
         log(f"第{period}期数据已推送到 GitHub")
         log(f"{'='*50}")
