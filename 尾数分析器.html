@@ -149,16 +149,6 @@ var keys=Object.keys(RAW).sort(function(a,b){return parseInt(a)-parseInt(b);});
 var showKeys=keys;
 if(vr>0&&vr<keys.length)showKeys=keys.slice(-vr);
 
-// 预计算每个尾数在每个期的段归属和出号率
-function getSegInfo(d, period){
-    var segIdx=Math.floor((period-1)/w);
-    var segStart=segIdx*w+1;
-    var segEnd=Math.min(segStart+w-1, N);
-    var sa=segs(d,w);
-    if(segIdx<sa.length) return {seg:sa[segIdx], segIdx:segIdx, allSegs:sa};
-    return null;
-}
-
 var h='<tr><th class="fix">期号</th>';
 for(var di=0;di<sel.length;di++){
     h+='<th>尾'+sel[di]+'</th>';
