@@ -19,7 +19,7 @@ h1{text-align:center;font-size:16px;color:#6c5ce7;margin-bottom:4px}
 .box{overflow-x:auto;max-height:calc(100vh - 150px);-webkit-overflow-scrolling:touch;margin:0 auto}
 table{table-layout:fixed;width:auto;margin:0 auto;border-collapse:collapse;font-size:9px}
 th,td{padding:1px 0;text-align:center;border:1px solid #e8e4f0;font-size:9px;line-height:1.2;width:9%;height:32px;max-height:32px;overflow:hidden}
-th{background:#f5f3ff;color:#888;font-size:8px;font-weight:500;position:sticky;top:0;z-index:10;height:20px;max-height:20px}
+th{background:#f5f3ff;color:#333;font-size:9px;font-weight:700;position:sticky;top:0;z-index:10;height:24px;max-height:24px}
 td.fix{font-size:9px;font-weight:600;color:#6c5ce7;background:#f5f3ff;position:sticky;left:0;z-index:5;box-shadow:2px 0 4px rgba(0,0,0,0.08);width:22px;min-width:22px;max-width:22px;writing-mode:vertical-lr;text-orientation:upright}
 td{color:#222}
 .hot{background:#22c55e}.warm{background:#3b82f6}.norm{background:#94a3b8}
@@ -153,10 +153,13 @@ for(var di=0;di<sel.length;di++){
   selSegs[d]=vr>0&&vr<sa.length?sa.slice(-vr):sa;
 }
 
-// 竖版：行=段，列=尾数
+// 竖版：行=段，列=尾数，表头加期号
 var h='<tr>';
 for(var di=0;di<sel.length;di++){
-  h+='<th>尾'+sel[di]+'</th>';
+  var dd=sel[di];
+  var fd=segs(dd,w)[0];
+  var ld=segs(dd,w)[segs(dd,w).length-1];
+  h+='<th>尾'+dd+'<br><span style="font-size:7px;color:#888;font-weight:400">'+fd.st+'-'+ld.en+'期</span></th>';
 }
 h+='</tr>';
 
