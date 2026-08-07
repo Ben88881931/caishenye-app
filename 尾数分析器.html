@@ -172,7 +172,7 @@ for(var di=0;di<sel.length;di++){
     var arrow=now.rate>prev.rate+3?'\u25b2':now.rate<prev.rate-3?'\u25bc':'\u2500';
     var arrowClr=now.rate>prev.rate+3?'#15803d':now.rate<prev.rate-3?'#b91c1c':'#555';
     var pred=getPred(dd2,sa2.length-1,w);
-    h+='<th style="font-size:9px;font-weight:700;color:#333;height:auto;line-height:1.3"><span style="color:'+arrowClr+'">'+arrow+'</span> '+clsNow+'<br><span style="font-size:7px;color:#eab308">'+Math.round(now.rate)+'%</span></th>';
+    h+='<th style="font-size:9px;font-weight:700;color:#333;height:auto;line-height:1.3;background:#fefce8"><span style="color:'+arrowClr+'">'+arrow+'</span> '+clsNow+'<br><span style="font-size:8px;color:#6c5ce7">'+Math.round(now.rate)+'%</span><br><span style="font-size:7px;color:#b45309">下段:'+(pred||'-')+'</span></th>';
   }else{h+='<th></th>';}
 }
 h+='</tr>';
@@ -203,146 +203,7 @@ for(var i=0;i<view.length;i++){
   b+='</tr>';
 }
 
-// 添加全局总数汇总行
-b+='<tr style="background:#f5f3ff;border-top:2px solid #6c5ce7">';
-for(var di=0;di<sel.length;di++){
-  var d=sel[di];
-  var totalHits=0;
-  for(var p=1;p<=N;p++)if(open(d,p))totalHits++;
-  b+='<td style="font-size:14px;font-weight:bold;color:#6c5ce7">'+totalHits+'/'+N+'</td>';
-}
-b+='</tr>';
-
-// 添加出号规律汇总行
-b+='<tr style="background:#faf8ff">';
-for(var di=0;di<sel.length;di++){
-  var d=sel[di];
-  var st = wdata ? wdata.stats[String(d)] : null;
-  if(st && st.rule){
-    b+='<td style="font-size:11px;line-height:1.4;color:#6c5ce7;font-weight:bold;text-align:left;padding:4px 6px">'+st.rule+'</td>';
-  }else{
-    b+='<td style="font-size:11px;color:#999">-</td>';
-  }
-}
-b+='</tr>';
-
-// 添加波动汇总行
-b+='<tr style="background:#f5f3ff">';
-for(var di=0;di<sel.length;di++){
-  var d=sel[di];
-  var st = wdata ? wdata.stats[String(d)] : null;
-  if(st){
-    var range = st.max - st.min;
-    var rangeLabel = range>=50?'大':range>=30?'中':'小';
-    b+='<td style="font-size:11px;line-height:1.4;text-align:left;padding:4px 6px"><b>'+st.max+'%</b>~<b>'+st.min+'%</b><br>幅度'+range+'% '+rangeLabel+'<br><span style="color:#999">'+st.most+'('+st.most_cnt+'/'+st.total+')</span></td>';
-  }else{
-    b+='<td style="font-size:11px;color:#999">-</td>';
-  }
-}
-b+='</tr>';
-
-// 添加下段预测汇总行
-b+='<tr style="background:#faf8ff">';
-for(var di=0;di<sel.length;di++){
-  var d=sel[di];
-  var sa=segs(d,w);
-  var lastSeg = sa[sa.length-1];
-  var lastSegIdx = all.indexOf(lastSeg);
-  var lastPred = wdata ? getPred(d, lastSegIdx, w) : null;
-  var cntPredData = CNTDATA[String(w)];
-  var cntPred = cntPredData ? cntPredData[String(d)] : null;
-  var predHtml = '';
-  if(lastPred) predHtml += lastPred;
-  if(cntPred) predHtml += (predHtml ? '<br>' : '') + '次数:' + cntPred.predict_cnt + '次(' + cntPred.predict_prob + '%)';
-  b+='<td style="font-size:11px;color:#6c5ce7;font-weight:bold;text-align:left;padding:4px 6px">'+(predHtml||'-')+'</td>';
-}
-b+='</tr>';
-
 document.getElementById('tbl').innerHTML=h+b;
-
-// 底部趋势摘要
-var arr=[];
-for(var di=0;di<sel.length;di++){
-  var d=sel[di],sa=segs(d,w);
-  var pd='';
-  if(sa.length>=2){
-    var curRate=sa[sa.length-1].rate;
-    var prevRate=sa[sa.length-2].rate;
-    function getAbbr(r){if(r>=70)return'H';if(r>=60)return'W';if(r>=50)return'N';if(r>=40)return'L';if(r>=30)return'C';return'I';}
-    var curAbbr=getAbbr(curRate);
-    var prevAbbr=getAbbr(prevRate);
-    var pattern=prevAbbr+curAbbr;
-    var transData=ALLDATA[String(w)].trans;
-    if(transData[pattern]&&transData[pattern].total>0){
-      var total=transData[pattern].total;
-      var upCount=0,downCount=0;
-      var clsValues={'I':0,'C':1,'L':2,'N':3,'W':4,'H':5};
-      var curValue=clsValues[curAbbr];
-      for(var nextCls in transData[pattern]){
-        if(nextCls==='total')continue;
-        var nextValue=clsValues[nextCls];
-        if(nextValue>curValue)upCount+=transData[pattern][nextCls];
-        else if(nextValue<curValue)downCount+=transData[pattern][nextCls];
-      }
-      var upPct=Math.round(upCount/total*100);
-      var downPct=Math.round(downCount/total*100);
-      if(upPct>downPct)pd='\u25b2 上升 '+upPct+'%';
-      else if(downPct>upPct)pd='\u25bc 下降 '+downPct+'%';
-      else pd='\u2500 持平 '+upPct+'%';
-    }else{pd='-';}
-  }
-  var sts=sa.slice(-3).map(function(x){return f1(x.rate,1)+'%';}).join(' \u2192 ');
-  arr.push('<b style="color:#6c5ce7">尾'+d+'</b> '+pd+' <span style="color:#bbb">'+sts+'</span>');
-}
-document.getElementById('tips').innerHTML=arr.join('<br>');
-
-// 冰点反弹信号
-var iceDiv=document.getElementById('ice');
-var iceData=ICE[String(w)];
-if(iceData && iceData.length>0){
-    var iceH='<div style="margin-top:10px;padding:10px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px"><b style="color:#6c5ce7">冰点反弹预测</b> <span style="font-size:11px;color:#999">('+w+'期窗口 当前冰点 历史反弹概率)</span><br>';
-    for(var i=0;i<iceData.length;i++){
-        var s=iceData[i];
-        var clr=s.rebound_prob>=80?'#16a34a':s.rebound_prob>=60?'#6c5ce7':s.rebound_prob>=40?'#f59e0b':'#dc2626';
-        iceH+='<span style="display:inline-block;margin:4px 6px;padding:4px 10px;border-radius:6px;background:#f5f3ff;font-size:11px"><b>尾'+s.digit+'</b> 当前'+s.cur_rate+'% 反弹概率<b style="color:'+clr+'">'+s.rebound_prob+'%</b> ('+s.rebound_count+'/'+s.ice_total+')</span>';
-    }
-    iceH+='</div>';
-    iceDiv.innerHTML=iceH;
-}else{
-    iceDiv.innerHTML='';
-}
-// 预测模型v2.0报告
-var predDiv=document.getElementById('predict');
-var predData=PREDICTDATA;
-if(predData){
-    var predH='<div style="margin-top:10px;padding:10px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px">';
-    predH+='<b style="color:#6c5ce7">🎯 预测模型v2.0</b> <span style="font-size:11px;color:#999">(第'+predData.next_period+'期 含预警机制)</span><br>';
-    if(predData.skip){
-        predH+='<div style="margin:8px 0;padding:8px;background:#fee2e2;border-radius:6px;color:#991b1b;font-weight:bold">'+predData.reason+'</div>';
-    }else if(predData.best){
-        var best=predData.best;
-        var lvlEmoji={'safe':'🟢','recommend':'🟡','cautious':'🔵'}[best.level]||'';
-        predH+='<div style="margin:8px 0;padding:8px;background:#dcfce7;border-radius:6px;color:#166534;font-weight:bold">';
-        predH+=lvlEmoji+' 推荐: 尾'+best.digit+' | 反转率'+best.rev_rate+'% | 遗漏'+best.miss+'期 | 5期窗口'+best.cls5+'('+best.rate5+'%) | 历史失败率'+best.fail_rate+'%';
-        predH+='</div>';
-        predH+='<div style="font-size:12px;color:#666;margin-top:4px">'+predData.reason+'</div>';
-    }
-    if(predData.warning&&predData.warning.length>0){
-        predH+='<div style="margin-top:8px;padding:6px;background:#fef3c7;border-radius:6px;font-size:12px;color:#92400e">';
-        predH+='<b>🔴 预警信号:</b> ';
-        for(var i=0;i<predData.warning.length;i++){
-            predH+='尾'+predData.warning[i].digit+'('+predData.warning[i].warning+') ';
-        }
-        predH+='</div>';
-    }
-    predH+='<div style="margin-top:8px;font-size:11px;color:#999">';
-    predH+='<b>预警规则:</b> 🟢安全(反转率≥60%+遗漏≥3期) | 🟡推荐(反转率≥55%+遗漏≥3期) | 🔵谨慎(反转率≥55%+遗漏≥2期+5期窗口暖) | 🔴预警(遗漏≥2期+5期窗口冰)';
-    predH+='</div>';
-    predH+='</div>';
-    predDiv.innerHTML=predH;
-}else{
-    predDiv.innerHTML='';
-}
 }
 function tg(d){var i=sel.indexOf(d);if(i>=0){if(sel.length>1)sel.splice(i,1);}else{sel.push(d);sel.sort(function(a,b){return a-b;});}draw();}
 function set7(){sel=[0,1,2,6,7,8,9];draw();}
