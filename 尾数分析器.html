@@ -26,7 +26,7 @@ td{color:#222}
 .cool{background:#eab308}.cold{background:#ef4444}.ice{background:#ec4899}
 .big{font-weight:700;font-size:10px}
 .lbl{font-weight:800;font-size:10px;color:#000}
-.arr{font-size:11px}
+.arr{font-size:14px;font-weight:bold}
 .tip{border:1px solid #e8e4f0;padding:10px 12px;margin-bottom:10px;background:#fff;border-radius:8px;font-size:14px;line-height:1.8;position:sticky;bottom:0;z-index:8}
 .tip b{color:#6c5ce7}
 .legend{position:fixed;top:0;left:0;right:0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-size:11px;margin:0;padding:8px;color:#888;background:rgba(240,242,255,0.95);z-index:100;border-bottom:1px solid #e8e4f0;backdrop-filter:blur(4px)}
@@ -177,9 +177,9 @@ for(var i=0;i<view.length;i++){
     var a='';
     if(i>0&&dv[i-1]){
       var pv=dv[i-1].rate;
-      if(e.rate>pv+3)a='<span class="arr" style="color:#16a34a">\u25b2</span>';
-      else if(e.rate<pv-3)a='<span class="arr" style="color:#dc2626">\u25bc</span>';
-      else a='<span class="arr" style="color:#aaa">\u2500</span>';
+      if(e.rate>pv+3)a='<span class="arr" style="color:#15803d">\u25b2</span>';
+      else if(e.rate<pv-3)a='<span class="arr" style="color:#b91c1c">\u25bc</span>';
+      else a='<span class="arr" style="color:#555">\u2500</span>';
     }
     var dot=open(d,e.en)?' \u25cf':'';
     var lb = label(e.rate);
