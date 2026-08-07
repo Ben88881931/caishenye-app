@@ -153,27 +153,25 @@ for(var di=0;di<sel.length;di++){
   selSegs[d]=vr>0&&vr<sa.length?sa.slice(-vr):sa;
 }
 
-// 竖版：行=段，列=尾数，表头加期号
+// 竖版：行=段，列=尾数，表头含预测
 var h='<tr>';
 for(var di=0;di<sel.length;di++){
   var dd=sel[di];
-  var fd=segs(dd,w)[0];
-  var ld=segs(dd,w)[segs(dd,w).length-1];
-  h+='<th>尾'+dd+'<br><span style="font-size:7px;color:#888;font-weight:400">'+fd.st+'-'+ld.en+'期</span></th>';
-}
-h+='</tr>';
-// 预测行
-h+='<tr style="background:#fefce8;border-bottom:2px solid #eab308">';
-for(var di=0;di<sel.length;di++){
-  var dd2=sel[di],sa2=segs(dd2,w);
-  if(sa2&&sa2.length>=2){
-    var now=sa2[sa2.length-1],prev=sa2[sa2.length-2];
+  var sa=segs(dd,w);
+  var fd=sa[0];
+  var ld=sa[sa.length-1];
+  var th='<th style="font-size:9px;font-weight:700;color:#333;height:auto;line-height:1.2;background:#f5f3ff;border-bottom:2px solid #6c5ce7">尾'+dd+'<br><span style="font-size:7px;color:#888;font-weight:400">'+fd.st+'-'+ld.en+'期</span>';
+  if(sa&&sa.length>=2){
+    var now=sa[sa.length-1];
+    var prev=sa[sa.length-2];
     var clsNow=now.rate>=70?'热':now.rate>=60?'暖':now.rate>=50?'平':now.rate>=40?'凉':now.rate>=30?'冷':'冰';
     var arrow=now.rate>prev.rate+3?'\u25b2':now.rate<prev.rate-3?'\u25bc':'\u2500';
     var arrowClr=now.rate>prev.rate+3?'#15803d':now.rate<prev.rate-3?'#b91c1c':'#555';
-    var pred=getPred(dd2,sa2.length-1,w);
-    h+='<th style="font-size:9px;font-weight:700;color:#333;height:auto;line-height:1.3;background:#fefce8"><span style="color:'+arrowClr+'">'+arrow+'</span> '+clsNow+'<br><span style="font-size:8px;color:#6c5ce7">'+Math.round(now.rate)+'%</span><br><span style="font-size:7px;color:#b45309">下段:'+(pred||'-')+'</span></th>';
-  }else{h+='<th></th>';}
+    var pred=wdata?getPred(dd,sa.length-1,w):'-';
+    th+='<br><span style="color:'+arrowClr+';font-size:12px">'+arrow+'</span> '+clsNow+' <span style="font-size:8px;color:#6c5ce7">'+Math.round(now.rate)+'%</span><br><span style="font-size:7px;color:#b45309">下段:'+(pred||'-')+'</span>';
+  }
+  th+='</th>';
+  h+=th;
 }
 h+='</tr>';
 
