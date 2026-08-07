@@ -162,6 +162,20 @@ for(var di=0;di<sel.length;di++){
   h+='<th>尾'+dd+'<br><span style="font-size:7px;color:#888;font-weight:400">'+fd.st+'-'+ld.en+'期</span></th>';
 }
 h+='</tr>';
+// 预测行
+h+='<tr style="background:#fefce8;border-bottom:2px solid #eab308">';
+for(var di=0;di<sel.length;di++){
+  var dd2=sel[di],sa2=segs(dd2,w);
+  if(sa2&&sa2.length>=2){
+    var now=sa2[sa2.length-1],prev=sa2[sa2.length-2];
+    var clsNow=now.rate>=70?'热':now.rate>=60?'暖':now.rate>=50?'平':now.rate>=40?'凉':now.rate>=30?'冷':'冰';
+    var arrow=now.rate>prev.rate+3?'\u25b2':now.rate<prev.rate-3?'\u25bc':'\u2500';
+    var arrowClr=now.rate>prev.rate+3?'#15803d':now.rate<prev.rate-3?'#b91c1c':'#555';
+    var pred=getPred(dd2,sa2.length-1,w);
+    h+='<th style="font-size:9px;font-weight:700;color:#333;height:auto;line-height:1.3"><span style="color:'+arrowClr+'">'+arrow+'</span> '+clsNow+'<br><span style="font-size:7px;color:#eab308">'+Math.round(now.rate)+'%</span></th>';
+  }else{h+='<th></th>';}
+}
+h+='</tr>';
 
 var b='';
 for(var i=0;i<view.length;i++){
