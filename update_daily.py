@@ -45,7 +45,18 @@ def tails_to_binary(tails):
 
 def load_lottery_data():
     with open(LOTTERY_JSON, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        raw = json.load(f)
+    # 兼容新旧格式，只返回数字key的数据
+    if 'data' in raw and isinstance(raw['data'], dict):
+        data = {}
+        for k, v in raw.items():
+            if k.isdigit():
+                data[k] = v
+        for k, v in raw.get('data', {}).items():
+            if k.isdigit():
+                data[k] = v
+        return data
+    return {k: v for k, v in raw.items() if k.isdigit()}
 
 def save_lottery_data(data):
     with open(LOTTERY_JSON, 'w', encoding='utf-8') as f:
