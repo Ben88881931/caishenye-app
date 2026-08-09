@@ -318,7 +318,7 @@ def update_analyzer_alldata(html_file, raw_data):
     cnt_json = json.dumps(all_cnt_pred, ensure_ascii=False, separators=(',', ':'))
     content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
     
-    # 计算并写入预测模型v2.0数据
+    # 计算并写入预测模型v4.0数据
     pred = calc_prediction(raw_data)
     pred_data = {
         'next_period': pred['next_period'],
@@ -326,11 +326,9 @@ def update_analyzer_alldata(html_file, raw_data):
         'skip': pred['skip'],
         'reason': pred['reason'],
         'best': pred['best'],
-        'safe': pred['safe'],
-        'recommend': pred['recommend'],
-        'cautious': pred['cautious'],
-        'warning': pred['warning'],
-        'candidates': pred['candidates']
+        'gap': pred['gap'],
+        'candidates': pred['candidates'],
+        'model_version': pred['model_version']
     }
     pattern = r'var PREDICTDATA=\{.*?\};'
     pred_json = json.dumps(pred_data, ensure_ascii=False, separators=(',', ':'))
@@ -451,20 +449,11 @@ def verify_ice(html_file, raw_data):
             log(f"    窗口{w}期: 尾{s['digit']} 当前{s['cur_rate']}% 反弹概率{s['rebound_prob']}%")
 
 def calc_prediction(raw_data):
-    """计算下期预测（模型v2.0：含预警机制）"""
+    """计算下期预测（模型v4.0：纯反转+单号倍投+差距过滤+预警）"""
     keys = sorted([k for k in raw_data.keys() if k.isdigit()], key=int)
     N = len(keys)
     
-    def classify(rate):
-        if rate >= 70: return 'H'
-        if rate >= 60: return 'W'
-        if rate >= 50: return 'N'
-        if rate >= 40: return 'L'
-        if rate >= 30: return 'C'
-        return 'I'
-    cls_names = {'H': '热', 'W': '暖', 'N': '平', 'L': '凉', 'C': '冷', 'I': '冰'}
-    
-    # 1. 计算全局反转率（上期未出→本期出）
+    # 1. 计算全局反转率
     rev_count = {d: 0 for d in range(10)}
     rev_total = {d: 0 for d in range(10)}
     for i in range(1, N):
@@ -474,16 +463,7 @@ def calc_prediction(raw_data):
                 if raw_data[keys[i]][d] == '1':
                     rev_count[d] += 1
     
-    # 2. 计算遗漏≥2期反转率
-    rev2_count = {d: 0 for d in range(10)}
-    rev2_total = {d: 0 for d in range(10)}
-    for i in range(2, N):
-        if raw_data[keys[i-1]][d] == '0' and raw_data[keys[i-2]][d] == '0':
-            rev2_total[d] += 1
-            if raw_data[keys[i]][d] == '1':
-                rev2_count[d] += 1
-    
-    # 3. 当前遗漏期数
+    # 2. 当前遗漏期数
     miss = {}
     for d in range(10):
         m = 0
@@ -494,113 +474,74 @@ def calc_prediction(raw_data):
                 break
         miss[d] = m
     
-    # 4. 5期窗口状态
-    segs5 = {}
-    for d in range(10):
-        segs = []
-        for st in range(1, N+1, 5):
-            en = min(st + 4, N)
-            cnt = sum(1 for p in range(st, en+1) if raw_data[keys[p-1]][d] == '1')
-            rate = cnt / (en - st + 1) * 100
-            segs.append({'cnt': cnt, 'rate': rate, 'cls': classify(rate)})
-        segs5[d] = segs
-    
     # 上期开出/未出
     prev_bin = raw_data[keys[-1]]
     missed_digits = [d for d in range(10) if prev_bin[d] == '0']
     
-    # 5. 构建每个尾数的完整分析
+    # 3. 只对未出尾数计算反转率，按反转率从高到低排序
     candidates = []
-    for d in range(10):
+    for d in missed_digits:
         rev_rate = round(rev_count[d] / rev_total[d] * 100, 1) if rev_total[d] > 0 else 0
-        rev2_rate = round(rev2_count[d] / rev2_total[d] * 100, 1) if rev2_total[d] > 0 else 0
-        
-        # 5期窗口当前状态
-        cur_seg5 = segs5[d][-1] if segs5[d] else None
-        cls5 = cur_seg5['cls'] if cur_seg5 else 'I'
-        rate5 = round(cur_seg5['rate'], 1) if cur_seg5 else 0
-        
         candidates.append({
             'digit': d,
             'rev_rate': rev_rate,
-            'rev2_rate': rev2_rate,
             'rev_hit': rev_count[d],
             'rev_total': rev_total[d],
             'miss': miss[d],
-            'cls5': cls5,
-            'rate5': rate5,
-            'warm5': cls5 in ['W', 'L'],
         })
+    candidates.sort(key=lambda x: -x['rev_rate'])
     
-    # 6. 应用预警规则，分级推荐
-    # 🟢 安全级: 反转率≥60% + 遗漏≥3期 → 0%失败
-    # 🟡 推荐级: 反转率≥55% + 遗漏≥3期 → 1.7%失败
-    # 🔵 谨慎级: 反转率≥55% + 遗漏≥2期 + 5期窗口暖(W) → 0%失败
-    # 🔴 预警: 遗漏=2期 + 5期窗口冰(I) → 高风险
-    
-    safe = []       # 安全级
-    recommend = []  # 推荐级
-    cautious = []   # 谨慎级
-    warning = []    # 预警级
-    
-    for c in candidates:
-        c['level'] = None
-        c['warning'] = None
-        
-        if c['rev_rate'] >= 60 and c['miss'] >= 3:
-            c['level'] = 'safe'
-            c['fail_rate'] = 0
-            safe.append(c)
-        elif c['rev_rate'] >= 55 and c['miss'] >= 3:
-            c['level'] = 'recommend'
-            c['fail_rate'] = 1.7
-            recommend.append(c)
-        elif c['rev_rate'] >= 55 and c['miss'] >= 2 and c['cls5'] == 'W':
-            c['level'] = 'cautious'
-            c['fail_rate'] = 0
-            cautious.append(c)
-        else:
-            # 检查预警信号
-            if c['miss'] >= 2 and c['cls5'] == 'I':
-                c['warning'] = '遗漏≥2期+5期窗口冰点'
-                warning.append(c)
-    
-    # 排序
-    safe.sort(key=lambda x: -x['rev_rate'])
-    recommend.sort(key=lambda x: -x['rev_rate'])
-    cautious.sort(key=lambda x: -x['rev_rate'])
-    
+    # 4. v4.0 等级判定
     result = {
         'next_period': N + 1,
         'prev_opened': [d for d in range(10) if prev_bin[d] == '1'],
         'prev_missed': missed_digits,
         'candidates': candidates,
-        'safe': safe,
-        'recommend': recommend,
-        'cautious': cautious,
-        'warning': warning,
         'best': None,
         'skip': False,
+        'gap': 0,
         'reason': '',
-        'alert_level': 'green',  # green/yellow/red
+        'alert_level': 'green',
+        'model_version': 'v4.0',
     }
     
-    if safe:
-        result['best'] = safe[0]
+    if not candidates:
+        result['skip'] = True
+        result['reason'] = '🔴 上期全中无遗漏，跳过'
+        return result
+    
+    best = candidates[0]
+    result['best'] = best
+    
+    # 计算第1-2名差距
+    if len(candidates) >= 2:
+        gap = round(best['rev_rate'] - candidates[1]['rev_rate'], 1)
+        result['gap'] = gap
+    else:
+        gap = 999
+        result['gap'] = gap
+    
+    # v4.0 差距过滤
+    if gap < 3:
+        result['skip'] = True
+        result['alert_level'] = 'red'
+        result['reason'] = f"⛔ 跳过: 尾{best['digit']}反转率{best['rev_rate']}%与第2名差距仅{gap}%<3%，无明显优势，等下一期"
+        return result
+    
+    # 等级判定
+    if best['rev_rate'] > 55:
         result['alert_level'] = 'green'
-        result['reason'] = f"🟢安全级: 反转率{safe[0]['rev_rate']}%≥60% + 遗漏{safe[0]['miss']}期≥3期 → 历史0%失败"
-    elif recommend:
-        result['best'] = recommend[0]
-        result['alert_level'] = 'green'
-        result['reason'] = f"🟡推荐级: 反转率{recommend[0]['rev_rate']}%≥55% + 遗漏{recommend[0]['miss']}期≥3期 → 历史1.7%失败"
-    elif cautious:
-        result['best'] = cautious[0]
+        result['reason'] = f"🟢 安全级: 尾{best['digit']}, 反转率{best['rev_rate']}%, 差距{gap}%≥3%, 第1期1000元"
+    elif best['rev_rate'] >= 50:
         result['alert_level'] = 'yellow'
-        result['reason'] = f"🔵谨慎级: 反转率{cautious[0]['rev_rate']}%≥55% + 遗漏{cautious[0]['miss']}期≥2期 + 5期窗口暖(W) → 历史0%失败"
+        result['reason'] = f"⚠️ 注意: 尾{best['digit']}, 反转率{best['rev_rate']}%偏低, 建议减半或跳过"
+    elif best['rev_rate'] >= 45:
+        result['alert_level'] = 'orange'
+        result['reason'] = f"🔴 预警: 尾{best['digit']}, 反转率{best['rev_rate']}%过低, 强烈建议跳过"
     else:
         result['skip'] = True
         result['alert_level'] = 'red'
-        result['reason'] = '🔴无尾数满足安全条件，建议跳过'
+        result['reason'] = f"🚨 特级预警: 尾{best['digit']}, 反转率{best['rev_rate']}%<45%, 必须跳过"
     
     return result
 
