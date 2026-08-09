@@ -132,7 +132,15 @@ function getPred(d,segIdx,w){
     if(!wdata) return null;
     var preds = wdata.preds[String(d)];
     if(preds && segIdx>=2 && segIdx-2<preds.length){
-        return preds[segIdx-2];
+        var p=preds[segIdx-2];
+        // 格式: "凉->热->暖 67%" 或 "凉->暖 75%"
+        var m=p.match(/(\d+)%/);
+        if(!m) return null;
+        var prob=parseInt(m[1]);
+        if(prob<40) return null;  // 低于40%不显示
+        // 只保留最后箭头后的预测+概率
+        var parts=p.split('->');
+        return parts[parts.length-1]+' '+prob+'%';
     }
     return null;
 }
