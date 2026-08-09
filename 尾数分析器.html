@@ -168,7 +168,7 @@ for(var di=0;di<sel.length;di++){
     var arrow=now.rate>prev.rate+3?'\u25b2':now.rate<prev.rate-3?'\u25bc':'\u2500';
     var arrowClr=now.rate>prev.rate+3?'#15803d':now.rate<prev.rate-3?'#b91c1c':'#555';
     var pred=wdata?getPred(dd,sa.length-1,w):'-';
-    th+='<br><span style="color:'+arrowClr+';font-size:12px">'+arrow+'</span> '+clsNow+' <span style="font-size:8px;color:#6c5ce7">'+Math.round(now.rate)+'%</span><br><span style="font-size:7px;color:#b45309">下段:'+(pred||'-')+'</span>';
+    th+='<br><span style="color:'+arrowClr+';font-size:12px">'+arrow+'</span> '+clsNow+' <span style="font-size:8px;color:#6c5ce7">'+Math.round(now.rate)+'%</span><br><span style="font-size:7px;color:#b45309">⤳预:'+(pred||'-')+'</span>';
   }
   th+='</th>';
   h+=th;
@@ -196,7 +196,7 @@ for(var i=0;i<view.length;i++){
     var dot=open(d,e.en)?' \u25cf':'';
     var lb = label(e.rate);
     var pred = wdata ? getPred(d, segIdx, w) : null;
-    b+='<td class="'+cls(e.rate)+'"><span style="font-size:7px;color:#000;font-weight:700">'+e.st+'-'+e.en+'期</span><br>'+a+'<span class="big">'+f1(e.rate,1)+'%</span> <b class="lbl">'+lb+'</b><br><b style="color:#333">'+e.cnt+'/'+e.w+'</b>'+dot+(pred?'<div class="pred">'+pred+'</div>':'')+'</td>';
+    b+='<td class="'+cls(e.rate)+'"><span style="font-size:7px;color:#000;font-weight:700">'+e.st+'-'+e.en+'期</span><br>'+a+'<span class="big">'+f1(e.rate,1)+'%</span> <b class="lbl">'+lb+'</b><br><b style="color:#333">'+e.cnt+'/'+e.w+'</b>'+dot+(pred?'<div class="pred">⤳预:'+pred+'</div>':'')+'</td>';
   }
   b+='</tr>';
 }
