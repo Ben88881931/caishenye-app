@@ -290,7 +290,8 @@ if(predData){
         for(var i=0;i<predData.candidates.length;i++){
             var c=predData.candidates[i];
             var mark=i===0&&!predData.skip?'✅':'';
-            predH+='尾'+c.digit+':'+c.rev_rate+'%'+mark+' ';
+            var slip=c.slip!==undefined?' <span style="font-size:10px;color:'+(c.slip>=55?'#dc2626':c.slip>=45?'#f59e0b':'#16a34a')+'">震'+(c.slip>=55?'易滑'+c.slip+'%':c.slip>=45?'中'+c.slip+'%':'稳'+c.slip+'%')+'</span>':'';
+            predH+='尾'+c.digit+':'+c.rev_rate+'%'+mark+slip+' ';
         }
         predH+='</div>';
     }

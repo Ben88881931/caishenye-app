@@ -448,6 +448,35 @@ def verify_ice(html_file, raw_data):
         for s in signals:
             log(f"    窗口{w}期: 尾{s['digit']} 当前{s['cur_rate']}% 反弹概率{s['rebound_prob']}%")
 
+def digit_bounce(raw_data, d):
+    """单号独立反弹率：该尾号自己历史中'遗漏X期后下期开出'的概率。返回 {miss: (hit, total)}"""
+    keys = sorted([k for k in raw_data.keys() if k.isdigit()], key=int)
+    bounce = {}
+    lo = None
+    for i, k in enumerate(keys):
+        if raw_data[k][d] == '1':
+            p = int(k)
+            if lo is not None:
+                miss = p - lo - 1
+                for x in range(1, miss + 1):
+                    if x not in bounce:
+                        bounce[x] = [0, 0]
+                    bounce[x][1] += 1
+                    if x == miss:
+                        bounce[x][0] += 1
+            lo = p
+    return bounce
+
+
+def digit_slip_risk(raw_data, d):
+    """单号'滑向大遗漏'风险：遗2期滑向遗3期(≥3期遗漏)的概率(%)。默认50为中性。"""
+    b = digit_bounce(raw_data, d)
+    if 2 not in b or b[2][1] < 3:
+        return 50
+    hit, total = b[2]
+    return round((1 - hit / total) * 100, 1)
+
+
 def calc_prediction(raw_data):
     """计算下期预测（模型v4.0：纯反转+单号倍投+差距过滤+预警）"""
     keys = sorted([k for k in raw_data.keys() if k.isdigit()], key=int)
@@ -488,6 +517,8 @@ def calc_prediction(raw_data):
             'rev_hit': rev_count[d],
             'rev_total': rev_total[d],
             'miss': miss[d],
+            # 单号性格补充字段（不参与排序，仅作展示/预警参考）
+            'slip': digit_slip_risk(raw_data, d),  # 遗2期滑向大遗漏风险(%)
         })
     candidates.sort(key=lambda x: -x['rev_rate'])
     
