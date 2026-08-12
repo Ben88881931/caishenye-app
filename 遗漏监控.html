@@ -105,6 +105,20 @@ draw();
 // ===== 规律状态表（单号独立规律 + 风险提示）=====
 (function(){
   var keys=Object.keys(RAW).sort(function(a,b){return parseInt(a)-parseInt(b);});
+  function oscState(d){
+      var N=keys.length;
+      var consec=0;
+      for(var i=N-1;i>=0;i--){if(RAW[keys[i]][d]==='0')consec++;else break;}
+      var cnt10=0;
+      for(var j=N-1;j>=Math.max(0,N-10);j--){if(RAW[keys[j]][d]==='1')cnt10++;}
+      var cnt5=0,cnt5prev=0;
+      for(var j=N-1;j>=N-5;j--){if(j>=0&&RAW[keys[j]][d]==='1')cnt5++;}
+      for(var j=N-6;j>=N-10;j--){if(j>=0&&RAW[keys[j]][d]==='1')cnt5prev++;}
+      if(consec===0)return {t:'🟢开出中',c:'#22c55e'};
+      if(consec===1)return cnt10>=5?{t:'🟡将震荡',c:'#eab308'}:{t:'🟢正常',c:'#22c55e'};
+      if(consec===2)return {t:'🟠震荡中',c:'#f97316'};
+      return {t:'🔴大遗漏',c:'#ef4444'};
+  }
   var pBounce={};
   for(var d=0;d<10;d++){
     pBounce[d]={};
@@ -139,7 +153,7 @@ draw();
   }
   var hh='<div style="background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:12px">';
   hh+='<div style="font-size:14px;font-weight:bold;color:#6c5ce7;margin-bottom:8px">📊 规律状态表（单号性格 + 风险提示）</div>';
-  hh+='<table style="width:100%;border-collapse:collapse;font-size:11px"><tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>遗4</th><th>性格</th><th>最大遗漏</th><th>当前</th><th>风险提示</th></tr>';
+  hh+='<table style="width:100%;border-collapse:collapse;font-size:11px"><tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>遗4</th><th>性格</th><th>最大遗漏</th><th>当前</th><th>风险提示</th><th>震荡预警</th></tr>';
   for(var d=0;d<10;d++){
     var bb=pBounce[d];
     function cell(x){
@@ -159,7 +173,7 @@ draw();
       else{risk='⚠️高风险 反弹'+rt.toFixed(0)+'%';riskColor='#ef4444';}
       if(cm>=mg&&cm>=4){risk='🚨触顶 连遗'+cm+'期(史'+mg+')';riskColor='#ef4444';}
     }
-    hh+='<tr><td style="font-weight:bold">'+d+'</td>'+cell(1)+cell(2)+cell(3)+cell(4)+'<td style="font-weight:bold;color:'+grd.c+'">'+grd.g+'</td><td>'+mg+'期</td><td>'+(cm===0?'已出':cm+'期')+'</td><td style="color:'+riskColor+';font-weight:bold">'+risk+'</td></tr>';
+    hh+='<tr><td style="font-weight:bold">'+d+'</td>'+cell(1)+cell(2)+cell(3)+cell(4)+'<td style="font-weight:bold;color:'+grd.c+'">'+grd.g+'</td><td>'+mg+'期</td><td>'+(cm===0?'已出':cm+'期')+'</td><td style="color:'+riskColor+';font-weight:bold">'+risk+'</td><td style="font-weight:bold">'+oscState(d).t+'</td></tr>';
   }
   hh+='</table>';
   hh+='<div style="font-size:10px;color:#bbb;margin-top:6px">反弹率=该尾号自己历史"遗漏N期后下期开出"的概率。触顶=当前遗漏达到该号历史最大遗漏，风险极高</div>';

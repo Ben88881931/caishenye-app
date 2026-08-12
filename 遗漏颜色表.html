@@ -180,6 +180,20 @@ document.getElementById('ft').textContent='数据: 第'+keys[0]+'-'+keys[keys.le
 
 // ===== 尾号性格表（单号独立规律）=====
 (function(){
+  function oscState(d){
+      var N=keys.length;
+      var consec=0;
+      for(var i=N-1;i>=0;i--){if(RAW[keys[i]][d]==='0')consec++;else break;}
+      var cnt10=0;
+      for(var j=N-1;j>=Math.max(0,N-10);j--){if(RAW[keys[j]][d]==='1')cnt10++;}
+      var cnt5=0,cnt5prev=0;
+      for(var j=N-1;j>=N-5;j--){if(j>=0&&RAW[keys[j]][d]==='1')cnt5++;}
+      for(var j=N-6;j>=N-10;j--){if(j>=0&&RAW[keys[j]][d]==='1')cnt5prev++;}
+      if(consec===0)return {t:'🟢开出中',c:'#22c55e'};
+      if(consec===1)return cnt10>=5?{t:'🟡将震荡',c:'#eab308'}:{t:'🟢正常',c:'#22c55e'};
+      if(consec===2)return {t:'🟠震荡中',c:'#f97316'};
+      return {t:'🔴大遗漏',c:'#ef4444'};
+    }
   // 单号反弹率：每个尾号自己的"遗漏X期→下期开出率"
   var pBounce={};
   for(var d=0;d<10;d++){
@@ -219,7 +233,7 @@ document.getElementById('ft').textContent='数据: 第'+keys[0]+'-'+keys[keys.le
     if(avg>=52)return {g:'🟡中',c:'#eab308'};
     return {g:'🔴险',c:'#ef4444'};
   }
-  var h='<tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>遗4</th><th>遗5+</th><th>性格</th><th>当前遗漏</th></tr>';
+  var h='<tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>遗4</th><th>遗5+</th><th>性格</th><th>当前遗漏</th><th>震荡预警</th></tr>';
   for(var d=0;d<10;d++){
     var bb=pBounce[d];
     function cell(x){
@@ -240,7 +254,7 @@ document.getElementById('ft').textContent='数据: 第'+keys[0]+'-'+keys[keys.le
       var warn=cm>=4?'⚠️':'';
       cmTag=cm+'期'+warn+'<br><span style="color:#888;font-size:10px">反弹'+curRate+'</span>';
     }
-    h+='<tr><td style="font-weight:bold">'+d+'</td>'+cell(1)+cell(2)+cell(3)+cell(4)+cell(5)+'<td style="font-weight:bold;color:'+grd.c+'">'+grd.g+'</td><td style="font-size:11px">'+cmTag+'</td></tr>';
+    h+='<tr><td style="font-weight:bold">'+d+'</td>'+cell(1)+cell(2)+cell(3)+cell(4)+cell(5)+'<td style="font-weight:bold;color:'+grd.c+'">'+grd.g+'</td><td style="font-size:11px">'+cmTag+'</td><td style="font-weight:bold">'+oscState(d).t+'</td></tr>';
   }
   document.getElementById('pTable').innerHTML=h;
 })();
