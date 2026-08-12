@@ -642,7 +642,7 @@ def calc_prediction(raw_data):
     # 等级判定
     if best['rev_rate'] > 55:
         result['alert_level'] = 'green'
-        result['reason'] = f"🟢 安全级: 尾{best['digit']}, 反转率{best['rev_rate']}%, 差距{gap}%≥3%, 第1期1000元"
+        result['reason'] = f"🟢 安全级: 尾{best['digit']}, 反转率{best['rev_rate']}%, 差距{gap}%≥3%, 第1期1500元"
     elif best['rev_rate'] >= 50:
         result['alert_level'] = 'yellow'
         result['reason'] = f"⚠️ 注意: 尾{best['digit']}, 反转率{best['rev_rate']}%偏低, 建议减半或跳过"
@@ -705,10 +705,11 @@ def show_prediction(raw_data):
         
         if pred['alert_level'] == 'green':
             log(f"\n💰 下注方案（1.8x赔率）:")
-            log(f"   第1期: 1000元 → 中了+800元")
-            log(f"   第2期: 2250元 → 中了+800元")
-            log(f"   第3期: 30000元 → 中了+20750元")
-            log(f"   3期不中: -33250元")
+            log(f"   第1期: 1500元 → 中了+1200元 (P1重注70%)")
+            log(f"   第2期: 500元 → 中了+400元 (平移)")
+            log(f"   第3期: 500元 → 中了+400元 (P3平移=P2)")
+            log(f"   3期不中: -2500元")
+            log(f"   ※ v5.0下注公式: P1重注1500 + P2=P3平移各500")
         elif pred['alert_level'] == 'yellow':
             log(f"\n⚠️ 谨慎级建议:")
             log(f"   可考虑减半下注或跳过")
