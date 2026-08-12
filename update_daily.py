@@ -318,7 +318,7 @@ def update_analyzer_alldata(html_file, raw_data):
     cnt_json = json.dumps(all_cnt_pred, ensure_ascii=False, separators=(',', ':'))
     content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
     
-    # 计算并写入预测模型v4.0数据
+    # 计算并写入预测模型v4.0+v5.0数据
     pred = calc_prediction(raw_data)
     pred_data = {
         'next_period': pred['next_period'],
@@ -328,7 +328,11 @@ def update_analyzer_alldata(html_file, raw_data):
         'best': pred['best'],
         'gap': pred['gap'],
         'candidates': pred['candidates'],
-        'model_version': pred['model_version']
+        'model_version': pred['model_version'],
+        'v5_best': pred['v5_best'],
+        'v5_gap': pred['v5_gap'],
+        'v5_eligible': pred['v5_eligible'],
+        'v5_skip_reason': pred['v5_skip_reason'],
     }
     pattern = r'var PREDICTDATA=\{.*?\};'
     pred_json = json.dumps(pred_data, ensure_ascii=False, separators=(',', ':'))
@@ -477,6 +481,49 @@ def digit_slip_risk(raw_data, d):
     return round((1 - hit / total) * 100, 1)
 
 
+# ===== v5.0 回归性格模型 =====
+# 强回归号：跌深了必然反弹（偏冷后下一期高概率开出）
+STRONG_DIGITS = [0, 2, 3, 4, 7, 8]
+# 反向号：偏离中枢后继续惯性（偏冷继续冷、偏热继续热），追投风险高
+WEAK_DIGITS = [5, 9, 1]
+
+
+def roll_rate_20(raw_data, d, upto):
+    """滚动20期开出率(%)，upto为最后一期索引(基于keys顺序)"""
+    keys = sorted([int(k) for k in raw_data.keys() if k.isdigit()])
+    if upto < 19:
+        return None
+    cnt = 0
+    for j in range(upto - 19, upto + 1):
+        if raw_data[str(keys[j])][d] == '1':
+            cnt += 1
+    return cnt / 20 * 100
+
+
+def center_of_20(raw_data, d, upto):
+    """该号截至upto(含)的历史滚动20期开出率均值(中枢)。using upto及之前所有滚动率"""
+    keys = sorted([int(k) for k in raw_data.keys() if k.isdigit()])
+    rates = []
+    for k in range(19, upto + 1):
+        cnt = 0
+        for j in range(k - 19, k + 1):
+            if raw_data[str(keys[j])][d] == '1':
+                cnt += 1
+        rates.append(cnt / 20 * 100)
+    if len(rates) < 10:
+        return None
+    return sum(rates) / len(rates)
+
+
+def dev_from_center(raw_data, d, upto):
+    """当前滚动20期开出率 偏离 中枢 的差值(百分点)。正=偏热，负=偏冷。"""
+    r = roll_rate_20(raw_data, d, upto)
+    c = center_of_20(raw_data, d, upto)
+    if r is None or c is None:
+        return None
+    return r - c
+
+
 def calc_prediction(raw_data):
     """计算下期预测（模型v4.0：纯反转+单号倍投+差距过滤+预警）"""
     keys = sorted([k for k in raw_data.keys() if k.isdigit()], key=int)
@@ -522,6 +569,34 @@ def calc_prediction(raw_data):
         })
     candidates.sort(key=lambda x: -x['rev_rate'])
     
+    # ===== v5.0 回归性格选号（强回归号 + 偏冷≥10点） =====
+    # 给每个候选加回归性格字段
+    for c in candidates:
+        c['dev'] = dev_from_center(raw_data, c['digit'], N - 1)  # 当前偏离中枢(百分点，负=偏冷)
+        c['is_strong'] = c['digit'] in STRONG_DIGITS
+        c['is_weak'] = c['digit'] in WEAK_DIGITS
+    
+    # v5.0 推荐：只取"强回归号 + 未出 + 偏冷≥10点"，按反转率排序，gap≥3过滤
+    v5_eligible = [
+        c for c in candidates
+        if c['digit'] in STRONG_DIGITS
+        and c.get('dev') is not None
+        and c['dev'] <= -10
+    ]
+    v5_eligible.sort(key=lambda x: -x['rev_rate'])
+    v5_best = None
+    v5_gap = 0
+    v5_skip_reason = ''
+    if not v5_eligible:
+        v5_skip_reason = '无强回归号且偏冷≥10点'
+    elif len(v5_eligible) >= 2 and (v5_eligible[0]['rev_rate'] - v5_eligible[1]['rev_rate']) < 3:
+        v5_best = v5_eligible[0]
+        v5_gap = round(v5_eligible[0]['rev_rate'] - v5_eligible[1]['rev_rate'], 1)
+        v5_skip_reason = f"强回归号反转率差距{v5_gap}%<3%，等下一期"
+    else:
+        v5_best = v5_eligible[0]
+        v5_gap = round(v5_eligible[0]['rev_rate'] - v5_eligible[1]['rev_rate'], 1) if len(v5_eligible) >= 2 else 999
+    
     # 4. v4.0 等级判定
     result = {
         'next_period': N + 1,
@@ -533,7 +608,12 @@ def calc_prediction(raw_data):
         'gap': 0,
         'reason': '',
         'alert_level': 'green',
-        'model_version': 'v4.0',
+        'model_version': 'v4.0+v5.0回归性格',
+        # v5.0 回归性格字段
+        'v5_best': v5_best,
+        'v5_gap': v5_gap,
+        'v5_eligible': v5_eligible,
+        'v5_skip_reason': v5_skip_reason,
     }
     
     if not candidates:

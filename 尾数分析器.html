@@ -301,6 +301,34 @@ if(predData){
     predH+='<b>回测:</b> 24-221期 命中率95.9% 净利润+176,500 ROI+30%';
     predH+='</div>';
     predH+='</div>';
+    // ===== v5.0 回归性格报告 =====
+    if(predData.v5_best !== undefined || predData.v5_eligible !== undefined){
+        predH+='<div style="margin-top:10px;padding:10px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px">';
+        predH+='<b style="color:#16a34a">🧲 v5.0 回归性格</b> <span style="font-size:11px;color:#999">(强回归号偏冷≥10点 P1命中67%)</span><br>';
+        if(predData.v5_best){
+            var vb=predData.v5_best;
+            var devStr=(vb.dev!==undefined&&vb.dev!==null)?((vb.dev<0?'':'+')+vb.dev.toFixed(1)+'点'):'';
+            predH+='<div style="margin:8px 0;padding:8px;background:#dcfce7;border-radius:6px;color:#166534;font-weight:bold">';
+            predH+='🟢 v5推荐: 尾'+vb.digit+' | 反转率'+vb.rev_rate+'% | 偏离中枢'+devStr+' | 遗漏'+vb.miss+'期';
+            predH+='</div>';
+        }else if(predData.v5_skip_reason){
+            predH+='<div style="margin:8px 0;padding:8px;background:#fef3c7;border-radius:6px;color:#92400e;font-weight:bold">';
+            predH+='⏸ 跳过: '+predData.v5_skip_reason;
+            predH+='</div>';
+        }
+        if(predData.v5_eligible && predData.v5_eligible.length>0){
+            predH+='<div style="font-size:11px;color:#666;line-height:1.8">';
+            predH+='<b>偏冷候选(强回归号):</b> ';
+            for(var i=0;i<predData.v5_eligible.length;i++){
+                var ve=predData.v5_eligible[i];
+                var veDev=(ve.dev!==undefined&&ve.dev!==null)?('(偏离'+(ve.dev<0?'':'+')+ve.dev.toFixed(1)+')'):'';
+                predH+='尾'+ve.digit+':'+ve.rev_rate+'%'+veDev+' ';
+            }
+            predH+='</div>';
+        }
+        predH+='<div style="margin-top:6px;font-size:10px;color:#aaa">强回归号(0/2/3/4/7/8)跌深必反弹；反向号(1/5/9)别追。</div>';
+        predH+='</div>';
+    }
     predDiv.innerHTML=predH;
 }else{
     predDiv.innerHTML='';
