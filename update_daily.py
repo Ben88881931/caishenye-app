@@ -333,6 +333,7 @@ def update_analyzer_alldata(html_file, raw_data):
         'v5_gap': pred['v5_gap'],
         'v5_eligible': pred['v5_eligible'],
         'v5_skip_reason': pred['v5_skip_reason'],
+        'b_line': pred['b_line'],
     }
     pattern = r'var PREDICTDATA=\{.*?\};'
     pred_json = json.dumps(pred_data, ensure_ascii=False, separators=(',', ':'))
@@ -488,40 +489,48 @@ STRONG_DIGITS = [0, 2, 3, 4, 7, 8]
 WEAK_DIGITS = [5, 9, 1]
 
 
-def roll_rate_20(raw_data, d, upto):
-    """滚动20期开出率(%)，upto为最后一期索引(基于keys顺序)"""
+def roll_rate(raw_data, d, upto, W=20):
+    """滚动W期开出率(%)，upto为最后一期索引(基于keys顺序)"""
     keys = sorted([int(k) for k in raw_data.keys() if k.isdigit()])
-    if upto < 19:
+    if upto < W - 1:
         return None
     cnt = 0
-    for j in range(upto - 19, upto + 1):
+    for j in range(upto - W + 1, upto + 1):
         if raw_data[str(keys[j])][d] == '1':
             cnt += 1
-    return cnt / 20 * 100
+    return cnt / W * 100
 
 
-def center_of_20(raw_data, d, upto):
-    """该号截至upto(含)的历史滚动20期开出率均值(中枢)。using upto及之前所有滚动率"""
+def center_of(raw_data, d, upto, W=20):
+    """该号截至upto(含)的历史滚动W期开出率均值(中枢)。"""
     keys = sorted([int(k) for k in raw_data.keys() if k.isdigit()])
     rates = []
-    for k in range(19, upto + 1):
+    for k in range(W - 1, upto + 1):
         cnt = 0
-        for j in range(k - 19, k + 1):
+        for j in range(k - W + 1, k + 1):
             if raw_data[str(keys[j])][d] == '1':
                 cnt += 1
-        rates.append(cnt / 20 * 100)
+        rates.append(cnt / W * 100)
     if len(rates) < 10:
         return None
     return sum(rates) / len(rates)
 
 
-def dev_from_center(raw_data, d, upto):
-    """当前滚动20期开出率 偏离 中枢 的差值(百分点)。正=偏热，负=偏冷。"""
-    r = roll_rate_20(raw_data, d, upto)
-    c = center_of_20(raw_data, d, upto)
+def dev_from_center(raw_data, d, upto, W=20):
+    """当前滚动W期开出率 偏离 中枢 的差值(百分点)。正=偏热，负=偏冷。"""
+    r = roll_rate(raw_data, d, upto, W)
+    c = center_of(raw_data, d, upto, W)
     if r is None or c is None:
         return None
     return r - c
+
+
+# 兼容旧函数名（A线 W=20 即默认）
+def roll_rate_20(raw_data, d, upto):
+    return roll_rate(raw_data, d, upto, 20)
+
+def center_of_20(raw_data, d, upto):
+    return center_of(raw_data, d, upto, 20)
 
 
 def calc_prediction(raw_data):
@@ -597,6 +606,37 @@ def calc_prediction(raw_data):
         v5_best = v5_eligible[0]
         v5_gap = round(v5_eligible[0]['rev_rate'] - v5_eligible[1]['rev_rate'], 1) if len(v5_eligible) >= 2 else 999
     
+    # ===== A线/B线 双线独立选号 =====
+    # A线 = W20（主线，v5_best 就是 A线结果）
+    # B线 = W18（独立短窗口参考，独立选号，不与A线合并）
+    def _line_pick(W):
+        keys_int = sorted([int(k) for k in raw_data.keys() if k.isdigit()])
+        N2 = len(keys_int)
+        prev_bin2 = raw_data[str(keys_int[N2 - 1])]
+        missed2 = [d for d in range(10) if prev_bin2[d] == '0']
+        elig = []
+        for d in missed2:
+            if d not in STRONG_DIGITS:
+                continue
+            dv = dev_from_center(raw_data, d, N2 - 1, W)
+            if dv is None or dv > -10:
+                continue
+            # 反转率
+            if rev_total[d] > 0:
+                rev = rev_count[d] / rev_total[d] * 100
+            else:
+                rev = 0
+            elig.append({'digit': d, 'dev': dv, 'rev': rev})
+        if not elig:
+            return {'pick': None, 'skip': '无强回归号偏冷≥10点'}
+        elig.sort(key=lambda x: -x['rev'])
+        # gap过滤
+        if len(elig) >= 2 and (elig[0]['rev'] - elig[1]['rev']) < 3:
+            return {'pick': None, 'skip': '反转率差距<3%跳过'}
+        return {'pick': elig[0], 'skip': ''}
+    
+    b_line = _line_pick(18)
+    
     # 4. v4.0 等级判定
     result = {
         'next_period': N + 1,
@@ -614,6 +654,8 @@ def calc_prediction(raw_data):
         'v5_gap': v5_gap,
         'v5_eligible': v5_eligible,
         'v5_skip_reason': v5_skip_reason,
+        # A线/B线双线（A线=W20=v5_best，B线=W18独立参考）
+        'b_line': b_line,
     }
     
     if not candidates:
