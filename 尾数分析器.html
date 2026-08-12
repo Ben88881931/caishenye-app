@@ -329,6 +329,24 @@ if(predData){
         predH+='<div style="margin-top:6px;font-size:10px;color:#aaa">强回归号(0/2/3/4/7/8)跌深必反弹；反向号(1/5/9)别追。</div>';
         predH+='</div>';
     }
+    // ===== A线/B线 双线独立参考 =====
+    if(predData.b_line !== undefined){
+        var bl=predData.b_line;
+        predH+='<div style="margin-top:10px;padding:10px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px">';
+        predH+='<b style="color:#0ea5e9">↔ A线/B线 独立参考</b> <span style="font-size:11px;color:#999">(各自独立选号，互不合并)</span><br>';
+        // A线 = v5_best
+        if(predData.v5_best){
+            predH+='<div style="margin:6px 0;font-size:12px"><b>A线(W20):</b> 尾'+predData.v5_best.digit+' (反转率'+predData.v5_best.rev_rate+'%)</div>';
+        }else{
+            predH+='<div style="margin:6px 0;font-size:12px"><b>A线(W20):</b> 跳过('+predData.v5_skip_reason+')</div>';
+        }
+        if(bl && bl.pick){
+            predH+='<div style="margin:6px 0;font-size:12px"><b>B线(W18):</b> 尾'+bl.pick.digit+' (反转率'+bl.pick.rev+'%)</div>';
+        }else if(bl){
+            predH+='<div style="margin:6px 0;font-size:12px"><b>B线(W18):</b> 跳过('+bl.skip+')</div>';
+        }
+        predH+='</div>';
+    }
     predDiv.innerHTML=predH;
 }else{
     predDiv.innerHTML='';
