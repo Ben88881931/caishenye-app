@@ -106,19 +106,33 @@ draw();
 (function(){
   var keys=Object.keys(RAW).sort(function(a,b){return parseInt(a)-parseInt(b);});
   function oscState(d){
-      var N=keys.length;
-      var consec=0;
-      for(var i=N-1;i>=0;i--){if(RAW[keys[i]][d]==='0')consec++;else break;}
-      var cnt10=0;
-      for(var j=N-1;j>=Math.max(0,N-10);j--){if(RAW[keys[j]][d]==='1')cnt10++;}
-      var cnt5=0,cnt5prev=0;
-      for(var j=N-1;j>=N-5;j--){if(j>=0&&RAW[keys[j]][d]==='1')cnt5++;}
-      for(var j=N-6;j>=N-10;j--){if(j>=0&&RAW[keys[j]][d]==='1')cnt5prev++;}
-      if(consec===0)return {t:'🟢开出中',c:'#22c55e'};
-      if(consec===1)return cnt10>=5?{t:'🟡将震荡',c:'#eab308'}:{t:'🟢正常',c:'#22c55e'};
-      if(consec===2)return {t:'🟠震荡中',c:'#f97316'};
-      return {t:'🔴大遗漏',c:'#ef4444'};
-  }
+    var N=keys.length;
+    var consec=0;
+    for(var i=N-1;i>=0;i--){if(RAW[keys[i]][d]==='0')consec++;else break;}
+    // 单号反弹率
+    var b={};
+    var lo=-1;
+    for(var i=0;i<N;i++){
+      if(RAW[keys[i]][d]==='1'){
+        if(lo>=0){
+          var miss=parseInt(keys[i])-lo-1;
+          for(var x=1;x<=miss;x++){
+            if(!b[x])b[x]={t:0,h:0};
+            b[x].t++;
+            if(x===miss)b[x].h++;
+          }
+        }
+        lo=parseInt(keys[i]);
+      }
+    }
+    var r2 = b[2] ? (b[2].h/b[2].t*100) : 50;
+    var slip = 100 - r2; // 遗2期滑向大遗漏的概率
+    var slipTag = slip>=55 ? '🔴易滑' : slip>=45 ? '🟡中等' : '🟢稳定';
+    if(consec===0) return {t:'🟢刚出',c:'#22c55e',slip:slip,slipTag:slipTag};
+    if(consec===1) return {t:slipTag+'·震1',c:(slip>=55?'#ef4444':slip>=45?'#eab308':'#22c55e'),slip:slip,slipTag:slipTag};
+    if(consec===2) return {t:slipTag+'·震2临界',c:(slip>=55?'#ef4444':slip>=45?'#eab308':'#22c55e'),slip:slip,slipTag:slipTag};
+    return {t:'🔴大遗漏',c:'#ef4444',slip:slip,slipTag:slipTag};
+  };
   var pBounce={};
   for(var d=0;d<10;d++){
     pBounce[d]={};
