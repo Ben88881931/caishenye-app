@@ -27,6 +27,9 @@ td.numcol{padding:0}
 td.hit{background:transparent}
 /* 生肖分组间隔竖线：浅灰色，只作用数据区，不穿表头 */
 td.zfirst{border-left:2px solid #9ca3af!important}
+/* 生肖字格：当期开出才写生肖中文 */
+td.zodcell{width:22px;height:26px;min-width:22px;font-size:12px;font-weight:bold;color:#fbbf24;background:#232738}
+thead th.znth{width:22px;min-width:22px}
 .ball{display:block;width:20px;height:20px;line-height:20px;border-radius:5px;font-size:11px;font-weight:bold;color:#fff;text-align:center;margin:0 auto}
 .c0{background:linear-gradient(135deg,#ef4444,#b91c1c)}
 .c1{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
@@ -82,17 +85,19 @@ function renderYear(y){
   document.getElementById('years').querySelectorAll('button').forEach(function(b){b.className=(parseInt(b.dataset.y)===y)?'on':'';});
   var nmap=numsOfZodiac(y);
 
-  // 表头：第一行生肖名(colspan=号码数)，第二行号码
+  // 表头：第一行生肖名(colspan=号码数+1)，第二行号码（末尾加1空列给生肖字）
   var h='<thead><tr><th class="period" rowspan="2">期</th>';
   for(var zi=0;zi<12;zi++){
     var z=ZODS[zi];
     var ns=nmap[z];
-    h+='<th colspan="'+ns.length+'"><div class="zodname">'+z+'</div></th>';
+    h+='<th colspan="'+(ns.length+1)+'"><div class="zodname">'+z+'</div></th>';
   }
   h+='</tr><tr>';
   for(var zi2=0;zi2<12;zi2++){
     var z2=ZODS[zi2];
     var ns2=nmap[z2];
+    // 生肖字格对应表头（空）
+    h+='<th class="znth"></th>';
     for(var k=0;k<ns2.length;k++){
       var n=ns2[k];
       h+='<th><div class="numhdr">'+(n<10?'0'+n:n)+'</div></th>';
@@ -100,16 +105,21 @@ function renderYear(y){
   }
   h+='</tr></thead><tbody>';
 
-  // 每期一行：号码落在对应号码列下
+  // 每期一行：每个生肖组 = 1个生肖字格 + N个号码格
   for(var i=arr.length-1;i>=0;i--){
     var r=arr[i];
-    // 建立 号码->颜色
+    // 建立 号码->颜色，以及当期开出的生肖集合
     var numColor={};
-    for(var j=0;j<7;j++){ numColor[r.nums[j]]=colorOf(r.nums[j]); }
+    var openedZod={};
+    for(var j=0;j<7;j++){ numColor[r.nums[j]]=colorOf(r.nums[j]); openedZod[r.zods[j]]=true; }
     h+='<tr><td class="period">'+r.p+'</td>';
     for(var zi3=0;zi3<12;zi3++){
       var z3=ZODS[zi3];
       var ns3=nmap[z3];
+      // 生肖字格：当期开出才写生肖中文，否则留空
+      var ztxt=openedZod[z3]?z3:'';
+      h+='<td class="zodcell">'+ztxt+'</td>';
+      // 号码格
       for(var k2=0;k2<ns3.length;k2++){
         var n3=ns3[k2];
         var zf=(k2===0)?' zfirst':'';
