@@ -25,12 +25,15 @@ thead .zodhdr{font-size:10px;color:#fbbf24;padding:0 0 3px;line-height:1.1}
 th.period,td.period{position:sticky;left:0;z-index:15;background:#1a1d30;font-size:11px;color:#a78bfa;font-weight:bold;min-width:42px;padding:0 3px}
 thead th.period{z-index:25}
 /* 数据格 */
-td{width:20px;height:26px;min-width:20px}
-td.hit{font-size:0}
-.dot{display:inline-block;width:14px;height:14px;border-radius:50%}
+td{width:26px;height:34px;min-width:26px;text-align:center}
+/* 开出的号码：波色球写数字，下面标生肖 */
+td.hit{position:relative;vertical-align:top;padding-top:2px}
+.ballcell{display:inline-flex;flex-direction:column;align-items:center;line-height:1}
+.ballnum{display:inline-block;width:20px;height:20px;line-height:20px;border-radius:50%;font-size:11px;font-weight:bold;color:#fff;text-align:center}
 .c0{background:radial-gradient(circle at 35% 35%,#f87171,#b91c1c);box-shadow:0 0 4px rgba(239,68,68,.6)}
 .c1{background:radial-gradient(circle at 35% 35%,#60a5fa,#1d4ed8);box-shadow:0 0 4px rgba(59,130,246,.6)}
 .c2{background:radial-gradient(circle at 35% 35%,#4ade80,#15803d);box-shadow:0 0 4px rgba(34,197,94,.6)}
+.ballzod{font-size:10px;color:#fbbf24;line-height:1;margin-top:1px}
 .foot{text-align:center;font-size:11px;color:#6b7280;margin-top:10px}
 </style>
 </head>
@@ -80,12 +83,15 @@ function renderYear(y){
   // 每期一行
   for(var i=arr.length-1;i>=0;i--){
     var r=arr[i];
-    var hitSet={};
-    for(var j=0;j<7;j++) hitSet[r.nums[j]]=colorOf(r.nums[j]);
+    var numInfo={}; // 号码 -> {color, zodiac}
+    for(var j=0;j<7;j++){
+      numInfo[r.nums[j]] = {color: colorOf(r.nums[j]), zodiac: r.zods[j]};
+    }
     h+='<tr><td class="period">'+r.p+'</td>';
     for(var n=1;n<=49;n++){
-      if(hitSet[n]!==undefined){
-        h+='<td class="hit"><span class="dot c'+hitSet[n]+'"></span></td>';
+      if(numInfo[n]){
+        var c=numInfo[n].color, z=numInfo[n].zodiac||'';
+        h+='<td class="hit"><span class="ballcell"><span class="ballnum c'+c+'">'+n+'</span><span class="ballzod">'+z+'</span></span></td>';
       }else{
         h+='<td></td>';
       }
