@@ -25,15 +25,9 @@ thead th.period{z-index:25}
 td{width:24px;height:26px;min-width:24px}
 td.numcol{padding:0}
 td.hit{background:transparent}
-/* 生肖组奇偶交替背景 */
-td.numcol.oddz{background:#181c30}
-td.numcol.evenz{background:#141726}
 /* 生肖组第一列左侧加粗分隔线 */
 td.zfirst{border-left:3px solid #6d5cff!important}
 thead th.zfirst{border-left:3px solid #6d5cff!important}
-/* 表头生肖名分组背景 */
-thead th.oddz{background:#1f2337}
-thead th.evenz{background:#252a44}
 .ball{display:block;width:20px;height:20px;line-height:20px;border-radius:5px;font-size:11px;font-weight:bold;color:#fff;text-align:center;margin:0 auto}
 .c0{background:linear-gradient(135deg,#ef4444,#b91c1c)}
 .c1{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
@@ -94,18 +88,16 @@ function renderYear(y){
   for(var zi=0;zi<12;zi++){
     var z=ZODS[zi];
     var ns=nmap[z];
-    var zcls=(zi%2===0)?'evenz':'oddz';
-    h+='<th colspan="'+ns.length+'" class="'+zcls+' zfirst"><div class="zodname">'+z+'</div></th>';
+    h+='<th colspan="'+ns.length+'" class="zfirst"><div class="zodname">'+z+'</div></th>';
   }
   h+='</tr><tr>';
   for(var zi2=0;zi2<12;zi2++){
     var z2=ZODS[zi2];
     var ns2=nmap[z2];
-    var zc2=(zi2%2===0)?'evenz':'oddz';
     for(var k=0;k<ns2.length;k++){
       var n=ns2[k];
       var zf=(k===0)?' zfirst':'';
-      h+='<th class="'+zc2+zf+'"><div class="numhdr">'+(n<10?'0'+n:n)+'</div></th>';
+      h+='<th class="'+zf+'"><div class="numhdr">'+(n<10?'0'+n:n)+'</div></th>';
     }
   }
   h+='</tr></thead><tbody>';
@@ -120,11 +112,10 @@ function renderYear(y){
     for(var zi3=0;zi3<12;zi3++){
       var z3=ZODS[zi3];
       var ns3=nmap[z3];
-      var zc3=(zi3%2===0)?'evenz':'oddz';
       for(var k2=0;k2<ns3.length;k2++){
         var n3=ns3[k2];
         var zf=(k2===0)?' zfirst':'';
-        var cls='numcol '+zc3+zf;
+        var cls='numcol'+zf;
         if(numColor[n3]!==undefined){
           h+='<td class="'+cls+' hit"><span class="ball c'+numColor[n3]+'">'+(n3<10?'0'+n3:n3)+'</span></td>';
         }else{
