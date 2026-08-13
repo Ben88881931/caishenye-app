@@ -128,7 +128,7 @@ function renderYear(y){
   h+='</tr></thead><tbody>';
 
   // 每期一行：每个生肖组 = 1个生肖字格(遗漏颜色) + N个号码格
-  for(var i=arr.length-1;i>=0;i--){
+  for(var i=0;i<arr.length;i++){
     var r=arr[i];
     var numColor={};
     for(var j=0;j<7;j++){ numColor[r.nums[j]]=colorOf(r.nums[j]); }

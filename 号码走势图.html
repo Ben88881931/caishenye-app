@@ -74,7 +74,7 @@ function renderYear(y){
   var h='<thead><tr><th class="period">期号</th>';
   for(var n=1;n<=49;n++){h+='<th><div class="numhdr">'+(n<10?'0'+n:n)+'</div><div class="zodhdr">'+(zmap[n]||'-')+'</div></th>';}
   h+='</tr></thead><tbody>';
-  for(var i=arr.length-1;i>=0;i--){
+  for(var i=0;i<arr.length;i++){
     var r=arr[i];
     var numInfo={};
     for(var j=0;j<7;j++){numInfo[r.nums[j]]={color:colorOf(r.nums[j]),zodiac:r.zods[j]};}

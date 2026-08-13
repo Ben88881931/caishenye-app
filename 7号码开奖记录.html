@@ -46,7 +46,7 @@ function renderYear(y){
   var arr=D.filter(function(r){return r.y===y;});
   document.getElementById('years').querySelectorAll('button').forEach(function(b){b.className=(parseInt(b.dataset.y)===y)?'on':'';});
   var h='<tr><th>期号</th><th>开奖号码</th><th>生肖</th></tr>';
-  for(var i=arr.length-1;i>=0;i--){
+  for(var i=0;i<arr.length;i++){
     var r=arr[i],balls='',zods='';
     for(var j=0;j<7;j++){
       var n=r.nums[j],c=colorOf(n);

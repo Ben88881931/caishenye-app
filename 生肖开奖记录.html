@@ -62,7 +62,7 @@ function renderYear(y){
   zg+='</div>';
   document.getElementById('zstat').innerHTML=zg;
   var h='<tr><th>期号</th><th>号码 / 生肖</th></tr>';
-  for(var i=arr.length-1;i>=0;i--){
+  for(var i=0;i<arr.length;i++){
     var r=arr[i],cells='';
     for(var j=0;j<7;j++){
       var n=r.nums[j],z=r.zods[j],c=colorOf(n);
