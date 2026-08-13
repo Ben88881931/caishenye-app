@@ -27,9 +27,14 @@ td.numcol{padding:0}
 td.hit{background:transparent}
 /* 生肖分组间隔竖线：浅灰色，只作用数据区，不穿表头 */
 td.zfirst{border-left:2px solid #9ca3af!important}
-/* 生肖字格：当期开出才写生肖中文 */
-td.zodcell{width:22px;height:26px;min-width:22px;font-size:12px;font-weight:bold;color:#fbbf24;background:#232738}
-thead th.znth{width:22px;min-width:22px}
+/* 生肖字格：方格样式，按遗漏颜色标注 */
+td.zodcell{width:26px;height:26px;min-width:26px;font-size:12px;font-weight:bold;text-align:center;color:#fff;border:1px solid #3a3f5c}
+/* 遗漏颜色（照搬遗漏颜色表） */
+td.z-red{background:#ef4444;color:#fff}
+td.z-m1{background:#3b82f6;color:#fff}
+td.z-m2{background:#22c55e;color:#fff}
+td.z-m3{background:#eab308;color:#111}
+thead th.znth{width:26px;min-width:26px}
 .ball{display:block;width:20px;height:20px;line-height:20px;border-radius:5px;font-size:11px;font-weight:bold;color:#fff;text-align:center;margin:0 auto}
 .c0{background:linear-gradient(135deg,#ef4444,#b91c1c)}
 .c1{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
@@ -38,12 +43,18 @@ thead th.znth{width:22px;min-width:22px}
 </style>
 </head>
 <body>
-<h1>🐯 生肖走势图（号码对号入座）</h1>
+<h1>🐯 生肖走势图</h1>
 <div class="nav">
   <a href="生肖走势图.html" class="on">生肖走势图</a>
   <a href="号码走势图.html">号码走势图</a>
   <a href="生肖开奖记录.html">生肖记录</a>
   <a href="7号码开奖记录.html">7号码记录</a>
+</div>
+<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:11px;color:#9ca3af;margin-bottom:8px">
+  <span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ef4444;margin-right:4px"></i>开出</span>
+  <span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#3b82f6;margin-right:4px"></i>遗漏1期</span>
+  <span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#22c55e;margin-right:4px"></i>遗漏2期</span>
+  <span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#eab308;margin-right:4px"></i>遗漏3期+</span>
 </div>
 <div class="yearbar" id="years"></div>
 <div class="wrap"><table id="tbl"></table></div>
@@ -85,6 +96,16 @@ function renderYear(y){
   document.getElementById('years').querySelectorAll('button').forEach(function(b){b.className=(parseInt(b.dataset.y)===y)?'on':'';});
   var nmap=numsOfZodiac(y);
 
+  // 预计算：每期每个生肖是否开出（arr 升序）
+  // periodOpen[i] = { p, open: {zod:true/undefined} }
+  var periodOpen=[];
+  for(var pi=0;pi<arr.length;pi++){
+    var rr=arr[pi];
+    var open={};
+    for(var jj=0;jj<7;jj++){ open[rr.zods[jj]]=true; }
+    periodOpen.push({p:rr.p, open:open});
+  }
+
   // 表头：第一行生肖名(colspan=号码数+1)，第二行号码（末尾加1空列给生肖字）
   var h='<thead><tr><th class="period" rowspan="2">期</th>';
   for(var zi=0;zi<12;zi++){
@@ -105,20 +126,30 @@ function renderYear(y){
   }
   h+='</tr></thead><tbody>';
 
-  // 每期一行：每个生肖组 = 1个生肖字格 + N个号码格
+  // 每期一行：每个生肖组 = 1个生肖字格(遗漏颜色) + N个号码格
   for(var i=arr.length-1;i>=0;i--){
     var r=arr[i];
-    // 建立 号码->颜色，以及当期开出的生肖集合
     var numColor={};
-    var openedZod={};
-    for(var j=0;j<7;j++){ numColor[r.nums[j]]=colorOf(r.nums[j]); openedZod[r.zods[j]]=true; }
+    for(var j=0;j<7;j++){ numColor[r.nums[j]]=colorOf(r.nums[j]); }
     h+='<tr><td class="period">'+r.p+'</td>';
     for(var zi3=0;zi3<12;zi3++){
       var z3=ZODS[zi3];
       var ns3=nmap[z3];
-      // 生肖字格：当期开出才写生肖中文，否则留空
-      var ztxt=openedZod[z3]?z3:'';
-      h+='<td class="zodcell">'+ztxt+'</td>';
+      // 生肖字格：计算连续遗漏期数（从这一期往前数）
+      var opened=periodOpen[i].open[z3];
+      var consec=0;
+      if(opened){
+        consec=0; // 当期开出
+      }else{
+        consec=1;
+        for(var kk=i-1;kk>=0;kk--){
+          if(!periodOpen[kk].open[z3]) consec++;
+          else break;
+        }
+      }
+      var zcls=consec===0?'z-red':(consec===1?'z-m1':(consec===2?'z-m2':'z-m3'));
+      var ztxt=consec===0?z3:(consec>=3?consec:'');
+      h+='<td class="zodcell '+zcls+'">'+ztxt+'</td>';
       // 号码格
       for(var k2=0;k2<ns3.length;k2++){
         var n3=ns3[k2];
@@ -135,7 +166,7 @@ function renderYear(y){
   }
   h+='</tbody>';
   document.getElementById('tbl').innerHTML=h;
-  document.getElementById('ft').textContent=y+'年 共'+arr.length+'期 | 每个号码对号入座';
+  document.getElementById('ft').textContent=y+'年 共'+arr.length+'期 | 生肖字格:红=开出 蓝=遗1 绿=遗2 黄=遗3+';
 }
 function init(){
   var years={};D.forEach(function(r){years[r.y]=1;});
