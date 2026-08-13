@@ -130,11 +130,10 @@ function renderYear(y){
   // 提前为每个生肖计算"每期所属遗漏段的总长度"，实现整段同色
   // zcolor[i][z] = 该期该生肖的颜色 class（遗漏段总长决定）
   var zcolor=[]; // zcolor[i] = {zod: class}
-  for(var i=0;i<arr.length;i++) zcolor.push({});
+  var zmark=[];  // zmark[i] = {zod: 段尾数字(空则无)}
+  for(var i=0;i<arr.length;i++){ zcolor.push({}); zmark.push({}); }
   for(var zi3=0;zi3<12;zi3++){
     var z3=ZODS[zi3];
-    // 正向扫描，记录每段遗漏的总长度
-    // missGroups: 数组，每项 {startIdx, endIdx, len}
     var start=null;
     for(var i=0;i<=arr.length;i++){
       var isMiss = (i<arr.length) && !periodOpen[i].open[z3];
@@ -142,9 +141,10 @@ function renderYear(y){
         if(start===null) start=i;
       }else{
         if(start!==null){
-          var len=i-start; // 这段遗漏长度
+          var len=i-start; // 这段遗漏总长度
           var cls = len===1?'z-m1':(len===2?'z-m2':'z-m3');
           for(var k=start;k<i;k++) zcolor[k][z3]=cls;
+          zmark[i-1][z3]=len; // 段尾(最新一格)写数字
           start=null;
         }
       }
@@ -167,7 +167,8 @@ function renderYear(y){
         ztxt=z3;
       }else{
         zcls=zcolor[i][z3]||'z-m3';
-        ztxt='';
+        var mk=zmark[i][z3];
+        ztxt=(mk!==undefined)?mk:'';
       }
       h+='<td class="zodcell"><span class="zp '+zcls+'">'+ztxt+'</span></td>';
       // 号码格
