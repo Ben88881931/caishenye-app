@@ -127,48 +127,56 @@ function renderYear(y){
   }
   h+='</tr></thead><tbody>';
 
+  // 提前为每个生肖计算"每期所属遗漏段的总长度"，实现整段同色
+  // zcolor[i][z] = 该期该生肖的颜色 class（遗漏段总长决定）
+  var zcolor=[]; // zcolor[i] = {zod: class}
+  for(var i=0;i<arr.length;i++) zcolor.push({});
+  for(var zi3=0;zi3<12;zi3++){
+    var z3=ZODS[zi3];
+    // 正向扫描，记录每段遗漏的总长度
+    // missGroups: 数组，每项 {startIdx, endIdx, len}
+    var start=null;
+    for(var i=0;i<=arr.length;i++){
+      var isMiss = (i<arr.length) && !periodOpen[i].open[z3];
+      if(isMiss){
+        if(start===null) start=i;
+      }else{
+        if(start!==null){
+          var len=i-start; // 这段遗漏长度
+          var cls = len===1?'z-m1':(len===2?'z-m2':'z-m3');
+          for(var k=start;k<i;k++) zcolor[k][z3]=cls;
+          start=null;
+        }
+      }
+    }
+  }
+
   // 每期一行：每个生肖组 = 1个生肖字格(遗漏颜色) + N个号码格
   for(var i=0;i<arr.length;i++){
     var r=arr[i];
     var numColor={};
     for(var j=0;j<7;j++){ numColor[r.nums[j]]=colorOf(r.nums[j]); }
     h+='<tr><td class="period">'+r.p+'</td>';
-    for(var zi3=0;zi3<12;zi3++){
-      var z3=ZODS[zi3];
+    for(var zi4=0;zi4<12;zi4++){
+      var z3=ZODS[zi4];
       var ns3=nmap[z3];
-      // 生肖字格：计算连续遗漏期数（从这一期往前数）
       var opened=periodOpen[i].open[z3];
-      var consec=0;
-      if(opened){
-        consec=0; // 当期开出
-      }else{
-        consec=1;
-        for(var kk=i-1;kk>=0;kk--){
-          if(!periodOpen[kk].open[z3]) consec++;
-          else break;
-        }
-      }
       var zcls, ztxt;
-      if(consec===0){
+      if(opened){
         zcls='z-out';
         ztxt=z3;
-      }else if(consec===1){
-        zcls='z-m1'; ztxt='';
-      }else if(consec===2){
-        zcls='z-m2'; ztxt='';
       }else{
-        zcls='z-m3'; ztxt='';
+        zcls=zcolor[i][z3]||'z-m3';
+        ztxt='';
       }
       h+='<td class="zodcell"><span class="zp '+zcls+'">'+ztxt+'</span></td>';
       // 号码格
       for(var k2=0;k2<ns3.length;k2++){
         var n3=ns3[k2];
-        var zf='';
-        var cls='numcol'+zf;
         if(numColor[n3]!==undefined){
-          h+='<td class="'+cls+' hit"><span class="ball c'+numColor[n3]+'">'+(n3<10?'0'+n3:n3)+'</span></td>';
+          h+='<td class="numcol hit"><span class="ball c'+numColor[n3]+'">'+(n3<10?'0'+n3:n3)+'</span></td>';
         }else{
-          h+='<td class="'+cls+'"></td>';
+          h+='<td class="numcol"></td>';
         }
       }
     }
