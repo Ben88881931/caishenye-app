@@ -53,15 +53,17 @@ function colorOf(n){return RED.has(n)?0:(BLUE.has(n)?1:2);}
 function zodiacOfYear(y){
   var map={};
   var arr=D.filter(function(r){return r.y===y;});
-  // 取该年最后一次出现的完整映射（用最靠后的期，确保是春节后的太岁生肖）
-  var last=arr[arr.length-1];
-  if(last){for(var j=0;j<7;j++){map[last.nums[j]]=last.zods[j];}}
-  // 用公式补全49个号
+  // 遍历该年所有记录，取每个号码最后一次出现的生肖（records已含公式算好的正确生肖）
+  for(var i=0;i<arr.length;i++){
+    var r=arr[i];
+    for(var j=0;j<7;j++){ map[r.nums[j]]=r.zods[j]; }
+  }
+  // 若还有号码没出现过（该年某号码一次没开，极少见），用太岁公式补全
   if(map[1]){
     var ZODS=['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪'];
     var tai=map[1];
     var idx=ZODS.indexOf(tai);
-    for(var n=1;n<=49;n++){map[n]=ZODS[((idx-(n-1))%12+12)%12];}
+    for(var n=1;n<=49;n++){ if(!map[n]) map[n]=ZODS[((idx-(n-1))%12+12)%12]; }
   }
   return map;
 }
