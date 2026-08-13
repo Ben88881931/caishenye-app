@@ -50,7 +50,8 @@ function renderYear(y){
     var r=arr[i],balls='',zods='';
     for(var j=0;j<7;j++){
       var n=r.nums[j],c=colorOf(n);
-      balls+='<span class="ball c'+c+'">'+(n<10?'0'+n:n)+'</span>';
+      var gap=(j===6)?' style="margin-left:8px"':'';
+      balls+='<span class="ball c'+c+'"'+gap+'>'+(n<10?'0'+n:n)+'</span>';
       zods+='<span class="zod">'+r.zods[j]+'</span> ';
     }
     h+='<tr><td style="font-weight:bold;color:#a78bfa">'+r.p+'</td><td>'+balls+'</td><td style="font-size:11px">'+zods+'</td></tr>';
