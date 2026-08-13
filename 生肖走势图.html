@@ -26,13 +26,15 @@ td{width:24px;height:26px;min-width:24px}
 td.numcol{padding:0;height:38px;vertical-align:middle}
 td.hit{background:transparent}
 /* 生肖字格：方格样式，按遗漏颜色标注 */
-td.zodcell{width:24px;height:38px;min-width:24px;font-size:12px;font-weight:bold;text-align:center;color:#fff;border:0}
+td.zodcell{width:24px;height:38px;min-width:24px;font-size:12px;font-weight:bold;text-align:center;color:#fff;border:0;padding:8px 2px}
 /* 开出：不标色，写生肖中文 */
-td.z-out{background:#232738;color:#fbbf24}
+/* 生肖字格：td透明，内层 .zp 为圆角小方块(仿号码球) */
+.zp{display:block;width:20px;height:20px;line-height:20px;border-radius:5px;font-size:11px;font-weight:bold;color:#fff;text-align:center;margin:0 auto}
+.zp.z-out{background:#232738;color:#fbbf24}
 /* 遗漏颜色（照搬遗漏颜色表） */
-td.z-m1{background:#3b82f6;color:#fff}
-td.z-m2{background:#22c55e;color:#fff}
-td.z-m3{background:#eab308;color:#111}
+.zp.z-m1{background:#3b82f6;color:#fff}
+.zp.z-m2{background:#22c55e;color:#fff}
+.zp.z-m3{background:#eab308;color:#111}
 thead th.znth{width:24px;min-width:24px}
 .ball{display:block;width:20px;height:20px;line-height:20px;border-radius:5px;font-size:11px;font-weight:bold;color:#fff;text-align:center;margin:0 auto}
 .c0{background:linear-gradient(135deg,#ef4444,#b91c1c)}
@@ -157,7 +159,7 @@ function renderYear(y){
       }else{
         zcls='z-m3'; ztxt='';
       }
-      h+='<td class="zodcell '+zcls+'">'+ztxt+'</td>';
+      h+='<td class="zodcell"><span class="zp '+zcls+'">'+ztxt+'</span></td>';
       // 号码格
       for(var k2=0;k2<ns3.length;k2++){
         var n3=ns3[k2];
