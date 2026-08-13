@@ -767,13 +767,89 @@ def git_push(period):
         err(f"Git 操作失败: {e}")
         return False
 
+# 生肖映射（按年份太岁，逐年滚动）——这里只用于"无生肖输入时"的兜底，实际生肖由用户提供或从历史页抄录
+ZODIACS = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪']
+
+def update_full_num_pages(period, nums):
+    """把7个号码追加到 7号码开奖记录.html 和 生肖开奖记录.html 的 DATA 数组，
+    并追加到5年历史数据 JSON。生肖需用户后续提供（当前默认不填，留空待补）。"""
+    log(f"\n[更新] 7号码/生肖页面 + 历史数据...")
+    
+    # 1. 追加到5年历史数据（createContent/lottery5y）
+    hist_path = os.path.join(
+        os.path.expanduser('~'), '.sosoagent', 'workspaces', 'agent-620594',
+        'createContent', 'lottery5y', 'lottery_5y_full.json'
+    )
+    if os.path.exists(hist_path):
+        try:
+            with open(hist_path, 'r', encoding='utf-8') as f:
+                hist = json.load(f)
+            # 用当前年份（从系统时间推断）
+            import datetime
+            year = datetime.datetime.now().year
+            key = f"{year}-{period}"
+            hist[key] = [
+                {'num': n, 'zodiac': ''} for n in nums
+            ]
+            with open(hist_path, 'w', encoding='utf-8') as f:
+                json.dump(hist, f, ensure_ascii=False)
+            log(f"  ✓ 历史数据已追加第{period}期（生肖待补）")
+        except Exception as e:
+            log(f"  提示: 历史数据追加跳过 ({e})")
+    else:
+        log(f"  提示: 未找到历史数据文件，跳过")
+    
+    # 2. 更新两个页面（7号码开奖记录 + 生肖开奖记录）
+    for html_file in ["7号码开奖记录.html", "生肖开奖记录.html"]:
+        if not os.path.exists(html_file):
+            continue
+        with open(html_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        # 找到 var D=[...]; 注入新记录（号码 + 空生肖占位）
+        nums_js = ','.join(str(n) for n in nums)
+        # 生肖先用空串占位
+        zods_js = ','.join(f'""' for _ in nums)
+        new_rec = '{"y":%d,"p":%d,"nums":[%s],"zods":[%s]}' % (
+            __import__('datetime').datetime.now().year, period, nums_js, zods_js
+        )
+        # 定位 var D= 开头，在第一个 ] 后插入（简化：追加到数组末尾）
+        marker = 'var D='
+        if marker in content:
+            # 找到数组结束的 ];
+            arr_end = content.index('];', content.index(marker))
+            # 检查是否已有该期（去重）
+            if ('"p":%d' % period) in content:
+                log(f"  ✓ {html_file} 已含第{period}期，跳过")
+                continue
+            content = content[:arr_end] + ',' + new_rec + content[arr_end:]
+            with open(html_file, 'w', encoding='utf-8') as f:
+                f.write(content)
+            log(f"  ✓ {html_file} 已追加第{period}期")
+    
+    log(f"  ⚠️ 生肖标注需手动补充（或下次开奖时一并提供生肖）")
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__)
         sys.exit(1)
     
     period = int(sys.argv[1])
-    tails = [int(x.strip()) for x in sys.argv[2].split(',')]
+    raw_input = sys.argv[2]
+    
+    # 智能判断：7个号码（含两位或大于9的数字）还是去重尾数（0-9）
+    parts = [x.strip() for x in raw_input.split(',') if x.strip() != '']
+    nums = [int(p) for p in parts]
+    # 判断：存在>9的数 且 共7个 => 视为7个完整号码
+    is_full_nums = (len(nums) == 7 and any(n > 9 for n in nums))
+    
+    if is_full_nums and len(nums) == 7:
+        # 7个号码输入：转去重尾数
+        tails = sorted(set(n % 10 for n in nums))
+        log(f"输入: 7个号码 {nums}")
+    else:
+        # 去重尾数输入
+        tails = sorted(set(nums))
+        log(f"输入: 去重尾数 {tails}")
     
     log(f"{'='*50}")
     log(f"财神爷小程序 - 每日更新（含全量检测）")
@@ -811,6 +887,10 @@ def main():
     
     verify_alldata("尾数分析器.html", data)
     verify_ice("尾数分析器.html", data)
+    
+    # 更新 7号码开奖记录 + 生肖开奖记录（若有7个号码输入）
+    if is_full_nums and len(nums) == 7:
+        update_full_num_pages(period, nums)
     
     log(f"\n{'='*50}")
     if ERRORS:
