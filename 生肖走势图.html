@@ -25,8 +25,6 @@ thead th.period{z-index:25}
 td{width:24px;height:26px;min-width:24px}
 td.numcol{padding:0}
 td.hit{background:transparent}
-/* 生肖分组间隔竖线：浅灰色，只作用数据区，不穿表头 */
-td.zfirst{border-left:2px solid #9ca3af!important}
 /* 生肖字格：方格样式，按遗漏颜色标注 */
 td.zodcell{width:26px;height:26px;min-width:26px;font-size:12px;font-weight:bold;text-align:center;color:#fff;border:1px solid #3a3f5c}
 /* 开出：不标色，写生肖中文 */
@@ -150,21 +148,20 @@ function renderYear(y){
       }
       var zcls, ztxt;
       if(consec===0){
-        // 开出：不标色，写生肖中文
         zcls='z-out';
         ztxt=z3;
       }else if(consec===1){
-        zcls='z-m1'; ztxt='1';
+        zcls='z-m1'; ztxt='';
       }else if(consec===2){
-        zcls='z-m2'; ztxt='2';
+        zcls='z-m2'; ztxt='';
       }else{
-        zcls='z-m3'; ztxt=consec;
+        zcls='z-m3'; ztxt='';
       }
       h+='<td class="zodcell '+zcls+'">'+ztxt+'</td>';
       // 号码格
       for(var k2=0;k2<ns3.length;k2++){
         var n3=ns3[k2];
-        var zf=(k2===0)?' zfirst':'';
+        var zf='';
         var cls='numcol'+zf;
         if(numColor[n3]!==undefined){
           h+='<td class="'+cls+' hit"><span class="ball c'+numColor[n3]+'">'+(n3<10?'0'+n3:n3)+'</span></td>';
