@@ -18,13 +18,14 @@ h1{text-align:center;font-size:18px;color:#fbbf24;margin-bottom:10px}
 table{border-collapse:collapse;width:max-content;min-width:100%}
 th,td{border:1px solid #3a3f5c;text-align:center;padding:0}
 thead th{position:sticky;top:0;z-index:20;background:#252a44}
-thead .zodname{font-size:14px;color:#e5e7eb;padding:4px 0;line-height:1.2;font-weight:bold}
-thead .zodnums{font-size:10px;color:#9ca3af;padding:0 4px 4px;line-height:1.1}
+thead .zodname{font-size:13px;color:#e5e7eb;padding:3px 0;line-height:1.2;font-weight:bold}
+thead .numhdr{font-size:10px;color:#a5b4fc;padding:1px 0 3px;line-height:1.1}
 th.period,td.period{position:sticky;left:0;z-index:15;background:#1a1d30;font-size:11px;color:#fbbf24;font-weight:bold;min-width:42px;padding:0 3px}
 thead th.period{z-index:25}
-td{min-width:34px;height:34px;padding:2px}
-td.zodcell{text-align:left;vertical-align:top}
-.ball{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:5px;font-size:12px;font-weight:bold;color:#fff;text-align:center;margin:1px}
+td{width:24px;height:26px;min-width:24px}
+td.numcol{padding:0}
+td.hit{background:transparent}
+.ball{display:block;width:20px;height:20px;line-height:20px;border-radius:5px;font-size:11px;font-weight:bold;color:#fff;text-align:center;margin:0 auto}
 .c0{background:linear-gradient(135deg,#ef4444,#b91c1c)}
 .c1{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
 .c2{background:linear-gradient(135deg,#22c55e,#15803d)}
@@ -32,7 +33,7 @@ td.zodcell{text-align:left;vertical-align:top}
 </style>
 </head>
 <body>
-<h1>🐯 生肖走势图（号码按生肖归类）</h1>
+<h1>🐯 生肖走势图（号码对号入座）</h1>
 <div class="nav">
   <a href="生肖走势图.html" class="on">生肖走势图</a>
   <a href="号码走势图.html">号码走势图</a>
@@ -49,7 +50,6 @@ var RED=new Set([1,2,7,8,12,13,18,19,23,24,29,30,34,35,40,45,46]);
 var BLUE=new Set([3,4,9,10,14,15,20,25,26,31,36,37,41,42,47,48]);
 function colorOf(n){return RED.has(n)?0:(BLUE.has(n)?1:2);}
 
-// 该年太岁生肖（从该年任意一期记录的 zods 反推：号码1的生肖=太岁）
 function taishuOfYear(y){
   var arr=D.filter(function(r){return r.y===y;});
   var last=null;
@@ -58,24 +58,20 @@ function taishuOfYear(y){
       if(arr[i].nums[j]===1) last=arr[i].zods[j];
     }
   }
-  // 取该年最后一个"号码1"的生肖（=该年主太岁，跨年取年末那个）
   if(last) return last;
   if(arr.length){return arr[arr.length-1].zods[0];}
   return '马';
 }
-// 号码→生肖（太岁公式）
 function zodiacOf(num, tai){
   var idx=ZODS.indexOf(tai);
   return ZODS[((idx-(num-1))%12+12)%12];
 }
-// 该年生肖→号码列表
+// 该年生肖→号码列表（已按升序）
 function numsOfZodiac(y){
   var tai=taishuOfYear(y);
   var m={};
   ZODS.forEach(function(z){m[z]=[];});
-  for(var n=1;n<=49;n++){
-    m[zodiacOf(n,tai)].push(n);
-  }
+  for(var n=1;n<=49;n++){ m[zodiacOf(n,tai)].push(n); }
   return m;
 }
 
@@ -84,42 +80,48 @@ function renderYear(y){
   document.getElementById('years').querySelectorAll('button').forEach(function(b){b.className=(parseInt(b.dataset.y)===y)?'on':'';});
   var nmap=numsOfZodiac(y);
 
-  // 表头
-  var h='<thead><tr><th class="period">期号</th>';
+  // 表头：第一行生肖名(colspan=号码数)，第二行号码
+  var h='<thead><tr><th class="period" rowspan="2">期</th>';
   for(var zi=0;zi<12;zi++){
     var z=ZODS[zi];
-    var nums=nmap[z];
-    h+='<th><div class="zodname">'+z+'</div><div class="zodnums">'+nums.map(function(n){return (n<10?'0'+n:n);}).join(' ')+'</div></th>';
+    var ns=nmap[z];
+    h+='<th colspan="'+ns.length+'"><div class="zodname">'+z+'</div></th>';
+  }
+  h+='</tr><tr>';
+  for(var zi2=0;zi2<12;zi2++){
+    var z2=ZODS[zi2];
+    var ns2=nmap[z2];
+    for(var k=0;k<ns2.length;k++){
+      var n=ns2[k];
+      h+='<th><div class="numhdr">'+(n<10?'0'+n:n)+'</div></th>';
+    }
   }
   h+='</tr></thead><tbody>';
 
-  // 每期一行
+  // 每期一行：号码落在对应号码列下
   for(var i=arr.length-1;i>=0;i--){
     var r=arr[i];
-    // 当期每个号码归属哪个生肖
-    var byZod={};
-    ZODS.forEach(function(z){byZod[z]=[];});
-    for(var j=0;j<7;j++){
-      var n=r.nums[j];
-      var z=r.zods[j]; // 直接用 records 里已算好的生肖
-      byZod[z].push(n);
-    }
+    // 建立 号码->颜色
+    var numColor={};
+    for(var j=0;j<7;j++){ numColor[r.nums[j]]=colorOf(r.nums[j]); }
     h+='<tr><td class="period">'+r.p+'</td>';
-    for(var zi=0;zi<12;zi++){
-      var z=ZODS[zi];
-      var ns=byZod[z];
-      var cell='';
-      for(var k=0;k<ns.length;k++){
-        var n=ns[k], c=colorOf(n);
-        cell+='<span class="ball c'+c+'">'+(n<10?'0'+n:n)+'</span>';
+    for(var zi3=0;zi3<12;zi3++){
+      var z3=ZODS[zi3];
+      var ns3=nmap[z3];
+      for(var k2=0;k2<ns3.length;k2++){
+        var n3=ns3[k2];
+        if(numColor[n3]!==undefined){
+          h+='<td class="numcol hit"><span class="ball c'+numColor[n3]+'">'+(n3<10?'0'+n3:n3)+'</span></td>';
+        }else{
+          h+='<td class="numcol"></td>';
+        }
       }
-      h+='<td class="zodcell">'+cell+'</td>';
     }
     h+='</tr>';
   }
   h+='</tbody>';
   document.getElementById('tbl').innerHTML=h;
-  document.getElementById('ft').textContent=y+'年 共'+arr.length+'期 | 每个生肖列下标出该生肖对应号码，开出的号码按生肖归类显示';
+  document.getElementById('ft').textContent=y+'年 共'+arr.length+'期 | 每个号码对号入座';
 }
 function init(){
   var years={};D.forEach(function(r){years[r.y]=1;});
