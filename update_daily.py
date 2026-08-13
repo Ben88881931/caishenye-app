@@ -710,21 +710,13 @@ def show_prediction(raw_data):
     log(f"上期未出: {pred['prev_missed']}")
     
     log(f"\n各尾数分析:")
-    log(f"  尾数 | 遗漏 | 反转率 | 5期窗口 | 等级")
-    log(f"  -----|------|--------|---------|-----")
+    log(f"  尾数 | 遗漏 | 反转率 | 偏离中枢 | v5类型")
+    log(f"  -----|------|--------|----------|------")
     for c in pred['candidates']:
-        mark = ''
-        if c.get('level') == 'safe':
-            mark = '🟢'
-        elif c.get('level') == 'recommend':
-            mark = '🟡'
-        elif c.get('level') == 'cautious':
-            mark = '🔵'
-        elif c.get('warning'):
-            mark = '🔴'
-        else:
-            mark = '  '
-        log(f"  {mark}尾{c['digit']}  | {c['miss']}期  | {c['rev_rate']}% | {c['cls5']}({c['rate5']}%) | {c.get('level', '-') or '观察'}")
+        dev = c.get('dev')
+        dev_s = (f"{dev:+.1f}" if dev is not None else '-')
+        typ = '强回归' if c.get('is_strong') else ('反向' if c.get('is_weak') else '中性')
+        log(f"  尾{c['digit']}  | {c.get('miss','-')}期  | {c.get('rev_rate','-')}% | {dev_s} | {typ}")
     
     log(f"\n预警规则:")
     log(f"  🟢安全级: 反转率≥60% + 遗漏≥3期 → 0%失败")
@@ -741,8 +733,6 @@ def show_prediction(raw_data):
         log(f"\n{level_emoji} 推荐: 尾{best['digit']}")
         log(f"   反转率: {best['rev_rate']}%")
         log(f"   遗漏期数: {best['miss']}期")
-        log(f"   5期窗口: {best['cls5']}({best['rate5']}%)")
-        log(f"   历史失败率: {best.get('fail_rate', '?')}%")
         log(f"   原因: {pred['reason']}")
         
         if pred['alert_level'] == 'green':
@@ -757,11 +747,7 @@ def show_prediction(raw_data):
             log(f"\n⚠️ 谨慎级建议:")
             log(f"   可考虑减半下注或跳过")
     
-    # 显示预警信号
-    if pred['warning']:
-        log(f"\n🔴 预警信号:")
-        for w in pred['warning']:
-            log(f"   尾{w['digit']}: {w['warning']}")
+    # (预警信号字段已随v5.0移除)
     
     log(f"\n{'='*50}")
     return pred
