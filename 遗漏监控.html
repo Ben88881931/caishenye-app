@@ -194,6 +194,8 @@ draw();
   hh+='</div>';
   document.getElementById('statusWrap').innerHTML=hh;
 })();
+
+setTimeout(function(){ var t=document.getElementById('tbl'); if(t){ window.scrollTo(0, t.getBoundingClientRect().bottom + window.scrollY - 10); } else { window.scrollTo(0, document.body.scrollHeight); } }, 150);
 </script>
 </body>
 </html>

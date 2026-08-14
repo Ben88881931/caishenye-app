@@ -358,6 +358,8 @@ function set10(){sel=[0,1,2,3,4,5,6,7,8,9];draw();}
 document.getElementById('sz').onchange=draw;
 document.getElementById('vr').onchange=draw;
 draw();
+
+setTimeout(function(){ var t=document.getElementById('tbl'); if(t){ window.scrollTo(0, t.getBoundingClientRect().bottom + window.scrollY - 10); } else { window.scrollTo(0, document.body.scrollHeight); } }, 150);
 </script>
 </body>
 </html>

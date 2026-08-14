@@ -279,6 +279,8 @@ document.getElementById('ft').textContent='数据: 第'+keys[0]+'-'+keys[keys.le
   }
   document.getElementById('pTable').innerHTML=h;
 })();
+
+setTimeout(function(){ var t=document.getElementById('tbl'); if(t){ window.scrollTo(0, t.getBoundingClientRect().bottom + window.scrollY - 10); } else { window.scrollTo(0, document.body.scrollHeight); } }, 150);
 </script>
 </body>
 </html>

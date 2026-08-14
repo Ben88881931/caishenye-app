@@ -73,6 +73,8 @@ for(var i=0;i<keys.length;i++){
 }
 document.getElementById('tbl').innerHTML=h;
 document.getElementById('ft').textContent='数据: 第'+keys[0]+'-'+keys[keys.length-1]+'期 | 共'+keys.length+'期';
+
+setTimeout(function(){ var t=document.getElementById('tbl'); if(t){ window.scrollTo(0, t.getBoundingClientRect().bottom + window.scrollY - 10); } else { window.scrollTo(0, document.body.scrollHeight); } }, 150);
 </script>
 </body>
 </html>
