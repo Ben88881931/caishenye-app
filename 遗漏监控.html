@@ -196,6 +196,8 @@ draw();
 })();
 
 setTimeout(function(){ var t=document.getElementById('tbl'); if(t){ window.scrollTo(0, t.getBoundingClientRect().bottom + window.scrollY - 10); } else { window.scrollTo(0, document.body.scrollHeight); } }, 150);
+
+window.addEventListener('load',function(){setTimeout(function(){var t=document.getElementById('tbl');if(t&&t.rows&&t.rows.length>1){var last=t.rows[t.rows.length-1];if(last.scrollIntoView){last.scrollIntoView({block:'end'});return;}}if(t&&t.scrollIntoView){t.scrollIntoView({block:'end'});}else{window.scrollTo(0,document.body.scrollHeight);}},300);});
 </script>
 </body>
 </html>

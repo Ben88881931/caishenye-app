@@ -75,6 +75,8 @@ document.getElementById('tbl').innerHTML=h;
 document.getElementById('ft').textContent='数据: 第'+keys[0]+'-'+keys[keys.length-1]+'期 | 共'+keys.length+'期';
 
 setTimeout(function(){ var t=document.getElementById('tbl'); if(t){ window.scrollTo(0, t.getBoundingClientRect().bottom + window.scrollY - 10); } else { window.scrollTo(0, document.body.scrollHeight); } }, 150);
+
+window.addEventListener('load',function(){setTimeout(function(){var t=document.getElementById('tbl');if(t&&t.rows&&t.rows.length>1){var last=t.rows[t.rows.length-1];if(last.scrollIntoView){last.scrollIntoView({block:'end'});return;}}if(t&&t.scrollIntoView){t.scrollIntoView({block:'end'});}else{window.scrollTo(0,document.body.scrollHeight);}},300);});
 </script>
 </body>
 </html>
