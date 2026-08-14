@@ -770,12 +770,41 @@ def git_push(period):
 # 生肖映射（按年份太岁，逐年滚动）——这里只用于"无生肖输入时"的兜底，实际生肖由用户提供或从历史页抄录
 ZODIACS = ['鼠','牛','虎','兔','龙','蛇','马','羊','猴','鸡','狗','猪']
 
+def zodiac_of(num, tai_zodiac='马'):
+    """生肖映射：号码N的生肖 = ZODIACS[(太岁索引-(N-1)) % 12]。2026太岁=马，公式100%验证。"""
+    tai_idx = ZODIACS.index(tai_zodiac)
+    return ZODIACS[(tai_idx - (num - 1)) % 12]
+
+
+def detect_tai_zodiac(year):
+    """按年份返回太岁生肖（农历大年初一变更，这里按阳历年近似）。"""
+    # 太岁分段：2021鼠(牛) / 2022虎 / 2023兔 / 2024龙 / 2025蛇 / 2026马
+    map_by_year = {
+        2021: '牛', 2022: '虎', 2023: '兔',
+        2024: '龙', 2025: '蛇', 2026: '马',
+    }
+    return map_by_year.get(year, '马')
+
+
 def update_full_num_pages(period, nums):
-    """把7个号码追加到 7号码开奖记录.html 和 生肖开奖记录.html 的 DATA 数组，
-    并追加到5年历史数据 JSON。生肖需用户后续提供（当前默认不填，留空待补）。"""
-    log(f"\n[更新] 7号码/生肖页面 + 历史数据...")
-    
-    # 1. 追加到5年历史数据（createContent/lottery5y）
+    """把7个号码(自动算生肖)追加到 7号码/生肖记录 + 号码/生肖走势图 四个页面，
+    并同步到5年历史数据 JSON。太岁生肖按年份自动判定。"""
+    log(f"\n[更新] 7号码/生肖页面(4页) + 历史数据...")
+
+    import datetime
+    year = datetime.datetime.now().year
+    tai = detect_tai_zodiac(year)
+    zods = [zodiac_of(n, tai) for n in nums]
+    log(f"  年份={year} 太岁={tai} 生肖={zods}")
+
+    # 生成新记录（含 tai 字段，与页面现有格式一致）
+    nums_js = ','.join(str(n) for n in nums)
+    zods_js = ','.join('"%s"' % z for z in zods)
+    new_rec = '{"y":%d,"p":%d,"nums":[%s],"zods":[%s],"tai":"%s"}' % (
+        year, period, nums_js, zods_js, tai
+    )
+
+    # 1. 追加到5年历史数据
     hist_path = os.path.join(
         os.path.expanduser('~'), '.sosoagent', 'workspaces', 'agent-620594',
         'createContent', 'lottery5y', 'lottery_5y_full.json'
@@ -784,49 +813,41 @@ def update_full_num_pages(period, nums):
         try:
             with open(hist_path, 'r', encoding='utf-8') as f:
                 hist = json.load(f)
-            # 用当前年份（从系统时间推断）
-            import datetime
-            year = datetime.datetime.now().year
-            key = f"{year}-{period}"
-            hist[key] = [
-                {'num': n, 'zodiac': ''} for n in nums
-            ]
+            key = "%d-%d" % (year, period)
+            hist[key] = [{'num': n, 'zodiac': z} for n, z in zip(nums, zods)]
             with open(hist_path, 'w', encoding='utf-8') as f:
                 json.dump(hist, f, ensure_ascii=False)
-            log(f"  ✓ 历史数据已追加第{period}期（生肖待补）")
+            log(f"  ✓ 历史数据已追加 {key}（生肖已算）")
         except Exception as e:
             log(f"  提示: 历史数据追加跳过 ({e})")
     else:
         log(f"  提示: 未找到历史数据文件，跳过")
-    
-    # 2. 更新两个页面（7号码开奖记录 + 生肖开奖记录）
-    for html_file in ["7号码开奖记录.html", "生肖开奖记录.html"]:
+
+    # 2. 更新4个页面（精确去重：匹配 y+period，避免历史年份同期号误判）
+    page_files = [
+        "7号码开奖记录.html", "生肖开奖记录.html",
+        "号码走势图.html", "生肖走势图.html",
+    ]
+    dup_marker = '"y":%d,"p":%d' % (year, period)
+    for html_file in page_files:
         if not os.path.exists(html_file):
             continue
         with open(html_file, 'r', encoding='utf-8') as f:
             content = f.read()
-        # 找到 var D=[...]; 注入新记录（号码 + 空生肖占位）
-        nums_js = ','.join(str(n) for n in nums)
-        # 生肖先用空串占位
-        zods_js = ','.join(f'""' for _ in nums)
-        new_rec = '{"y":%d,"p":%d,"nums":[%s],"zods":[%s]}' % (
-            __import__('datetime').datetime.now().year, period, nums_js, zods_js
-        )
-        # 定位 var D= 开头，在第一个 ] 后插入（简化：追加到数组末尾）
+        # 精确去重：当前年份+当前期 是否已存在
+        if dup_marker in content:
+            log(f"  ✓ {html_file} 已含{year}-{period}，跳过")
+            continue
+        # 找到 var D= 的数组结束 ];
         marker = 'var D='
-        if marker in content:
-            # 找到数组结束的 ];
-            arr_end = content.index('];', content.index(marker))
-            # 检查是否已有该期（去重）
-            if ('"p":%d' % period) in content:
-                log(f"  ✓ {html_file} 已含第{period}期，跳过")
-                continue
-            content = content[:arr_end] + ',' + new_rec + content[arr_end:]
-            with open(html_file, 'w', encoding='utf-8') as f:
-                f.write(content)
-            log(f"  ✓ {html_file} 已追加第{period}期")
-    
-    log(f"  ⚠️ 生肖标注需手动补充（或下次开奖时一并提供生肖）")
+        if marker not in content:
+            log(f"  提示: {html_file} 无 var D=，跳过")
+            continue
+        arr_end = content.index('];', content.index(marker))
+        content = content[:arr_end] + ',' + new_rec + content[arr_end:]
+        with open(html_file, 'w', encoding='utf-8') as f:
+            f.write(content)
+        log(f"  ✓ {html_file} 已追加 {year}-{period}")
 
 def main():
     if len(sys.argv) != 3:
