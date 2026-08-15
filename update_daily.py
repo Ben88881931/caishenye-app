@@ -729,7 +729,7 @@ def show_prediction(raw_data):
         log(f"   原因: {pred['reason']}")
     else:
         best = pred['best']
-        level_emoji = {'safe': '🟢', 'recommend': '🟡', 'cautious': '🔵'}.get(best['level'], '')
+        level_emoji = {'green': '🟢', 'yellow': '🟡', 'orange': '🔴', 'red': '🚨'}.get(pred.get('alert_level'), '')
         log(f"\n{level_emoji} 推荐: 尾{best['digit']}")
         log(f"   反转率: {best['rev_rate']}%")
         log(f"   遗漏期数: {best['miss']}期")
