@@ -114,21 +114,21 @@ td{color:#222}
 <div class="pred-table" id="predTable" style="width:100%;max-width:100%;margin:10px 0;background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:14px">
   <div style="font-size:16px;font-weight:bold;color:#6c5ce7;margin-bottom:10px">下一段预估开出次数（每个窗口并排前2段→前1段→预估）</div>
   <div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center">
       <thead>
         <tr style="background:#f5f3ff;font-weight:bold">
           <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7">尾号</th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="4">5期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第47段(231-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="4">7期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第33段(225-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="4">10期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第24段(231-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="4">15期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第16段(226-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="4">20期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第12段(221-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="4">27期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第9段(217-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="4">30期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第8段(211-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="3">5期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第47段(231-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="3">7期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第33段(225-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="3">10期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第24段(231-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="3">15期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第16段(226-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="3">20期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第12段(221-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="3">27期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第9段(217-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="3">30期段口<br><span style="font-size:9px;font-weight:normal;color:#999">第8段(211-231期)</span></th>
         </tr>
         <tr style="background:#faf8ff;font-size:10px;color:#888">
-          <th style="padding:4px 2px">0-9</th>
-          <th>前2段</th><th>前1段</th><th>预估</th><th style="width:4px;background:transparent"></th><th style="width:4px;background:transparent"></th><th style="width:4px;background:transparent"></th><th style="width:4px;background:transparent"></th><th style="width:4px;background:transparent"></th><th style="width:4px;background:transparent"></th>
+          <th style="padding:6px 8px;position:sticky;left:0;background:#faf8ff;z-index:2">0-9</th>
+          <th>前2段</th><th>前1段</th><th>预估</th>
           <th>前2段</th><th>前1段</th><th>预估</th>
           <th>前2段</th><th>前1段</th><th>预估</th>
           <th>前2段</th><th>前1段</th><th>预估</th>
@@ -138,7 +138,7 @@ td{color:#222}
         </tr>
       </thead>
       <tbody id="predBody"></tbody>
-    </table>
+    </div></table>
   </div>
   <div style="font-size:11px;color:#999;margin-top:8px">前2段=再往前一段，前1段=上一段，预估=下一段最可能值(概率%)，超=预估-前1段，样本匹配历史同类冷热状态</div>
 </div>
@@ -305,22 +305,22 @@ function fillPredTable(){
   var wh = "";
   function hbg(r){return r>=0.7?"#22c55e":r>=0.6?"#3b82f6":r>=0.5?"#94a3b8":r>=0.4?"#eab308":r>=0.3?"#ef4444":"#ec4899";}
   for(var d=0;d<10;d++){
-    wh += "<tr><td style=\"font-weight:bold;padding:4px 2px;font-size:12px;background:#f5f3ff;color:#222\">尾"+d+"</td>";
+    wh += "<tr><td style=\"font-weight:bold;padding:6px 8px;font-size:13px;background:#f5f3ff;color:#222;position:sticky;left:0;z-index:1\">尾"+d+"</td>";
     for(var wi=0;wi<ws.length;wi++){
       var w = parseInt(ws[wi]);
       var s = SEGDATA[ws[wi]]&&SEGDATA[ws[wi]][String(d)]?SEGDATA[ws[wi]][String(d)]:{prev2:0,prev1:0,cur:0};
       var c = CNTDATA[ws[wi]]&&CNTDATA[ws[wi]][String(d)]?CNTDATA[ws[wi]][String(d)]:null;
       var r2 = s.prev2/w, r1 = s.prev1/w;
-      var groupGap = wi==ws.length-1?"":"<td style=\"width:4px;background:transparent\"></td>";
-      wh += "<td style=\"padding:6px 8px;background:"+hbg(r2)+";color:#222\"><b style=\"font-size:14px\">"+s.prev2+"</b></td>";
+      var groupGap = wi==ws.length-1?"":"";
+      wh += "<td style=\"padding:8px 12px;background:"+hbg(r2)+";color:#222\"><b style=\"font-size:14px\">"+s.prev2+"</b></td>";
       var arrow = s.prev1>s.prev2?"<span style=\"color:#222\"> +"+(s.prev1-s.prev2)+"</span>":s.prev1<s.prev2?"<span style=\"color:#222\"> "+(s.prev1-s.prev2)+"</span>":"";
-      wh += "<td style=\"padding:6px 8px;background:"+hbg(r1)+";color:#222\"><b style=\"font-size:14px\">"+s.prev1+"</b>"+arrow+"</td>";
+      wh += "<td style=\"padding:8px 12px;background:"+hbg(r1)+";color:#222\"><b style=\"font-size:14px\">"+s.prev1+"</b>"+arrow+"</td>";
       if(c && c.sample>0){
         var diff = c.most_likely - s.prev1;
         var diffStr = diff>0?"+"+diff:diff<0?""+diff:"0";
-        wh += "<td style=\"padding:6px 8px;background:"+hbg(c.most_likely/w)+";color:#222\"><b style=\"font-size:14px\">"+c.most_likely+"</b>次 "+diffStr+"<br><span style=\"font-size:9px;color:#666\">"+c.sample+"样本</span></td>"+groupGap;
+        wh += "<td style=\"padding:8px 12px;background:"+hbg(c.most_likely/w)+";color:#222\"><b style=\"font-size:14px\">"+c.most_likely+"</b>次 "+diffStr+"<br><span style=\"font-size:9px;color:#666\">"+c.sample+"样本</span></td>"+groupGap;
       } else {
-        wh += "<td style=\"padding:6px 8px;background:#f9f9f9;color:#999\">--</td>"+groupGap;
+        wh += "<td style=\"padding:8px 12px;background:#f9f9f9;color:#999\">--</td>"+groupGap;
       }
     }
     wh += "</tr>";
