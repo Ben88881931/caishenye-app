@@ -169,15 +169,13 @@ document.getElementById('ft').textContent='数据: 第'+keys[0]+'-'+keys[keys.le
   var html='';
   for(var i=0;i<showList.length;i++){
     var c=showList[i];
-    // 颜色按遗漏期数渐变：3期最浅→11+期最深
+    // 颜色按严重程度：蓝(3-4)→黄(5-6)→橙(7-8)→红(9-10)→暗红(11+)
     var bgColor;
     if(c.consec>=11) bgColor='#7f1d1d';
-    else if(c.consec>=9) bgColor='#991b1b';
-    else if(c.consec>=7) bgColor='#b91c1c';
-    else if(c.consec>=6) bgColor='#dc2626';
-    else if(c.consec>=5) bgColor='#ef4444';
-    else if(c.consec>=4) bgColor='#f87171';
-    else bgColor='#fca5a5';
+    else if(c.consec>=9) bgColor='#dc2626';
+    else if(c.consec>=7) bgColor='#ea580c';
+    else if(c.consec>=5) bgColor='#ca8a04';
+    else bgColor='#2563eb';
     var textColor='#fff';
     var status='遗漏'+c.consec+'期';
     var bounceTxt=(c.consec===0)?'—':(c.bounce?c.bounce+'%':'>历史'+(c.consec)+'期');
