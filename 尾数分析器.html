@@ -283,35 +283,7 @@ if(iceData && iceData.length>0){
         iceH+='<span style="display:inline-block;margin:4px 6px;padding:4px 10px;border-radius:6px;background:#f5f3ff;font-size:11px"><b>尾'+s.digit+'</b> 当前'+s.cur_rate+'% 反弹概率<b style="color:'+clr+'">'+s.rebound_prob+'%</b> ('+s.rebound_count+'/'+s.ice_total+')</span>';
     }
     iceH+='</div>';
-    iceDiv.innerHTML=iceH;
-
-  var pb = document.getElementById("predBody");
-  if(pb){
-    var wh = "";
-    var ws = [5,7,10,15];
-    for(var d=0;d<10;d++){
-      var cnt15 = 0;
-      for(var p=N-14;p<=N;p++){ if(RAW[p]&&RAW[p][d]==="1") cnt15++; }
-      var cs = cnt15>=10?"热":cnt15<=5?"冷":"中";
-      var csColor = cnt15>=10?"#22c55e":cnt15<=5?"#ef4444":"#3b82f6";
-      wh += "<tr><td style=\"font-weight:bold;padding:10px 6px;font-size:14px\">尾"+d+"</td><td style=\"padding:10px 6px;color:"+csColor+";font-weight:600;font-size:14px\">"+cs+"("+cnt15+"/15)</td>";
-      for(var wi=0;wi<ws.length;wi++){
-        var w = ws[wi];
-        var cntdata = CNTDATA[String(w)];
-        if(cntdata && cntdata[String(d)]){
-          var e = cntdata[String(d)];
-          var sc = e.sample;
-          var scColor = sc>=20?"#16a34a":sc>=10?"#6c5ce7":sc>=5?"#f59e0b":"#dc2626";
-          wh += "<td style=\"padding:10px 6px;font-size:14px\">最可能<b>"+e.most_likely+"</b>次("+e.most_prob+"%)<br><span style=\"font-size:11px;color:"+scColor+"\">"+sc+"样本</span></td>";
-        } else {
-          wh += "<td style=\"padding:10px 6px;font-size:14px;color:#ccc\">--</td>";
-        }
-      }
-      wh += "</tr>";
-    }
-    pb.innerHTML = wh;
-  }
-}else{
+    iceDiv.innerHTML=iceH;}else{
     iceDiv.innerHTML='';
 }
 }
