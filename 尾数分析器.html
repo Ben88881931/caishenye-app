@@ -331,8 +331,8 @@ function fillPredTable(){
   if(!pb) return;
   var ws = ["5","7","10","15","20","27","30"];
   var wh = "";
-  function hbg(r){return r>=0.7?"rgba(220,38,38,0.15)":r>=0.6?"rgba(234,88,12,0.12)":r>=0.5?"rgba(202,138,4,0.10)":r>=0.4?"rgba(22,163,74,0.10)":r>=0.3?"rgba(37,99,235,0.10)":"rgba(79,70,229,0.10)";}
-  function htx(r){return r>=0.7?"#dc2626":r>=0.6?"#ea580c":r>=0.5?"#ca8a04":r>=0.4?"#16a34a":r>=0.3?"#2563eb":"#4f46e5";}
+  function hbg(r){return r>=0.7?"#22c55e":r>=0.6?"#3b82f6":r>=0.5?"#94a3b8":r>=0.4?"#eab308":r>=0.3?"#ef4444":"#ec4899";}
+  function htx(r){return r>=0.5?"#fff":"#fff";}
   for(var d=0;d<10;d++){
     wh += "<tr><td style=\"font-weight:bold;padding:8px 4px;font-size:15px;background:#faf8ff\">尾"+d+"</td>";
     for(var wi=0;wi<ws.length;wi++){
