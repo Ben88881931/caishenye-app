@@ -26,6 +26,7 @@ HTML_FILES = [
     "遗漏监控.html",
     "遗漏颜色表.html",
     "尾数分析器.html",
+    "预估分析表.html",
 ]
 ERRORS = []
 
