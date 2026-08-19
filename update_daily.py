@@ -284,6 +284,51 @@ def calc_segment_stats(raw_data, window_size):
         'cnt_pred': {str(k): v for k, v in cnt_preds.items()}
     }
 
+def rebuild_cntdata(raw_data):
+    """按当前冷热状态，找历史同类状态统计下一段开出次数"""
+    numeric = {int(k): v for k, v in raw_data.items() if k.isdigit()}
+    N = max(numeric.keys())
+    
+    def status_of(cnt, w):
+        if w <= 7:
+            if cnt <= w * 0.2: return '冷'
+            elif cnt >= w * 0.7: return '热'
+            else: return '中'
+        else:
+            if cnt <= w * 0.33: return '冷'
+            elif cnt >= w * 0.66: return '热'
+            else: return '中'
+    
+    newCNT = {}
+    for w in [5, 7, 10, 15, 20, 27, 30]:
+        newCNT[str(w)] = {}
+        cur_st = N - w + 1
+        for d in range(10):
+            cnt_cur = sum(1 for p in range(cur_st, N + 1) if numeric[p][d] == '1')
+            cur_status = status_of(cnt_cur, w)
+            nexts = []
+            scan_end = N - w
+            while scan_end - 2 * w + 1 >= 1:
+                s = scan_end - w + 1
+                ps = s - w
+                cnt_prev = sum(1 for p in range(ps, s) if numeric[p][d] == '1')
+                if status_of(cnt_prev, w) == cur_status:
+                    cnt_next = sum(1 for p in range(s, scan_end + 1) if numeric[p][d] == '1')
+                    nexts.append(cnt_next)
+                scan_end -= w
+            if nexts:
+                avg = sum(nexts) / len(nexts)
+                newCNT[str(w)][str(d)] = {
+                    'pattern': f'{cur_status}({cnt_cur}/{w})',
+                    'predict_cnt': round(avg),
+                    'predict_prob': round(avg / w * 100),
+                    'expected': round(avg, 1),
+                    'sample': len(nexts),
+                    'range': f'{min(nexts)}-{max(nexts)}'
+                }
+    return newCNT
+
+
 def update_analyzer_alldata(html_file, raw_data):
     with open(html_file, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -291,7 +336,6 @@ def update_analyzer_alldata(html_file, raw_data):
     windows = [5, 7, 10, 15, 20, 27, 30]
     all_data = {}
     all_ice = {}
-    all_cnt_pred = {}
     
     for w in windows:
         stats = calc_segment_stats(raw_data, w)
@@ -303,8 +347,6 @@ def update_analyzer_alldata(html_file, raw_data):
         }
         if stats['ice']:
             all_ice[str(w)] = stats['ice']
-        if stats['cnt_pred']:
-            all_cnt_pred[str(w)] = stats['cnt_pred']
     
     pattern = r'var ALLDATA=\{.*?\};'
     alldata_json = json.dumps(all_data, ensure_ascii=False, separators=(',', ':'))
@@ -314,8 +356,10 @@ def update_analyzer_alldata(html_file, raw_data):
     ice_json = json.dumps(all_ice, ensure_ascii=False, separators=(',', ':'))
     content = re.sub(pattern, f'var ICE={ice_json};', content, flags=re.DOTALL)
     
+    # 用新逻辑重建CNTDATA
+    newCNT = rebuild_cntdata(raw_data)
     pattern = r'var CNTDATA=\{.*?\};'
-    cnt_json = json.dumps(all_cnt_pred, ensure_ascii=False, separators=(',', ':'))
+    cnt_json = json.dumps(newCNT, ensure_ascii=False, separators=(',', ':'))
     content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
     
     # 计算并写入预测模型v4.0+v5.0数据
@@ -899,6 +943,26 @@ def update_miss_in_html(html_file, miss_obj):
         f.write(new_content)
 
 
+def update_miss_pred_block(html_file, raw_data):
+    """更新遗漏监控页面的预测板块（🔮 下一段预估开出次数）"""
+    if not os.path.exists(html_file):
+        return
+    with open(html_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # 重建CNTDATA
+    newCNT = rebuild_cntdata(raw_data)
+    
+    # 替换CNTDATA（如果存在）
+    if 'var CNTDATA=' in content:
+        pattern = r'var CNTDATA=\{.*?\};'
+        cnt_json = json.dumps(newCNT, ensure_ascii=False, separators=(',', ':'))
+        content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
+        with open(html_file, 'w', encoding='utf-8') as f:
+            f.write(content)
+        log(f"  ✓ 遗漏监控预测板块已更新")
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__)
@@ -955,6 +1019,7 @@ def main():
     if os.path.exists("遗漏监控.html"):
         miss_obj = recalc_miss(data)
         update_miss_in_html("遗漏监控.html", miss_obj)
+        update_miss_pred_block("遗漏监控.html", data)
         log(f"  ✓ 遗漏监控MISS已重新计算")
     
     log(f"\n[更新] 重算尾数分析器ALLDATA...")
