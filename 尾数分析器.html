@@ -90,44 +90,20 @@ td{color:#222}
   <button id="ball" onclick="set10()">全部10号</button>
 </div>
 <div class="nums" id="nbs"></div>
-<div class="box"><table id="tbl"></table></div>
-<div class="v-cards" id="vcards"></div>
-<div class="tip" id="tips"></div>
-<div class="ice-signal" id="ice"></div>
-<div class="predict-report" id="predict"></div>
-<div class="legend">
-  <span><i style="background:#22c55e"></i>热 >=70%</span>
-  <span><i style="background:#3b82f6"></i>暖 60-69%</span>
-  <span><i style="background:#94a3b8"></i>平 50-59%</span>
-  <span><i style="background:#eab308"></i>凉 40-49%</span>
-  <span><i style="background:#ef4444"></i>冷 30-39%</span>
-  <span><i style="background:#ec4899"></i>冰 <30%</span>
-</div>
-<div class="legend" style="margin-bottom:0;font-size:10px;position:fixed;top:36px;left:0;right:0;background:rgba(240,242,255,0.95);padding:6px;z-index:100;border-bottom:1px solid #e8e4f0;backdrop-filter:blur(4px)">
-  <span><span style="color:#16a34a;font-weight:bold">▲</span> 上升>3%</span>
-  <span><span style="color:#dc2626;font-weight:bold">▼</span> 下降>3%</span>
-  <span><span style="color:#aaa;font-weight:bold">─</span> 持平</span>
-  <span><span style="color:#6c5ce7;font-weight:bold">●</span> 当期开出</span>
-  <span style="font-size:10px;color:#999">8/15 段口内次数/总期数</span>
-  <span style="font-size:10px;color:#6c5ce7">⤳预估下一段开出次数</span>
-</div>
-<div class="pred-table" id="predTable" style="width:100%;max-width:100%;margin:10px 0;background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:14px">
-  <div style="font-size:16px;font-weight:bold;color:#6c5ce7;margin-bottom:10px">下一段预估开出次数（每个窗口并排前2段→前1段→预估）</div>
-  <div style="overflow-x:auto">
-    <div class="box"><table style="table-layout:fixed;width:auto;border-collapse:collapse;font-size:12px;text-align:center;white-space:nowrap">
+<div class="box"><table style="table-layout:fixed;width:auto;border-collapse:collapse;font-size:12px;text-align:center;white-space:nowrap">
       <thead>
         <tr style="background:#f5f3ff;font-weight:bold">
           <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7">尾号</th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="3" style="font-size:10px;white-space:nowrap" style="font-size:10px;white-space:nowrap">5期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第47段(231-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="3" style="font-size:10px;white-space:nowrap" style="font-size:10px;white-space:nowrap">7期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第33段(225-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="3" style="font-size:10px;white-space:nowrap" style="font-size:10px;white-space:nowrap">10期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第24段(231-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="3" style="font-size:10px;white-space:nowrap" style="font-size:10px;white-space:nowrap">15期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第16段(226-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="3" style="font-size:10px;white-space:nowrap" style="font-size:10px;white-space:nowrap">20期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第12段(221-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff" colspan="3" style="font-size:10px;white-space:nowrap" style="font-size:10px;white-space:nowrap">27期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第9段(217-231期)</span></th>
-          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff" colspan="3" style="font-size:10px;white-space:nowrap" style="font-size:10px;white-space:nowrap">30期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第8段(211-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff;font-size:10px;white-space:nowrap" colspan="3">5期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第47段(231-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff;font-size:10px;white-space:nowrap" colspan="3">7期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第33段(225-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff;font-size:10px;white-space:nowrap" colspan="3">10期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第24段(231-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff;font-size:10px;white-space:nowrap" colspan="3">15期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第16段(226-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff;font-size:10px;white-space:nowrap" colspan="3">20期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第12段(221-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#e8f0ff;font-size:10px;white-space:nowrap" colspan="3">27期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第9段(217-231期)</span></th>
+          <th style="padding:4px 3px;border-bottom:2px solid #6c5ce7;background:#f0ecff;font-size:10px;white-space:nowrap" colspan="3">30期段口<br><span style="font-size:8px;font-weight:normal;color:#999">第8段(211-231期)</span></th>
         </tr>
         <tr style="background:#faf8ff;font-size:10px;color:#888;white-space:nowrap">
-          <th style="padding:4px 1px;font-size:10px;position:sticky;left:0;background:#faf8ff;z-index:2;min-width:0">0-9</th>
+          <th style="padding:4px 2px;font-size:10px;position:sticky;left:0;background:#faf8ff;z-index:2;min-width:0">0-9</th>
           <th>前2段</th><th>前1段</th><th>预估</th>
           <th>前2段</th><th>前1段</th><th>预估</th>
           <th>前2段</th><th>前1段</th><th>预估</th>
