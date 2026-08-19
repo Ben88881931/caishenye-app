@@ -849,6 +849,56 @@ def update_full_num_pages(period, nums):
             f.write(content)
         log(f"  ✓ {html_file} 已追加 {year}-{period}")
 
+
+def recalc_miss(data):
+    """从 RAW 数据重新计算遗漏监控页面的 MISS 对象"""
+    from collections import Counter
+    numeric = {int(k): v for k, v in data.items()}
+    N = max(numeric.keys())
+    result = {}
+    for d in range(10):
+        records = []
+        i = 1
+        while i <= N:
+            if numeric[i][d] == '0':
+                start = i
+                while i <= N and numeric[i][d] == '0':
+                    i += 1
+                end = i - 1
+                miss = end - start + 1
+                if miss >= 3:
+                    records.append({'start': start, 'end': end, 'miss': miss})
+            else:
+                i += 1
+        if not records:
+            result[str(d)] = {'records': [], 'max_miss': 0, 'total': 0,
+                              'dist': '', 'seg_dist': '', 'trend': '', 'last_end': 0}
+            continue
+        max_miss = max(r['miss'] for r in records)
+        total = len(records)
+        dist_counter = Counter(r['miss'] for r in records)
+        dist_parts = []
+        for m in sorted(dist_counter, reverse=True):
+            dist_parts.append(f"{dist_counter[m]}x{m}期")
+        dist = '、'.join(dist_parts)
+        recent_misses = [r['miss'] for r in records[-3:]]
+        trend = '、'.join(f"{m}期" for m in recent_misses)
+        last_end = records[-1]['end']
+        result[str(d)] = {'records': records, 'max_miss': max_miss, 'total': total,
+                          'dist': dist, 'seg_dist': '', 'trend': trend, 'last_end': last_end}
+    return result
+
+
+def update_miss_in_html(html_file, miss_obj):
+    """替换遗漏监控.html 中的硬编码 MISS 对象"""
+    with open(html_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    new_json = json.dumps(miss_obj, ensure_ascii=False, separators=(',', ':'))
+    new_content = re.sub(r'var MISS=\{.*?\};', 'var MISS=' + new_json + ';', content, flags=re.DOTALL)
+    with open(html_file, 'w', encoding='utf-8') as f:
+        f.write(new_content)
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__)
@@ -900,6 +950,12 @@ def main():
             err(f"{html_file} 不存在")
     
     verify_consistency(data)
+    
+    log(f"\n[更新] 遗漏监控MISS对象...")
+    if os.path.exists("遗漏监控.html"):
+        miss_obj = recalc_miss(data)
+        update_miss_in_html("遗漏监控.html", miss_obj)
+        log(f"  ✓ 遗漏监控MISS已重新计算")
     
     log(f"\n[更新] 重算尾数分析器ALLDATA...")
     if os.path.exists("尾数分析器.html"):
