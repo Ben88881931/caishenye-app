@@ -81,8 +81,17 @@ for(var i=0;i<allRecs.length;i++){
     }
 }
 var recentStr='';
+// 按遗漏期数从大到小排序
+recentList.sort(function(a,b){return b.miss-a.miss;});
 for(var i=0;i<recentList.length;i++){
-    recentStr+='<span class="badge badge-r" style="font-size:13px;padding:3px 10px">尾'+recentList[i].digit+' '+recentList[i].miss+'期</span> ';
+    var m=recentList[i].miss;
+    // 颜色按遗漏期数分级
+    var bgColor;
+    if(m>=10) bgColor='#b91c1c';
+    else if(m>=7) bgColor='#dc2626';
+    else if(m>=5) bgColor='#ef4444';
+    else bgColor='#f87171';
+    recentStr+='<span style="display:inline-block;margin:3px 5px;padding:4px 12px;border-radius:8px;background:'+bgColor+';color:#fff;font-weight:bold;font-size:13px">尾'+recentList[i].digit+' '+m+'期</span> ';
 }
 for(var d=0;d<10;d++){
     var md=MISS[d];
@@ -97,7 +106,7 @@ for(var d=0;d<10;d++){
 }
 document.getElementById('tbl').innerHTML=h;
 var curMiss='<div style="margin-top:10px;padding:8px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px;font-size:14px;line-height:2;color:#333"><b>当前遗漏</b><br>'+curMissStr+'</div>';
-document.getElementById('ft').innerHTML=curMiss+'<div style="margin-top:6px;font-size:12px;padding:8px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px;line-height:2;color:#333"><b>最近遗漏>3期</b><br>'+recentStr+'</div><br>数据: 第1-'+lastKey+'期';
+document.getElementById('ft').innerHTML=curMiss+'<div style="margin-top:6px;font-size:12px;padding:8px 12px;background:#fff;border:1px solid #e8e4f0;border-radius:8px;line-height:2;color:#333"><b>最近遗漏≥3期</b><br>'+recentStr+'</div><br>数据: 第1-'+lastKey+'期';
 }
 draw();
 
