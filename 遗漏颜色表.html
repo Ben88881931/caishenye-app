@@ -46,9 +46,9 @@ td{color:#222}
 <div style="overflow-x:auto;max-height:calc(100vh - 120px);overflow-y:auto"><table id="tbl"></table></div>
 <div class="foot" id="ft"></div>
 <div style="background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:12px;margin-top:12px">
-  <div style="font-size:14px;font-weight:bold;color:#6c5ce7;margin-bottom:8px">🧭 遗漏规律预测</div>
+  <div style="font-size:14px;font-weight:bold;color:#6c5ce7;margin-bottom:8px">🧭 遗漏规律预测（≥3期）</div>
   <div id="predBody" style="font-size:12px;color:#555;line-height:1.9"></div>
-  <div style="font-size:10px;color:#bbb;margin-top:6px">反弹率=历史中"连遗N期后下一期开出"的概率</div>
+  <div style="font-size:10px;color:#bbb;margin-top:6px">反弹率=历史中"连遗N期后下一期开出"的概率 | 颜色越深遗漏越久</div>
 </div>
 
 <div style="background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:12px;margin-top:10px">
@@ -161,27 +161,32 @@ document.getElementById('ft').textContent='数据: 第'+keys[0]+'-'+keys[keys.le
   // 排序：遗漏越久越靠前
   list.sort(function(a,b){return b.consec-a.consec;});
   
+  // 只显示遗漏≥3期的
+  var showList=list.filter(function(c){return c.consec>=3;});
+  // 按遗漏期数从大到小排
+  showList.sort(function(a,b){return b.consec-a.consec;});
+  
   var html='';
-  for(var i=0;i<list.length;i++){
-    var c=list[i];
-    var colorDot=c.color==='red'?'#ef4444':c.color==='m1'?'#3b82f6':c.color==='m2'?'#22c55e':'#eab308';
-    var status=c.consec===0?'已开出(红)':'遗漏'+c.consec+'期';
+  for(var i=0;i<showList.length;i++){
+    var c=showList[i];
+    // 颜色按遗漏期数分级：3-4期浅红，5-6期中红，7-9期深红，10+期暗红
+    var bgColor;
+    if(c.consec>=10) bgColor='#b91c1c';
+    else if(c.consec>=7) bgColor='#dc2626';
+    else if(c.consec>=5) bgColor='#ef4444';
+    else bgColor='#f87171';
+    var textColor='#fff';
+    var status='遗漏'+c.consec+'期';
     var bounceTxt=(c.consec===0)?'—':(c.bounce?c.bounce+'%':'>历史'+(c.consec)+'期');
-    var hot=c.consec>=5?' 🔥':'';
-    html+='<span style="display:inline-block;margin:2px 4px;padding:2px 8px;border-radius:6px;background:#f7f6ff">'
-      +'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+colorDot+';margin-right:4px"></span>'
-      +'<b>尾'+c.d+'</b> '+status+' · 反弹率 '+bounceTxt+hot
+    var hot=c.consec>=7?' 🔥':'';
+    html+='<span style="display:inline-block;margin:3px 5px;padding:5px 12px;border-radius:8px;background:'+bgColor+';color:'+textColor+';font-weight:bold;font-size:13px">'
+      +'<b>尾'+c.d+'</b> '+status+' · '+bounceTxt+hot
       +'</span>';
   }
-  // 反弹候选
-  var cand=list.filter(function(c){return c.consec>=3;});
-  var candTxt='';
-  if(cand.length>0){
-    candTxt='<div style="margin-top:8px;color:#dc2626;font-weight:bold">反弹候选: '+cand.map(function(c){return '尾'+c.d+'('+c.consec+'期'+(c.bounce?',反弹'+c.bounce+'%':'')+')';}).join('、')+'</div>';
-  }else{
-    candTxt='<div style="margin-top:8px;color:#888">当前无遗漏≥3期的尾号</div>';
+  if(showList.length===0){
+    html='<div style="color:#888">当前无遗漏≥3期的尾号</div>';
   }
-  document.getElementById('predBody').innerHTML=html+candTxt;
+  document.getElementById('predBody').innerHTML=html;
 })();
 
 
