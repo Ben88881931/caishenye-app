@@ -178,7 +178,7 @@ for(var di=0;di<sel.length;di++){
   th+='</th>';
   h+=th;
 }
-h+='</tr>';
+h+='</p></tr>';
 
 var b='';
 for(var i=0;i<view.length;i++){
@@ -190,7 +190,7 @@ for(var i=0;i<view.length;i++){
     var d=sel[di];
     var dv=selSegs[d];
     var e=dv[i];
-    if(!e){b+='<td>-</td>';continue;}
+    if(!e){b+='<td>-</p></td>';continue;}
     var a='';
     if(i>0&&dv[i-1]){
       var pv=dv[i-1].rate;
@@ -201,7 +201,7 @@ for(var i=0;i<view.length;i++){
     var dot=open(d,e.en)?' \u25cf':'';
     var lb = label(e.rate);
     var pred = wdata ? getPred(d, segIdx, w) : null;
-    b+='<td class="'+cls(e.rate)+'"><span style="font-size:7px;color:#000;font-weight:700">'+e.st+'-'+e.en+'期</span><br>'+a+'<span class="big">'+f1(e.rate,1)+'%</span> <b class="lbl">'+lb+'</b><br><b style="color:#333">'+e.cnt+'/'+e.w+'</b>'+dot+(pred?'<div class="pred">⤳'+pred+'</div>':'')+'</td>';
+    b+='<td class="'+cls(e.rate)+'"><span style="font-size:7px;color:#000;font-weight:700">'+e.st+'-'+e.en+'期</span><br>'+a+'<span class="big">'+f1(e.rate,1)+'%</span> <b class="lbl">'+lb+'</b><br><b style="color:#333">'+e.cnt+'/'+e.w+'</b>'+dot+(pred?'<div class="pred">⤳'+pred+'</p></div>':'')+'</td>';
   }
   b+='</tr>';
 }
