@@ -111,22 +111,22 @@ td{color:#222}
   <span style="font-size:10px;color:#999">8/15 段口内次数/总期数</span>
   <span style="font-size:10px;color:#6c5ce7">⤳预估下一段开出次数</span>
 </div>
-<div class="pred-table" id="predTable" style="max-width:600px;margin:10px auto;background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:12px">
-  <div style="font-size:14px;font-weight:bold;color:#6c5ce7;margin-bottom:8px">下一段预估开出次数（按当前冷热状态）</div>
+<div class="pred-table" id="predTable" style="width:100%;max-width:100%;margin:10px 0;background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:14px">
+  <div style="font-size:16px;font-weight:bold;color:#6c5ce7;margin-bottom:10px">下一段预估开出次数（按当前冷热状态）</div>
   <div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:11px;text-align:center">
+    <table style="width:100%;border-collapse:collapse;font-size:14px;text-align:center">
       <thead><tr style="background:#f5f3ff;font-weight:bold">
-        <th style="padding:6px 4px;border-bottom:2px solid #6c5ce7">尾号</th>
-        <th style="padding:6px 4px;border-bottom:2px solid #6c5ce7">当前状态</th>
-        <th style="padding:6px 4px;border-bottom:2px solid #6c5ce7">5期预估</th>
-        <th style="padding:6px 4px;border-bottom:2px solid #6c5ce7">7期预估</th>
-        <th style="padding:6px 4px;border-bottom:2px solid #6c5ce7">10期预估</th>
-        <th style="padding:6px 4px;border-bottom:2px solid #6c5ce7">15期预估</th>
+        <th style="padding:10px 6px;border-bottom:2px solid #6c5ce7">尾号</th>
+        <th style="padding:10px 6px;border-bottom:2px solid #6c5ce7">当前状态</th>
+        <th style="padding:10px 6px;border-bottom:2px solid #6c5ce7">5期预估</th>
+        <th style="padding:10px 6px;border-bottom:2px solid #6c5ce7">7期预估</th>
+        <th style="padding:10px 6px;border-bottom:2px solid #6c5ce7">10期预估</th>
+        <th style="padding:10px 6px;border-bottom:2px solid #6c5ce7">15期预估</th>
       </tr></thead>
       <tbody id="predBody"></tbody>
     </table>
   </div>
-  <div style="font-size:10px;color:#999;margin-top:6px">最可能值(概率%)，样本匹配历史同类冷热状态。样本数越大越可靠</div>
+  <div style="font-size:12px;color:#999;margin-top:8px">最可能值(概率%)，样本匹配历史同类冷热状态。样本数越大越可靠</div>
 </div>
 
 <div class="foot" id="ft"></div>
@@ -279,7 +279,7 @@ if(iceData && iceData.length>0){
       for(var p=N-14;p<=N;p++){ if(RAW[p]&&RAW[p][d]==="1") cnt15++; }
       var cs = cnt15>=10?"热":cnt15<=5?"冷":"中";
       var csColor = cnt15>=10?"#22c55e":cnt15<=5?"#ef4444":"#3b82f6";
-      wh += "<tr><td style=\"font-weight:bold;padding:5px\">尾"+d+"</td><td style=\"padding:5px;color:"+csColor+";font-weight:600\">"+cs+"("+cnt15+"/15)</td>";
+      wh += "<tr><td style=\"font-weight:bold;padding:10px 6px;font-size:14px\">尾"+d+"</td><td style=\"padding:10px 6px;color:"+csColor+";font-weight:600;font-size:14px\">"+cs+"("+cnt15+"/15)</td>";
       for(var wi=0;wi<ws.length;wi++){
         var w = ws[wi];
         var cntdata = CNTDATA[String(w)];
@@ -287,9 +287,9 @@ if(iceData && iceData.length>0){
           var e = cntdata[String(d)];
           var sc = e.sample;
           var scColor = sc>=20?"#16a34a":sc>=10?"#6c5ce7":sc>=5?"#f59e0b":"#dc2626";
-          wh += "<td style=\"padding:5px\">最可能<b>"+e.most_likely+"</b>次("+e.most_prob+"%)<br><span style=\"font-size:9px;color:"+scColor+"\">"+sc+"样本</span></td>";
+          wh += "<td style=\"padding:10px 6px;font-size:14px\">最可能<b>"+e.most_likely+"</b>次("+e.most_prob+"%)<br><span style=\"font-size:11px;color:"+scColor+"\">"+sc+"样本</span></td>";
         } else {
-          wh += "<td style=\"padding:5px;color:#ccc\">--</td>";
+          wh += "<td style=\"padding:10px 6px;font-size:14px;color:#ccc\">--</td>";
         }
       }
       wh += "</tr>";
