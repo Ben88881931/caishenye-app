@@ -331,22 +331,37 @@ function fillPredTable(){
   if(!pb) return;
   var ws = ["5","7","10","15","20","27","30"];
   var wh = "";
+  function heatBg(n,w){
+    var r=n/w;
+    if(r>=0.7) return "#fee2e2";
+    if(r>=0.6) return "#fef3c7";
+    if(r>=0.5) return "#f0fdf4";
+    if(r>=0.4) return "#dbeafe";
+    if(r>=0.3) return "#e0e7ff";
+    return "#e0e7ff";
+  }
+  function heatTxt(n,w){
+    var r=n/w;
+    if(r>=0.7) return "#dc2626";
+    if(r>=0.6) return "#d97706";
+    if(r>=0.5) return "#16a34a";
+    if(r>=0.4) return "#2563eb";
+    if(r>=0.3) return "#4f46e5";
+    return "#4f46e5";
+  }
   for(var d=0;d<10;d++){
     wh += "<tr><td style=\"font-weight:bold;padding:8px 3px;font-size:15px;background:#faf8ff\">尾"+d+"</td>";
     for(var wi=0;wi<ws.length;wi++){
-      var w = ws[wi];
-      var s = SEGDATA[w]&&SEGDATA[w][String(d)]?SEGDATA[w][String(d)]:{prev2:0,prev1:0,cur:0};
-      var c = CNTDATA[w]&&CNTDATA[w][String(d)]?CNTDATA[w][String(d)]:null;
-      var bg = wi%2==0?"#faf8ff":"#f8faff";
+      var w = parseInt(ws[wi]);
+      var s = SEGDATA[ws[wi]]&&SEGDATA[ws[wi]][String(d)]?SEGDATA[ws[wi]][String(d)]:{prev2:0,prev1:0,cur:0};
+      var c = CNTDATA[ws[wi]]&&CNTDATA[ws[wi]][String(d)]?CNTDATA[ws[wi]][String(d)]:null;
       // 前2段
       var p2 = s.prev2;
-      var p2color = p2<=w*0.3?"#ef4444":p2>=w*0.7?"#22c55e":"#3b82f6";
-      wh += "<td style=\"padding:6px 3px;background:"+bg+"\"><span style=\"color:"+p2color+";font-weight:600\">"+p2+"</span></td>";
+      wh += "<td style=\"padding:6px 3px;background:"+heatBg(p2,w)+"\"><span style=\"color:"+heatTxt(p2,w)+";font-weight:600\">"+p2+"</span></td>";
       // 前1段
       var p1 = s.prev1;
-      var p1color = p1<=w*0.3?"#ef4444":p1>=w*0.7?"#22c55e":"#3b82f6";
       var arrow = p1>p2?"<span style=\"color:#16a34a\">▲</span>":p1<p2?"<span style=\"color:#dc2626\">▼</span>":"<span style=\"color:#999\">─</span>";
-      wh += "<td style=\"padding:6px 3px;background:"+bg+"\"><span style=\"color:"+p1color+";font-weight:600\">"+p1+"</span> "+arrow+"</td>";
+      wh += "<td style=\"padding:6px 3px;background:"+heatBg(p1,w)+"\"><span style=\"color:"+heatTxt(p1,w)+";font-weight:600\">"+p1+"</span> "+arrow+"</td>";
       // 预估
       if(c && c.sample>0){
         var sc = c.sample;
@@ -354,9 +369,9 @@ function fillPredTable(){
         var diff = c.most_likely - p1;
         var diffStr = diff>0?"+"+diff:diff<0?""+diff:"0";
         var diffColor = diff>0?"#16a34a":diff<0?"#dc2626":"#999";
-        wh += "<td style=\"padding:6px 3px;background:"+bg+"\"><b style=\"font-size:14px\">"+c.most_likely+"</b>次("+c.most_prob+"%)<br><span style=\"font-size:9px;color:"+scColor+"\">"+sc+"样本</span> <span style=\"font-size:9px;color:"+diffColor+"\">"+diffStr+"</span></td>";
+        wh += "<td style=\"padding:6px 3px;background:"+heatBg(c.most_likely,w)+"\"><b style=\"font-size:14px;color:"+heatTxt(c.most_likely,w)+"\">"+c.most_likely+"</b>次("+c.most_prob+"%)<br><span style=\"font-size:9px;color:"+scColor+"\">"+sc+"样本</span> <span style=\"font-size:9px;color:"+diffColor+"\">"+diffStr+"</span></td>";
       } else {
-        wh += "<td style=\"padding:6px 3px;background:"+bg+";color:#ccc\">--</td>";
+        wh += "<td style=\"padding:6px 3px;background:#f9f9f9;color:#ccc\">--</td>";
       }
     }
     wh += "</tr>";
