@@ -362,11 +362,6 @@ def update_analyzer_alldata(html_file, raw_data):
     cnt_json = json.dumps(newCNT, ensure_ascii=False, separators=(',', ':'))
     content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
     
-    # 计算并写入预测模型v4.0+v5.0数据
-    pattern = r'var PREDICTDATA=\{.*?\};'
-    pred_json = json.dumps(pred_data, ensure_ascii=False, separators=(',', ':'))
-    content = re.sub(pattern, f'var PREDICTDATA={pred_json};', content, flags=re.DOTALL)
-    
     with open(html_file, 'w', encoding='utf-8') as f:
         f.write(content)
 
