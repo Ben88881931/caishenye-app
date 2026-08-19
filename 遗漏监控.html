@@ -200,59 +200,7 @@ draw();
   document.getElementById('statusWrap').innerHTML=hh;
 
   // ===== 下一段预测（基于当前冷热状态）=====
-  var predHTML='<div style="background:#fff;border:1px solid #e8e4f0;border-radius:8px;padding:12px;margin-top:10px">';
-  predHTML+='<div style="font-size:14px;font-weight:bold;color:#6c5ce7;margin-bottom:8px">🔮 下一段预估开出次数（按当前冷热状态）</div>';
-  predHTML+='<table style="width:100%;border-collapse:collapse;font-size:11px"><tr><th>尾号</th><th>当前状态</th><th>5期预估</th><th>7期预估</th><th>10期预估</th><th>15期预估</th></tr>';
-  
-  var N_cur = 231;
-  function status_of(cnt, w){
-    if(w<=7){ if(cnt<=w*0.2)return '冷'; else if(cnt>=w*0.7)return '热'; else return '中'; }
-    else{ if(cnt<=w*0.33)return '冷'; else if(cnt>=w*0.66)return '热'; else return '中'; }
-  }
-  
-  for(var d=0;d<10;d++){
-    var cnt15 = 0;
-    for(var p=N_cur-14;p<=N_cur;p++){ if(RAW[p]&&RAW[p][d]==='1')cnt15++; }
-    var curStatus = cnt15>=10?'热':cnt15<=5?'冷':'中';
-    var curTag = curStatus + '(' + cnt15 + '/15)';
-    
-    var preds = [];
-    for(var wi=0;wi<4;wi++){
-      var w = [5,7,10,15][wi];
-      var cur_st = N_cur - w + 1;
-      var cnt_cur = 0;
-      for(var p=cur_st;p<=N_cur;p++){ if(RAW[p]&&RAW[p][d]==='1')cnt_cur++; }
-      var cur_s = status_of(cnt_cur, w);
-      
-      var nexts = [];
-      var scan_end = N_cur - w;
-      while(scan_end - 2*w + 1 >= 1){
-        var s = scan_end - w + 1;
-        var ps = s - w;
-        var cnt_prev = 0;
-        for(var p=ps;p<s;p++){ if(RAW[p]&&RAW[p][d]==='1')cnt_prev++; }
-        if(status_of(cnt_prev, w) == cur_s){
-          var cnt_next = 0;
-          for(var p=s;p<=scan_end;p++){ if(RAW[p]&&RAW[p][d]==='1')cnt_next++; }
-          nexts.push(cnt_next);
-        }
-        scan_end -= w;
-      }
-      if(nexts.length>0){
-        var avg = nexts.reduce(function(a,b){return a+b;},0)/nexts.length;
-        preds.push('估'+avg.toFixed(1)+'次('+nexts.length+'样本)')
-      } else {
-        preds.push('—')
-      }
-    }
-    
-    predHTML+='<tr><td style="font-weight:bold">'+d+'</td><td>'+curTag+'</td><td>'+preds[0]+'</td><td>'+preds[1]+'</td><td>'+preds[2]+'</td><td>'+preds[3]+'</td></tr>';
-  }
-  predHTML+='</table>';
-  predHTML+='<div style="font-size:10px;color:#bbb;margin-top:6px">预估=找历史同类冷热状态，统计下一段平均开出次数。样本数越大越可靠</div>';
-  predHTML+='</div>';
-  document.getElementById('statusWrap').innerHTML += predHTML;
-})();
+  })();
 
 setTimeout(function(){ var t=document.getElementById('tbl'); if(t){ window.scrollTo(0, t.getBoundingClientRect().bottom + window.scrollY - 10); } else { window.scrollTo(0, document.body.scrollHeight); } }, 150);
 
