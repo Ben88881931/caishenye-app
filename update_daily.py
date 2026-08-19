@@ -363,22 +363,6 @@ def update_analyzer_alldata(html_file, raw_data):
     content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
     
     # 计算并写入预测模型v4.0+v5.0数据
-    pred = calc_prediction(raw_data)
-    pred_data = {
-        'next_period': pred['next_period'],
-        'alert_level': pred['alert_level'],
-        'skip': pred['skip'],
-        'reason': pred['reason'],
-        'best': pred['best'],
-        'gap': pred['gap'],
-        'candidates': pred['candidates'],
-        'model_version': pred['model_version'],
-        'v5_best': pred['v5_best'],
-        'v5_gap': pred['v5_gap'],
-        'v5_eligible': pred['v5_eligible'],
-        'v5_skip_reason': pred['v5_skip_reason'],
-        'b_line': pred['b_line'],
-    }
     pattern = r'var PREDICTDATA=\{.*?\};'
     pred_json = json.dumps(pred_data, ensure_ascii=False, separators=(',', ':'))
     content = re.sub(pattern, f'var PREDICTDATA={pred_json};', content, flags=re.DOTALL)
@@ -1046,7 +1030,7 @@ def main():
         git_push(period)
         
         # 显示下期预测
-        show_prediction(data)
+        # show_prediction(data)  # 已废弃
         
         log(f"\n{'='*50}")
         log(f"第{period}期数据已推送到 GitHub")
