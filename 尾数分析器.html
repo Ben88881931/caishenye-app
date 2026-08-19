@@ -332,7 +332,7 @@ function fillPredTable(){
   var ws = ["5","7","10","15","20","27","30"];
   var wh = "";
   function hbg(r){return r>=0.7?"#22c55e":r>=0.6?"#3b82f6":r>=0.5?"#94a3b8":r>=0.4?"#eab308":r>=0.3?"#ef4444":"#ec4899";}
-  function htx(r){return r>=0.5?"#fff":"#fff";}
+  function htx(r){return r>=0.7?"#fff":r>=0.6?"#fff":r>=0.5?"#222":r>=0.4?"#222":r>=0.3?"#fff":"#fff";}
   for(var d=0;d<10;d++){
     wh += "<tr><td style=\"font-weight:bold;padding:8px 4px;font-size:15px;background:#faf8ff\">尾"+d+"</td>";
     for(var wi=0;wi<ws.length;wi++){
