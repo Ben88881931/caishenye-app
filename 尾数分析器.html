@@ -333,12 +333,12 @@ function fillPredTable(){
   var wh = "";
   function heatBg(n,w){
     var r=n/w;
-    if(r>=0.7) return "#fee2e2";
-    if(r>=0.6) return "#ffedd5";
-    if(r>=0.5) return "#fef9c3";
-    if(r>=0.4) return "#dcfce7";
-    if(r>=0.3) return "#dbeafe";
-    return "#e0e7ff";
+    if(r>=0.7) return "rgba(220,38,38,0.15)";
+    if(r>=0.6) return "rgba(234,88,12,0.12)";
+    if(r>=0.5) return "rgba(202,138,4,0.10)";
+    if(r>=0.4) return "rgba(22,163,74,0.10)";
+    if(r>=0.3) return "rgba(37,99,235,0.10)";
+    return "rgba(79,70,229,0.10)";
   }
   function heatTxt(n,w){
     var r=n/w;
