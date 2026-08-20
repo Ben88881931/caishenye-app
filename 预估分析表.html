@@ -84,18 +84,26 @@ function cntRange(d, start, end) {
 function calcPredict(d, w, curCnt) {
     var total_segs = Math.ceil(N / w);
     var similar_nexts = [];
+    var all_nexts = [];
     for (var seg = 1; seg < total_segs; seg++) {
         var seg_start = (seg - 1) * w + 1;
         var seg_end = seg * w;
         var seg_cnt = cntRange(d, seg_start, seg_end);
+        var next_start = seg * w + 1;
+        var next_end = Math.min((seg + 1) * w, N);
+        var next_cnt = cntRange(d, next_start, next_end);
+        all_nexts.push(next_cnt);
         if (seg_cnt == curCnt) {
-            var next_start = seg * w + 1;
-            var next_end = Math.min((seg + 1) * w, N);
-            var next_cnt = cntRange(d, next_start, next_end);
             similar_nexts.push(next_cnt);
         }
     }
-    if (similar_nexts.length == 0) return {ml: 0, s: 0};
+    if (similar_nexts.length == 0) {
+        // 找不到相似段时，用历史平均值
+        if (all_nexts.length == 0) return {ml: 0, s: 0};
+        var sum = all_nexts.reduce(function(a, b) { return a + b; }, 0);
+        var avg = Math.round(sum / all_nexts.length);
+        return {ml: avg, s: all_nexts.length, avg: true};
+    }
     var dist = {};
     similar_nexts.forEach(function(cnt) { dist[cnt] = (dist[cnt] || 0) + 1; });
     var most_likely = 0, max_count = 0;
@@ -157,7 +165,8 @@ function fill() {
                 if (pred.s > 0) {
                     var dif = pred.ml - p1;
                     var ds = dif > 0 ? '+' + dif : dif < 0 ? String(dif) : '0';
-                    h += '<td class="d ' + bg(pred.ml/w) + '">' + pred.ml + '<span class="arr">' + ds + '</span><span class="sm">' + pred.s + '样本</span></td>';
+                    var label = pred.avg ? '均值' : pred.s + '样本';
+                    h += '<td class="d ' + bg(pred.ml/w) + '">' + pred.ml + '<span class="arr">' + ds + '</span><span class="sm">' + label + '</span></td>';
                 } else {
                     h += '<td class="d" style="color:#222">--</td>';
                 }
