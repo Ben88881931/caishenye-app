@@ -66,7 +66,7 @@ def save_lottery_data(data):
 def update_html_raw(html_file, period, binary_str):
     with open(html_file, 'r', encoding='utf-8') as f:
         content = f.read()
-    pattern = r'var RAW=\{([^}]+)\}'
+    pattern = r'var RAW\s*=\s*\{([^}]+)\}'
     match = re.search(pattern, content)
     if not match:
         err(f"{html_file} 中未找到 var RAW")
