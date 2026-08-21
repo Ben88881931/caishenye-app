@@ -53,19 +53,30 @@ def check_rebound_pattern(data, tail, lookback=30):
     return rebound_after_miss
 
 def optimize_parameters(data):
-    """优化策略参数 - 计算不同窗口大小的预测准确率"""
+    """优化策略参数 - 正确的评估指标"""
     windows = [5, 7, 10, 15, 20]
-    accuracy = {}
+    results = {}
     
     periods = sorted(data.keys(), key=int)
     
     for w in windows:
-        correct = 0
-        total = 0
+        # 策略1：热号跟踪（前w期出现>=3次的尾数）
+        hot_precision = []  # 精确度：预测的尾数中有多少真的出现了
+        hot_recall = []     # 召回率：实际出现的尾数中有多少被预测到了
+        hot_f1 = []         # F1分数：精确度和召回率的调和平均
+        
+        # 策略2：冷号反弹（前w期出现0次的尾数）
+        cold_precision = []
+        cold_recall = []
+        cold_f1 = []
+        
+        # 随机基准
+        random_precision = []
+        random_recall = []
+        random_f1 = []
         
         # 滑动窗口预测
         for i in range(w, len(periods) - w):
-            # 用前w期预测后w期
             prev_periods = periods[i-w:i]
             next_periods = periods[i:i+w]
             
@@ -83,20 +94,50 @@ def optimize_parameters(data):
                 tails = [j for j, b in enumerate(binary) if b == '1']
                 next_tails.update(tails)
             
-            # 预测策略：前w期出现次数最多的前5个尾数
-            top5 = [t for t, c in prev_counts.most_common(5)]
-            predicted = set(top5)
+            # 策略1：热号（出现>=3次）
+            hot_predicted = set(t for t, c in prev_counts.items() if c >= 3)
+            if hot_predicted and next_tails:
+                precision = len(hot_predicted & next_tails) / len(hot_predicted)
+                recall = len(hot_predicted & next_tails) / len(next_tails)
+                f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+                hot_precision.append(precision)
+                hot_recall.append(recall)
+                hot_f1.append(f1)
             
-            # 计算准确率：预测的5个尾数，有几个真的在后w期出现了
-            if predicted:
-                hit_count = len(predicted & next_tails)
-                accuracy_score = hit_count / len(predicted)
-                correct += accuracy_score
-                total += 1
+            # 策略2：冷号（出现0次）
+            cold_predicted = set(t for t in range(10) if prev_counts.get(t, 0) == 0)
+            if cold_predicted and next_tails:
+                precision = len(cold_predicted & next_tails) / len(cold_predicted)
+                recall = len(cold_predicted & next_tails) / len(next_tails)
+                f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+                cold_precision.append(precision)
+                cold_recall.append(recall)
+                cold_f1.append(f1)
+            
+            # 随机基准：随机选5个尾数
+            import random
+            random.seed(i)
+            random_predicted = set(random.sample(range(10), 5))
+            if random_predicted and next_tails:
+                precision = len(random_predicted & next_tails) / len(random_predicted)
+                recall = len(random_predicted & next_tails) / len(next_tails)
+                f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
+                random_precision.append(precision)
+                random_recall.append(recall)
+                random_f1.append(f1)
         
-        accuracy[w] = correct / total if total > 0 else 0
+        results[w] = {
+            'hot_f1': sum(hot_f1) / len(hot_f1) if hot_f1 else 0,
+            'cold_f1': sum(cold_f1) / len(cold_f1) if cold_f1 else 0,
+            'random_f1': sum(random_f1) / len(random_f1) if random_f1 else 0,
+            'hot_precision': sum(hot_precision) / len(hot_precision) if hot_precision else 0,
+            'hot_recall': sum(hot_recall) / len(hot_recall) if hot_recall else 0,
+            'cold_precision': sum(cold_precision) / len(cold_precision) if cold_precision else 0,
+            'cold_recall': sum(cold_recall) / len(cold_recall) if cold_recall else 0,
+            'samples': len(hot_f1)
+        }
     
-    return accuracy
+    return results
 
 def analyze_strategy_effectiveness(data):
     """分析当前策略的有效性"""
@@ -235,11 +276,13 @@ def main():
         if pattern:
             print(f"尾{tail}: 遗漏后反弹情况 {dict(pattern)}")
     
-    # 4. 优化参数
-    print("\n窗口预测准确率:")
+    # 4. 优化参数（严格版）
+    print("\n窗口预测准确率（严格版）:")
     accuracy = optimize_parameters(data)
-    for w, acc in accuracy.items():
-        print(f"{w}期窗口: {acc:.1%}")
+    print(f"{'窗口':>6} | {'热号F1':>8} | {'冷号F1':>8} | {'随机F1':>8} | 样本数")
+    print("-" * 50)
+    for w, r in accuracy.items():
+        print(f"{w:>4}期 | {r['hot_f1']:>7.1%} | {r['cold_f1']:>7.1%} | {r['random_f1']:>7.1%} | {r['samples']:>4}")
     
     # 5. 分析策略有效性
     print("\n" + "=" * 60)
