@@ -76,6 +76,27 @@
     return total ? hits / total : 0;
   }
 
+  // 理论基准率：1-49 中，尾数 0 只有 4 个号(10/20/30/40)，尾数 1-9 各有 5 个号。
+  // 每期开 7 个不同号码，尾数至少出现一次的概率 = 1 - C(49-c,7)/C(49,7)。
+  var BASE_RATE = [0.4717, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539];
+
+  function missRebound(tail) {
+    var k = currentMiss(tail);
+    var total = 0, hits = 0, run = 0;
+    for (var i = 0; i < periods.length - 1; i++) {
+      if (hit(periods[i], tail)) {
+        run = 0;
+      } else {
+        run++;
+        if (run >= k) {
+          total++;
+          if (hit(periods[i + 1], tail)) hits++;
+        }
+      }
+    }
+    return { k: k, hits: hits, total: total, rate: total ? hits / total : 0 };
+  }
+
   function statusOf(rate, w) {
     if (w <= 7) {
       if (rate <= 0.2) return "冷";
@@ -161,10 +182,18 @@
     var refs = [];
     for (var k = 0; k < 10; k++) {
       if (!hit(latest, k)) {
-        refs.push({ tail: k, rev: reversalRate(k), miss: currentMiss(k) });
+        var mb = missRebound(k);
+        refs.push({
+          tail: k,
+          miss: mb.k,
+          base: BASE_RATE[k],
+          rate: mb.rate,
+          sample: mb.total,
+          edge: mb.total ? mb.rate - BASE_RATE[k] : 0
+        });
       }
     }
-    refs.sort(function (a, b) { return b.rev - a.rev; });
+    refs.sort(function (a, b) { return b.edge - a.edge; });
 
     var html = "";
     html += '<div class="section">';
@@ -191,14 +220,18 @@
     });
     html += "</div></div></div></div>";
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">下期参考</h2><span class="section__hint">上期未出 · 按历史反转率排序</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史反转率</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">统计参考</h2><span class="section__hint">上期未出 · 与理论基准对比</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>遗漏</th><th>基准率</th><th>遗漏后开出</th><th>样本</th><th>差值</th><th>判定</th></tr></thead><tbody>';
     refs.forEach(function (r) {
-      html += "<tr><td>" + r.tail + '</td><td class="cell--' + (r.miss >= 4 ? "hot" : "cold") + '">' + r.miss + " 期</td><td>" + pct(r.rev) + "</td></tr>";
+      var verdict = "无信号";
+      if (r.sample >= 20 && r.edge >= 0.04) verdict = "偏热";
+      else if (r.sample >= 20 && r.edge <= -0.04) verdict = "偏冷";
+      var verdictCls = verdict === "偏热" ? "cell--hot" : verdict === "偏冷" ? "cell--cold" : "";
+      html += "<tr><td>" + r.tail + '</td><td class="' + (r.miss >= 4 ? "cell--hot" : "cell--cold") + '">' + r.miss + '</td><td>' + pct(r.base) + "</td><td>" + pct(r.rate) + "</td><td>" + r.sample + '</td><td>' + (r.edge >= 0 ? "+" : "") + pct(r.edge) + '</td><td class="' + verdictCls + '">' + verdict + "</td></tr>";
     });
     html += "</tbody></table></div></div>";
 
-    html += '<p class="disclaimer">以上内容为历史统计参考，不构成任何投注建议。</p>';
+    html += '<p class="disclaimer">尾数 0 的理论出现率约 47%，尾数 1-9 约 55%（因为 1-49 中尾数 0 只有 4 个号，其余各有 5 个号）。差值需样本足够才有参考意义；当前多数信号都在统计噪声范围内，不应据此追号。</p>';
 
     view.innerHTML = html;
   }
