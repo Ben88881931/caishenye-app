@@ -49,15 +49,16 @@
 
     for (var t = 0; t < 10; t++) {
       html += "<tr><td>" + t + "</td>";
-      var rates = last3.map(function (seg) {
-        return countIn(t, seg.si, seg.ei) / seg.len;
+      var counts = last3.map(function (seg) {
+        return countIn(t, seg.si, seg.ei);
       });
+      var rates = counts.map(function (c, idx) { return c / last3[idx].len; });
       last3.forEach(function (seg, idx) {
-        var c = Math.round(rates[idx] * seg.len);
-        var rate = rates[idx];
-        var above = rate >= BASE[t];
+        var c = counts[idx];
+        var fill = c / currentWindow;
+        var above = rates[idx] >= BASE[t];
         var color = above ? "var(--hot)" : "var(--cold)";
-        html += '<td class="seg-cell"><div class="seg-rate" style="color:' + color + '">' + (rate * 100).toFixed(0) + '%</div><div class="seg-count">' + c + "/" + seg.len + '</div><div class="seg-bar"><i style="width:' + Math.round(rate * 100) + '%"></i></div></td>';
+        html += '<td class="seg-cell"><div class="seg-rate">' + (fill * 100).toFixed(0) + '%</div><div class="seg-count" style="color:' + color + '">' + c + "/" + seg.len + ' 期</div><div class="seg-bar"><i style="width:' + Math.round(fill * 100) + '%"></i></div></td>';
       });
       var prev = rates[1], last = rates[2];
       var trend, cls;
@@ -69,7 +70,7 @@
     }
 
     html += "</tbody></table></div></div>";
-    html += '<p class="disclaimer">百分比 = 该尾数在该分段窗口内的开出率；颜色红=高于该尾数理论基准，蓝=低于基准。末段若不满窗口，以实际期数计算。</p>';
+    html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + currentWindow + ' 期）的进度；末段不满窗口时也按完整窗口计算，副标签显示实际期数。颜色 = 实际开出率相对该尾理论基准（红=偏热，蓝=偏冷）。</p>';
 
     view.innerHTML = html;
   }
