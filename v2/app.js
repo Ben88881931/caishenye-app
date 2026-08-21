@@ -134,6 +134,23 @@
     return { name: name, n: n, avgHit: n ? hitSum / n : 0, avgBase: n ? baseSum / n : 0, edge: n ? (hitSum - baseSum) / n : 0 };
   }
 
+  function segsOf(w) {
+    var segs = [];
+    for (var st = 0; st < periods.length; st += w) {
+      var en = Math.min(st + w - 1, periods.length - 1);
+      segs.push({ si: st, ei: en, s: periods[st], e: periods[en], len: en - st + 1 });
+    }
+    return segs;
+  }
+
+  function countInSeg(tail, a, b) {
+    var c = 0;
+    for (var i = a; i <= b; i++) {
+      if (hit(periods[i], tail)) c++;
+    }
+    return c;
+  }
+
   function statusOf(rate, w) {
     if (w <= 7) {
       if (rate <= 0.2) return "冷";
@@ -157,6 +174,7 @@
   var state = {
     tab: "overview",
     window: 15,
+    segWindow: 15,
     tail: 0,
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
     recordPage: 0,
@@ -165,6 +183,7 @@
   var TABS = [
     { id: "overview", label: "总览" },
     { id: "tails", label: "尾数分析" },
+    { id: "segments", label: "分段对比" },
     { id: "miss", label: "遗漏" },
     { id: "trend", label: "走势" },
     { id: "records", label: "记录" },
@@ -200,6 +219,7 @@
     renderTabs();
     if (state.tab === "overview") renderOverview();
     else if (state.tab === "tails") renderTails();
+    else if (state.tab === "segments") renderSegments();
     else if (state.tab === "miss") renderMiss();
     else if (state.tab === "trend") renderTrend();
     else if (state.tab === "records") renderRecords();
@@ -490,6 +510,49 @@
     view.innerHTML = html;
   }
 
+  function renderSegments() {
+    var w = state.segWindow;
+    var segs = segsOf(w);
+    var last3 = segs.slice(-3);
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口选择</h2></div><div class="chips">';
+    [5, 7, 10, 15, 20, 27, 30].forEach(function (n) {
+      html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-segw="' + n + '">' + n + " 期</button>";
+    });
+    html += "</div></div>";
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近三段对比</h2><span class="section__hint">共 ' + segs.length + " 个分段，末段可能不满窗口</span></div>";
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th>';
+    last3.forEach(function (seg, idx) {
+      var segNo = segs.length - 3 + idx + 1;
+      html += '<th class="seg-cell"><div>第 ' + segNo + ' 段</div><div class="seg-head">' + seg.s + '-' + seg.e + ' 期 · ' + seg.len + ' 期</div></th>';
+    });
+    html += "<th>趋势</th></tr></thead><tbody>";
+
+    for (var t = 0; t < 10; t++) {
+      html += "<tr><td>" + t + "</td>";
+      var counts = last3.map(function (seg) { return countInSeg(t, seg.si, seg.ei); });
+      var rates = counts.map(function (c, idx) { return c / last3[idx].len; });
+      last3.forEach(function (seg, idx) {
+        var c = counts[idx];
+        var fill = c / w;
+        var above = rates[idx] >= BASE_RATE[t];
+        var color = above ? "var(--hot)" : "var(--cold)";
+        html += '<td class="seg-cell"><div class="seg-rate">' + (fill * 100).toFixed(0) + '%</div><div class="seg-count" style="color:' + color + '">' + c + '/' + seg.len + ' 期</div><div class="seg-bar"><i style="width:' + Math.round(fill * 100) + '%"></i></div></td>';
+      });
+      var prev = rates[1], last = rates[2];
+      var trend, cls;
+      if (last - prev >= 0.05) { trend = "↗ 升温"; cls = "trend-up"; }
+      else if (prev - last >= 0.05) { trend = "↘ 降温"; cls = "trend-down"; }
+      else { trend = "→ 平稳"; cls = "trend-flat"; }
+      html += '<td class="' + cls + '">' + trend + "</td>";
+      html += "</tr>";
+    }
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算，副标签显示实际期数。颜色 = 实际开出率相对该尾理论基准（红=偏热，蓝=偏冷）。</p>';
+    view.innerHTML = html;
+  }
+
   tabsEl.addEventListener("click", function (e) {
     var btn = e.target.closest(".tab");
     if (btn) {
@@ -503,6 +566,12 @@
     if (chip) {
       state.window = Number(chip.dataset.window);
       renderTails();
+      return;
+    }
+    var segChip = e.target.closest("[data-segw]");
+    if (segChip) {
+      state.segWindow = Number(segChip.dataset.segw);
+      renderSegments();
       return;
     }
     var tailChip = e.target.closest("[data-tail]");

@@ -433,3 +433,13 @@ body {
   .grid-2 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
 }
+
+.seg-head { font-size: 10px; color: var(--muted); font-weight: 400; }
+.seg-cell { min-width: 92px; }
+.seg-rate { font-size: 13px; font-weight: 700; }
+.seg-count { font-size: 11px; color: var(--muted); }
+.seg-bar { height: 6px; border-radius: 3px; background: #f1f2f4; overflow: hidden; margin-top: 4px; }
+.seg-bar i { display: block; height: 100%; background: var(--accent); }
+.trend-up { color: var(--hot); font-weight: 700; }
+.trend-down { color: var(--cold); font-weight: 700; }
+.trend-flat { color: var(--muted); }
