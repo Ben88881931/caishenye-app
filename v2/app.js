@@ -97,6 +97,43 @@
     return { k: k, hits: hits, total: total, rate: total ? hits / total : 0 };
   }
 
+  function countEnding(tail, upto, w) {
+    var c = 0;
+    for (var j = Math.max(0, upto - w + 1); j <= upto; j++) {
+      if (hit(periods[j], tail)) c++;
+    }
+    return c;
+  }
+
+  function missedRun(tail, upto, k) {
+    for (var j = upto; j > upto - k && j >= 0; j--) {
+      if (hit(periods[j], tail)) return false;
+    }
+    return true;
+  }
+
+  function zScore(tail, w) {
+    var c = countWindow(tail, w);
+    var p = BASE_RATE[tail];
+    var exp = w * p;
+    var sd = Math.sqrt(w * p * (1 - p));
+    return { count: c, expected: exp, rate: c / w, base: p, diff: c / w - p, z: sd > 0 ? (c - exp) / sd : 0 };
+  }
+
+  function backtestSignal(name, isSignal) {
+    var n = 0, hitSum = 0, baseSum = 0;
+    for (var i = 15; i < periods.length - 1; i++) {
+      for (var t = 0; t < 10; t++) {
+        if (isSignal(t, i)) {
+          n++;
+          if (hit(periods[i + 1], t)) hitSum++;
+          baseSum += BASE_RATE[t];
+        }
+      }
+    }
+    return { name: name, n: n, avgHit: n ? hitSum / n : 0, avgBase: n ? baseSum / n : 0, edge: n ? (hitSum - baseSum) / n : 0 };
+  }
+
   function statusOf(rate, w) {
     if (w <= 7) {
       if (rate <= 0.2) return "冷";
@@ -131,6 +168,7 @@
     { id: "miss", label: "遗漏" },
     { id: "trend", label: "走势" },
     { id: "records", label: "记录" },
+    { id: "backtest", label: "回测" },
   ];
 
   var view = document.getElementById("view");
@@ -165,6 +203,7 @@
     else if (state.tab === "miss") renderMiss();
     else if (state.tab === "trend") renderTrend();
     else if (state.tab === "records") renderRecords();
+    else if (state.tab === "backtest") renderBacktest();
   }
 
   function renderOverview() {
@@ -245,17 +284,17 @@
     });
     html += "</div></div>";
 
-    html += '<div class="section"><div class="panel"><table class="table"><thead><tr><th>尾数</th><th>近 ' + w + " 期</th><th>开出率</th><th>状态</th><th>当前遗漏</th></tr></thead><tbody>";
+    html += '<div class="section"><div class="panel"><table class="table"><thead><tr><th>尾数</th><th>近 ' + w + " 期</th><th>期望</th><th>偏离</th><th>判定</th><th>当前遗漏</th></tr></thead><tbody>";
     for (var t = 0; t < 10; t++) {
-      var c = countWindow(t, w);
-      var rate = c / w;
-      var st = statusOf(rate, w);
+      var z = zScore(t, w);
       var miss = currentMiss(t);
-      var tag = st === "热" ? "hot" : st === "冷" ? "cold" : "mid";
-      html += "<tr><td>" + t + '</td><td>' + c + "/" + w + "</td><td>" + pct(rate, 0) + '</td><td><span class="tag tag--' + tag + '">' + st + '</span></td><td class="cell--' + (miss >= 4 ? "hot" : "cold") + '">' + miss + " 期</td></tr>";
+      var verdict = "正常", cls = "";
+      if (z.z >= 2) { verdict = "偏热"; cls = "cell--hot"; }
+      else if (z.z <= -2) { verdict = "偏冷"; cls = "cell--cold"; }
+      html += "<tr><td>" + t + '</td><td>' + z.count + "/" + w + "</td><td>" + z.expected.toFixed(1) + '</td><td>' + (z.diff >= 0 ? "+" : "") + pct(z.diff) + '</td><td class="' + cls + '">' + verdict + '</td><td class="cell--' + (miss >= 4 ? "hot" : "cold") + '">' + miss + " 期</td></tr>";
     }
     html += "</tbody></table></div></div>";
-    html += '<p class="disclaimer">状态按当前窗口开出率划分：热 ≥ ' + (w <= 7 ? "70%" : "66%") + "，冷 ≤ " + (w <= 7 ? "20%" : "33%") + "，其余为中。</p>";
+    html += '<p class="disclaimer">偏离 = 实际开出率减去该尾数理论基准率；判定按 z 分数（|z|≥2 视为显著偏离），已考虑尾数 0 与 1-9 的天然差异。</p>';
 
     view.innerHTML = html;
   }
@@ -427,6 +466,27 @@
 
     html += '<div class="pager"><button data-prev="1" ' + (state.recordPage === 0 ? "disabled" : "") + '>上一页</button><span>' + (state.recordPage + 1) + " / " + totalPages + '</span><button data-next="1" ' + (state.recordPage >= totalPages - 1 ? "disabled" : "") + '>下一页</button></div>';
 
+    view.innerHTML = html;
+  }
+
+  function renderBacktest() {
+    var signals = [
+      backtestSignal("热号跟踪（近15期≥10次）", function (t, i) { return countEnding(t, i, 15) >= 10; }),
+      backtestSignal("冷号反弹（近15期≤5次）", function (t, i) { return countEnding(t, i, 15) <= 5; }),
+      backtestSignal("遗漏≥2期后反弹", function (t, i) { return missedRun(t, i, 2); }),
+      backtestSignal("遗漏≥3期后反弹", function (t, i) { return missedRun(t, i, 3); })
+    ];
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">策略回测</h2><span class="section__hint">信号出现后，下一期真实命中率 vs 理论基准</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>信号</th><th>样本</th><th>实际命中</th><th>基准</th><th>差值</th><th>结论</th></tr></thead><tbody>';
+    signals.forEach(function (s) {
+      var verdict = "无优势", cls = "";
+      if (s.n < 50) { verdict = "样本不足"; }
+      else if (s.edge >= 0.03) { verdict = "略优"; cls = "cell--hot"; }
+      else if (s.edge <= -0.03) { verdict = "略劣"; cls = "cell--cold"; }
+      html += "<tr><td>" + s.name + '</td><td>' + s.n + '</td><td>' + pct(s.avgHit) + '</td><td>' + pct(s.avgBase) + '</td><td>' + (s.edge >= 0 ? "+" : "") + pct(s.edge) + '</td><td class="' + cls + '">' + verdict + "</td></tr>";
+    });
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">结论 = 信号出现后，下一期实际命中率与理论基准率的平均差值。差值接近 0 说明该信号没有稳定预测能力，不应据此加注。</p>';
     view.innerHTML = html;
   }
 
