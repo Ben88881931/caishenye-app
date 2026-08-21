@@ -1,4 +1,12 @@
 import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 sys.argv = ['update_daily.py', '232', '0,1,3,6,8,9']
 import update_daily
 

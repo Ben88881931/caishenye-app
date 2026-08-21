@@ -1,4 +1,12 @@
 import json, re, os
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 # 检查JSON数据
 with open('lottery_data.json', 'r', encoding='utf-8') as f:
@@ -22,7 +30,7 @@ for fn in files:
     raw_match = re.search(r'var RAW\s*=\s*\{([^}]+)\}', content)
     if raw_match:
         raw_str = raw_match.group(1)
-        periods = re.findall(r'"(\d+)"', raw_str)
+        periods = re.findall(r'"(\d+)"\s*:\s*"[01]{10}"', raw_str)
         if periods:
             max_p = max(int(p) for p in periods)
             print(f'{fn}: RAW最新={max_p}')

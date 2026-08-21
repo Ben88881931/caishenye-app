@@ -1,4 +1,12 @@
 import re
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 with open('预估分析表.html', 'r', encoding='utf-8') as f:
     content = f.read()

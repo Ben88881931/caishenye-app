@@ -17,6 +17,15 @@ import subprocess
 import re
 from collections import defaultdict
 
+# 中文 Windows 的 GBK 控制台遇到 ✓/中文/emoji 会抛 UnicodeEncodeError，
+# 统一把标准输出转成 UTF-8，保证脚本在命令行下可稳定运行。
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(APP_DIR)
 
@@ -27,6 +36,12 @@ HTML_FILES = [
     "遗漏颜色表.html",
     "尾数分析器.html",
     "预估分析表.html",
+]
+FULL_NUM_PAGES = [
+    "7号码开奖记录.html",
+    "生肖开奖记录.html",
+    "号码走势图.html",
+    "生肖走势图.html",
 ]
 ERRORS = []
 
@@ -818,7 +833,10 @@ def show_prediction(raw_data):
 
 def git_push(period):
     try:
-        subprocess.run(['git', 'add', '.'], check=True)
+        # 只提交本次更新实际涉及的数据文件，避免把目录里的无关文件扫进仓库。
+        files = [LOTTERY_JSON] + HTML_FILES + FULL_NUM_PAGES
+        files = [f for f in files if os.path.exists(f)]
+        subprocess.run(['git', 'add', '--'] + files, check=True)
         subprocess.run(['git', 'commit', '-m', f'更新第{period}期数据'], check=True)
         result = subprocess.run(['git', 'push'], capture_output=True, text=True)
         if result.returncode != 0:
@@ -1017,8 +1035,20 @@ def main():
     
     verify_binary(period, tails, binary)
     
-    log(f"\n[更新] lottery_data.json...")
+    # 写入前校验：数据范围与期数连续性。任何一项不合法就中止，不落盘任何文件。
+    if any(t < 0 or t > 9 for t in tails):
+        log(f"✗ 尾数超出范围(0-9): {tails}，已中止")
+        sys.exit(1)
+    if is_full_nums and any(n < 1 or n > 49 for n in nums):
+        log(f"✗ 号码超出范围(1-49): {nums}，已中止")
+        sys.exit(1)
     data = load_lottery_data()
+    existing = sorted(int(k) for k in data.keys() if k.isdigit())
+    if existing and period != existing[-1] + 1:
+        log(f"✗ 期数不连续: 当前最新={existing[-1]}, 新期={period}，已中止，未改动任何文件")
+        sys.exit(1)
+    
+    log(f"\n[更新] lottery_data.json...")
     data[str(period)] = binary
     save_lottery_data(data)
     log(f"  ✓ 已添加第{period}期")

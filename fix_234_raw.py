@@ -1,4 +1,12 @@
 import json, re
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 pages = ['开奖历史记录.html', '尾数分析器.html', '遗漏监控.html', '遗漏颜色表.html']
 

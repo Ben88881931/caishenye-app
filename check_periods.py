@@ -1,4 +1,13 @@
 import re
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 files = ['开奖历史记录.html', '遗漏监控.html', '遗漏颜色表.html', '尾数分析器.html', '预估分析表.html']
 for fn in files:
     try:

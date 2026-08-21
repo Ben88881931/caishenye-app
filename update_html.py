@@ -1,4 +1,12 @@
 import json, re
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 # 读取数据
 with open('lottery_data.json', 'r', encoding='utf-8') as f:

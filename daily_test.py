@@ -1,4 +1,12 @@
 import json, re
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 print("=" * 60)
 print("小程序数据完整性检查")
