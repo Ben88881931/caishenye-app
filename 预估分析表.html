@@ -207,6 +207,99 @@ function fill() {
     tbody.innerHTML = h;
 }
 fill();
+
+// 三层分析框架
+var bounceThreshold = {0:4, 1:4, 2:5, 3:4, 4:4, 5:3, 6:2, 7:5, 8:2, 9:1};
+
+function getMiss(d) {
+    var miss = 0;
+    for (var p = N; p >= 1; p--) {
+        if (RAW[p] && RAW[p][d] == '0') miss++;
+        else break;
+    }
+    return miss;
+}
+
+function getDirection(cnt15, miss, bt) {
+    if (cnt15 >= 10) return '热惯性';
+    if (cnt15 <= 5) {
+        if (miss >= bt) return '🔥超临界';
+        return '冷反弹';
+    }
+    return '中';
+}
+
+function fillThreeLayer() {
+    var tbody = document.getElementById('threeLayerBody');
+    if (!tbody) return;
+    var html = '';
+    var candidates = [];
+    
+    for (var d = 0; d < 10; d++) {
+        var cnt15 = cntRange(d, N-14, N);
+        var cnt5 = cntRange(d, N-4, N);
+        var cnt7 = cntRange(d, N-6, N);
+        var cnt10 = cntRange(d, N-9, N);
+        var miss = getMiss(d);
+        var bt = bounceThreshold[d];
+        var dir = getDirection(cnt15, miss, bt);
+        
+        var s15 = cnt15 >= 10 ? '热' : (cnt15 <= 5 ? '冷' : '中');
+        var s5 = cnt5 >= 4 ? '热' : (cnt5 <= 1 ? '冷' : '中');
+        
+        var bg15 = cnt15 >= 10 ? '#22c55e' : (cnt15 <= 5 ? '#ef4444' : '#94a3b8');
+        var bg5 = cnt5 >= 4 ? '#22c55e' : (cnt5 <= 1 ? '#ef4444' : '#94a3b8');
+        
+        var score = 0;
+        if (cnt15 <= 5) score += 3;
+        if (cnt5 <= 1) score += 2;
+        if (miss >= bt) score += 5;
+        else if (miss >= bt - 1) score += 2;
+        
+        // 只推荐未出的号
+        var lastBin = RAW[N] || '';
+        var isMissed = lastBin[d] == '0';
+        if (isMissed) {
+            candidates.push({d:d, miss:miss, cnt15:cnt15, cnt5:cnt5, bt:bt, score:score, dir:dir});
+        }
+        
+        html += '<tr>';
+        html += '<td style="padding:4px;border:1px solid #e8e4f0;font-weight:bold">尾' + d + '</td>';
+        html += '<td style="padding:4px;border:1px solid #e8e4f0;background:' + bg15 + ';color:#fff">' + cnt15 + '/15 ' + s15 + '</td>';
+        html += '<td style="padding:4px;border:1px solid #e8e4f0;background:' + bg5 + ';color:#fff">' + cnt5 + '/5 ' + s5 + '</td>';
+        html += '<td style="padding:4px;border:1px solid #e8e4f0">' + cnt7 + '/7</td>';
+        html += '<td style="padding:4px;border:1px solid #e8e4f0">' + cnt10 + '/10</td>';
+        html += '<td style="padding:4px;border:1px solid #e8e4f0">' + miss + '期</td>';
+        html += '<td style="padding:4px;border:1px solid #e8e4f0">' + bt + '期</td>';
+        html += '<td style="padding:4px;border:1px solid #e8e4f0">' + dir + '</td>';
+        html += '</tr>';
+    }
+    tbody.innerHTML = html;
+    
+    // 推荐排序
+    candidates.sort(function(a, b) { return b.score - a.score; });
+    var recDiv = document.getElementById('recommendation');
+    if (!recDiv) return;
+    
+    if (candidates.length == 0) {
+        recDiv.innerHTML = '<div style="color:#999">上期全中，无未出号，建议跳过</div>';
+        return;
+    }
+    
+    var top = candidates[0];
+    var recHtml = '<div style="font-size:16px;font-weight:bold;color:#6c5ce7;margin-bottom:8px">首选：尾' + top.d + '</div>';
+    recHtml += '<div style="font-size:11px;color:#666;margin-bottom:4px">遗漏' + top.miss + '期 | 15段' + top.cnt15 + '/15 | 近5期' + top.cnt5 + '/5 | 临界' + top.bt + '期</div>';
+    recHtml += '<div style="font-size:12px;color:#222;margin-bottom:8px">方向：' + top.dir + '</div>';
+    
+    if (candidates.length >= 2) {
+        var sec = candidates[1];
+        recHtml += '<div style="font-size:12px;color:#888;margin-top:8px">备选：尾' + sec.d + ' (遗漏' + sec.miss + '期 | 15段' + sec.cnt15 + '/15)</div>';
+    }
+    
+    recDiv.innerHTML = recHtml;
+}
+
+fillThreeLayer();
 </script>
 </body>
 </html>
