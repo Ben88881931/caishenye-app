@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>尾数分段对比</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .seg-head { font-size: 10px; color: var(--muted); font-weight: 400; }
+    .seg-cell { min-width: 92px; }
+    .seg-bar { height: 6px; border-radius: 3px; background: #f1f2f4; overflow: hidden; margin-top: 4px; }
+    .seg-bar i { display: block; height: 100%; background: var(--accent); }
+    .seg-rate { font-size: 13px; font-weight: 700; }
+    .seg-count { font-size: 11px; color: var(--muted); }
+    .trend-up { color: var(--hot); font-weight: 700; }
+    .trend-down { color: var(--cold); font-weight: 700; }
+    .trend-flat { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <div class="appbar__inner">
+      <div>
+        <h1 class="appbar__title">尾数分段对比</h1>
+        <p class="appbar__sub">每个尾数最近三个分段窗口的开出情况</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="view" id="view"></main>
+
+  <script src="data.js"></script>
+  <script src="segments.js"></script>
+</body>
+</html>
