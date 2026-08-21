@@ -66,13 +66,15 @@ def save_lottery_data(data):
 def update_html_raw(html_file, period, binary_str):
     with open(html_file, 'r', encoding='utf-8') as f:
         content = f.read()
+    # 支持var RAW = {...} 和 var RAW={...} 两种格式
     pattern = r'var RAW\s*=\s*\{([^}]+)\}'
     match = re.search(pattern, content)
     if not match:
         err(f"{html_file} 中未找到 var RAW")
         return False
     raw_str = match.group(1)
-    last_periods = re.findall(r'"(\d+)":', raw_str)
+    # 提取所有期数（支持 "数字": 和 "数字" : 两种格式）
+    last_periods = re.findall(r'"(\d+)"\s*:', raw_str)
     if last_periods:
         last_p = int(last_periods[-1])
         if period != last_p + 1:
@@ -81,6 +83,44 @@ def update_html_raw(html_file, period, binary_str):
     new_entry = f',"{period}":"{binary_str}"'
     new_raw_str = raw_str + new_entry
     new_content = content[:match.start(1)] + new_raw_str + content[match.end(1):]
+    with open(html_file, 'w', encoding='utf-8') as f:
+        f.write(new_content)
+    return True
+
+def update_html_array(html_file, period, nums):
+    """更新数组格式的HTML页面（号码走势图、生肖走势图等）"""
+    with open(html_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    pattern = r'var D\s*=\s*(\[[\s\S]*?\]);'
+    match = re.search(pattern, content)
+    if not match:
+        err(f"{html_file} 中未找到 var D")
+        return False
+    
+    arr_str = match.group(1)
+    try:
+        d = json.loads(arr_str)
+    except:
+        err(f"{html_file} D数组解析失败")
+        return False
+    
+    if d and d[-1].get('p') >= period:
+        err(f"{html_file} 已包含第{period}期")
+        return False
+    
+    # 生肖映射（2026年太岁是马）
+    ZODIACS = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪']
+    def get_zodiac(num):
+        return ZODIACS[(6 - (num - 1)) % 12]
+    
+    zods = [get_zodiac(n) for n in nums]
+    new_entry = {"y": 2026, "p": period, "nums": nums, "zods": zods, "tai": "马"}
+    d.append(new_entry)
+    
+    new_arr = json.dumps(d, ensure_ascii=False)
+    new_content = content[:match.start(1)] + new_arr + content[match.end(1):]
+    
     with open(html_file, 'w', encoding='utf-8') as f:
         f.write(new_content)
     return True
