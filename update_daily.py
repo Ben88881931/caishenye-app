@@ -103,43 +103,6 @@ def update_html_raw(html_file, period, binary_str):
         f.write(new_content)
     return True
 
-def update_html_array(html_file, period, nums):
-    """更新数组格式的HTML页面（号码走势图、生肖走势图等）"""
-    with open(html_file, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
-    pattern = r'var D\s*=\s*(\[[\s\S]*?\]);'
-    match = re.search(pattern, content)
-    if not match:
-        err(f"{html_file} 中未找到 var D")
-        return False
-    
-    arr_str = match.group(1)
-    try:
-        d = json.loads(arr_str)
-    except:
-        err(f"{html_file} D数组解析失败")
-        return False
-    
-    if d and d[-1].get('p') >= period:
-        err(f"{html_file} 已包含第{period}期")
-        return False
-    
-    # 生肖映射（2026年太岁是马）
-    ZODIACS = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪']
-    def get_zodiac(num):
-        return ZODIACS[(6 - (num - 1)) % 12]
-    
-    zods = [get_zodiac(n) for n in nums]
-    new_entry = {"y": 2026, "p": period, "nums": nums, "zods": zods, "tai": "马"}
-    d.append(new_entry)
-    
-    new_arr = json.dumps(d, ensure_ascii=False)
-    new_content = content[:match.start(1)] + new_arr + content[match.end(1):]
-    
-    with open(html_file, 'w', encoding='utf-8') as f:
-        f.write(new_content)
-    return True
 
 def calc_segment_stats(raw_data, window_size):
     numeric = {k: v for k, v in raw_data.items() if k.isdigit()}
@@ -606,11 +569,6 @@ def dev_from_center(raw_data, d, upto, W=20):
 
 
 # 兼容旧函数名（A线 W=20 即默认）
-def roll_rate_20(raw_data, d, upto):
-    return roll_rate(raw_data, d, upto, 20)
-
-def center_of_20(raw_data, d, upto):
-    return center_of(raw_data, d, upto, 20)
 
 
 def calc_prediction(raw_data):
@@ -778,59 +736,6 @@ def calc_prediction(raw_data):
     
     return result
 
-def show_prediction(raw_data):
-    """显示预测结果（模型v2.0：含预警机制）"""
-    log(f"\n{'='*50}")
-    log(f"📊 下期预测分析（模型v2.0：含预警机制）")
-    log(f"{'='*50}")
-    
-    pred = calc_prediction(raw_data)
-    
-    log(f"\n上期开出: {pred['prev_opened']}")
-    log(f"上期未出: {pred['prev_missed']}")
-    
-    log(f"\n各尾数分析:")
-    log(f"  尾数 | 遗漏 | 反转率 | 偏离中枢 | v5类型")
-    log(f"  -----|------|--------|----------|------")
-    for c in pred['candidates']:
-        dev = c.get('dev')
-        dev_s = (f"{dev:+.1f}" if dev is not None else '-')
-        typ = '强回归' if c.get('is_strong') else ('反向' if c.get('is_weak') else '中性')
-        log(f"  尾{c['digit']}  | {c.get('miss','-')}期  | {c.get('rev_rate','-')}% | {dev_s} | {typ}")
-    
-    log(f"\n预警规则:")
-    log(f"  🟢安全级: 反转率≥60% + 遗漏≥3期 → 0%失败")
-    log(f"  🟡推荐级: 反转率≥55% + 遗漏≥3期 → 1.7%失败")
-    log(f"  🔵谨慎级: 反转率≥55% + 遗漏≥2期 + 5期窗口暖(W) → 0%失败")
-    log(f"  🔴预警: 遗漏≥2期 + 5期窗口冰(I) → 高风险")
-    
-    if pred['skip']:
-        log(f"\n🚫 建议: 跳过不下注")
-        log(f"   原因: {pred['reason']}")
-    else:
-        best = pred['best']
-        level_emoji = {'green': '🟢', 'yellow': '🟡', 'orange': '🔴', 'red': '🚨'}.get(pred.get('alert_level'), '')
-        log(f"\n{level_emoji} 推荐: 尾{best['digit']}")
-        log(f"   反转率: {best['rev_rate']}%")
-        log(f"   遗漏期数: {best['miss']}期")
-        log(f"   原因: {pred['reason']}")
-        
-        if pred['alert_level'] == 'green':
-            log(f"\n💰 下注方案（1.8x赔率，追到P4封顶）:")
-            log(f"   第1期(P1): 1500元 → 中了+1200元 (重注70%)")
-            log(f"   第2期(P2): 500元 → 中了+400元 (平移)")
-            log(f"   第3期(P3): 500元 → 中了+400元 (平移=P2)")
-            log(f"   第4期(P4): 3000元 → 中是回本+小赚 (覆盖到98.6%)")
-            log(f"   第5期起: 认亏不追 (1.4%连漏5期放弃)")
-            log(f"   单轮最坏亏: -5500元")
-        elif pred['alert_level'] == 'yellow':
-            log(f"\n⚠️ 谨慎级建议:")
-            log(f"   可考虑减半下注或跳过")
-    
-    # (预警信号字段已随v5.0移除)
-    
-    log(f"\n{'='*50}")
-    return pred
 
 def git_push(period):
     try:
