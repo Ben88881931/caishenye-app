@@ -291,13 +291,12 @@ body {
 .miss-6 { color: var(--bad); font-weight: 700; }
 
 .heatmap {
-  overflow-x: auto;
+  text-align: center;
 }
 
 .heatmap__table {
   border-collapse: collapse;
-  min-width: 480px;
-  width: 100%;
+  margin: 0 auto;
 }
 
 .heatmap__table th,
@@ -306,7 +305,11 @@ body {
   text-align: center;
 }
 
-.heatmap__table th {
+.heatmap__table thead th {
+  position: sticky;
+  top: 121px;
+  z-index: 3;
+  background: #fafafa;
   font-size: 10px;
   color: var(--muted);
   font-weight: 600;
@@ -318,18 +321,30 @@ body {
   color: var(--muted);
   padding-right: 6px;
   white-space: nowrap;
+  text-align: right;
 }
 
 .heat-cell {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   margin: 1px;
-  border-radius: 3px;
+  border-radius: 4px;
   background: #eef0f2;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  vertical-align: middle;
 }
 
-.heat-cell.is-hit { background: var(--accent); }
+.heat-cell.cell-hit { background: #dc2626; }
+.heat-cell.cell-miss1 { background: #16a34a; }
+.heat-cell.cell-miss2 { background: #2563eb; }
+.heat-cell.cell-miss3 { background: #eab308; color: #713f12; }
+.heat-num { font-size: 10px; line-height: 1; }
 
 .linechart {
   width: 100%;

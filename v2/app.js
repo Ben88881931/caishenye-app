@@ -151,6 +151,15 @@
     return c;
   }
 
+  function missRunAt(tail, upto) {
+    var run = 0;
+    for (var i = upto; i >= 0; i--) {
+      if (hit(periods[i], tail)) break;
+      run++;
+    }
+    return run;
+  }
+
   function statusOf(rate, w) {
     if (w <= 7) {
       if (rate <= 0.2) return "冷";
@@ -363,10 +372,22 @@
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
     html += "</tr></thead><tbody>";
-    heatPeriods.forEach(function (p) {
+    heatPeriods.forEach(function (p, rowIdx) {
+      var globalIdx = periods.length - heatPeriods.length + rowIdx;
       html += '<tr><td class="row-label">' + p + "</td>";
       for (var d = 0; d < 10; d++) {
-        html += '<td><span class="heat-cell ' + (hit(p, d) ? "is-hit" : "") + '"></span></td>';
+        var cellCls = "heat-cell";
+        var num = "";
+        if (hit(p, d)) {
+          cellCls += " cell-hit";
+        } else {
+          var run = missRunAt(d, globalIdx);
+          cellCls += run >= 3 ? " cell-miss3" : run === 2 ? " cell-miss2" : " cell-miss1";
+          if (rowIdx === heatPeriods.length - 1) {
+            num = '<span class="heat-num">' + run + "</span>";
+          }
+        }
+        html += '<td><span class="' + cellCls + '">' + num + "</span></td>";
       }
       html += "</tr>";
     });
