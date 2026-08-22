@@ -175,6 +175,7 @@
     tab: "overview",
     window: 15,
     segWindow: 15,
+    rollWindow: 10,
     tail: 0,
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
     recordPage: 0,
@@ -371,7 +372,12 @@
     });
     html += "</tbody></table></div></div></div>";
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">10 期窗口</span></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">' + state.rollWindow + ' 期窗口</span></div>';
+    html += '<div class="chips" style="margin-bottom:8px">';
+    [5, 10, 15, 20, 30].forEach(function (n) {
+      html += '<button class="chip ' + (state.rollWindow === n ? "is-active" : "") + '" data-rollw="' + n + '">' + n + " 期</button>";
+    });
+    html += "</div>";
     html += '<div class="chips" style="margin-bottom:8px">';
     for (var k = 0; k < 10; k++) {
       html += '<button class="chip ' + (state.tail === k ? "is-active" : "") + '" data-tail="' + k + '">尾 ' + k + "</button>";
@@ -396,7 +402,7 @@
   function drawLineChart() {
     var host = document.getElementById("linechart");
     if (!host) return;
-    var w = 10;
+    var w = state.rollWindow;
     var count = 60;
     var start = Math.max(0, periods.length - count);
     var values = [];
@@ -432,7 +438,7 @@
     host.innerHTML = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
       grid +
       '<polyline points="' + pts + '" fill="none" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
-      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + state.tail + " 10期开出率</text>" +
+      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + state.tail + " " + w + "期开出率</text>" +
       xlabels +
       "</svg>";
   }
@@ -578,6 +584,12 @@
     if (segChip) {
       state.segWindow = Number(segChip.dataset.segw);
       renderSegments();
+      return;
+    }
+    var rollChip = e.target.closest("[data-rollw]");
+    if (rollChip) {
+      state.rollWindow = Number(rollChip.dataset.rollw);
+      renderTrend();
       return;
     }
     var tailChip = e.target.closest("[data-tail]");
