@@ -374,7 +374,7 @@
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">' + state.rollWindow + ' 期窗口</span></div>';
     html += '<div class="chips" style="margin-bottom:8px">';
-    [5, 10, 15, 20, 30].forEach(function (n) {
+    [5, 7, 10, 15, 20, 30].forEach(function (n) {
       html += '<button class="chip ' + (state.rollWindow === n ? "is-active" : "") + '" data-rollw="' + n + '">' + n + " 期</button>";
     });
     html += "</div>";
