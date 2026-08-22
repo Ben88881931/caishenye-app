@@ -369,12 +369,13 @@
   function renderTrend() {
     var heatPeriods = periods.slice(-24);
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾数走势热力图</h2><span class="section__hint">近 ' + heatPeriods.length + " 期</span></div>";
-    html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th>';
+    html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
     html += "</tr></thead><tbody>";
     heatPeriods.forEach(function (p, rowIdx) {
       var globalIdx = periods.length - heatPeriods.length + rowIdx;
-      html += '<tr><td class="row-label">' + p + "</td>";
+      var drawn = tailsOf(p);
+      html += '<tr><td class="row-label">' + p + '</td><td class="open-tails">' + drawn.join(" ") + '</td><td class="open-count">' + drawn.length + "</td>";
       for (var d = 0; d < 10; d++) {
         var cellCls = "heat-cell";
         var num = "";

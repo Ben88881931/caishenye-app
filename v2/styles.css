@@ -324,6 +324,21 @@ body {
   text-align: right;
 }
 
+.heatmap__table .open-tails {
+  font-size: 11px;
+  color: var(--text);
+  padding: 0 6px;
+  white-space: nowrap;
+  text-align: left;
+  font-weight: 600;
+}
+
+.heatmap__table .open-count {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0 4px;
+}
+
 .heat-cell {
   width: 20px;
   height: 20px;
