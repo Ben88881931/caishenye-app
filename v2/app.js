@@ -160,6 +160,42 @@
     return run;
   }
 
+  var CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
+
+  function buildMissInfo() {
+    var info = {};
+    for (var d = 0; d < 10; d++) {
+      info[d] = {};
+      var lastOpen = -1;
+      for (var i = 0; i < periods.length; i++) {
+        var period = periods[i];
+        if (hit(period, d)) {
+          if (lastOpen >= 0 && period > lastOpen + 1) {
+            var cycleLen = period - lastOpen - 1;
+            var cls = cycleLen >= 3 ? "cell-miss3" : cycleLen === 2 ? "cell-miss2" : "cell-miss1";
+            for (var p = lastOpen + 1; p < period; p++) {
+              info[d][p] = { cls: cls, mark: 0 };
+            }
+            info[d][period - 1] = { cls: cls, mark: cycleLen };
+          }
+          lastOpen = period;
+        }
+      }
+      var latestPeriod = periods[periods.length - 1];
+      if (lastOpen >= 0 && latestPeriod > lastOpen) {
+        var cycleLen2 = latestPeriod - lastOpen;
+        var cls2 = cycleLen2 >= 3 ? "cell-miss3" : cycleLen2 === 2 ? "cell-miss2" : "cell-miss1";
+        for (var p2 = lastOpen + 1; p2 <= latestPeriod; p2++) {
+          info[d][p2] = { cls: cls2, mark: 0 };
+        }
+        info[d][latestPeriod] = { cls: cls2, mark: cycleLen2 };
+      }
+    }
+    return info;
+  }
+
+  var MISS_INFO = buildMissInfo();
+
   function statusOf(rate, w) {
     if (w <= 7) {
       if (rate <= 0.2) return "冷";
@@ -372,23 +408,18 @@
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
     html += "</tr></thead><tbody>";
-    heatPeriods.forEach(function (p, rowIdx) {
-      var globalIdx = periods.length - heatPeriods.length + rowIdx;
+    heatPeriods.forEach(function (p) {
       var drawn = tailsOf(p);
       html += '<tr><td class="row-label">' + p + '</td><td class="open-tails">' + drawn.join(" ") + '</td><td class="open-count">' + drawn.length + "</td>";
       for (var d = 0; d < 10; d++) {
-        var cellCls = "heat-cell";
-        var num = "";
         if (hit(p, d)) {
-          cellCls += " cell-hit";
+          html += '<td><span class="heat-cell cell-hit">' + d + "</span></td>";
         } else {
-          var run = missRunAt(d, globalIdx);
-          cellCls += run >= 3 ? " cell-miss3" : run === 2 ? " cell-miss2" : " cell-miss1";
-          if (rowIdx === heatPeriods.length - 1) {
-            num = '<span class="heat-num">' + run + "</span>";
-          }
+          var mi = MISS_INFO[d][p];
+          var cls = mi ? mi.cls : "cell-miss1";
+          var mark = (mi && mi.mark > 0) ? (CN[mi.mark] || mi.mark) : "";
+          html += '<td><span class="heat-cell ' + cls + '">' + mark + "</span></td>";
         }
-        html += '<td><span class="' + cellCls + '">' + num + "</span></td>";
       }
       html += "</tr>";
     });
