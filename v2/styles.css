@@ -341,9 +341,9 @@ body {
 }
 
 .heat-cell.cell-hit { background: #dc2626; }
-.heat-cell.cell-miss1 { background: #16a34a; }
-.heat-cell.cell-miss2 { background: #2563eb; }
-.heat-cell.cell-miss3 { background: #eab308; color: #713f12; }
+.heat-cell.cell-miss1 { background: #3b82f6; }
+.heat-cell.cell-miss2 { background: #22c55e; }
+.heat-cell.cell-miss3 { background: #eab308; color: #7a5b00; }
 .heat-num { font-size: 10px; line-height: 1; }
 
 .linechart {
