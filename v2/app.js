@@ -538,7 +538,13 @@
         var fill = c / w;
         var above = rates[idx] >= BASE_RATE[t];
         var color = above ? "var(--hot)" : "var(--cold)";
-        html += '<td class="seg-cell"><div class="seg-rate">' + (fill * 100).toFixed(0) + '%</div><div class="seg-count" style="color:' + color + '">' + c + '/' + seg.len + ' 期</div><div class="seg-bar"><i style="width:' + Math.round(fill * 100) + '%"></i></div></td>';
+        var isLast = idx === last3.length - 1;
+        var est = "";
+        if (isLast && seg.len < w) {
+          var predicted = c + (w - seg.len) * BASE_RATE[t];
+          est = '<div class="seg-est">预估 ' + predicted.toFixed(1) + ' 次</div>';
+        }
+        html += '<td class="seg-cell"><div class="seg-rate">' + (fill * 100).toFixed(0) + '%</div><div class="seg-count" style="color:' + color + '">' + c + '/' + seg.len + ' 期</div><div class="seg-bar"><i style="width:' + Math.round(fill * 100) + '%"></i></div>' + est + '</td>';
       });
       var prev = rates[1], last = rates[2];
       var trend, cls;
