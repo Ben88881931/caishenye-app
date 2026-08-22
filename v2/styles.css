@@ -292,6 +292,8 @@ body {
 
 .heatmap {
   text-align: center;
+  max-height: calc(100vh - 190px);
+  overflow: auto;
 }
 
 .heatmap__table {
@@ -307,7 +309,7 @@ body {
 
 .heatmap__table thead th {
   position: sticky;
-  top: 121px;
+  top: 0;
   z-index: 3;
   background: #fafafa;
   font-size: 10px;

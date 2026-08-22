@@ -367,8 +367,8 @@
   }
 
   function renderTrend() {
-    var heatPeriods = periods.slice(-24);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾数走势热力图</h2><span class="section__hint">近 ' + heatPeriods.length + " 期</span></div>";
+    var heatPeriods = periods;
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾数走势热力图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
     html += "</tr></thead><tbody>";
@@ -419,6 +419,8 @@
 
     drawLineChart();
     drawZodiacBars();
+    var hm = view.querySelector(".heatmap");
+    if (hm) hm.scrollTop = hm.scrollHeight;
   }
 
   function drawLineChart() {
