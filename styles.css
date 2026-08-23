@@ -768,3 +768,71 @@ body {
 .hist-table .hist-hit { background: #dc2626; color: #fff; font-weight: 700; }
 .hist-table .hist-miss { color: #9ca3af; }
 .hist-table .hist-miss-sum { color: #dc2626; font-weight: 700; font-size: 11px; }
+
+/* 桌面端加宽，手机端收紧边距并让标签栏更容易滑动 */
+@media (min-width: 768px) {
+  .appbar__inner,
+  .tabs,
+  .view {
+    max-width: 1160px;
+  }
+  .appbar__inner {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .tabs {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .view {
+    padding: 20px 24px 64px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .appbar__inner,
+  .tabs,
+  .view {
+    max-width: 1320px;
+  }
+}
+
+@media (max-width: 640px) {
+  .appbar__inner {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .tabs {
+    padding-left: 8px;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #c7ccd4 transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabs::-webkit-scrollbar {
+    display: block;
+    height: 5px;
+  }
+  .tabs::-webkit-scrollbar-thumb {
+    background: #c7ccd4;
+    border-radius: 999px;
+  }
+  .view {
+    padding: 10px 10px 36px;
+  }
+  .panel__body {
+    padding: 10px;
+  }
+  .section__head {
+    gap: 6px;
+  }
+  .tab {
+    min-width: 58px;
+    padding: 7px 7px;
+    font-size: 12px;
+  }
+  .tab-group {
+    padding: 7px 7px;
+    font-size: 10px;
+  }
+}
