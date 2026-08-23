@@ -234,11 +234,14 @@
     { id: "trend", label: "走势" },
     { id: "numtrend", label: "号码走势" },
     { id: "zodtrend", label: "生肖走势" },
+    { id: "zodrecords", label: "生肖记录" },
     { id: "records", label: "记录" },
+    { id: "history", label: "开奖历史" },
     { id: "backtest", label: "回测" },
     { id: "order", label: "下单" },
     { id: "predict", label: "预估" },
     { id: "personality", label: "性格" },
+    { id: "datarecord", label: "数据记录" },
   ];
 
   var view = document.getElementById("view");
@@ -275,11 +278,14 @@
     else if (state.tab === "trend") renderTrend();
     else if (state.tab === "numtrend") renderNumTrend();
     else if (state.tab === "zodtrend") renderZodTrend();
+    else if (state.tab === "zodrecords") renderZodRecords();
     else if (state.tab === "records") renderRecords();
+    else if (state.tab === "history") renderHistory();
     else if (state.tab === "backtest") renderBacktest();
     else if (state.tab === "order") renderOrder();
     else if (state.tab === "predict") renderPredict();
     else if (state.tab === "personality") renderPersonality();
+    else if (state.tab === "datarecord") renderDataRecord();
   }
 
   function renderOverview() {
@@ -960,6 +966,8 @@
     });
     html += "</tbody></table></div></div></div>";
     view.innerHTML = html;
+    var ntsc = view.querySelector(".trend-scroll");
+    if (ntsc) ntsc.scrollTop = ntsc.scrollHeight;
   }
 
   function renderZodTrend() {
@@ -1037,6 +1045,135 @@
     html += "</tbody></table></div></div></div>";
     html += '<p class="disclaimer">生肖字格：开出写生肖名，蓝=遗漏1期、绿=遗漏2期、黄=遗漏3期及以上并写期数；号码球红/蓝/绿为号码颜色分类。</p>';
     view.innerHTML = html;
+    var ztsc = view.querySelector(".trend-scroll");
+    if (ztsc) ztsc.scrollTop = ztsc.scrollHeight;
+  }
+
+  function renderZodRecords() {
+    var y = state.year;
+    var arr = D.filter(function (r) { return r.y === y; });
+    var cnt = {};
+    ZODS12.forEach(function (z) { cnt[z] = 0; });
+    arr.forEach(function (r) { r.zods.forEach(function (z) { cnt[z]++; }); });
+    var totalZC = arr.length * 7;
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">生肖开奖记录</h2><span class="section__hint">' + y + " 年</span></div>";
+    html += trendYearChips(y);
+    html += "</div>";
+
+    html += '<div class="panel"><div class="panel__body trend-dark">';
+    html += '<div class="zstat-title">' + y + "年 生肖出现统计（" + totalZC + "个号码）</div>";
+    html += '<div class="zgrid">';
+    ZODS12.forEach(function (z) {
+      var pct = (cnt[z] / totalZC * 100).toFixed(1);
+      html += '<div class="zitem"><div class="zn">' + z + '</div><div class="zc">' + cnt[z] + "次 " + pct + "%</div></div>";
+    });
+    html += "</div></div></div>";
+
+    html += '<div class="panel"><div class="panel__body trend-dark"><table class="zrec-table"><thead><tr><th>期号</th><th>号码 / 生肖</th></tr></thead><tbody>';
+    arr.forEach(function (r) {
+      var cells = "";
+      for (var j = 0; j < 7; j++) {
+        var n = r.nums[j], z = r.zods[j], c = numberColorOf(n);
+        cells += '<span class="cell"><span class="ball c' + c + '">' + (n < 10 ? "0" + n : n) + '</span><span class="zod">' + z + "</span></span>";
+      }
+      html += '<tr><td class="zrec-period">' + r.p + "</td><td>" + cells + "</td></tr>";
+    });
+    html += "</tbody></table></div></div>";
+    view.innerHTML = html;
+    var zt = view.querySelector(".zrec-table");
+    if (zt && zt.rows && zt.rows.length > 1) zt.rows[zt.rows.length - 1].scrollIntoView({ block: "end" });
+  }
+
+  // ===== 开奖历史记录（文本表） =====
+  function renderHistory() {
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">开奖历史记录</h2><span class="section__hint">共 ' + periods.length + " 期</span></div>";
+    html += '<div class="panel"><div class="panel__body hist-scroll"><table class="hist-table"><thead><tr><th class="hist-p">期号</th><th>开奖尾号</th><th>个数</th>';
+    for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
+    html += "<th>遗漏</th></tr></thead><tbody>";
+    periods.forEach(function (p, idx) {
+      var tails = tailsOf(p);
+      html += '<tr><td class="hist-p">' + p + '</td><td>' + tails.join(" ") + "</td><td>" + tails.length + "</td>";
+      for (var d = 0; d < 10; d++) {
+        if (hit(p, d)) {
+          html += '<td class="hist-hit">' + d + "</td>";
+        } else {
+          var run = 0;
+          for (var q = p; q >= 1; q--) { if (hit(q, d)) break; run++; }
+          html += '<td class="hist-miss">' + run + "</td>";
+        }
+      }
+      if (idx === periods.length - 1) {
+        var missArr = [];
+        for (var d2 = 0; d2 < 10; d2++) missArr.push(currentMiss(d2));
+        html += '<td class="hist-miss-sum">' + missArr.join(" ") + "</td>";
+      } else {
+        html += "<td></td>";
+      }
+      html += "</tr>";
+    });
+    html += "</tbody></table></div></div></div>";
+    view.innerHTML = html;
+    var hsc = view.querySelector(".hist-scroll");
+    if (hsc) hsc.scrollTop = hsc.scrollHeight;
+  }
+
+  // ===== 数据记录系统（三期内必出规律分析） =====
+  function calcGapStats(num) {
+    var stats = {};
+    for (var gap = 1; gap <= 5; gap++) {
+      var total = 0, hitC = 0;
+      for (var i = 0; i < periods.length - gap - 2; i++) {
+        var allMissing = true;
+        for (var j = 1; j <= gap; j++) { if (hit(periods[i + j], num)) { allMissing = false; break; } }
+        if (!allMissing) continue;
+        var appeared = false;
+        for (var k = 1; k <= 3; k++) {
+          var idx = i + gap + k;
+          if (idx < periods.length && hit(periods[idx], num)) { appeared = true; break; }
+        }
+        total++;
+        if (appeared) hitC++;
+      }
+      if (total > 0) stats[gap] = { hit: hitC, total: total, rate: hitC / total };
+    }
+    return stats;
+  }
+
+  function renderDataRecord() {
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">数据记录系统</h2><span class="section__hint">三期内必出规律分析</span></div>';
+    html += '<div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value">' + periods.length + '</div><div class="stat__label">总期数</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + latest + '</div><div class="stat__label">最新期</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + tailsOf(latest).join(",") + '</div><div class="stat__label">最新尾数</div></div>';
+    html += "</div></div>";
+
+    html += '<div class="section"><div class="panel"><table class="table"><thead><tr><th>数字</th><th>最佳触发条件</th><th>三期内命中率</th><th>样本量</th><th>说明</th></tr></thead><tbody>';
+    for (var num = 0; num <= 9; num++) {
+      var stats = calcGapStats(num);
+      var bestGap = null, bestRate = 0, bestHit = 0, bestTotal = 0;
+      Object.keys(stats).forEach(function (g) {
+        if (stats[g].total >= 5 && stats[g].rate > bestRate) { bestGap = Number(g); bestRate = stats[g].rate; bestHit = stats[g].hit; bestTotal = stats[g].total; }
+      });
+      if (!bestGap) {
+        Object.keys(stats).forEach(function (g) {
+          if (stats[g].total >= 3 && stats[g].rate > bestRate) { bestGap = Number(g); bestRate = stats[g].rate; bestHit = stats[g].hit; bestTotal = stats[g].total; }
+        });
+      }
+      if (!bestGap && Object.keys(stats).length > 0) {
+        bestGap = Math.min.apply(null, Object.keys(stats).map(Number));
+        bestRate = stats[bestGap].rate; bestHit = stats[bestGap].hit; bestTotal = stats[bestGap].total;
+      }
+      var desc = "需要等待";
+      if (bestRate >= 0.98) desc = "完美触发";
+      else if (bestRate >= 0.95) desc = "非常稳定";
+      else if (bestRate >= 0.90) desc = "稳定可靠";
+      var cls = bestRate >= 0.95 ? "ord-hit" : bestRate >= 0.90 ? "ord-pending" : "ord-miss";
+      html += '<tr><td><strong>' + num + "</strong></td><td>缺席 ≥ " + (bestGap || 2) + " 期</td><td class=\"" + cls + "\">" + (bestRate * 100).toFixed(1) + "%</td><td>" + bestHit + "/" + bestTotal + "</td><td>" + desc + "</td></tr>";
+    }
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">统计口径：当某数字连续缺席 N 期后，接下来 3 期内出现的概率；样本量不足时优先放宽到 3。仅供参考。</p>';
+    view.innerHTML = html;
   }
 
   tabsEl.addEventListener("click", function (e) {
@@ -1095,6 +1232,7 @@
       if (state.tab === "trend") renderTrend();
       else if (state.tab === "numtrend") renderNumTrend();
       else if (state.tab === "zodtrend") renderZodTrend();
+      else if (state.tab === "zodrecords") renderZodRecords();
       else if (state.tab === "records") renderRecords();
       return;
     }

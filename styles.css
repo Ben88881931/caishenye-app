@@ -643,3 +643,30 @@ body {
   padding: 3px 2px;
 }
 .trend-dark .numcol { padding: 0; height: 28px; vertical-align: middle; }
+
+/* ===== 生肖开奖记录（照搬老版） ===== */
+.zstat-title { font-size: 13px; color: #fbbf24; margin-bottom: 8px; font-weight: 700; }
+.zgrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.zitem { background: #252a44; border-radius: 8px; padding: 8px 4px; text-align: center; }
+.zitem .zn { font-size: 14px; font-weight: bold; color: #e5e7eb; }
+.zitem .zc { font-size: 11px; color: #9ca3af; }
+
+.zrec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.zrec-table th,
+.zrec-table td { padding: 6px 4px; text-align: center; border: 1px solid #2d3250; }
+.zrec-table th { background: #252a44; color: #9ca3af; font-size: 11px; font-weight: 500; }
+.zrec-table td { color: #f3f4f6; }
+.zrec-table .zrec-period { font-weight: bold; color: #fbbf24; }
+.trend-dark .cell { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin: 2px 3px; }
+.trend-dark .zod { display: block; font-size: 12px; color: #d1d5db; text-align: center; }
+
+/* ===== 开奖历史记录（文本表） ===== */
+.hist-scroll { overflow: auto; max-height: calc(100vh - 140px); }
+.hist-table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: 12px; }
+.hist-table th, .hist-table td { border: 1px solid var(--line); text-align: center; padding: 4px 3px; }
+.hist-table th { background: #fafafa; color: var(--muted); font-size: 11px; position: sticky; top: 0; z-index: 3; }
+.hist-table .hist-p { position: sticky; left: 0; background: #fff; font-weight: 700; color: var(--accent); min-width: 40px; z-index: 2; }
+.hist-table thead .hist-p { z-index: 4; }
+.hist-table .hist-hit { color: #dc2626; font-weight: 700; }
+.hist-table .hist-miss { color: #9ca3af; }
+.hist-table .hist-miss-sum { color: #dc2626; font-weight: 700; font-size: 11px; }
