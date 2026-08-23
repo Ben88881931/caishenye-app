@@ -537,3 +537,109 @@ body {
 @media (min-width: 640px) {
   .ord-grid { grid-template-columns: repeat(5, 1fr); }
 }
+
+/* ===== 号码走势图 / 生肖走势图（深色主题，照搬老版） ===== */
+.trend-scroll { overflow: auto; max-height: calc(100vh - 140px); }
+
+.trend-dark { background: #0f1222; color: #e5e7eb; }
+
+.trend-dark .trend-table {
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+}
+
+.trend-dark .trend-table th,
+.trend-dark .trend-table td {
+  border: 1px solid #3a3f5c;
+  text-align: center;
+  padding: 0;
+}
+
+.trend-dark thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #252a44;
+}
+
+.trend-dark .numhdr { font-size: 11px; color: #e5e7eb; padding: 3px 0; line-height: 1.2; }
+.trend-dark .zodhdr { font-size: 10px; color: #d1d5db; padding: 0 0 3px; line-height: 1.1; }
+.trend-dark .zodname { font-size: 13px; color: #e5e7eb; padding: 3px 0; line-height: 1.2; font-weight: bold; }
+
+.trend-dark th.period,
+.trend-dark td.period {
+  position: sticky;
+  left: 0;
+  z-index: 15;
+  background: #1a1d30;
+  font-size: 11px;
+  color: #a78bfa;
+  font-weight: bold;
+  min-width: 42px;
+  padding: 0 3px;
+}
+.trend-dark thead th.period { z-index: 25; }
+
+.trend-dark td { width: 26px; height: 38px; min-width: 26px; text-align: center; }
+.trend-dark td.hit { vertical-align: top; padding-top: 1px; }
+
+.trend-dark .ball {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  margin: 0 auto;
+}
+.trend-dark .c0 { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.trend-dark .c1 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.trend-dark .c2 { background: linear-gradient(135deg, #22c55e, #15803d); }
+
+.trend-dark .ballcell { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; }
+.trend-dark .ballnum {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+}
+.trend-dark .ballzod { font-size: 11px; color: #d1d5db; line-height: 1; margin-top: 2px; }
+
+.trend-dark .zp {
+  display: block;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  margin: 0 auto;
+}
+.trend-dark .zp.z-out { background: #232738; color: #e5e7eb; }
+.trend-dark .zp.z-m1 { background: #3b82f6; color: #fff; }
+.trend-dark .zp.z-m2 { background: #22c55e; color: #fff; }
+.trend-dark .zp.z-m3 { background: #eab308; color: #7a5b00; }
+
+.trend-dark .zodcell {
+  width: 24px;
+  height: 28px;
+  min-width: 24px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  color: #fff;
+  border: 0;
+  padding: 3px 2px;
+}
+.trend-dark .numcol { padding: 0; height: 28px; vertical-align: middle; }

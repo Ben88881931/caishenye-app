@@ -232,6 +232,8 @@
     { id: "segments", label: "分段对比" },
     { id: "miss", label: "遗漏" },
     { id: "trend", label: "走势" },
+    { id: "numtrend", label: "号码走势" },
+    { id: "zodtrend", label: "生肖走势" },
     { id: "records", label: "记录" },
     { id: "backtest", label: "回测" },
     { id: "order", label: "下单" },
@@ -271,6 +273,8 @@
     else if (state.tab === "segments") renderSegments();
     else if (state.tab === "miss") renderMiss();
     else if (state.tab === "trend") renderTrend();
+    else if (state.tab === "numtrend") renderNumTrend();
+    else if (state.tab === "zodtrend") renderZodTrend();
     else if (state.tab === "records") renderRecords();
     else if (state.tab === "backtest") renderBacktest();
     else if (state.tab === "order") renderOrder();
@@ -896,6 +900,145 @@
     view.innerHTML = html;
   }
 
+  // ===== 号码走势图 / 生肖走势图（照搬老版） =====
+  var ZODS12 = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+  var RED_NUM = [1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46];
+  var BLUE_NUM = [3, 4, 9, 10, 14, 15, 20, 25, 26, 31, 36, 37, 41, 42, 47, 48];
+
+  function numberColorOf(n) {
+    return RED_NUM.indexOf(n) >= 0 ? 0 : (BLUE_NUM.indexOf(n) >= 0 ? 1 : 2);
+  }
+
+  function numZodMap(y) {
+    var arr = D.filter(function (r) { return r.y === y; });
+    var map = {};
+    arr.forEach(function (r) {
+      for (var j = 0; j < r.nums.length; j++) map[r.nums[j]] = r.zods[j];
+    });
+    if (map[1]) {
+      var ti = ZODS12.indexOf(map[1]);
+      for (var n = 1; n <= 49; n++) {
+        if (!map[n]) map[n] = ZODS12[((ti - (n - 1)) % 12 + 12) % 12];
+      }
+    }
+    return map;
+  }
+
+  function trendYearChips(y) {
+    var h = '<div class="chips" style="margin-bottom:8px">';
+    [2026, 2025, 2024, 2023, 2022, 2021].forEach(function (yy) {
+      h += '<button class="chip ' + (y === yy ? "is-active" : "") + '" data-year="' + yy + '">' + yy + "</button>";
+    });
+    return h + "</div>";
+  }
+
+  function renderNumTrend() {
+    var y = state.year;
+    var arr = D.filter(function (r) { return r.y === y; });
+    var zmap = numZodMap(y);
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">号码走势图</h2><span class="section__hint">' + y + " 年 · 共 " + arr.length + " 期</span></div>";
+    html += trendYearChips(y);
+    html += '</div><div class="panel"><div class="panel__body trend-dark trend-scroll"><table class="trend-table">';
+    html += "<thead><tr><th class=\"period\">期号</th>";
+    for (var n = 1; n <= 49; n++) {
+      html += '<th><div class="numhdr">' + (n < 10 ? "0" + n : n) + '</div><div class="zodhdr">' + (zmap[n] || "-") + "</div></th>";
+    }
+    html += "</tr></thead><tbody>";
+    arr.forEach(function (r) {
+      var info = {};
+      for (var j = 0; j < r.nums.length; j++) info[r.nums[j]] = { c: numberColorOf(r.nums[j]), z: r.zods[j] };
+      html += '<tr><td class="period">' + r.p + "</td>";
+      for (var m = 1; m <= 49; m++) {
+        if (info[m]) {
+          html += '<td class="hit"><span class="ballcell"><span class="ballnum c' + info[m].c + '">' + m + '</span><span class="ballzod">' + info[m].z + "</span></span></td>";
+        } else {
+          html += "<td></td>";
+        }
+      }
+      html += "</tr>";
+    });
+    html += "</tbody></table></div></div></div>";
+    view.innerHTML = html;
+  }
+
+  function renderZodTrend() {
+    var y = state.year;
+    var arr = D.filter(function (r) { return r.y === y; });
+    var tai = arr.length ? arr[arr.length - 1].tai : "马";
+    var ti = ZODS12.indexOf(tai);
+    function zodiacOf(n) { return ZODS12[((ti - (n - 1)) % 12 + 12) % 12]; }
+
+    var nmap = {};
+    ZODS12.forEach(function (z) { nmap[z] = []; });
+    for (var n = 1; n <= 49; n++) nmap[zodiacOf(n)].push(n);
+
+    var periodOpen = arr.map(function (r) {
+      var o = {};
+      for (var j = 0; j < r.zods.length; j++) o[r.zods[j]] = true;
+      return { p: r.p, open: o };
+    });
+
+    var zcolor = [], zmark = [];
+    for (var i = 0; i < arr.length; i++) { zcolor.push({}); zmark.push({}); }
+    ZODS12.forEach(function (z) {
+      var start = null;
+      for (var i = 0; i <= arr.length; i++) {
+        var isMiss = (i < arr.length) && !periodOpen[i].open[z];
+        if (isMiss) {
+          if (start === null) start = i;
+        } else if (start !== null) {
+          var len = i - start;
+          var cls = len === 1 ? "z-m1" : (len === 2 ? "z-m2" : "z-m3");
+          for (var k = start; k < i; k++) zcolor[k][z] = cls;
+          zmark[i - 1][z] = len;
+          start = null;
+        }
+      }
+    });
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">生肖走势图</h2><span class="section__hint">' + y + " 年 · 太岁 " + tai + " · 共 " + arr.length + " 期</span></div>";
+    html += trendYearChips(y);
+    html += '</div><div class="panel"><div class="panel__body trend-dark trend-scroll"><table class="trend-table">';
+    html += '<thead><tr><th class="period" rowspan="2">期</th>';
+    ZODS12.forEach(function (z) {
+      html += '<th colspan="' + (nmap[z].length + 1) + '"><div class="zodname">' + z + "</div></th>";
+    });
+    html += "</tr><tr>";
+    ZODS12.forEach(function (z) {
+      html += '<th class="znth"></th>';
+      nmap[z].forEach(function (n) { html += '<th><div class="numhdr">' + (n < 10 ? "0" + n : n) + "</div></th>"; });
+    });
+    html += "</tr></thead><tbody>";
+    arr.forEach(function (r, i) {
+      var nc = {};
+      for (var j = 0; j < r.nums.length; j++) nc[r.nums[j]] = numberColorOf(r.nums[j]);
+      html += '<tr><td class="period">' + r.p + "</td>";
+      ZODS12.forEach(function (z) {
+        var opened = periodOpen[i].open[z];
+        var zcls, ztxt;
+        if (opened) { zcls = "z-out"; ztxt = z; }
+        else {
+          zcls = zcolor[i][z] || "z-m3";
+          var mk = zmark[i][z];
+          ztxt = (mk !== undefined) ? mk : "";
+        }
+        html += '<td class="zodcell"><span class="zp ' + zcls + '">' + ztxt + "</span></td>";
+        nmap[z].forEach(function (n) {
+          if (nc[n] !== undefined) {
+            html += '<td class="numcol hit"><span class="ball c' + nc[n] + '">' + (n < 10 ? "0" + n : n) + "</span></td>";
+          } else {
+            html += '<td class="numcol"></td>';
+          }
+        });
+      });
+      html += "</tr>";
+    });
+    html += "</tbody></table></div></div></div>";
+    html += '<p class="disclaimer">生肖字格：开出写生肖名，蓝=遗漏1期、绿=遗漏2期、黄=遗漏3期及以上并写期数；号码球红/蓝/绿为号码颜色分类。</p>';
+    view.innerHTML = html;
+  }
+
   tabsEl.addEventListener("click", function (e) {
     var btn = e.target.closest(".tab");
     if (btn) {
@@ -950,6 +1093,8 @@
     if (yearChip) {
       state.year = Number(yearChip.dataset.year);
       if (state.tab === "trend") renderTrend();
+      else if (state.tab === "numtrend") renderNumTrend();
+      else if (state.tab === "zodtrend") renderZodTrend();
       else if (state.tab === "records") renderRecords();
       return;
     }
