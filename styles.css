@@ -417,9 +417,9 @@ body {
 
 .linechart-dot {
   position: absolute;
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
   border-radius: 50%;
   background: #dc2626;
   border: 1px solid #fff;
@@ -691,14 +691,18 @@ body {
 .trend-dark { background: #0f1222; color: #e5e7eb; }
 
 .trend-dark .trend-table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #3a3f5c;
   width: max-content;
   min-width: 100%;
 }
 
 .trend-dark .trend-table th,
 .trend-dark .trend-table td {
-  border: 1px solid #3a3f5c;
+  border: 0;
+  border-right: 1px solid #3a3f5c;
+  border-bottom: 1px solid #3a3f5c;
   text-align: center;
   padding: 0;
 }
@@ -720,6 +724,9 @@ body {
   left: 0;
   z-index: 15;
   background: #1a1d30;
+  border-right: 1px solid #3a3f5c;
+  border-bottom: 1px solid #3a3f5c;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.25);
   font-size: 11px;
   color: #a78bfa;
   font-weight: bold;

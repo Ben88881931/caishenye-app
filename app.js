@@ -654,7 +654,7 @@
     }
     var maxV = Math.max(100, Math.max.apply(null, values));
     var width = 640, height = 180;
-    var padL = 24, padR = 8, padT = 10, padB = 20;
+    var padL = 34, padR = 8, padT = 10, padB = 20;
     var plotW = width - padL - padR;
     var plotH = height - padT - padB;
     var pts = values.map(function (v, idx) {
@@ -670,21 +670,27 @@
     }).join("");
 
     var grid = "";
+    var ylabels = "";
     for (var g = 0; g <= 4; g++) {
       var gy = padT + plotH - (g / 4) * plotH;
       grid += '<line x1="' + padL + '" y1="' + gy.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + gy.toFixed(1) + '" stroke="#eef0f2" stroke-width="1"/>';
+      ylabels += '<text x="' + (padL - 5) + '" y="' + (gy + 3).toFixed(1) + '" font-size="9" fill="#9aa1ab" text-anchor="end">' + (g * 25) + "%</text>";
     }
 
     var xlabels = "";
-    for (var li = 0; li < labels.length; li += Math.ceil(labels.length / 6)) {
-      var lx = padL + li / (values.length - 1) * plotW;
+    var tickCount = 6;
+    for (var tk = 0; tk < tickCount; tk++) {
+      var li = Math.round(tk * (labels.length - 1) / (tickCount - 1));
+      var lx = padL + (values.length === 1 ? 0 : li / (values.length - 1) * plotW);
+      grid += '<line x1="' + lx.toFixed(1) + '" y1="' + padT + '" x2="' + lx.toFixed(1) + '" y2="' + (padT + plotH) + '" stroke="#f1f3f5" stroke-width="1"/>';
       xlabels += '<text x="' + lx.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + labels[li] + "</text>";
     }
 
     var svg = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
       grid +
-      '<polyline points="' + pts + '" fill="none" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<polyline points="' + pts + '" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
       '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + state.tail + " " + w + "期开出率</text>" +
+      ylabels +
       xlabels +
       "</svg>";
     host.innerHTML = '<div style="position:relative;width:100%;height:180px">' + svg + markers + "</div>";
