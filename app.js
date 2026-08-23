@@ -151,6 +151,57 @@
     return c;
   }
 
+  function tailSegs(tail, w) {
+    return segsOf(w).map(function (seg) {
+      var c = countInSeg(tail, seg.si, seg.ei);
+      return { si: seg.si, ei: seg.ei, s: seg.s, e: seg.e, len: seg.len, c: c, rate: c / w };
+    });
+  }
+
+  function segColorClass(rate) {
+    if (rate >= 0.7) return "seg-hot";
+    if (rate >= 0.6) return "seg-warm";
+    if (rate >= 0.5) return "seg-norm";
+    if (rate >= 0.4) return "seg-cool";
+    if (rate >= 0.3) return "seg-cold";
+    return "seg-ice";
+  }
+
+  function segTextLabel(rate) {
+    if (rate >= 0.7) return "热";
+    if (rate >= 0.6) return "暖";
+    if (rate >= 0.5) return "平";
+    if (rate >= 0.4) return "凉";
+    if (rate >= 0.3) return "冷";
+    return "冰";
+  }
+
+  function segStats(tail, w) {
+    var arr = tailSegs(tail, w);
+    if (!arr.length) return null;
+    var max = -Infinity, min = Infinity, sum = 0;
+    var labels = {};
+    arr.forEach(function (e) {
+      var r = e.rate;
+      if (r > max) max = r;
+      if (r < min) min = r;
+      sum += r;
+      var l = segTextLabel(r);
+      labels[l] = (labels[l] || 0) + 1;
+    });
+    var most = "", mostCnt = 0;
+    Object.keys(labels).forEach(function (l) {
+      if (labels[l] > mostCnt) { most = l; mostCnt = labels[l]; }
+    });
+    var range = max - min;
+    var rangeLabel = range >= 50 ? "大" : range >= 30 ? "中" : "小";
+    return {
+      max: max, min: min, avg: sum / arr.length, most: most, mostCnt: mostCnt,
+      total: arr.length, range: range, rangeLabel: rangeLabel,
+      rule: "最高" + Math.round(max) + "% 最低" + Math.round(min) + "% 最频" + most + "(" + mostCnt + "/" + arr.length + ")"
+    };
+  }
+
   function missRunAt(tail, upto) {
     var run = 0;
     for (var i = upto; i >= 0; i--) {
@@ -220,6 +271,8 @@
     tab: "overview",
     window: 15,
     segWindow: 15,
+    segTails: 7,
+    segCount: 0,
     rollWindow: 10,
     tail: 0,
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
@@ -595,6 +648,86 @@
     view.innerHTML = html;
   }
 
+  function renderSegHistory(w, tails, segCount) {
+    var allSegs = segsOf(w);
+    var tailMap = {};
+    tails.forEach(function (t) { tailMap[t] = tailSegs(t, w); });
+    var viewSegs = (segCount > 0 && segCount < allSegs.length) ? allSegs.slice(-segCount) : allSegs;
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">历史分段</h2><span class="section__hint">第 ' + allSegs[0].s + '-' + allSegs[allSegs.length - 1].e + " 期 · 共 " + allSegs.length + " 段</span></div>";
+
+    html += '<div class="chips" style="margin-bottom:8px">';
+    [[7, "只看7号"], [10, "全部10号"]].forEach(function (mode) {
+      html += '<button class="chip ' + (tails.length === mode[0] ? "is-active" : "") + '" data-segtails="' + mode[0] + '">' + mode[1] + "</button>";
+    });
+    html += "</div>";
+
+    html += '<div class="chips" style="margin-bottom:8px">';
+    [[0, "全部"], [20, "近20段"], [15, "近15段"], [10, "近10段"], [8, "近8段"]].forEach(function (opt) {
+      html += '<button class="chip ' + (segCount === opt[0] ? "is-active" : "") + '" data-segcount="' + opt[0] + '">' + opt[1] + "</button>";
+    });
+    html += "</div>";
+
+    html += '<div class="panel"><div class="panel__body seg-hist-scroll"><table class="seg-hist-table"><thead><tr><th class="seg-hist-label">段</th>';
+    tails.forEach(function (t) { html += "<th>尾" + t + "</th>"; });
+    html += "</tr></thead><tbody>";
+
+    viewSegs.forEach(function (seg) {
+      var segIdx = allSegs.indexOf(seg);
+      html += '<tr><td class="seg-hist-label">' + seg.s + "-" + seg.e + "期</td>";
+      tails.forEach(function (t) {
+        var arr = tailMap[t];
+        var e = arr[segIdx];
+        if (!e) { html += "<td>-</td>"; return; }
+
+        var arrow = "", arrowColor = "#555";
+        if (segIdx > 0 && arr[segIdx - 1]) {
+          var prevRate = arr[segIdx - 1].rate;
+          if (e.rate > prevRate + 0.03) { arrow = "▲"; arrowColor = "#15803d"; }
+          else if (e.rate < prevRate - 0.03) { arrow = "▼"; arrowColor = "#b91c1c"; }
+          else { arrow = "─"; arrowColor = "#555"; }
+        }
+        var dot = hit(periods[e.ei], t) ? " ●" : "";
+        var arrowStyle = "color:" + arrowColor;
+        var cell = '<td class="seg-hist-cell ' + segColorClass(e.rate) + '">';
+        cell += '<span class="seg-hist-period">' + e.s + '-' + e.e + '期</span>';
+        cell += '<span class="seg-hist-arrow" style="' + arrowStyle + '">' + arrow + '</span>';
+        cell += '<span class="seg-hist-rate">' + (e.rate * 100).toFixed(1) + '%</span> <b>' + segTextLabel(e.rate) + '</b><br><b>' + e.c + '/' + w + '</b>' + dot;
+        cell += '</td>';
+        html += cell;
+      });
+      html += "</tr>";
+    });
+
+    html += '</tbody><tfoot><tr class="seg-hist-summary"><td class="seg-hist-label">总数</td>';
+    tails.forEach(function (t) {
+      var totalHits = 0;
+      for (var i = 0; i < periods.length; i++) if (hit(periods[i], t)) totalHits++;
+      html += '<td>' + totalHits + "/" + periods.length + "</td>";
+    });
+    html += "</tr>";
+
+    html += '<tr class="seg-hist-summary"><td class="seg-hist-label">规律</td>';
+    tails.forEach(function (t) {
+      var s = segStats(t, w);
+      html += "<td>" + (s ? s.rule : "-") + "</td>";
+    });
+    html += "</tr>";
+
+    html += '<tr class="seg-hist-summary"><td class="seg-hist-label">波动</td>';
+    tails.forEach(function (t) {
+      var s = segStats(t, w);
+      if (s) {
+        html += '<td>' + Math.round(s.max) + '%~' + Math.round(s.min) + '% 幅度' + Math.round(s.range) + '% ' + s.rangeLabel + ' ' + s.most + '(' + s.mostCnt + '/' + s.total + ')</td>';
+      } else {
+        html += "<td>-</td>";
+      }
+    });
+    html += "</tr></tfoot></table></div></div></div>";
+
+    return html;
+  }
+
   function renderSegments() {
     var w = state.segWindow;
     var segs = segsOf(w);
@@ -641,6 +774,7 @@
     }
     html += "</tbody></table></div></div>";
     html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算，副标签显示实际期数。颜色 = 实际开出率相对该尾理论基准（红=偏热，蓝=偏冷）。</p>';
+    html += renderSegHistory(w, state.segTails === 7 ? [0, 1, 2, 6, 7, 8, 9] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], state.segCount);
     view.innerHTML = html;
   }
 
@@ -1223,6 +1357,18 @@
     var segChip = e.target.closest("[data-segw]");
     if (segChip) {
       state.segWindow = Number(segChip.dataset.segw);
+      renderSegments();
+      return;
+    }
+    var segTailsChip = e.target.closest("[data-segtails]");
+    if (segTailsChip) {
+      state.segTails = Number(segTailsChip.dataset.segtails);
+      renderSegments();
+      return;
+    }
+    var segCountChip = e.target.closest("[data-segcount]");
+    if (segCountChip) {
+      state.segCount = Number(segCountChip.dataset.segcount);
       renderSegments();
       return;
     }

@@ -89,6 +89,13 @@ body {
 
 .tabs::-webkit-scrollbar { display: none; }
 
+@media (min-width: 640px) {
+  .tabs {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+}
+
 .tab {
   flex: 1 0 auto;
   min-width: 64px;
@@ -514,6 +521,36 @@ body {
 .trend-down { color: var(--cold); font-weight: 700; }
 .trend-flat { color: var(--muted); }
 
+/* 历史分段记录 */
+.seg-hist-scroll { overflow: auto; max-height: calc(100vh - 260px); padding: 0; }
+.seg-hist-table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: 12px; }
+.seg-hist-table th,
+.seg-hist-table td { border: 1px solid var(--line); text-align: center; padding: 5px 4px; }
+.seg-hist-table thead th { position: sticky; top: 0; z-index: 3; background: #fafafa; color: var(--muted); font-size: 11px; font-weight: 600; }
+.seg-hist-table .seg-hist-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+  color: var(--accent);
+  font-weight: 700;
+  min-width: 58px;
+  white-space: nowrap;
+}
+.seg-hist-table thead .seg-hist-label { z-index: 5; background: #fafafa; }
+.seg-hist-cell { min-width: 72px; line-height: 1.25; }
+.seg-hist-period { display: block; font-size: 9px; color: var(--muted); }
+.seg-hist-arrow { display: inline-block; width: 12px; font-size: 11px; }
+.seg-hist-rate { font-weight: 700; }
+.seg-hist-table .seg-hot { background: #22c55e; color: #fff; }
+.seg-hist-table .seg-warm { background: #3b82f6; color: #fff; }
+.seg-hist-table .seg-norm { background: #94a3b8; color: #fff; }
+.seg-hist-table .seg-cool { background: #eab308; color: #7a5b00; }
+.seg-hist-table .seg-cold { background: #ef4444; color: #fff; }
+.seg-hist-table .seg-ice { background: #ec4899; color: #fff; }
+.seg-hist-summary td { background: #fafafa; color: var(--text); font-size: 10px; text-align: left; }
+.seg-hist-summary .seg-hist-label { background: #fafafa; color: var(--accent); text-align: center; }
+
 .ord-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -576,7 +613,7 @@ body {
 }
 
 /* ===== 号码走势图 / 生肖走势图（深色主题，照搬老版） ===== */
-.trend-scroll { overflow: auto; max-height: calc(100vh - 140px); padding: 0; }
+.trend-scroll { overflow: auto; max-height: calc(100vh - 140px); padding: 0 0 96px; }
 
 .trend-dark { background: #0f1222; color: #e5e7eb; }
 
