@@ -433,6 +433,21 @@ body {
   font-size: 14px;
 }
 
+.num.c0 {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+}
+
+.num.c1 {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+}
+
+.num.c2 {
+  background: linear-gradient(135deg, #22c55e, #15803d);
+  color: #fff;
+}
+
 .zod {
   font-size: 11px;
   color: var(--muted);
@@ -561,7 +576,7 @@ body {
 }
 
 /* ===== 号码走势图 / 生肖走势图（深色主题，照搬老版） ===== */
-.trend-scroll { overflow: auto; max-height: calc(100vh - 140px); }
+.trend-scroll { overflow: auto; max-height: calc(100vh - 140px); padding: 0; }
 
 .trend-dark { background: #0f1222; color: #e5e7eb; }
 
@@ -599,7 +614,7 @@ body {
   color: #a78bfa;
   font-weight: bold;
   min-width: 42px;
-  padding: 0 3px;
+  padding: 0;
 }
 .trend-dark thead th.period { z-index: 25; }
 

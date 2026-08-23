@@ -535,6 +535,15 @@
     }).join("");
   }
 
+  function recordCard(r) {
+    var balls = "";
+    for (var j = 0; j < r.nums.length; j++) {
+      var n = r.nums[j];
+      balls += '<div style="text-align:center"><div class="num c' + numberColorOf(n) + '">' + (n < 10 ? "0" + n : n) + '</div><div class="zod">' + r.zods[j] + "</div></div>";
+    }
+    return '<div class="record"><div class="record__top"><span class="record__period">第 ' + r.p + ' 期</span><span class="record__meta">' + r.y + " · 太岁 " + r.tai + '</span></div><div class="num-list">' + balls + "</div></div>";
+  }
+
   function renderRecords() {
     var year = state.year;
     var list = D.filter(function (e) { return e.y === year; }).sort(function (a, b) { return b.p - a.p; });
@@ -555,11 +564,7 @@
       html += '<div class="empty">暂无记录</div>';
     } else {
       page.forEach(function (r) {
-        html += '<div class="record"><div class="record__top"><span class="record__period">第 ' + r.p + ' 期</span><span class="record__meta">' + r.y + " · 太岁 " + r.tai + "</span></div><div class=\"num-list\">";
-        r.nums.forEach(function (n, i) {
-          html += '<div style="text-align:center"><div class="num">' + n + '</div><div class="zod">' + r.zods[i] + "</div></div>";
-        });
-        html += "</div></div>";
+        html += recordCard(r);
       });
     }
     html += "</div></div>";
@@ -1054,11 +1059,15 @@
 
   function renderZodRecords() {
     var y = state.year;
-    var arr = D.filter(function (r) { return r.y === y; });
+    var list = D.filter(function (r) { return r.y === y; }).sort(function (a, b) { return b.p - a.p; });
     var cnt = {};
     ZODS12.forEach(function (z) { cnt[z] = 0; });
-    arr.forEach(function (r) { r.zods.forEach(function (z) { cnt[z]++; }); });
-    var totalZC = arr.length * 7;
+    list.forEach(function (r) { r.zods.forEach(function (z) { cnt[z]++; }); });
+    var totalZC = list.length * 7;
+    var pageSize = 10;
+    var totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+    if (state.recordPage >= totalPages) state.recordPage = totalPages - 1;
+    var page = list.slice(state.recordPage * pageSize, state.recordPage * pageSize + pageSize);
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">生肖开奖</h2><span class="section__hint">' + y + " 年</span></div>";
     html += trendYearChips(y);
@@ -1073,19 +1082,19 @@
     });
     html += "</div></div></div>";
 
-    html += '<div class="panel"><div class="panel__body trend-dark trend-scroll"><table class="zrec-table"><thead><tr><th>期号</th><th>号码 / 生肖</th></tr></thead><tbody>';
-    arr.forEach(function (r) {
-      var cells = "";
-      for (var j = 0; j < 7; j++) {
-        var n = r.nums[j], z = r.zods[j], c = numberColorOf(n);
-        cells += '<span class="cell"><span class="ball c' + c + '">' + (n < 10 ? "0" + n : n) + '</span><span class="zod">' + z + "</span></span>";
-      }
-      html += '<tr><td class="zrec-period">' + r.p + "</td><td>" + cells + "</td></tr>";
-    });
-    html += "</tbody></table></div></div>";
+    html += '<div class="section"><div class="panel">';
+    if (!page.length) {
+      html += '<div class="empty">暂无记录</div>';
+    } else {
+      page.forEach(function (r) {
+        html += recordCard(r);
+      });
+    }
+    html += "</div></div>";
+
+    html += '<div class="pager"><button data-prev="1" ' + (state.recordPage === 0 ? "disabled" : "") + '>上一页</button><span>' + (state.recordPage + 1) + " / " + totalPages + '</span><button data-next="1" ' + (state.recordPage >= totalPages - 1 ? "disabled" : "") + '>下一页</button></div>';
+
     view.innerHTML = html;
-    var zt = view.querySelector(".zrec-table");
-    if (zt && zt.rows && zt.rows.length > 1) zt.rows[zt.rows.length - 1].scrollIntoView({ block: "end" });
   }
 
   // ===== 开奖历史记录（文本表） =====
@@ -1242,13 +1251,15 @@
     if (e.target.closest("[data-prev]")) {
       if (state.recordPage > 0) {
         state.recordPage--;
-        renderRecords();
+        if (state.tab === "zodrecords") renderZodRecords();
+        else renderRecords();
       }
       return;
     }
     if (e.target.closest("[data-next]")) {
       state.recordPage++;
-      renderRecords();
+      if (state.tab === "zodrecords") renderZodRecords();
+      else renderRecords();
       return;
     }
   });
