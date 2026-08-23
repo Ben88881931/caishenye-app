@@ -548,8 +548,16 @@ body {
 .seg-hist-table .seg-cool { background: #eab308; color: #7a5b00; }
 .seg-hist-table .seg-cold { background: #ef4444; color: #fff; }
 .seg-hist-table .seg-ice { background: #ec4899; color: #fff; }
-.seg-hist-summary td { background: #fafafa; color: var(--text); font-size: 10px; text-align: left; }
-.seg-hist-summary .seg-hist-label { background: #fafafa; color: var(--accent); text-align: center; }
+.seg-hist-summary td {
+  background: #fafafa;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  padding: 9px 7px;
+  min-width: 130px;
+}
+.seg-hist-summary .seg-hist-label { background: #fafafa; color: var(--accent); text-align: center; font-size: 12px; min-width: 58px; }
 
 .ord-grid {
   display: grid;
@@ -757,6 +765,6 @@ body {
 .hist-table th { background: #fafafa; color: var(--muted); font-size: 11px; position: sticky; top: 0; z-index: 3; }
 .hist-table .hist-p { position: sticky; left: 0; background: #fff; font-weight: 700; color: var(--accent); min-width: 40px; z-index: 2; }
 .hist-table thead .hist-p { z-index: 4; }
-.hist-table .hist-hit { color: #dc2626; font-weight: 700; }
+.hist-table .hist-hit { background: #dc2626; color: #fff; font-weight: 700; }
 .hist-table .hist-miss { color: #9ca3af; }
 .hist-table .hist-miss-sum { color: #dc2626; font-weight: 700; font-size: 11px; }

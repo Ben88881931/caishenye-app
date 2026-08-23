@@ -657,12 +657,6 @@
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">历史分段</h2><span class="section__hint">第 ' + allSegs[0].s + '-' + allSegs[allSegs.length - 1].e + " 期 · 共 " + allSegs.length + " 段</span></div>";
 
     html += '<div class="chips" style="margin-bottom:8px">';
-    [[7, "只看7号"], [10, "全部10号"]].forEach(function (mode) {
-      html += '<button class="chip ' + (tails.length === mode[0] ? "is-active" : "") + '" data-segtails="' + mode[0] + '">' + mode[1] + "</button>";
-    });
-    html += "</div>";
-
-    html += '<div class="chips" style="margin-bottom:8px">';
     [[0, "全部"], [20, "近20段"], [15, "近15段"], [10, "近10段"], [8, "近8段"]].forEach(function (opt) {
       html += '<button class="chip ' + (segCount === opt[0] ? "is-active" : "") + '" data-segcount="' + opt[0] + '">' + opt[1] + "</button>";
     });
@@ -734,7 +728,7 @@
     var last3 = segs.slice(-3);
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口选择</h2></div><div class="chips">';
-    [5, 7, 10, 15, 20, 27, 30].forEach(function (n) {
+    [5, 10, 15, 30].forEach(function (n) {
       html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-segw="' + n + '">' + n + " 期</button>";
     });
     html += "</div></div>";
@@ -774,7 +768,7 @@
     }
     html += "</tbody></table></div></div>";
     html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算，副标签显示实际期数。颜色 = 实际开出率相对该尾理论基准（红=偏热，蓝=偏冷）。</p>';
-    html += renderSegHistory(w, state.segTails === 7 ? [0, 1, 2, 6, 7, 8, 9] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], state.segCount);
+    html += renderSegHistory(w, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], state.segCount);
     view.innerHTML = html;
   }
 
