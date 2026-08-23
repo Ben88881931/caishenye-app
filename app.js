@@ -282,7 +282,6 @@
   var TABS = [
     { id: "overview", label: "总览" },
     { group: "记录" },
-    { id: "history", label: "开奖记录" },
     { id: "records", label: "7号开奖" },
     { id: "zodrecords", label: "生肖开奖" },
     { id: "numtrend", label: "号码走势" },
@@ -728,7 +727,7 @@
     var last3 = segs.slice(-3);
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口选择</h2></div><div class="chips">';
-    [5, 10, 15, 30].forEach(function (n) {
+    [5, 7, 10, 15, 30].forEach(function (n) {
       html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-segw="' + n + '">' + n + " 期</button>";
     });
     html += "</div></div>";
