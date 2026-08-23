@@ -497,13 +497,28 @@
   function missOrderTails() {
     var arr = [];
     for (var t = 0; t < 10; t++) {
-      arr.push({ tail: t, miss: currentMiss(t), last: lastOpenIdx(t) });
+      var run = 0, runStart = 0, evStart = -1, evEnd = -1;
+      for (var i = 0; i < periods.length; i++) {
+        if (hit(periods[i], t)) {
+          if (run >= 3) {
+            evStart = runStart;
+            evEnd = periods[i - 1];
+          }
+          run = 0;
+        } else {
+          if (run === 0) runStart = periods[i];
+          run++;
+        }
+      }
+      if (run >= 3) {
+        evStart = runStart;
+        evEnd = periods[periods.length - 1];
+      }
+      arr.push({ tail: t, evStart: evStart, evEnd: evEnd });
     }
     arr.sort(function (a, b) {
-      var ga = Math.min(a.miss, 3);
-      var gb = Math.min(b.miss, 3);
-      if (ga !== gb) return ga - gb;
-      if (a.last !== b.last) return a.last - b.last;
+      if (a.evEnd !== b.evEnd) return a.evEnd - b.evEnd;
+      if (a.evStart !== b.evStart) return a.evStart - b.evStart;
       return a.tail - b.tail;
     });
     return arr.map(function (x) { return x.tail; });
@@ -535,7 +550,7 @@
     });
 
     html += "</tbody></table></div></div>";
-    html += '<p class="disclaimer">排序规则：先按当前遗漏 0、1、2、3 期及以上分组，3 期及以上放最右；每组内按最近一次开出的日期从旧到新排列，最新开始遗漏的放最后。</p>';
+    html += '<p class="disclaimer">排序规则：按每个尾数最近一次遗漏满 3 期及以上的时间排序，旧的放左、最新的放右；正在遗漏满 3 期及以上的放在最后。</p>';
     return html;
   }
 
@@ -1305,7 +1320,11 @@
 
     html += '<div class="pager"><button data-prev="1" ' + (state.recordPage === 0 ? "disabled" : "") + '>上一页</button><span>' + (state.recordPage + 1) + " / " + totalPages + '</span><button data-next="1" ' + (state.recordPage >= totalPages - 1 ? "disabled" : "") + '>下一页</button></div>';
 
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">生肖分布</h2><span class="section__hint">' + y + " 年</span></div>";
+    html += '<div class="panel"><div class="panel__body"><div id="zodchart" class="bars"></div></div></div></div>';
+
     view.innerHTML = html;
+    drawZodiacBars();
   }
 
   // ===== 开奖历史记录（文本表） =====
