@@ -487,6 +487,58 @@
     return out;
   }
 
+  function lastOpenIdx(tail) {
+    for (var i = periods.length - 1; i >= 0; i--) {
+      if (hit(periods[i], tail)) return i;
+    }
+    return -1;
+  }
+
+  function missOrderTails() {
+    var arr = [];
+    for (var t = 0; t < 10; t++) {
+      arr.push({ tail: t, miss: currentMiss(t), last: lastOpenIdx(t) });
+    }
+    arr.sort(function (a, b) {
+      var ga = Math.min(a.miss, 3);
+      var gb = Math.min(b.miss, 3);
+      if (ga !== gb) return ga - gb;
+      if (a.last !== b.last) return a.last - b.last;
+      return a.tail - b.tail;
+    });
+    return arr.map(function (x) { return x.tail; });
+  }
+
+  function renderMissOrderHeatmap() {
+    var order = missOrderTails();
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏排序热图</h2><span class="section__hint">按当前遗漏 0/1/2/3+ 排序，最新遗漏放最后</span></div>';
+    html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
+    order.forEach(function (t) {
+      html += '<th>尾' + t + '<span class="heat-order-miss">漏' + currentMiss(t) + '</span></th>';
+    });
+    html += "</tr></thead><tbody>";
+
+    periods.forEach(function (p) {
+      var drawn = tailsOf(p);
+      html += '<tr><td class="row-label">' + p + '</td><td class="open-tails">' + drawn.join(" ") + '</td><td class="open-count">' + drawn.length + "</td>";
+      order.forEach(function (d) {
+        if (hit(p, d)) {
+          html += '<td><span class="heat-cell cell-hit">' + d + "</span></td>";
+        } else {
+          var mi = MISS_INFO[d][p];
+          var cls = mi ? mi.cls : "cell-miss1";
+          var mark = (mi && mi.mark > 0) ? (CN[mi.mark] || mi.mark) : "";
+          html += '<td><span class="heat-cell ' + cls + '">' + mark + "</span></td>";
+        }
+      });
+      html += "</tr>";
+    });
+
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">排序规则：先按当前遗漏 0、1、2、3 期及以上分组，3 期及以上放最右；每组内按最近一次开出的日期从旧到新排列，最新开始遗漏的放最后。</p>';
+    return html;
+  }
+
   function renderTrend() {
     var heatPeriods = periods;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
@@ -523,18 +575,11 @@
     html += "</div>";
     html += '<div class="panel"><div class="panel__body"><div id="linechart" class="linechart"></div></div></div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">生肖分布</h2><span class="section__hint">' + state.year + " 年</span></div>";
-    html += '<div class="chips" style="margin-bottom:8px">';
-    [2026, 2025, 2024, 2023, 2022, 2021].forEach(function (y) {
-      html += '<button class="chip ' + (state.year === y ? "is-active" : "") + '" data-year="' + y + '">' + y + "</button>";
-    });
-    html += "</div>";
-    html += '<div class="panel"><div class="panel__body"><div id="zodchart" class="bars"></div></div></div></div>';
+    html += renderMissOrderHeatmap();
 
     view.innerHTML = html;
 
     drawLineChart();
-    drawZodiacBars();
     var hm = view.querySelector(".heatmap");
     if (hm) hm.scrollTop = hm.scrollHeight;
   }
@@ -773,7 +818,7 @@
         html += '<th class="seg-cell"><div>第 ' + segNo + ' 段</div><div class="seg-head">' + seg.s + '-' + seg.e + ' 期 · ' + seg.len + ' 期</div></th>';
       }
     });
-    html += "<th>趋势</th></tr></thead><tbody>";
+    html += '<th class="seg-trend-col">趋势</th></tr></thead><tbody>';
 
     for (var t = 0; t < 10; t++) {
       html += "<tr><td>" + t + "</td>";
@@ -801,7 +846,7 @@
       if (last - prev >= 0.05) { trend = "↗ 升温"; cls = "trend-up"; }
       else if (prev - last >= 0.05) { trend = "↘ 降温"; cls = "trend-down"; }
       else { trend = "→ 平稳"; cls = "trend-flat"; }
-      html += '<td class="' + cls + '">' + trend + "</td>";
+      html += '<td class="seg-trend-col ' + cls + '">' + trend + "</td>";
       html += "</tr>";
     }
     html += "</tbody></table></div></div></div>";

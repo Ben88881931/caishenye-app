@@ -355,6 +355,13 @@ body {
   background: #fafafa;
 }
 
+.heatmap__table .heat-order-miss {
+  display: block;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .heatmap__table .open-tails {
   font-size: 11px;
   color: var(--text);
@@ -580,6 +587,18 @@ body {
 .seg-compare-scroll::-webkit-scrollbar { height: 6px; }
 .seg-compare-scroll::-webkit-scrollbar-thumb { background: #c7ccd4; border-radius: 999px; }
 .seg-compare-scroll .table { min-width: 540px; }
+.seg-compare-scroll .table th.seg-trend-col,
+.seg-compare-scroll .table td.seg-trend-col {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #fff;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.08);
+}
+.seg-compare-scroll .table thead th.seg-trend-col {
+  z-index: 4;
+  background: #fafafa;
+}
 
 .ord-grid {
   display: grid;
