@@ -1,4 +1,4 @@
-name: 自动同步 v2 数据
+name: 自动同步数据
 
 on:
   push:
@@ -23,17 +23,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: 生成 v2 数据
-        run: python v2/sync.py
+      - name: 生成数据
+        run: python sync.py
 
       - name: 有变化则提交
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet v2/data.js; then
-            echo "v2/data.js 无变化，跳过提交"
+          if git diff --quiet data.js; then
+            echo "data.js 无变化，跳过提交"
           else
-            git add v2/data.js
-            git commit -m "自动同步 v2 数据到最新期"
+            git add data.js
+            git commit -m "自动同步数据到最新期"
             git push
           fi

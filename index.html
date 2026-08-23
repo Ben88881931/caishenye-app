@@ -1,50 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>财神爷小程序</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; padding: 12px; background: #f0f2ff; max-width: 600px; margin: 0 auto; }
-        h1 { text-align: center; color: #6c5ce7; font-size: 20px; margin: 12px 0; }
-        .info { background: #e8e4f0; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; color: #333; text-align: center; }
-        .nav { display: flex; flex-direction: column; gap: 6px; }
-        .nav a { display: block; padding: 12px; color: white; text-decoration: none; border-radius: 8px; text-align: center; font-size: 15px; font-weight: 600; }
-        .purple { background: #6c5ce7; }
-        .pink { background: #ec4899; }
-        .orange { background: #f59e0b; }
-        .green { background: #10b981; }
-        .blue { background: #3b82f6; }
-        .card { background: white; padding: 16px; margin: 12px 0; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .card h3 { color: #6c5ce7; margin-bottom: 8px; font-size: 15px; }
-        .card ul { padding-left: 20px; font-size: 13px; color: #555; line-height: 1.8; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>财神爷尾数分析</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>📊 财神爷小程序</h1>
-    <div class="info">📱 手机访问：点击下方按钮即可打开</div>
-    <div class="nav">
-        <a href="尾数分析器.html" class="purple">📊 尾数分段窗口分析</a>
-        <a href="预估分析表.html" class="purple">📊 预估分析表</a>
-        <a href="号码走势图.html" class="pink">📈 号码走势图</a>
-        <a href="生肖走势图.html" class="orange">🐯 生肖走势图</a>
-        <a href="7号码开奖记录.html" class="orange">🎰 7号码开奖记录</a>
-        <a href="生肖开奖记录.html" class="green">🐯 生肖开奖记录</a>
-        <a href="开奖历史记录.html" class="blue">📋 尾数开奖记录</a>
-        <a href="遗漏监控.html" class="blue">📈 遗漏监控</a>
-        <a href="遗漏颜色表.html" class="blue">🎨 遗漏颜色表</a>
-        <a href="财神爷-数据记录.html" class="blue">📊 数据记录</a>
-        <a href="财神爷-追投跟踪.html" class="blue">💰 追投跟踪</a>
-        <a href="下单系统.html" class="blue">💰 下单系统</a>
+  <header class="appbar">
+    <div class="appbar__inner">
+      <div>
+        <h1 class="appbar__title">财神爷尾数分析</h1>
+        <p class="appbar__sub">数据截至第 <span id="latestPeriod">-</span> 期</p>
+      </div>
+      <div class="appbar__badge" id="latestTails">-</div>
     </div>
-    <div class="card">
-        <h3>💡 使用说明</h3>
-        <ul>
-            <li>每天22:00自动更新数据</li>
-            <li>手机刷新页面即可看到最新数据</li>
-            <li>数据保存在浏览器本地</li>
-        </ul>
-    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="主导航"></nav>
+
+  <main class="view" id="view"></main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
