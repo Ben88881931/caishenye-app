@@ -301,6 +301,8 @@
     { id: "numtrend", label: "号码走势" },
     { id: "zodtrend", label: "生肖走势" },
     { id: "trend", label: "遗漏热图" },
+    { id: "missorder", label: "遗漏排序" },
+    { id: "parity", label: "单双热图" },
     { id: "datarecord", label: "三期规律" },
     { group: "预测" },
     { id: "miss", label: "遗漏监控" },
@@ -345,6 +347,8 @@
     else if (state.tab === "segments") renderSegments();
     else if (state.tab === "miss") renderMiss();
     else if (state.tab === "trend") renderTrend();
+    else if (state.tab === "missorder") view.innerHTML = renderMissOrderHeatmap();
+    else if (state.tab === "parity") view.innerHTML = renderParityHeatmap();
     else if (state.tab === "numtrend") renderNumTrend();
     else if (state.tab === "zodtrend") renderZodTrend();
     else if (state.tab === "zodrecords") renderZodRecords();
@@ -526,7 +530,7 @@
 
   function renderMissOrderHeatmap() {
     var order = missOrderTails();
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏排序热图</h2><span class="section__hint">按当前遗漏 0/1/2/3+ 排序，最新遗漏放最后</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏排序热图</h2><span class="section__hint">按最近遗漏满3期排序，最新放最后</span></div>';
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     order.forEach(function (t) {
       html += '<th>尾' + t + '<span class="heat-order-miss">漏' + currentMiss(t) + '</span></th>';
@@ -554,6 +558,44 @@
     return html;
   }
 
+  function renderParityHeatmap() {
+    var allOrder = missOrderTails();
+    var order = allOrder.filter(function (t) { return t % 2 === 1; }).concat(allOrder.filter(function (t) { return t % 2 === 0; }));
+    var splitIdx = order.length;
+    for (var si = 0; si < order.length; si++) {
+      if (order[si] % 2 === 0) { splitIdx = si; break; }
+    }
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">单双热图</h2><span class="section__hint">单数在左 · 双数在右 · 按最近遗漏满3期排序</span></div>';
+    html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
+    order.forEach(function (t, i) {
+      if (i === splitIdx) html += '<th class="heat-order-divider"></th>';
+      html += '<th>尾' + t + '<span class="heat-order-miss">漏' + currentMiss(t) + '</span></th>';
+    });
+    html += "</tr></thead><tbody>";
+
+    periods.forEach(function (p) {
+      var drawn = tailsOf(p);
+      html += '<tr><td class="row-label">' + p + '</td><td class="open-tails">' + drawn.join(" ") + '</td><td class="open-count">' + drawn.length + "</td>";
+      order.forEach(function (d, i) {
+        if (i === splitIdx) html += '<td class="heat-order-divider"></td>';
+        if (hit(p, d)) {
+          html += '<td><span class="heat-cell cell-hit">' + d + "</span></td>";
+        } else {
+          var mi = MISS_INFO[d][p];
+          var cls = mi ? mi.cls : "cell-miss1";
+          var mark = (mi && mi.mark > 0) ? (CN[mi.mark] || mi.mark) : "";
+          html += '<td><span class="heat-cell ' + cls + '">' + mark + "</span></td>";
+        }
+      });
+      html += "</tr>";
+    });
+
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">单数尾数放左、双数尾数放右；左右两侧内部都按最近一次遗漏满 3 期及以上的时间排序，最新放最右。</p>';
+    return html;
+  }
+
   function renderTrend() {
     var heatPeriods = periods;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
@@ -577,7 +619,7 @@
     });
     html += "</tbody></table></div></div></div>";
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">' + state.rollWindow + ' 期窗口</span></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">' + state.rollWindow + ' 期窗口 · 红点 = 开出</span></div>';
     html += '<div class="chips" style="margin-bottom:8px">';
     [5, 7, 10, 15, 20, 30].forEach(function (n) {
       html += '<button class="chip ' + (state.rollWindow === n ? "is-active" : "") + '" data-rollw="' + n + '">' + n + " 期</button>";
@@ -589,8 +631,6 @@
     }
     html += "</div>";
     html += '<div class="panel"><div class="panel__body"><div id="linechart" class="linechart"></div></div></div></div>';
-
-    html += renderMissOrderHeatmap();
 
     view.innerHTML = html;
 
@@ -622,6 +662,12 @@
       var y = padT + plotH - (v / maxV) * plotH;
       return x.toFixed(1) + "," + y.toFixed(1);
     }).join(" ");
+    var markers = values.map(function (v, idx) {
+      if (!hit(periods[start + idx], state.tail)) return "";
+      var x = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
+      var y = padT + plotH - (v / maxV) * plotH;
+      return '<span class="linechart-dot" style="left:' + (x / width * 100).toFixed(2) + '%;top:' + (y / height * 100).toFixed(2) + '%"></span>';
+    }).join("");
 
     var grid = "";
     for (var g = 0; g <= 4; g++) {
@@ -635,12 +681,13 @@
       xlabels += '<text x="' + lx.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + labels[li] + "</text>";
     }
 
-    host.innerHTML = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
+    var svg = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
       grid +
       '<polyline points="' + pts + '" fill="none" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
       '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + state.tail + " " + w + "期开出率</text>" +
       xlabels +
       "</svg>";
+    host.innerHTML = '<div style="position:relative;width:100%;height:180px">' + svg + markers + "</div>";
   }
 
   function drawZodiacBars() {
