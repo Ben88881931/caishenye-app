@@ -559,6 +559,28 @@ body {
 }
 .seg-hist-summary .seg-hist-label { background: #fafafa; color: var(--accent); text-align: center; font-size: 12px; min-width: 58px; }
 
+.next-seg-banner {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.seg-compare-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #c7ccd4 transparent;
+}
+.seg-compare-scroll::-webkit-scrollbar { height: 6px; }
+.seg-compare-scroll::-webkit-scrollbar-thumb { background: #c7ccd4; border-radius: 999px; }
+.seg-compare-scroll .table { min-width: 540px; }
+
 .ord-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

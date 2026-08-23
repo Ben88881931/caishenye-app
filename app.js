@@ -759,9 +759,12 @@
       html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-segw="' + n + '">' + n + " 期</button>";
     });
     html += "</div></div>";
+    if (nextSeg) {
+      html += '<div class="next-seg-banner">下一段 ' + nextSeg.s + '-' + nextSeg.e + "期 · " + w + "期窗口 · 未开</div>";
+    }
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">最近三段对比</h2><span class="section__hint">' + (hasNext ? "已接下一段" : "共 " + segs.length + " 个分段，末段可能不满窗口") + "</span></div>";
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th>';
+    html += '<div class="panel"><div class="seg-compare-scroll"><table class="table"><thead><tr><th>尾数</th>';
     comparisonSegs.forEach(function (seg, idx) {
       if (seg.future) {
         html += '<th class="seg-cell"><div>下一段</div><div class="seg-head">' + seg.s + '-' + seg.e + " 期 · 未开</div></th>";
@@ -801,7 +804,7 @@
       html += '<td class="' + cls + '">' + trend + "</td>";
       html += "</tr>";
     }
-    html += "</tbody></table></div></div>";
+    html += "</tbody></table></div></div></div>";
     html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算，副标签显示实际期数。颜色 = 实际开出率相对该尾理论基准（红=偏热，蓝=偏冷）。</p>';
     html += renderSegHistory(w, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], state.segCount);
     view.innerHTML = html;
