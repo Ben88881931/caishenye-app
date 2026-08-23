@@ -143,6 +143,21 @@
     return segs;
   }
 
+  function futureSegment(w, segs) {
+    var last = segs[segs.length - 1];
+    if (!last || last.len !== w) return null;
+    return {
+      si: periods.length,
+      ei: periods.length + w - 1,
+      s: last.e + 1,
+      e: last.e + w,
+      len: 0,
+      c: 0,
+      rate: 0,
+      future: true
+    };
+  }
+
   function countInSeg(tail, a, b) {
     var c = 0;
     for (var i = a; i <= b; i++) {
@@ -282,7 +297,6 @@
   var TABS = [
     { id: "overview", label: "总览" },
     { group: "记录" },
-    { id: "records", label: "7号开奖" },
     { id: "zodrecords", label: "生肖开奖" },
     { id: "numtrend", label: "号码走势" },
     { id: "zodtrend", label: "生肖走势" },
@@ -652,6 +666,8 @@
     var tailMap = {};
     tails.forEach(function (t) { tailMap[t] = tailSegs(t, w); });
     var viewSegs = (segCount > 0 && segCount < allSegs.length) ? allSegs.slice(-segCount) : allSegs;
+    var nextSeg = futureSegment(w, allSegs);
+    if (nextSeg) viewSegs.push(nextSeg);
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">历史分段</h2><span class="section__hint">第 ' + allSegs[0].s + '-' + allSegs[allSegs.length - 1].e + " 期 · 共 " + allSegs.length + " 段</span></div>";
 
@@ -666,6 +682,14 @@
     html += "</tr></thead><tbody>";
 
     viewSegs.forEach(function (seg) {
+      if (seg.future) {
+        html += '<tr><td class="seg-hist-label">' + seg.s + "-" + seg.e + "期</td>";
+        tails.forEach(function (t) {
+          html += '<td class="seg-hist-cell seg-ice"><span class="seg-hist-period">' + seg.s + '-' + seg.e + '期</span><span class="seg-hist-arrow">─</span><span class="seg-hist-rate">0.0%</span> <b>未开</b><br><b>0/' + w + '</b></td>';
+        });
+        html += "</tr>";
+        return;
+      }
       var segIdx = allSegs.indexOf(seg);
       html += '<tr><td class="seg-hist-label">' + seg.s + "-" + seg.e + "期</td>";
       tails.forEach(function (t) {
@@ -725,6 +749,10 @@
     var w = state.segWindow;
     var segs = segsOf(w);
     var last3 = segs.slice(-3);
+    var nextSeg = futureSegment(w, segs);
+    var comparisonSegs = last3.slice();
+    var hasNext = !!nextSeg;
+    if (nextSeg) comparisonSegs.push(nextSeg);
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口选择</h2></div><div class="chips">';
     [5, 7, 10, 15, 30].forEach(function (n) {
@@ -732,26 +760,34 @@
     });
     html += "</div></div>";
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近三段对比</h2><span class="section__hint">共 ' + segs.length + " 个分段，末段可能不满窗口</span></div>";
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近三段对比</h2><span class="section__hint">' + (hasNext ? "已接下一段" : "共 " + segs.length + " 个分段，末段可能不满窗口") + "</span></div>";
     html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th>';
-    last3.forEach(function (seg, idx) {
-      var segNo = segs.length - 3 + idx + 1;
-      html += '<th class="seg-cell"><div>第 ' + segNo + ' 段</div><div class="seg-head">' + seg.s + '-' + seg.e + ' 期 · ' + seg.len + ' 期</div></th>';
+    comparisonSegs.forEach(function (seg, idx) {
+      if (seg.future) {
+        html += '<th class="seg-cell"><div>下一段</div><div class="seg-head">' + seg.s + '-' + seg.e + " 期 · 未开</div></th>";
+      } else {
+        var segNo = segs.length - 3 + idx + 1;
+        html += '<th class="seg-cell"><div>第 ' + segNo + ' 段</div><div class="seg-head">' + seg.s + '-' + seg.e + ' 期 · ' + seg.len + ' 期</div></th>';
+      }
     });
     html += "<th>趋势</th></tr></thead><tbody>";
 
     for (var t = 0; t < 10; t++) {
       html += "<tr><td>" + t + "</td>";
-      var counts = last3.map(function (seg) { return countInSeg(t, seg.si, seg.ei); });
-      var rates = counts.map(function (c, idx) { return c / last3[idx].len; });
-      last3.forEach(function (seg, idx) {
+      var counts = comparisonSegs.map(function (seg) { return seg.future ? 0 : countInSeg(t, seg.si, seg.ei); });
+      var rates = comparisonSegs.map(function (seg, idx) { return seg.future ? 0 : counts[idx] / seg.len; });
+      comparisonSegs.forEach(function (seg, idx) {
+        if (seg.future) {
+          html += '<td class="seg-cell"><div class="seg-rate">0%</div><div class="seg-count" style="color:var(--muted)">未开</div><div class="seg-bar"><i style="width:0%"></i></div></td>';
+          return;
+        }
         var c = counts[idx];
         var fill = c / w;
         var above = rates[idx] >= BASE_RATE[t];
         var color = above ? "var(--hot)" : "var(--cold)";
-        var isLast = idx === last3.length - 1;
+        var isLast = idx === comparisonSegs.length - 1;
         var est = "";
-        if (isLast && seg.len < w) {
+        if (!seg.future && isLast && seg.len < w) {
           var predicted = c + (w - seg.len) * BASE_RATE[t];
           est = '<div class="seg-est">预估 ' + predicted.toFixed(1) + ' 次</div>';
         }
