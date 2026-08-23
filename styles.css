@@ -111,6 +111,19 @@ body {
   box-shadow: var(--shadow);
 }
 
+.tab-group {
+  flex: 0 0 auto;
+  padding: 8px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  border-left: 2px solid var(--line);
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
 .view {
   max-width: 720px;
   margin: 0 auto;
@@ -319,11 +332,20 @@ body {
 }
 
 .heatmap__table .row-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
   font-size: 11px;
   color: var(--muted);
   padding-right: 6px;
   white-space: nowrap;
   text-align: right;
+}
+
+.heatmap__table thead .row-label {
+  z-index: 6;
+  background: #fafafa;
 }
 
 .heatmap__table .open-tails {
@@ -655,8 +677,24 @@ body {
 .zrec-table th,
 .zrec-table td { padding: 6px 4px; text-align: center; border: 1px solid #2d3250; }
 .zrec-table th { background: #252a44; color: #9ca3af; font-size: 11px; font-weight: 500; }
+.zrec-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 .zrec-table td { color: #f3f4f6; }
-.zrec-table .zrec-period { font-weight: bold; color: #fbbf24; }
+.zrec-table .zrec-period {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #1a1d30;
+  font-weight: bold;
+  color: #fbbf24;
+}
+.zrec-table thead .zrec-period {
+  z-index: 11;
+  background: #252a44;
+}
 .trend-dark .cell { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin: 2px 3px; }
 .trend-dark .zod { display: block; font-size: 12px; color: #d1d5db; text-align: center; }
 

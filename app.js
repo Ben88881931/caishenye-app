@@ -228,20 +228,22 @@
 
   var TABS = [
     { id: "overview", label: "总览" },
-    { id: "tails", label: "尾数分析" },
-    { id: "segments", label: "分段对比" },
-    { id: "miss", label: "遗漏" },
-    { id: "trend", label: "走势" },
+    { group: "记录" },
+    { id: "history", label: "开奖记录" },
+    { id: "records", label: "7号开奖" },
+    { id: "zodrecords", label: "生肖开奖" },
     { id: "numtrend", label: "号码走势" },
     { id: "zodtrend", label: "生肖走势" },
-    { id: "zodrecords", label: "生肖记录" },
-    { id: "records", label: "记录" },
-    { id: "history", label: "开奖历史" },
-    { id: "backtest", label: "回测" },
-    { id: "order", label: "下单" },
-    { id: "predict", label: "预估" },
-    { id: "personality", label: "性格" },
-    { id: "datarecord", label: "数据记录" },
+    { id: "trend", label: "遗漏热图" },
+    { id: "datarecord", label: "三期规律" },
+    { group: "预测" },
+    { id: "miss", label: "遗漏监控" },
+    { id: "tails", label: "冷热分析" },
+    { id: "segments", label: "分段对比" },
+    { id: "predict", label: "下期预估" },
+    { id: "backtest", label: "策略回测" },
+    { id: "personality", label: "尾号性格" },
+    { id: "order", label: "下单追投" },
   ];
 
   var view = document.getElementById("view");
@@ -259,6 +261,7 @@
 
   function renderTabs() {
     tabsEl.innerHTML = TABS.map(function (t) {
+      if (t.group) return '<span class="tab-group">' + t.group + "</span>";
       return '<button class="tab ' + (state.tab === t.id ? "is-active" : "") +
         '" data-tab="' + t.id + '">' + t.label + "</button>";
     }).join("");
@@ -359,7 +362,7 @@
 
   function renderTails() {
     var w = state.window;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾数分段窗口分析</h2></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">冷热分析</h2></div>';
     html += '<div class="chips">';
     [5, 7, 10, 15, 20, 27, 30].forEach(function (n) {
       html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-window="' + n + '">' + n + " 期</button>";
@@ -420,7 +423,7 @@
 
   function renderTrend() {
     var heatPeriods = periods;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾数走势热力图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
     html += "</tr></thead><tbody>";
@@ -540,7 +543,7 @@
     if (state.recordPage >= totalPages) state.recordPage = totalPages - 1;
     var page = list.slice(state.recordPage * pageSize, state.recordPage * pageSize + pageSize);
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">开奖记录</h2><span class="section__hint">7 号码 + 生肖</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">7号开奖</h2><span class="section__hint">7 号码 + 生肖</span></div>';
     html += '<div class="chips" style="margin-bottom:8px">';
     [2026, 2025, 2024, 2023, 2022, 2021].forEach(function (y) {
       html += '<button class="chip ' + (year === y ? "is-active" : "") + '" data-year="' + y + '">' + y + "</button>";
@@ -715,7 +718,7 @@
 
   function renderOrder() {
     var next = latest + 1;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">下单系统</h2><span class="section__hint">数据保存在本机浏览器</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">下单追投</h2><span class="section__hint">数据保存在本机浏览器</span></div>';
     html += '<div class="panel"><div class="panel__body">';
     html += '<div class="ord-grid">';
     html += '<div class="ord-item"><label>基础金额</label><input id="ordBase" type="number" min="1" value="' + orderData.base + '"> 元</div>';
@@ -878,7 +881,7 @@
   }
 
   function renderPersonality() {
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾号性格表</h2><span class="section__hint">该尾数「遗漏N期后下一期开出」的概率</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾号性格</h2><span class="section__hint">该尾数「遗漏N期后下一期开出」的概率</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>遗4</th><th>遗5+</th><th>性格</th><th>当前遗漏</th></tr></thead><tbody>';
     for (var d = 0; d < 10; d++) {
       var b = bounceStats(d);
@@ -1057,7 +1060,7 @@
     arr.forEach(function (r) { r.zods.forEach(function (z) { cnt[z]++; }); });
     var totalZC = arr.length * 7;
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">生肖开奖记录</h2><span class="section__hint">' + y + " 年</span></div>";
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">生肖开奖</h2><span class="section__hint">' + y + " 年</span></div>";
     html += trendYearChips(y);
     html += "</div>";
 
@@ -1070,7 +1073,7 @@
     });
     html += "</div></div></div>";
 
-    html += '<div class="panel"><div class="panel__body trend-dark"><table class="zrec-table"><thead><tr><th>期号</th><th>号码 / 生肖</th></tr></thead><tbody>';
+    html += '<div class="panel"><div class="panel__body trend-dark trend-scroll"><table class="zrec-table"><thead><tr><th>期号</th><th>号码 / 生肖</th></tr></thead><tbody>';
     arr.forEach(function (r) {
       var cells = "";
       for (var j = 0; j < 7; j++) {
@@ -1087,7 +1090,7 @@
 
   // ===== 开奖历史记录（文本表） =====
   function renderHistory() {
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">开奖历史记录</h2><span class="section__hint">共 ' + periods.length + " 期</span></div>";
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">开奖记录</h2><span class="section__hint">共 ' + periods.length + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body hist-scroll"><table class="hist-table"><thead><tr><th class="hist-p">期号</th><th>开奖尾号</th><th>个数</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
     html += "<th>遗漏</th></tr></thead><tbody>";
@@ -1141,7 +1144,7 @@
   }
 
   function renderDataRecord() {
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">数据记录系统</h2><span class="section__hint">三期内必出规律分析</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">三期规律</h2><span class="section__hint">三期内必出规律分析</span></div>';
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + periods.length + '</div><div class="stat__label">总期数</div></div>';
     html += '<div class="stat"><div class="stat__value">' + latest + '</div><div class="stat__label">最新期</div></div>';
