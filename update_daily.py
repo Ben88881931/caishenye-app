@@ -372,15 +372,17 @@ def update_analyzer_alldata(html_file, raw_data):
     alldata_json = json.dumps(all_data, ensure_ascii=False, separators=(',', ':'))
     content = re.sub(pattern, f'var ALLDATA={alldata_json};', content, flags=re.DOTALL)
     
-    pattern = r'var ICE=\{.*?\};'
-    ice_json = json.dumps(all_ice, ensure_ascii=False, separators=(',', ':'))
-    content = re.sub(pattern, f'var ICE={ice_json};', content, flags=re.DOTALL)
+    if 'var ICE=' in content:
+        pattern = r'var ICE\s*=\s*\{.*?\};'
+        ice_json = json.dumps(all_ice, ensure_ascii=False, separators=(',', ':'))
+        content = re.sub(pattern, f'var ICE={ice_json};', content, flags=re.DOTALL)
     
-    # 用新逻辑重建CNTDATA
+    # 用新逻辑重建CNTDATA（页面存在该变量时才更新）
     newCNT = rebuild_cntdata(raw_data)
-    pattern = r'var CNTDATA=\{.*?\};'
-    cnt_json = json.dumps(newCNT, ensure_ascii=False, separators=(',', ':'))
-    content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
+    if 'var CNTDATA=' in content:
+        pattern = r'var CNTDATA\s*=\s*\{.*?\};'
+        cnt_json = json.dumps(newCNT, ensure_ascii=False, separators=(',', ':'))
+        content = re.sub(pattern, f'var CNTDATA={cnt_json};', content, flags=re.DOTALL)
     
     with open(html_file, 'w', encoding='utf-8') as f:
         f.write(content)
@@ -393,13 +395,13 @@ def verify_consistency(raw_data):
             continue
         with open(html_file, 'r', encoding='utf-8') as f:
             content = f.read()
-        match = re.search(r'var RAW=\{([^}]+)\}', content)
+        match = re.search(r'var RAW\s*=\s*\{([^}]+)\}', content)
         if not match:
             err(f"{html_file} 中未找到 var RAW")
             continue
         raw_str = match.group(1)
         html_raw = {}
-        for m in re.finditer(r'"(\d+)":"([01]{10})"', raw_str):
+        for m in re.finditer(r'"(\d+)"\s*:\s*"([01]{10})"', raw_str):
             html_raw[m.group(1)] = m.group(2)
         
         numeric_json = {k: v for k, v in raw_data.items() if k.isdigit()}
@@ -479,9 +481,9 @@ def verify_ice(html_file, raw_data):
     with open(html_file, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    match = re.search(r'var ICE=(\{.*?\});', content)
+    match = re.search(r'var ICE\s*=\s*(\{.*?\});', content)
     if not match:
-        err("未找到 ICE 数据")
+        log("  ⚠ 页面无 ICE 数据，跳过冰点信号验证")
         return
     
     try:
