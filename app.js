@@ -283,7 +283,7 @@
   }
 
   var state = {
-    tab: "overview",
+    tab: lsGet("v2_current_tab", "overview"),
     window: 15,
     segWindow: 15,
     segTails: 7,
@@ -1475,6 +1475,7 @@
     var btn = e.target.closest(".tab");
     if (btn) {
       state.tab = btn.dataset.tab;
+      lsSet("v2_current_tab", state.tab);
       render();
     }
   });
@@ -1573,6 +1574,8 @@
     }
   });
 
+  var validTabs = TABS.filter(function (t) { return !t.group; }).map(function (t) { return t.id; });
+  if (validTabs.indexOf(state.tab) === -1) state.tab = "overview";
   renderHeader();
   render();
 })();
