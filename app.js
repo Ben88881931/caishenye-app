@@ -217,6 +217,48 @@
     };
   }
 
+  function segStatus(cnt, w) {
+    if (w <= 7) {
+      if (cnt <= w * 0.2) return "冷";
+      if (cnt >= w * 0.7) return "热";
+      return "中";
+    }
+    if (cnt <= w * 0.33) return "冷";
+    if (cnt >= w * 0.66) return "热";
+    return "中";
+  }
+
+  function predictSegmentCount(tail, w) {
+    var arr = tailSegs(tail, w);
+    if (!arr.length) return { pred: w * BASE_RATE[tail], sample: 0, lo: 0, hi: w, method: "基准" };
+    var cur = arr[arr.length - 1];
+    var nexts = [];
+    for (var i = 0; i < arr.length - 1; i++) {
+      if (segStatus(arr[i].c, w) === segStatus(cur.c, w)) nexts.push(arr[i + 1].c);
+    }
+    var method = "同类状态";
+    if (nexts.length < 3) {
+      nexts = [];
+      for (var j = 0; j < arr.length - 1; j++) {
+        if (Math.abs(arr[j].c - cur.c) <= 1) nexts.push(arr[j + 1].c);
+      }
+      method = "相近次数";
+    }
+    if (nexts.length < 3) {
+      nexts = arr.slice(1).map(function (e) { return e.c; });
+      method = "全历史";
+    }
+    if (!nexts.length) return { pred: w * BASE_RATE[tail], sample: 0, lo: 0, hi: w, method: "基准" };
+    var sum = nexts.reduce(function (a, b) { return a + b; }, 0);
+    return {
+      pred: sum / nexts.length,
+      sample: nexts.length,
+      lo: Math.min.apply(null, nexts),
+      hi: Math.max.apply(null, nexts),
+      method: method
+    };
+  }
+
   function missRunAt(tail, upto) {
     var run = 0;
     for (var i = upto; i >= 0; i--) {
@@ -798,7 +840,8 @@
       if (seg.future) {
         html += '<tr><td class="seg-hist-label">' + seg.s + "-" + seg.e + "期</td>";
         tails.forEach(function (t) {
-          html += '<td class="seg-hist-cell seg-ice"><span class="seg-hist-period">' + seg.s + '-' + seg.e + '期</span><span class="seg-hist-arrow">─</span><span class="seg-hist-rate">0.0%</span> <b>未开</b><br><b>0/' + w + '</b></td>';
+          var pr = predictSegmentCount(t, w);
+          html += '<td class="seg-hist-cell seg-ice"><span class="seg-hist-period">' + seg.s + '-' + seg.e + '期</span><span class="seg-hist-arrow">─</span><span class="seg-hist-rate">预估 ' + pr.pred.toFixed(1) + ' 次</span> <b>' + pr.method + '</b><br><b>样本 ' + pr.sample + ' · 0/' + w + '</b></td>';
         });
         html += "</tr>";
         return;
@@ -866,6 +909,10 @@
     var comparisonSegs = last3.slice();
     var hasNext = !!nextSeg;
     if (nextSeg) comparisonSegs.push(nextSeg);
+    var futurePreds = {};
+    if (nextSeg) {
+      for (var tp = 0; tp < 10; tp++) futurePreds[tp] = predictSegmentCount(tp, w);
+    }
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口选择</h2></div><div class="chips">';
     [5, 7, 10, 15, 30].forEach(function (n) {
@@ -894,7 +941,9 @@
       var rates = comparisonSegs.map(function (seg, idx) { return seg.future ? 0 : counts[idx] / seg.len; });
       comparisonSegs.forEach(function (seg, idx) {
         if (seg.future) {
-          html += '<td class="seg-cell"><div class="seg-rate">0%</div><div class="seg-count" style="color:var(--muted)">未开</div><div class="seg-bar"><i style="width:0%"></i></div></td>';
+          var pr = futurePreds[t];
+          var predFill = Math.max(0, Math.min(100, pr.pred / w * 100));
+          html += '<td class="seg-cell"><div class="seg-rate">预估 ' + pr.pred.toFixed(1) + ' 次</div><div class="seg-count" style="color:var(--muted)">样本 ' + pr.sample + ' · ' + pr.method + '</div><div class="seg-bar"><i style="width:' + Math.round(predFill) + '%"></i></div></td>';
           return;
         }
         var c = counts[idx];
@@ -904,8 +953,8 @@
         var isLast = idx === comparisonSegs.length - 1;
         var est = "";
         if (!seg.future && isLast && seg.len < w) {
-          var predicted = c + (w - seg.len) * BASE_RATE[t];
-          est = '<div class="seg-est">预估 ' + predicted.toFixed(1) + ' 次</div>';
+          var pr = predictSegmentCount(t, w);
+          est = '<div class="seg-est">预估 ' + pr.pred.toFixed(1) + ' 次 · 样本' + pr.sample + '</div>';
         }
         html += '<td class="seg-cell"><div class="seg-rate">' + (fill * 100).toFixed(0) + '%</div><div class="seg-count" style="color:' + color + '">' + c + '/' + seg.len + ' 期</div><div class="seg-bar"><i style="width:' + Math.round(fill * 100) + '%"></i></div>' + est + '</td>';
       });
@@ -918,8 +967,20 @@
       html += "</tr>";
     }
     html += "</tbody></table></div></div></div>";
-    html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算，副标签显示实际期数。颜色 = 实际开出率相对该尾理论基准（红=偏热，蓝=偏冷）。</p>';
+    html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算。下一段/未完成段的预估按历史同类或相近段口推算，样本不足时回退全历史均值。</p>';
     html += renderSegHistory(w, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], state.segCount);
+
+    var segReport = [];
+    for (var rt = 0; rt < 10; rt++) segReport.push({ tail: rt, pr: predictSegmentCount(rt, w) });
+    segReport.sort(function (a, b) { return b.pr.pred - a.pr.pred; });
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">分段预测报告</h2><span class="section__hint">' + w + ' 期窗口 · 预计开出次数</span></div>';
+    html += '<div class="panel"><div class="panel__body report">';
+    segReport.slice(0, 3).forEach(function (item, idx) {
+      html += '<p><b>' + (idx + 1) + '. 尾 ' + item.tail + '：</b>预计 ' + item.pr.pred.toFixed(1) + ' 次；依据 ' + item.pr.method + '；样本 ' + item.pr.sample + '。</p>';
+    });
+    html += '<p><b>逻辑：</b>优先匹配历史同类状态段口，样本不足时匹配相近次数，再不足则回退全历史均值；预测值只作为透明参考。</p>';
+    html += "</div></div></div>";
+
     view.innerHTML = html;
   }
 
@@ -1149,6 +1210,36 @@
       }
     }
     html += "</div></div></div>";
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">每日分析报告</h2><span class="section__hint">' + new Date().toLocaleDateString("zh-CN") + " · 第 " + N + " 期</span></div>";
+    html += '<div class="panel"><div class="panel__body report">';
+    if (cands.length === 0) {
+      html += '<p><b>结论：</b>上期尾数全部开出，没有未开尾数可供预测，建议本期跳过。</p>';
+    } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
+      html += '<p><b>结论：</b>候选分数并列，没有明显优势，建议本期跳过。</p>';
+      html += '<p><b>并列候选：</b>' + cands.slice(0, 3).map(function (c) { return "尾" + c.d; }).join("、") + '</p>';
+      html += '<p><b>逻辑：</b>当第一、第二名综合分相同时，强行选一个只会放大随机性，因此系统选择等待。</p>';
+    } else {
+      var top = cands[0];
+      var reasons = [];
+      if (top.cnt15 <= 5) reasons.push("近15期只开 " + top.cnt15 + "/15，处于冷区");
+      if (top.cnt5 <= 1) reasons.push("近5期只开 " + top.cnt5 + "/5，短期偏冷");
+      if (top.miss >= top.bt) reasons.push("当前遗漏 " + top.miss + " 期，已达到临界 " + top.bt + " 期");
+      else if (top.miss >= top.bt - 1) reasons.push("当前遗漏 " + top.miss + " 期，接近临界 " + top.bt + " 期");
+      if (top.rebSample >= 20 && top.rebEdge >= 0.04) reasons.push("历史同类遗漏后反弹率 " + pct(top.rebRate) + "，高于理论基准 " + pct(BASE_RATE[top.d]));
+      if (!reasons.length) reasons.push("综合评分最高");
+
+      html += '<p><b>结论：</b>首选尾数 <b>' + top.d + '</b>。</p>';
+      html += '<p><b>理由：</b>' + reasons.join("；") + '。</p>';
+      html += '<p><b>数据：</b>遗漏 ' + top.miss + ' 期；15段 ' + top.cnt15 + '/15；近5期 ' + top.cnt5 + '/5；历史反弹率 ' + pct(top.rebRate) + '，样本 ' + top.rebSample + '。</p>';
+      if (cands.length >= 2) {
+        html += '<p><b>备选：</b>尾 ' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；15段 ' + cands[1].cnt15 + '/15）。</p>';
+      }
+    }
+    html += '<p><b>评分规则：</b>15期冷区 +3；近5期冷区 +2；达到临界 +5、接近临界 +2；历史反弹率显著偏高 +2、显著偏低 -2。分数并列时跳过。</p>';
+    html += '<p><b>风险提示：</b>历史回测显示这类信号没有稳定优势，报告只做透明推演，不应据此重注。</p>';
+    html += "</div></div></div>";
+
     html += '<p class="disclaimer">评分结合冷热、遗漏、临界和历史反弹率；当候选分数并列时宁可跳过。历史回测仍显示这类信号没有稳定优势，仅供参考。</p>';
     view.innerHTML = html;
   }

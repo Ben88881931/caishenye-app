@@ -501,6 +501,21 @@ body {
   line-height: 1.6;
 }
 
+.report {
+  padding: 2px 2px;
+}
+.report p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.report p:last-child {
+  margin-bottom: 0;
+}
+.report b {
+  color: var(--accent);
+}
+
 .empty {
   padding: 28px 12px;
   text-align: center;
