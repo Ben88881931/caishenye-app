@@ -970,7 +970,8 @@
     html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算。下一段/未完成段的预估按历史同类或相近段口推算，样本不足时回退全历史均值。</p>';
 
     var reportSeg = nextSeg || segs[segs.length - 1];
-    var reportRange = reportSeg ? reportSeg.s + "~" + reportSeg.e + "期" : "当前段";
+    var reportEnd = reportSeg ? reportSeg.s + w - 1 : 0;
+    var reportRange = reportSeg ? reportSeg.s + "~" + reportEnd + "期" : "当前段";
     var segReport = [];
     for (var rt = 0; rt < 10; rt++) segReport.push({ tail: rt, pr: predictSegmentCount(rt, w) });
     segReport.sort(function (a, b) { return b.pr.pred - a.pr.pred; });
