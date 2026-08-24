@@ -1119,28 +1119,37 @@
       if (cnt15 <= 5) score += 3;
       if (cnt5 <= 1) score += 2;
       if (miss >= bt) score += 5; else if (miss >= bt - 1) score += 2;
-      if (lastBin[d] === "0") cands.push({ d: d, miss: miss, cnt15: cnt15, cnt5: cnt5, bt: bt, score: score, dir: dir });
+      if (lastBin[d] === "0") {
+        var reb = missRebound(d);
+        var rebEdge = reb.total ? reb.rate - BASE_RATE[d] : 0;
+        var rebConf = reb.total >= 20 && rebEdge >= 0.04 ? 2 : reb.total >= 20 && rebEdge <= -0.04 ? -2 : 0;
+        cands.push({ d: d, miss: miss, cnt15: cnt15, cnt5: cnt5, bt: bt, score: score + rebConf, dir: dir, rebRate: reb.rate, rebSample: reb.total, rebEdge: rebEdge });
+      }
       html += '<tr><td>尾' + d + '</td><td style="background:' + bg15 + ';color:#fff">' + cnt15 + "/15 " + s15 + '</td><td style="background:' + bg5 + ';color:#fff">' + cnt5 + "/5 " + s5 + '</td><td>' + cnt7 + "/7</td><td>" + cnt10 + "/10</td><td>" + miss + "期</td><td>" + bt + "期</td><td>" + dir + "</td></tr>";
     }
     html += "</tbody></table></div></div>";
 
     cands.sort(function (a, b) { return b.score - a.score; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">按冷热+遗漏+临界打分</span></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">冷热+遗漏+临界+历史反弹率</span></div>';
     html += '<div class="panel"><div class="panel__body">';
     if (cands.length === 0) {
       html += '<div class="empty">上期全中，无未出号，建议跳过</div>';
+    } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
+      html += '<div class="empty">信号接近，建议跳过</div>';
+      html += '<div style="margin-top:8px;font-size:12px;color:var(--muted)">并列候选：' + cands.slice(0, 3).map(function (c) { return "尾" + c.d; }).join("、") + "</div>";
     } else {
       var top = cands[0];
       html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">首选：尾 ' + top.d + "</div>";
       html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">遗漏 ' + top.miss + " 期 | 15段 " + top.cnt15 + "/15 | 近5期 " + top.cnt5 + "/5 | 临界 " + top.bt + " 期</div>";
       html += '<div style="margin-top:4px">方向：' + top.dir + "</div>";
+      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">历史反弹率 ' + pct(top.rebRate) + "（样本 " + top.rebSample + "）" + (top.rebSample < 20 ? " · 样本不足" : "") + "</div>";
       if (cands.length >= 2) {
         var sec = cands[1];
         html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + "（遗漏 " + sec.miss + " 期 | 15段 " + sec.cnt15 + "/15）</div>";
       }
     }
     html += "</div></div></div>";
-    html += '<p class="disclaimer">这是老版三层框架的移植，评分基于冷热与遗漏；历史回测显示这类信号没有稳定优势，仅供参考。</p>';
+    html += '<p class="disclaimer">评分结合冷热、遗漏、临界和历史反弹率；当候选分数并列时宁可跳过。历史回测仍显示这类信号没有稳定优势，仅供参考。</p>';
     view.innerHTML = html;
   }
 
