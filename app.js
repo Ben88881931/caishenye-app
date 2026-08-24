@@ -968,10 +968,9 @@
     }
     html += "</tbody></table></div></div></div>";
     html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算。下一段/未完成段的预估按历史同类或相近段口推算，样本不足时回退全历史均值。</p>';
-    html += renderSegHistory(w, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], state.segCount);
 
     var reportSeg = nextSeg || segs[segs.length - 1];
-    var reportRange = reportSeg ? reportSeg.s + "-" + reportSeg.e + "期" : "当前段";
+    var reportRange = reportSeg ? "从第" + reportSeg.s + "期到第" + reportSeg.e + "期" : "当前段";
     var segReport = [];
     for (var rt = 0; rt < 10; rt++) segReport.push({ tail: rt, pr: predictSegmentCount(rt, w) });
     segReport.sort(function (a, b) { return b.pr.pred - a.pr.pred; });
@@ -983,6 +982,8 @@
     });
     html += '<p><b>逻辑：</b>优先匹配历史同类状态段口，样本不足时匹配相近次数，再不足则回退全历史均值；预测值只作为透明参考。</p>';
     html += "</div></div></div>";
+
+    html += renderSegHistory(w, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], state.segCount);
 
     view.innerHTML = html;
   }
