@@ -338,6 +338,13 @@
 
   var TABS = [
     { id: "overview", label: "总览" },
+    { group: "预测" },
+    { id: "miss", label: "遗漏监控" },
+    { id: "tails", label: "冷热分析" },
+    { id: "segments", label: "分段对比" },
+    { id: "predict", label: "下期预估" },
+    { id: "backtest", label: "策略回测" },
+    { id: "personality", label: "尾号性格" },
     { group: "记录" },
     { id: "zodrecords", label: "生肖开奖" },
     { id: "numtrend", label: "号码走势" },
@@ -346,13 +353,6 @@
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
     { id: "datarecord", label: "三期规律" },
-    { group: "预测" },
-    { id: "miss", label: "遗漏监控" },
-    { id: "tails", label: "冷热分析" },
-    { id: "segments", label: "分段对比" },
-    { id: "predict", label: "下期预估" },
-    { id: "backtest", label: "策略回测" },
-    { id: "personality", label: "尾号性格" },
     { id: "order", label: "下单追投" },
   ];
 
