@@ -998,7 +998,7 @@
         html += '<th class="seg-cell"><div>第 ' + segNo + ' 段</div><div class="seg-head">' + seg.s + '-' + seg.e + ' 期 · ' + seg.len + ' 期</div></th>';
       }
     });
-    html += '<th class="seg-trend-col">趋势</th></tr></thead><tbody>';
+    html += "</tr></thead><tbody>";
 
     for (var t = 0; t < 10; t++) {
       html += "<tr><td>" + t + "</td>";
@@ -1023,19 +1023,12 @@
         }
         html += '<td class="seg-cell"><div class="seg-rate">' + (fill * 100).toFixed(0) + '%</div><div class="seg-count" style="color:' + color + '">' + c + '/' + seg.len + ' 期</div><div class="seg-bar"><i style="width:' + Math.round(fill * 100) + '%"></i></div>' + est + '</td>';
       });
-      var pr = predictSegmentCount(t, w);
-      var curSeg = segs[segs.length - 1];
-      var curRate = countInSeg(t, curSeg.si, curSeg.ei) / curSeg.len;
-      var predRate = pr.pred / w;
-      var trend, cls;
-      if (predRate - curRate >= 0.05) { trend = "预计升温"; cls = "trend-up"; }
-      else if (curRate - predRate >= 0.05) { trend = "预计降温"; cls = "trend-down"; }
-      else { trend = "预计平稳"; cls = "trend-flat"; }
-      html += '<td class="seg-trend-col ' + cls + '">' + trend + "</td>";
       html += "</tr>";
     }
     html += "</tbody></table></div></div></div>";
     html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算。下一段/未完成段的预估按历史同类或相近段口推算，样本不足时回退全历史均值。</p>';
+
+    html += renderFullWindowHistory(w);
 
     var reportSeg = nextSeg || segs[segs.length - 1];
     var reportEnd = reportSeg ? reportSeg.s + w - 1 : 0;
@@ -1051,8 +1044,6 @@
     });
     html += '<p><b>逻辑：</b>优先匹配历史同类状态段口，样本不足时匹配相近次数，再不足则回退全历史均值；预测值只作为透明参考。</p>';
     html += "</div></div></div>";
-
-    html += renderFullWindowHistory(w);
 
     view.innerHTML = html;
   }
