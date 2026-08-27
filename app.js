@@ -921,6 +921,29 @@
     return html;
   }
 
+  function renderFullWindowHistory(w) {
+    var allSegs = segsOf(w);
+    var tailMap = {};
+    for (var t = 0; t < 10; t++) tailMap[t] = tailSegs(t, w);
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">全历史分段实际次数</h2><span class="section__hint">' + w + "期窗口 · 从第" + allSegs[0].s + "期到第" + allSegs[allSegs.length - 1].e + "期 · 共" + allSegs.length + "段</span></div>";
+    html += '<div class="panel"><div class="panel__body seg-hist-scroll"><table class="seg-hist-table full-hist-table"><thead><tr><th class="seg-hist-label">尾数</th>';
+    allSegs.forEach(function (seg) { html += '<th>' + seg.s + "~" + seg.e + "</th>"; });
+    html += "</tr></thead><tbody>";
+
+    for (var t = 0; t < 10; t++) {
+      html += '<tr><td class="seg-hist-label">尾' + t + "</td>";
+      allSegs.forEach(function (seg, idx) {
+        var e = tailMap[t][idx];
+        html += '<td class="seg-hist-cell ' + (e ? segColorClass(e.rate) : "") + '">' + (e ? e.c : "-") + "</td>";
+      });
+      html += "</tr>";
+    }
+
+    html += "</tbody></table></div></div></div>";
+    return html;
+  }
+
   function renderSegments() {
     var w = state.segWindow;
     var segs = segsOf(w);
@@ -1004,7 +1027,7 @@
     html += '<p><b>逻辑：</b>优先匹配历史同类状态段口，样本不足时匹配相近次数，再不足则回退全历史均值；预测值只作为透明参考。</p>';
     html += "</div></div></div>";
 
-    html += renderWindowSummary();
+    html += renderFullWindowHistory(w);
 
     view.innerHTML = html;
   }
