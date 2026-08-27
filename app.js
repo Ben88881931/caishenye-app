@@ -929,7 +929,7 @@
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">全历史分段实际次数</h2><span class="section__hint">' + w + "期窗口 · 从第" + allSegs[0].s + "期到第" + allSegs[allSegs.length - 1].e + "期 · 共" + allSegs.length + "段</span></div>";
     html += '<div class="panel"><div class="panel__body seg-hist-scroll"><table class="seg-hist-table full-hist-table"><thead><tr><th class="seg-hist-label">尾数</th>';
     allSegs.forEach(function (seg) { html += '<th>' + seg.s + "~" + seg.e + "</th>"; });
-    html += "</tr></thead><tbody>";
+    html += '<th>趋势</th></tr></thead><tbody>';
 
     for (var t = 0; t < 10; t++) {
       html += '<tr><td class="seg-hist-label">尾' + t + "</td>";
@@ -937,6 +937,15 @@
         var e = tailMap[t][idx];
         html += '<td class="seg-hist-cell ' + (e ? segColorClass(e.rate) : "") + '">' + (e ? e.c : "-") + "</td>";
       });
+      var pr = predictSegmentCount(t, w);
+      var cur = tailMap[t][allSegs.length - 1];
+      var curRate = cur.c / cur.len;
+      var predRate = pr.pred / w;
+      var trendText, trendCls;
+      if (predRate - curRate >= 0.05) { trendText = "预计升温"; trendCls = "trend-up"; }
+      else if (curRate - predRate >= 0.05) { trendText = "预计降温"; trendCls = "trend-down"; }
+      else { trendText = "预计平稳"; trendCls = "trend-flat"; }
+      html += '<td class="' + trendCls + '">' + trendText + "</td>";
       html += "</tr>";
     }
 
@@ -1001,11 +1010,14 @@
         }
         html += '<td class="seg-cell"><div class="seg-rate">' + (fill * 100).toFixed(0) + '%</div><div class="seg-count" style="color:' + color + '">' + c + '/' + seg.len + ' 期</div><div class="seg-bar"><i style="width:' + Math.round(fill * 100) + '%"></i></div>' + est + '</td>';
       });
-      var prev = rates[1], last = rates[2];
+      var pr = predictSegmentCount(t, w);
+      var curSeg = segs[segs.length - 1];
+      var curRate = countInSeg(t, curSeg.si, curSeg.ei) / curSeg.len;
+      var predRate = pr.pred / w;
       var trend, cls;
-      if (last - prev >= 0.05) { trend = "↗ 升温"; cls = "trend-up"; }
-      else if (prev - last >= 0.05) { trend = "↘ 降温"; cls = "trend-down"; }
-      else { trend = "→ 平稳"; cls = "trend-flat"; }
+      if (predRate - curRate >= 0.05) { trend = "预计升温"; cls = "trend-up"; }
+      else if (curRate - predRate >= 0.05) { trend = "预计降温"; cls = "trend-down"; }
+      else { trend = "预计平稳"; cls = "trend-flat"; }
       html += '<td class="seg-trend-col ' + cls + '">' + trend + "</td>";
       html += "</tr>";
     }
