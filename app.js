@@ -915,7 +915,7 @@
     }
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口选择</h2></div><div class="chips">';
-    [5, 7, 10, 15, 30].forEach(function (n) {
+    [5, 7, 10, 15, 21, 30].forEach(function (n) {
       html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-segw="' + n + '">' + n + " 期</button>";
     });
     html += "</div></div>";
