@@ -1328,6 +1328,31 @@
     return b;
   }
 
+  function streakStats(d) {
+    var b = {};
+    var run = 0;
+    for (var i = 0; i < periods.length - 1; i++) {
+      if (hit(periods[i], d)) {
+        run++;
+        if (!b[run]) b[run] = { h: 0, t: 0 };
+        b[run].t++;
+        if (hit(periods[i + 1], d)) b[run].h++;
+      } else {
+        run = 0;
+      }
+    }
+    return b;
+  }
+
+  function currentStreak(d) {
+    var run = 0;
+    for (var i = periods.length - 1; i >= 0; i--) {
+      if (hit(periods[i], d)) run++;
+      else break;
+    }
+    return run;
+  }
+
   function renderPersonality() {
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾号性格</h2><span class="section__hint">该尾数「遗漏N期后下一期开出」的概率</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>遗4</th><th>遗5+</th><th>性格</th><th>当前遗漏</th></tr></thead><tbody>';
@@ -1353,6 +1378,31 @@
       html += "<tr><td>尾" + d + "</td>" + cell(1) + cell(2) + cell(3) + cell(4) + cell(5) + '<td style="color:' + gc + ";font-weight:700\">" + grade + "</td><td>" + miss + "期</td></tr>";
     }
     html += "</tbody></table></div></div>";
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">连出性格表</h2><span class="section__hint">该尾数「连续开出N期后下一期继续开出」的概率</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>连1</th><th>连2</th><th>连3</th><th>连4</th><th>连5+</th><th>性格</th><th>当前连出</th></tr></thead><tbody>';
+    for (var d2 = 0; d2 < 10; d2++) {
+      var b2 = streakStats(d2);
+      function scell(x) {
+        var s = b2[x];
+        if (!s) return "<td>-</td>";
+        if (s.t < 3) return '<td style="color:#bbb">' + (s.h / s.t * 100).toFixed(0) + "%*</td>";
+        var r = s.h / s.t * 100;
+        var c = r >= 62 ? "#16a34a" : r >= 52 ? "#eab308" : "#dc2626";
+        return '<td style="color:' + c + ";font-weight:700\">" + r.toFixed(0) + "%</td>";
+      }
+      var arr2 = [];
+      for (var x2 = 1; x2 <= 3; x2++) { var s2 = b2[x2]; if (s2 && s2.t >= 3) arr2.push(s2.h / s2.t * 100); }
+      var grade2 = "—", gc2 = "#999";
+      if (arr2.length) {
+        var avg2 = arr2.reduce(function (a, b3) { return a + b3; }, 0) / arr2.length;
+        grade2 = avg2 >= 62 ? "🟢稳" : avg2 >= 52 ? "🟡中" : "🔴险";
+        gc2 = avg2 >= 62 ? "#16a34a" : avg2 >= 52 ? "#eab308" : "#dc2626";
+      }
+      var cs = currentStreak(d2);
+      html += "<tr><td>尾" + d2 + "</td>" + scell(1) + scell(2) + scell(3) + scell(4) + scell(5) + '<td style="color:' + gc2 + ";font-weight:700\">" + grade2 + "</td><td>" + cs + "连</td></tr>";
+    }
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">连出率 = 该尾数历史上「连续开出N期后、下一期继续开出」的概率；样本小于3标 *。🟢稳 / 🟡中 / 🔴险 按连1-3连出率平均划分。</p>';
     html += '<p class="disclaimer">反弹率 = 该尾数历史上「连续遗漏N期后、下一期开出」的概率；样本小于3标 *。🟢稳 / 🟡中 / 🔴险 按遗1-3反弹率平均划分。</p>';
     view.innerHTML = html;
   }
