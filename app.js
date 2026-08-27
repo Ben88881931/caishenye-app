@@ -382,6 +382,16 @@
     document.getElementById("latestTails").textContent = "尾 " + tailsOf(latest).join(" ");
   }
 
+  function scrollToLatest() {
+    var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
+    if (sc) {
+      sc.scrollTop = sc.scrollHeight;
+      return;
+    }
+    var lastRecord = view.querySelector(".record:last-child");
+    if (lastRecord) lastRecord.scrollIntoView({ block: "end" });
+  }
+
   function render() {
     renderTabs();
     if (state.tab === "overview") renderOverview();
@@ -401,6 +411,7 @@
     else if (state.tab === "predict") renderPredict();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
+    scrollToLatest();
   }
 
   function renderOverview() {
