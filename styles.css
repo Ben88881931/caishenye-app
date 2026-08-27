@@ -620,6 +620,36 @@ body {
 }
 .seg-hist-summary .seg-hist-label { background: #fafafa; color: var(--accent); text-align: center; font-size: 12px; min-width: 58px; }
 
+.full-hist-table {
+  font-size: 11px;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+}
+.full-hist-table th,
+.full-hist-table td {
+  padding: 2px 3px;
+}
+.full-hist-table thead th {
+  min-width: 44px;
+  padding: 2px 3px;
+}
+.full-hist-table .seg-hist-label {
+  min-width: 34px;
+  width: 34px;
+}
+.full-hist-table .seg-hist-cell {
+  min-width: 30px;
+  width: 30px;
+  padding: 2px 3px;
+  line-height: 1.25;
+}
+.full-hist-table .full-hist-trend {
+  margin-top: 2px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
 .next-seg-banner {
   margin-bottom: 10px;
   padding: 10px 12px;

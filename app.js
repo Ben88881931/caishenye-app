@@ -940,14 +940,9 @@
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">全历史分段实际次数</h2><span class="section__hint">' + w + "期窗口 · 从第" + allSegs[0].s + "期到第" + allSegs[allSegs.length - 1].e + "期 · 共" + allSegs.length + "段</span></div>";
     html += '<div class="panel"><div class="panel__body seg-hist-scroll"><table class="seg-hist-table full-hist-table"><thead><tr><th class="seg-hist-label">尾数</th>';
     allSegs.forEach(function (seg) { html += '<th>' + seg.s + "~" + seg.e + "</th>"; });
-    html += '<th>趋势</th></tr></thead><tbody>';
+    html += "</tr></thead><tbody>";
 
     for (var t = 0; t < 10; t++) {
-      html += '<tr><td class="seg-hist-label">尾' + t + "</td>";
-      allSegs.forEach(function (seg, idx) {
-        var e = tailMap[t][idx];
-        html += '<td class="seg-hist-cell ' + (e ? segColorClass(e.rate) : "") + '">' + (e ? e.c : "-") + "</td>";
-      });
       var pr = predictSegmentCount(t, w);
       var cur = tailMap[t][allSegs.length - 1];
       var curRate = cur.c / cur.len;
@@ -956,7 +951,14 @@
       if (predRate - curRate >= 0.05) { trendText = "预计升温"; trendCls = "trend-up"; }
       else if (curRate - predRate >= 0.05) { trendText = "预计降温"; trendCls = "trend-down"; }
       else { trendText = "预计平稳"; trendCls = "trend-flat"; }
-      html += '<td class="' + trendCls + '">' + trendText + "</td>";
+
+      html += '<tr><td class="seg-hist-label">尾' + t + "</td>";
+      allSegs.forEach(function (seg, idx) {
+        var e = tailMap[t][idx];
+        var cell = '<td class="seg-hist-cell ' + (e ? segColorClass(e.rate) : "") + '">' + (e ? e.c : "-");
+        if (idx === allSegs.length - 1) cell += '<div class="full-hist-trend ' + trendCls + '">' + trendText + "</div>";
+        html += cell + "</td>";
+      });
       html += "</tr>";
     }
 
