@@ -338,21 +338,19 @@
 
   var TABS = [
     { id: "overview", label: "总览" },
-    { group: "预测" },
-    { id: "miss", label: "遗漏监控" },
-    { id: "tails", label: "冷热分析" },
-    { id: "segments", label: "分段对比" },
-    { id: "predict", label: "下期预估" },
-    { id: "backtest", label: "策略回测" },
     { id: "personality", label: "尾号性格" },
-    { group: "记录" },
-    { id: "zodrecords", label: "生肖开奖" },
-    { id: "numtrend", label: "号码走势" },
-    { id: "zodtrend", label: "生肖走势" },
+    { id: "segments", label: "分段对比" },
     { id: "trend", label: "遗漏热图" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
+    { id: "predict", label: "下期预估" },
     { id: "datarecord", label: "三期规律" },
+    { id: "miss", label: "遗漏监控" },
+    { id: "tails", label: "冷热分析" },
+    { id: "backtest", label: "策略回测" },
+    { id: "zodrecords", label: "生肖开奖" },
+    { id: "numtrend", label: "号码走势" },
+    { id: "zodtrend", label: "生肖走势" },
     { id: "order", label: "下单追投" },
   ];
 
@@ -1404,6 +1402,22 @@
     html += "</tbody></table></div></div>";
     html += '<p class="disclaimer">连出率 = 该尾数历史上「连续开出N期后、下一期继续开出」的概率；样本小于3标 *。🟢稳 / 🟡中 / 🔴险 按连1-3连出率平均划分。</p>';
     html += '<p class="disclaimer">反弹率 = 该尾数历史上「连续遗漏N期后、下一期开出」的概率；样本小于3标 *。🟢稳 / 🟡中 / 🔴险 按遗1-3反弹率平均划分。</p>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当下状态</h2><span class="section__hint">各尾数最新状态</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>当前遗漏</th><th>当前连出</th><th>近15期</th><th>近5期</th><th>判定</th></tr></thead><tbody>';
+    for (var d3 = 0; d3 < 10; d3++) {
+      var miss3 = currentMiss(d3);
+      var streak3 = currentStreak(d3);
+      var c15 = countWindow(d3, 15);
+      var c5 = countWindow(d3, 5);
+      var s15 = c15 >= 10 ? "热" : c15 <= 5 ? "冷" : "中";
+      var s5 = c5 >= 4 ? "热" : c5 <= 1 ? "冷" : "中";
+      var status = miss3 >= BOUNCE[d3] ? "临界反弹" : c15 >= 10 ? "热惯性" : c15 <= 5 ? "冷待反弹" : streak3 >= 3 ? "连出中" : "中";
+      var statusColor = miss3 >= BOUNCE[d3] ? "#dc2626" : c15 >= 10 ? "#16a34a" : c15 <= 5 ? "#2563eb" : "#6b7280";
+      html += '<tr><td>尾' + d3 + '</td><td>' + miss3 + '期</td><td>' + streak3 + '连</td><td>' + c15 + '/15 ' + s15 + '</td><td>' + c5 + '/5 ' + s5 + '</td><td style="color:' + statusColor + ';font-weight:700">' + status + "</td></tr>";
+    }
+    html += "</tbody></table></div></div>";
+
     view.innerHTML = html;
   }
 
