@@ -654,6 +654,18 @@ body {
   background: #fafafa;
 }
 
+.window-summary-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #c7ccd4 transparent;
+}
+.window-summary-scroll::-webkit-scrollbar { height: 6px; }
+.window-summary-scroll::-webkit-scrollbar-thumb { background: #c7ccd4; border-radius: 999px; }
+.window-summary-table { min-width: 760px; }
+.window-summary-table .win-cur { font-weight: 700; }
+.window-summary-table .win-hist { font-size: 11px; color: var(--muted); line-height: 1.45; }
+
 .ord-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

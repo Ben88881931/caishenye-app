@@ -901,6 +901,26 @@
     return html;
   }
 
+  function renderWindowSummary() {
+    var windows = [5, 7, 10, 15, 21, 30];
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口开出次数统计</h2><span class="section__hint">当前段与最近5段实际次数</span></div>';
+    html += '<div class="panel"><div class="panel__body window-summary-scroll"><table class="table window-summary-table"><thead><tr><th>尾数</th>';
+    windows.forEach(function (w) { html += '<th>' + w + "期</th>"; });
+    html += "</tr></thead><tbody>";
+    for (var t = 0; t < 10; t++) {
+      html += "<tr><td>尾" + t + "</td>";
+      windows.forEach(function (w) {
+        var arr = tailSegs(t, w);
+        var cur = arr[arr.length - 1];
+        var history = arr.slice(-6, -1).map(function (e) { return e.c + '/' + e.len; }).join(" · ");
+        html += '<td><div class="win-cur">' + cur.c + '/' + cur.len + '</div><div class="win-hist">' + history + "</div></td>";
+      });
+      html += "</tr>";
+    }
+    html += "</tbody></table></div></div></div>";
+    return html;
+  }
+
   function renderSegments() {
     var w = state.segWindow;
     var segs = segsOf(w);
@@ -984,7 +1004,7 @@
     html += '<p><b>逻辑：</b>优先匹配历史同类状态段口，样本不足时匹配相近次数，再不足则回退全历史均值；预测值只作为透明参考。</p>';
     html += "</div></div></div>";
 
-    html += renderSegHistory(w, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], state.segCount);
+    html += renderWindowSummary();
 
     view.innerHTML = html;
   }
