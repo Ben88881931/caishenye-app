@@ -729,12 +729,28 @@
     }
 
     var xlabels = "";
-    var tickCount = 6;
-    for (var tk = 0; tk < tickCount; tk++) {
-      var li = Math.round(tk * (labels.length - 1) / (tickCount - 1));
-      var lx = padL + (values.length === 1 ? 0 : li / (values.length - 1) * plotW);
+    var chartStartP = labels[0];
+    var chartEndP = labels[labels.length - 1];
+    var segs = [];
+    for (var ss = chartStartP; ss <= chartEndP; ss += w) {
+      segs.push({ s: ss, e: Math.min(ss + w - 1, chartEndP) });
+    }
+    var step = Math.max(1, Math.ceil(segs.length / 6));
+    var tickMap = {};
+    for (var si = 0; si < segs.length; si += step) {
+      var seg = segs[si];
+      var idx = seg.e - chartStartP;
+      if (idx < 0 || idx >= labels.length) continue;
+      var lx = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
       grid += '<line x1="' + lx.toFixed(1) + '" y1="' + padT + '" x2="' + lx.toFixed(1) + '" y2="' + (padT + plotH) + '" stroke="#f1f3f5" stroke-width="1"/>';
-      xlabels += '<text x="' + lx.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + labels[li] + "</text>";
+      xlabels += '<text x="' + lx.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + seg.s + "~" + seg.e + "</text>";
+      tickMap[idx] = true;
+    }
+    var lastSeg = segs[segs.length - 1];
+    var lastIdx = lastSeg.e - chartStartP;
+    if (!tickMap[lastIdx]) {
+      var lx2 = padL + (values.length === 1 ? 0 : lastIdx / (values.length - 1) * plotW);
+      xlabels += '<text x="' + lx2.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + lastSeg.s + "~" + lastSeg.e + "</text>";
     }
 
     var svg = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
