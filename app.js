@@ -340,7 +340,7 @@
     { id: "overview", label: "总览" },
     { id: "personality", label: "尾号性格" },
     { id: "segments", label: "分段对比" },
-    { id: "windowk", label: "窗口K线" },
+    { id: "windowk", label: "窗口走势" },
     { id: "trend", label: "遗漏热图" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -718,23 +718,11 @@
       var y = padT + plotH - (v / maxV) * plotH;
       return '<span class="linechart-dot" style="left:' + (x / width * 100).toFixed(2) + '%;top:' + (y / height * 100).toFixed(2) + '%"></span>';
     }).join("");
-    var candleSvg = "";
-    var candleW = Math.max(2, Math.min(9, plotW / values.length * 0.7));
-    function yOf(v) { return padT + plotH - (v / maxV) * plotH; }
-    for (var cs = 0; cs < values.length; cs += w) {
-      var ce = Math.min(cs + w - 1, values.length - 1);
-      var segVals = values.slice(cs, ce + 1);
-      var open = segVals[0], close = segVals[segVals.length - 1];
-      var high = Math.max.apply(null, segVals);
-      var low = Math.min.apply(null, segVals);
-      var xc = padL + ((cs + (segVals.length - 1) / 2) / (values.length - 1)) * plotW;
-      var color = close >= open ? "#dc2626" : "#16a34a";
-      candleSvg += '<line x1="' + xc.toFixed(1) + '" y1="' + yOf(high).toFixed(1) + '" x2="' + xc.toFixed(1) + '" y2="' + yOf(low).toFixed(1) + '" stroke="' + color + '" stroke-width="1"/>';
-      var yO = yOf(open), yC = yOf(close);
-      var top = Math.min(yO, yC);
-      var hgt = Math.max(1, Math.abs(yC - yO));
-      candleSvg += '<rect x="' + (xc - candleW / 2).toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + candleW.toFixed(1) + '" height="' + hgt.toFixed(1) + '" fill="' + color + '"/>';
-    }
+    var pts = values.map(function (v, idx) {
+      var x = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
+      var y = padT + plotH - (v / maxV) * plotH;
+      return x.toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
 
     var grid = "";
     var ylabels = "";
@@ -771,8 +759,8 @@
 
     var svg = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
       grid +
-      candleSvg +
-      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + tail + " " + w + "期K线</text>" +
+      '<polyline points="' + pts + '" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + tail + " " + w + "期走势</text>" +
       ylabels +
       xlabels +
       "</svg>";
@@ -781,7 +769,7 @@
 
   function renderWindowK() {
     var windows = [5, 7, 10, 15, 21, 30];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口K线</h2><span class="section__hint">每只股票 = 一个尾号</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口走势</h2><span class="section__hint">每个尾号查看各窗口滚动走势</span></div>';
     html += '<div class="chips" style="margin-bottom:8px">';
     for (var t = 0; t < 10; t++) {
       html += '<button class="chip ' + (state.tail === t ? "is-active" : "") + '" data-wk-tail="' + t + '">尾 ' + t + "</button>";
