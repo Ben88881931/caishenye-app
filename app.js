@@ -340,6 +340,7 @@
     { id: "overview", label: "总览" },
     { id: "personality", label: "尾号性格" },
     { id: "segments", label: "分段对比" },
+    { id: "windowk", label: "窗口K线" },
     { id: "trend", label: "遗漏热图" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -397,6 +398,7 @@
     else if (state.tab === "segments") renderSegments();
     else if (state.tab === "miss") renderMiss();
     else if (state.tab === "trend") renderTrend();
+    else if (state.tab === "windowk") renderWindowK();
     else if (state.tab === "missorder") view.innerHTML = renderMissOrderHeatmap();
     else if (state.tab === "parity") view.innerHTML = renderParityHeatmap();
     else if (state.tab === "numtrend") renderNumTrend();
@@ -693,13 +695,15 @@
   function drawLineChart() {
     var host = document.getElementById("linechart");
     if (!host) return;
-    var w = state.rollWindow;
-    var count = 60;
+    drawCandleChart(host, state.tail, state.rollWindow, 60);
+  }
+
+  function drawCandleChart(host, tail, w, count) {
     var start = Math.max(0, periods.length - count);
     var values = [];
     var labels = [];
     for (var i = start; i < periods.length; i++) {
-      var r = rateAt(state.tail, i, w);
+      var r = rateAt(tail, i, w);
       values.push(r == null ? 0 : r * 100);
       labels.push(periods[i]);
     }
@@ -709,7 +713,7 @@
     var plotW = width - padL - padR;
     var plotH = height - padT - padB;
     var markers = values.map(function (v, idx) {
-      if (!hit(periods[start + idx], state.tail)) return "";
+      if (!hit(periods[start + idx], tail)) return "";
       var x = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
       var y = padT + plotH - (v / maxV) * plotH;
       return '<span class="linechart-dot" style="left:' + (x / width * 100).toFixed(2) + '%;top:' + (y / height * 100).toFixed(2) + '%"></span>';
@@ -768,11 +772,29 @@
     var svg = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
       grid +
       candleSvg +
-      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + state.tail + " " + w + "期K线</text>" +
+      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + tail + " " + w + "期K线</text>" +
       ylabels +
       xlabels +
       "</svg>";
     host.innerHTML = '<div style="position:relative;width:100%;height:180px">' + svg + markers + "</div>";
+  }
+
+  function renderWindowK() {
+    var windows = [5, 7, 10, 15, 21, 30];
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口K线</h2><span class="section__hint">每只股票 = 一个尾号</span></div>';
+    html += '<div class="chips" style="margin-bottom:8px">';
+    for (var t = 0; t < 10; t++) {
+      html += '<button class="chip ' + (state.tail === t ? "is-active" : "") + '" data-wk-tail="' + t + '">尾 ' + t + "</button>";
+    }
+    html += "</div></div>";
+    windows.forEach(function (w) {
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">' + w + "期窗口</h2><span class=\"section__hint\">尾 " + state.tail + "</span></div>";
+      html += '<div class="panel"><div class="panel__body"><div id="wkchart-' + w + '" class="linechart"></div></div></div></div>';
+    });
+    view.innerHTML = html;
+    windows.forEach(function (w) {
+      drawCandleChart(document.getElementById("wkchart-" + w), state.tail, w, 60);
+    });
   }
 
   function drawZodiacBars() {
@@ -1788,6 +1810,12 @@
     if (tailChip) {
       state.tail = Number(tailChip.dataset.tail);
       renderTrend();
+      return;
+    }
+    var wkTailChip = e.target.closest("[data-wk-tail]");
+    if (wkTailChip) {
+      state.tail = Number(wkTailChip.dataset.wkTail);
+      renderWindowK();
       return;
     }
     var yearChip = e.target.closest("[data-year]");
