@@ -708,17 +708,29 @@
     var padL = 34, padR = 8, padT = 10, padB = 20;
     var plotW = width - padL - padR;
     var plotH = height - padT - padB;
-    var pts = values.map(function (v, idx) {
-      var x = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
-      var y = padT + plotH - (v / maxV) * plotH;
-      return x.toFixed(1) + "," + y.toFixed(1);
-    }).join(" ");
     var markers = values.map(function (v, idx) {
       if (!hit(periods[start + idx], state.tail)) return "";
       var x = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
       var y = padT + plotH - (v / maxV) * plotH;
       return '<span class="linechart-dot" style="left:' + (x / width * 100).toFixed(2) + '%;top:' + (y / height * 100).toFixed(2) + '%"></span>';
     }).join("");
+    var candleSvg = "";
+    var candleW = Math.max(2, Math.min(9, plotW / values.length * 0.7));
+    function yOf(v) { return padT + plotH - (v / maxV) * plotH; }
+    for (var cs = 0; cs < values.length; cs += w) {
+      var ce = Math.min(cs + w - 1, values.length - 1);
+      var segVals = values.slice(cs, ce + 1);
+      var open = segVals[0], close = segVals[segVals.length - 1];
+      var high = Math.max.apply(null, segVals);
+      var low = Math.min.apply(null, segVals);
+      var xc = padL + ((cs + (segVals.length - 1) / 2) / (values.length - 1)) * plotW;
+      var color = close >= open ? "#dc2626" : "#16a34a";
+      candleSvg += '<line x1="' + xc.toFixed(1) + '" y1="' + yOf(high).toFixed(1) + '" x2="' + xc.toFixed(1) + '" y2="' + yOf(low).toFixed(1) + '" stroke="' + color + '" stroke-width="1"/>';
+      var yO = yOf(open), yC = yOf(close);
+      var top = Math.min(yO, yC);
+      var hgt = Math.max(1, Math.abs(yC - yO));
+      candleSvg += '<rect x="' + (xc - candleW / 2).toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + candleW.toFixed(1) + '" height="' + hgt.toFixed(1) + '" fill="' + color + '"/>';
+    }
 
     var grid = "";
     var ylabels = "";
@@ -755,8 +767,8 @@
 
     var svg = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
       grid +
-      '<polyline points="' + pts + '" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
-      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + state.tail + " " + w + "期开出率</text>" +
+      candleSvg +
+      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + state.tail + " " + w + "期K线</text>" +
       ylabels +
       xlabels +
       "</svg>";
