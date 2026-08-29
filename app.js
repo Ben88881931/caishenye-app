@@ -767,9 +767,80 @@
     host.innerHTML = '<div style="position:relative;width:100%;height:180px">' + svg + markers + "</div>";
   }
 
+  function drawPeriodChart(host, tail, w, count) {
+    if (!host) return;
+    var start = Math.max(0, periods.length - count);
+    var firstP = periods[start];
+    var chartEnd = periods[periods.length - 1];
+    var segStart = Math.floor((firstP - 1) / w) * w + 1;
+    var labels = [], values = [], score = 0;
+    for (var p = segStart; p <= chartEnd; p++) {
+      score += hit(p, tail) ? 1 : -1;
+      if (p >= firstP) {
+        values.push(score);
+        labels.push(p);
+      }
+    }
+
+    var width = 640, height = 180;
+    var padL = 34, padR = 8, padT = 10, padB = 20;
+    var plotW = width - padL - padR;
+    var plotH = height - padT - padB;
+    var maxV = w;
+
+    function yOf(v) { return padT + (w - v) / (2 * w) * plotH; }
+
+    var pts = values.map(function (v, idx) {
+      var x = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
+      return x.toFixed(1) + "," + yOf(v).toFixed(1);
+    }).join(" ");
+
+    var grid = "", ylabels = "";
+    [-w, 0, w].forEach(function (level) {
+      var gy = yOf(level);
+      var isZero = level === 0;
+      grid += '<line x1="' + padL + '" y1="' + gy.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + gy.toFixed(1) + '" stroke="' + (isZero ? "#9aa1ab" : "#eef0f2") + '" stroke-width="' + (isZero ? 1.5 : 1) + '"/>';
+      ylabels += '<text x="' + (padL - 5) + '" y="' + (gy + 3).toFixed(1) + '" font-size="9" fill="#9aa1ab" text-anchor="end">' + (level > 0 ? "+" : "") + level + "</text>";
+    });
+
+    var xlabels = "";
+    var chartStartP = labels[0];
+    var chartEndP = labels[labels.length - 1];
+    var segs = [];
+    for (var ss = chartStartP; ss <= chartEndP; ss += w) {
+      segs.push({ s: ss, e: Math.min(ss + w - 1, chartEndP) });
+    }
+    var step = Math.max(1, Math.ceil(segs.length / 6));
+    var tickMap = {};
+    for (var si = 0; si < segs.length; si += step) {
+      var seg = segs[si];
+      var idx = seg.e - chartStartP;
+      if (idx < 0 || idx >= labels.length) continue;
+      var lx = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
+      grid += '<line x1="' + lx.toFixed(1) + '" y1="' + padT + '" x2="' + lx.toFixed(1) + '" y2="' + (padT + plotH) + '" stroke="#f1f3f5" stroke-width="1"/>';
+      xlabels += '<text x="' + lx.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + seg.s + "~" + seg.e + "</text>";
+      tickMap[idx] = true;
+    }
+    var lastSeg = segs[segs.length - 1];
+    var lastIdx = lastSeg.e - chartStartP;
+    if (!tickMap[lastIdx]) {
+      var lx2 = padL + (values.length === 1 ? 0 : lastIdx / (values.length - 1) * plotW);
+      xlabels += '<text x="' + lx2.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + lastSeg.s + "~" + lastSeg.e + "</text>";
+    }
+
+    var svg = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
+      grid +
+      '<polyline points="' + pts + '" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + tail + " " + w + "期每期浮动</text>" +
+      ylabels +
+      xlabels +
+      "</svg>";
+    host.innerHTML = svg;
+  }
+
   function renderWindowK() {
     var windows = [5, 7, 10, 15, 21, 30];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口走势</h2><span class="section__hint">每个尾号查看各窗口滚动走势</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口走势</h2><span class="section__hint">每个窗口内，每期开出上浮、未开出下浮</span></div>';
     html += '<div class="chips" style="margin-bottom:8px">';
     for (var t = 0; t < 10; t++) {
       html += '<button class="chip ' + (state.tail === t ? "is-active" : "") + '" data-wk-tail="' + t + '">尾 ' + t + "</button>";
@@ -781,7 +852,7 @@
     });
     view.innerHTML = html;
     windows.forEach(function (w) {
-      drawCandleChart(document.getElementById("wkchart-" + w), state.tail, w, 60);
+      drawPeriodChart(document.getElementById("wkchart-" + w), state.tail, w, 60);
     });
   }
 
