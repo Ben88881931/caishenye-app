@@ -1329,6 +1329,57 @@
     return c;
   }
 
+  function missUntil(d, upto) {
+    var m = 0;
+    for (var p = upto; p >= 1; p--) {
+      if (hit(p, d)) break;
+      m++;
+    }
+    return m;
+  }
+
+  function reboundUntil(d, upto) {
+    var k = missUntil(d, upto);
+    var total = 0, hits = 0, run = 0;
+    for (var p = 1; p < upto; p++) {
+      if (hit(p, d)) run = 0;
+      else {
+        run++;
+        if (run >= k) {
+          total++;
+          if (hit(p + 1, d)) hits++;
+        }
+      }
+    }
+    return { rate: total ? hits / total : 0, total: total };
+  }
+
+  function prevTailReview() {
+    if (periods.length < 3) return null;
+    var N = latest - 1;
+    var cands = [];
+    var lastBin = bin(N);
+    for (var d = 0; d < 10; d++) {
+      var cnt15 = cntRange(d, N - 14, N);
+      var cnt5 = cntRange(d, N - 4, N);
+      var miss = missUntil(d, N);
+      var bt = BOUNCE[d];
+      var score = 0;
+      if (cnt15 <= 5) score += 3;
+      if (cnt5 <= 1) score += 2;
+      if (miss >= bt) score += 5; else if (miss >= bt - 1) score += 2;
+      if (lastBin[d] === "0") {
+        var reb = reboundUntil(d, N);
+        var rebEdge = reb.total ? reb.rate - BASE_RATE[d] : 0;
+        var rebConf = reb.total >= 20 && rebEdge >= 0.04 ? 2 : reb.total >= 20 && rebEdge <= -0.04 ? -2 : 0;
+        cands.push({ d: d, miss: miss, cnt15: cnt15, cnt5: cnt5, bt: bt, score: score + rebConf, rebRate: reb.rate, rebSample: reb.total, rebEdge: rebEdge });
+      }
+    }
+    cands.sort(function (a, b) { return b.score - a.score; });
+    var actual = tailsOf(latest);
+    return { N: N, actual: actual, cands: cands };
+  }
+
   function renderPredict() {
     var N = latest;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">三层分析框架</h2><span class="section__hint">第1层 15期方向 · 第2层 5/7/10期 · 第3层 反弹临界点</span></div>';
@@ -1410,6 +1461,27 @@
     html += '<p><b>评分规则：</b>15期冷区 +3；近5期冷区 +2；达到临界 +5、接近临界 +2；历史反弹率显著偏高 +2、显著偏低 -2。分数并列时跳过。</p>';
     html += '<p><b>风险提示：</b>历史回测显示这类信号没有稳定优势，报告只做透明推演，不应据此重注。</p>';
     html += "</div></div></div>";
+
+    var review = prevTailReview();
+    if (review) {
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">上期预测反馈</h2><span class="section__hint">用第 ' + review.N + ' 期数据回看第 ' + latest + " 期</span></div>";
+      html += '<div class="panel"><div class="panel__body report">';
+      html += '<p><b>当时推荐：</b>';
+      if (review.cands.length === 0) {
+        html += "上期全中，系统建议跳过";
+        html += '</p><p><b>实际开出：</b>' + review.actual.join(" ") + "。跳过建议合理。</p>";
+      } else if (review.cands.length >= 2 && review.cands[0].score === review.cands[1].score) {
+        html += "候选并列，系统建议跳过";
+        html += '</p><p><b>实际开出：</b>' + review.actual.join(" ") + "。并列时没有强行选择。</p>";
+      } else {
+        var rtop = review.cands[0];
+        var rhit = review.actual.indexOf(rtop.d) >= 0;
+        html += "首选尾 " + rtop.d + "；备选尾 " + (review.cands.length >= 2 ? review.cands[1].d : "-");
+        html += '</p><p><b>实际开出：</b>' + review.actual.join(" ");
+        html += '</p><p><b>结果：</b><span style="color:' + (rhit ? "#16a34a" : "#dc2626") + ';font-weight:700">' + (rhit ? "正确，首选命中" : "未中，首选未开出") + "</span></p>";
+      }
+      html += "</div></div></div>";
+    }
 
     html += '<p class="disclaimer">评分结合冷热、遗漏、临界和历史反弹率；当候选分数并列时宁可跳过。历史回测仍显示这类信号没有稳定优势，仅供参考。</p>';
     view.innerHTML = html;
