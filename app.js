@@ -1354,9 +1354,8 @@
     return { rate: total ? hits / total : 0, total: total };
   }
 
-  function prevTailReview() {
-    if (periods.length < 3) return null;
-    var N = latest - 1;
+  function tailReviewAt(N) {
+    if (N < 1 || !bin(N + 1)) return null;
     var cands = [];
     var lastBin = bin(N);
     for (var d = 0; d < 10; d++) {
@@ -1376,8 +1375,33 @@
       }
     }
     cands.sort(function (a, b) { return b.score - a.score; });
-    var actual = tailsOf(latest);
+    var actual = tailsOf(N + 1);
     return { N: N, actual: actual, cands: cands };
+  }
+
+  function prevTailReview() {
+    return tailReviewAt(latest - 1);
+  }
+
+  function tailReviewHistory() {
+    var out = [];
+    for (var N = 30; N <= latest - 1; N++) {
+      var r = tailReviewAt(N);
+      if (!r) continue;
+      var row = { N: N, period: N + 1, actual: r.actual };
+      if (r.cands.length === 0) {
+        row.status = "跳过";
+      } else if (r.cands.length >= 2 && r.cands[0].score === r.cands[1].score) {
+        row.status = "跳过";
+      } else {
+        row.top = r.cands[0].d;
+        row.sec = r.cands.length >= 2 ? r.cands[1].d : null;
+        row.hit = r.actual.indexOf(row.top) >= 0;
+        row.status = row.hit ? "对" : "错";
+      }
+      out.push(row);
+    }
+    return out;
   }
 
   function renderPredict() {
@@ -1481,6 +1505,19 @@
         html += '</p><p><b>结果：</b><span style="color:' + (rhit ? "#16a34a" : "#dc2626") + ';font-weight:700">' + (rhit ? "正确，首选命中" : "未中，首选未开出") + "</span></p>";
       }
       html += "</div></div></div>";
+    }
+
+    var historyRows = tailReviewHistory().slice(-40);
+    if (historyRows.length) {
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">最近 ' + historyRows.length + " 期回放</span></div>";
+      html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>当时首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
+      historyRows.slice().reverse().forEach(function (row) {
+        var topText = row.top === undefined ? "-" : "尾" + row.top;
+        var secText = row.sec === undefined ? "-" : "尾" + row.sec;
+        var cls = row.status === "对" ? "cell--hot" : row.status === "错" ? "cell--cold" : "";
+        html += '<tr><td>' + row.period + "</td><td>" + topText + "</td><td>" + secText + '</td><td>' + row.actual.join(" ") + '</td><td class="' + cls + '">' + row.status + "</td></tr>";
+      });
+      html += "</tbody></table></div></div>";
     }
 
     html += '<p class="disclaimer">评分结合冷热、遗漏、临界和历史反弹率；当候选分数并列时宁可跳过。历史回测仍显示这类信号没有稳定优势，仅供参考。</p>';
