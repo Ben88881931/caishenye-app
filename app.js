@@ -1151,6 +1151,7 @@
     });
     html += '<p><b>逻辑：</b>优先匹配历史同类状态段口，样本不足时匹配相近次数，再不足则回退全历史均值；预测值只作为透明参考。</p>';
     html += "</div></div></div>";
+    html += predictionFeedbackHTML();
 
     view.innerHTML = html;
   }
@@ -1402,6 +1403,12 @@
       out.push(row);
     }
     return out;
+  }
+
+  function predictionFeedbackHTML() {
+    var html = "";
+    html += predictionFeedbackHTML();
+    return html;
   }
 
   function renderPredict() {
