@@ -1097,40 +1097,39 @@
   function renderSegments() {
     var w = state.segWindow;
     var segs = segsOf(w);
-    var last3 = segs.slice(-3);
     
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">分段对比</h2><span class="section__hint">最近3段对比 · 看趋势</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">分段对比</h2><span class="section__hint">共' + segs.length + '段 · 横向滑动查看</span></div>';
     html += '<div class="chips" style="margin-bottom:12px">';
     [5, 7, 10, 15, 21, 30].forEach(function(n) {
       html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-segw="' + n + '">' + n + "期</button>";
     });
     html += '</div>';
-    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto"><table class="table" style="font-size:12px"><thead><tr><th>尾数</th>';
-    last3.forEach(function(seg, idx) {
-      var segNo = segs.length - 3 + idx + 1;
-      html += '<th style="text-align:center">第' + segNo + '段<br><span style="font-size:10px;color:#999">' + seg.s + '-' + seg.e + '期</span></th>';
+    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto"><table class="table" style="font-size:12px;white-space:nowrap"><thead><tr><th style="position:sticky;left:0;background:#fff;z-index:2;min-width:40px">尾数</th>';
+    segs.forEach(function(seg, idx) {
+      html += '<th style="text-align:center;min-width:52px">第' + (idx+1) + '段<br><span style="font-size:10px;color:#999">' + seg.s + '-' + seg.e + '期</span></th>';
     });
-    html += '<th style="text-align:center">趋势</th></tr></thead><tbody>';
+    html += '<th style="text-align:center;position:sticky;right:0;background:#fff;z-index:2;min-width:50px">趋势</th></tr></thead><tbody>';
     
     for (var t = 0; t < 10; t++) {
-      html += '<tr><td><b>尾' + t + '</b></td>';
-      var counts = [];
-      last3.forEach(function(seg) {
+      html += '<tr><td style="position:sticky;left:0;background:#fff;z-index:1"><b>尾' + t + '</b></td>';
+      var firstCount = 0, lastCount = 0;
+      segs.forEach(function(seg, idx) {
         var c = countInSeg(t, seg.si, seg.ei);
-        counts.push(c);
+        if (idx === 0) firstCount = c;
+        if (idx === segs.length - 1) lastCount = c;
         var hotThresh = Math.ceil(seg.len * 0.6);
         var coldThresh = Math.floor(seg.len * 0.2);
         var color = c >= hotThresh ? '#16a34a' : c > coldThresh ? '#6b7280' : c > 0 ? '#eab308' : '#dc2626';
         html += '<td style="text-align:center"><span style="color:' + color + ';font-weight:700;font-size:16px">' + c + '</span><span style="color:#999;font-size:10px">/' + seg.len + '</span></td>';
       });
       var trend = '', trendColor = '#6b7280';
-      if (counts[2] > counts[0] + 1) { trend = '↑升温'; trendColor = '#16a34a'; }
-      else if (counts[2] < counts[0] - 1) { trend = '↓降温'; trendColor = '#dc2626'; }
+      if (lastCount > firstCount + 1) { trend = '↑升温'; trendColor = '#16a34a'; }
+      else if (lastCount < firstCount - 1) { trend = '↓降温'; trendColor = '#dc2626'; }
       else { trend = '→平稳'; }
-      html += '<td style="text-align:center;color:' + trendColor + ';font-weight:700">' + trend + '</td></tr>';
+      html += '<td style="text-align:center;position:sticky;right:0;background:#fff;z-index:1;color:' + trendColor + ';font-weight:700">' + trend + '</td></tr>';
     }
     html += '</tbody></table></div></div></div>';
-    html += '<p class="disclaimer">数字=开出次数 · <span style="color:#16a34a">绿≥60%</span> <span style="color:#6b7280">灰中间</span> <span style="color:#eab308">黄偏冷</span> <span style="color:#dc2626">红≤20%</span> · 趋势=末段vs首段</p>';
+    html += '<p class="disclaimer">数字=开出次数 · <span style="color:#16a34a">绿≥60%</span> <span style="color:#6b7280">灰中间</span> <span style="color:#eab308">黄偏冷</span> <span style="color:#dc2626">红≤20%</span> · 趋势=末段vs首段 · 可横向滑动</p>';
     view.innerHTML = html;
   }
 
