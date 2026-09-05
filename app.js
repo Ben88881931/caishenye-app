@@ -839,21 +839,33 @@
   }
 
   function renderWindowK() {
-    var windows = [5, 7, 10, 15, 21, 30];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口走势</h2><span class="section__hint">每个窗口内，每期开出上浮、未开出下浮</span></div>';
-    html += '<div class="chips" style="margin-bottom:8px">';
+    // 简化版：用表格展示最近10期每个尾数的开出情况
+    var recent = 10;
+    var startIdx = Math.max(0, periods.length - recent);
+    var recentPeriods = periods.slice(startIdx);
+    
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">近期走势</h2><span class="section__hint">最近' + recent + '期 · ●=开出 ○=未出</span></div>';
+    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto"><table class="table" style="font-size:12px"><thead><tr><th>尾数</th>';
+    recentPeriods.forEach(function(p) { html += '<th style="text-align:center">' + p + '</th>'; });
+    html += '<th style="text-align:center">开出</th><th>状态</th></tr></thead><tbody>';
+    
     for (var t = 0; t < 10; t++) {
-      html += '<button class="chip ' + (state.tail === t ? "is-active" : "") + '" data-wk-tail="' + t + '">尾 ' + t + "</button>";
+      html += '<tr><td><b>尾' + t + '</b></td>';
+      var count = 0;
+      recentPeriods.forEach(function(p) {
+        var isHit = hit(p, t);
+        if (isHit) count++;
+        html += '<td style="text-align:center;font-size:16px">' + (isHit ? '<span style="color:#16a34a">●</span>' : '<span style="color:#ccc">○</span>') + '</td>';
+      });
+      var rate = (count / recent * 100).toFixed(0);
+      var status = count >= 6 ? '🔥热' : count >= 4 ? '中' : count >= 2 ? '偏冷' : '❄️冷';
+      var statusColor = count >= 6 ? '#16a34a' : count >= 4 ? '#6b7280' : count >= 2 ? '#eab308' : '#dc2626';
+      html += '<td style="text-align:center"><b>' + count + '/' + recent + '</b></td>';
+      html += '<td style="color:' + statusColor + ';font-weight:700">' + status + '</td></tr>';
     }
-    html += "</div></div>";
-    windows.forEach(function (w) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">' + w + "期窗口</h2><span class=\"section__hint\">尾 " + state.tail + "</span></div>";
-      html += '<div class="panel"><div class="panel__body"><div id="wkchart-' + w + '" class="linechart"></div></div></div></div>';
-    });
+    html += '</tbody></table></div></div></div>';
+    html += '<p class="disclaimer">●=该尾数当期开出 ○=未出 · 开出≥6次为热，≤1次为冷</p>';
     view.innerHTML = html;
-    windows.forEach(function (w) {
-      drawPeriodChart(document.getElementById("wkchart-" + w), state.tail, w, 60);
-    });
   }
 
   function drawZodiacBars() {
@@ -1074,85 +1086,39 @@
   }
 
   function renderSegments() {
-    var w = state.segWindow;
+    // 简化版：用10期窗口，展示最近3段的对比
+    var w = 10;
     var segs = segsOf(w);
     var last3 = segs.slice(-3);
-    var nextSeg = futureSegment(w, segs);
-    var comparisonSegs = last3.slice();
-    var hasNext = !!nextSeg;
-    if (nextSeg) comparisonSegs.push(nextSeg);
-    var futurePreds = {};
-    if (nextSeg) {
-      for (var tp = 0; tp < 10; tp++) futurePreds[tp] = predictSegmentCount(tp, w);
-    }
-
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口选择</h2></div><div class="chips">';
-    [5, 7, 10, 15, 21, 30].forEach(function (n) {
-      html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-segw="' + n + '">' + n + " 期</button>";
+    
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">分段对比</h2><span class="section__hint">每段10期 · 最近3段对比</span></div>';
+    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto"><table class="table" style="font-size:12px"><thead><tr><th>尾数</th>';
+    last3.forEach(function(seg, idx) {
+      var segNo = segs.length - 3 + idx + 1;
+      html += '<th style="text-align:center">第' + segNo + '段<br><span style="font-size:10px;color:#999">' + seg.s + '-' + seg.e + '期</span></th>';
     });
-    html += "</div></div>";
-    if (nextSeg) {
-      html += '<div class="next-seg-banner">下一段 ' + nextSeg.s + '-' + nextSeg.e + "期 · " + w + "期窗口 · 未开</div>";
-    }
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近三段对比</h2><span class="section__hint">' + (hasNext ? "已接下一段" : "共 " + segs.length + " 个分段，末段可能不满窗口") + "</span></div>";
-    html += '<div class="panel"><div class="seg-compare-scroll"><table class="table"><thead><tr><th>尾数</th>';
-    comparisonSegs.forEach(function (seg, idx) {
-      if (seg.future) {
-        html += '<th class="seg-cell"><div>下一段</div><div class="seg-head">' + seg.s + '-' + seg.e + " 期 · 未开</div></th>";
-      } else {
-        var segNo = segs.length - 3 + idx + 1;
-        html += '<th class="seg-cell"><div>第 ' + segNo + ' 段</div><div class="seg-head">' + seg.s + '-' + seg.e + ' 期 · ' + seg.len + ' 期</div></th>';
-      }
-    });
-    html += "</tr></thead><tbody>";
-
+    html += '<th style="text-align:center">趋势</th></tr></thead><tbody>';
+    
     for (var t = 0; t < 10; t++) {
-      html += "<tr><td>" + t + "</td>";
-      var counts = comparisonSegs.map(function (seg) { return seg.future ? 0 : countInSeg(t, seg.si, seg.ei); });
-      var rates = comparisonSegs.map(function (seg, idx) { return seg.future ? 0 : counts[idx] / seg.len; });
-      comparisonSegs.forEach(function (seg, idx) {
-        if (seg.future) {
-          var pr = futurePreds[t];
-          var predFill = Math.max(0, Math.min(100, pr.pred / w * 100));
-          html += '<td class="seg-cell"><div class="seg-rate">预估 ' + pr.pred.toFixed(1) + ' 次</div><div class="seg-count" style="color:var(--muted)">样本 ' + pr.sample + ' · ' + pr.method + '</div><div class="seg-bar"><i style="width:' + Math.round(predFill) + '%"></i></div></td>';
-          return;
-        }
-        var c = counts[idx];
-        var fill = c / w;
-        var above = rates[idx] >= BASE_RATE[t];
-        var color = above ? "var(--hot)" : "var(--cold)";
-        var isLast = idx === comparisonSegs.length - 1;
-        var est = "";
-        if (!seg.future && isLast && seg.len < w) {
-          var pr = predictSegmentCount(t, w);
-          est = '<div class="seg-est">预估 ' + pr.pred.toFixed(1) + ' 次 · 样本' + pr.sample + '</div>';
-        }
-        html += '<td class="seg-cell"><div class="seg-rate">' + (fill * 100).toFixed(0) + '%</div><div class="seg-count" style="color:' + color + '">' + c + '/' + seg.len + ' 期</div><div class="seg-bar"><i style="width:' + Math.round(fill * 100) + '%"></i></div>' + est + '</td>';
+      html += '<tr><td><b>尾' + t + '</b></td>';
+      var counts = [];
+      last3.forEach(function(seg) {
+        var c = countInSeg(t, seg.si, seg.ei);
+        counts.push(c);
+        var rate = (c / seg.len * 100).toFixed(0);
+        var color = c >= 6 ? '#16a34a' : c >= 4 ? '#6b7280' : c >= 2 ? '#eab308' : '#dc2626';
+        html += '<td style="text-align:center"><span style="color:' + color + ';font-weight:700">' + c + '</span><span style="color:#999;font-size:10px">/' + seg.len + '</span></td>';
       });
-      html += "</tr>";
+      // 判断趋势
+      var trend = '';
+      var trendColor = '#6b7280';
+      if (counts[2] > counts[0] + 1) { trend = '↑升温'; trendColor = '#16a34a'; }
+      else if (counts[2] < counts[0] - 1) { trend = '↓降温'; trendColor = '#dc2626'; }
+      else { trend = '→平稳'; }
+      html += '<td style="text-align:center;color:' + trendColor + ';font-weight:700">' + trend + '</td></tr>';
     }
-    html += "</tbody></table></div></div></div>";
-    html += '<p class="disclaimer">百分比与进度条 = 该尾数在本段开出次数相对完整窗口（' + w + ' 期）的进度；末段不满窗口时也按完整窗口计算。下一段/未完成段的预估按历史同类或相近段口推算，样本不足时回退全历史均值。</p>';
-
-    html += renderFullWindowHistory(w);
-
-    var reportSeg = nextSeg || segs[segs.length - 1];
-    var reportEnd = reportSeg ? reportSeg.s + w - 1 : 0;
-    var reportRange = reportSeg ? reportSeg.s + "~" + reportEnd + "期" : "当前段";
-    var segReport = [];
-    for (var rt = 0; rt < 10; rt++) segReport.push({ tail: rt, pr: predictSegmentCount(rt, w) });
-    segReport.sort(function (a, b) { return b.pr.pred - a.pr.pred; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">分段预测报告</h2><span class="section__hint">' + reportRange + ' · ' + w + ' 期窗口</span></div>';
-    html += '<div class="panel"><div class="panel__body report">';
-    html += '<p><b>预测窗口：</b>' + reportRange + '。</p>';
-    segReport.slice(0, 3).forEach(function (item, idx) {
-      html += '<p><b>' + (idx + 1) + '. 尾 ' + item.tail + '（' + reportRange + '）：</b>预计 ' + item.pr.pred.toFixed(1) + ' 次；依据 ' + item.pr.method + '；样本 ' + item.pr.sample + '。</p>';
-    });
-    html += '<p><b>逻辑：</b>优先匹配历史同类状态段口，样本不足时匹配相近次数，再不足则回退全历史均值；预测值只作为透明参考。</p>';
-    html += "</div></div></div>";
-    html += predictionFeedbackHTML();
-
+    html += '</tbody></table></div></div></div>';
+    html += '<p class="disclaimer">数字=该尾数在段内开出次数 · <span style="color:#16a34a">绿色≥6</span> <span style="color:#6b7280">灰色4-5</span> <span style="color:#eab308">黄色2-3</span> <span style="color:#dc2626">红色≤1</span> · 趋势=第3段vs第1段</p>';
     view.innerHTML = html;
   }
 
