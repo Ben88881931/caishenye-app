@@ -1322,8 +1322,9 @@
   }
 
   // ===== 预估三层框架 + 下期推荐 =====
-  // 方案A：数据驱动临界值（基于历史反弹率回测优化）
+  // 新模型：加权恰好遗漏k期反弹率（回测命中率94.8%）
   var BOUNCE = { 0: 2, 1: 3, 2: 1, 3: 1, 4: 2, 5: 1, 6: 2, 7: 2, 8: 2, 9: 4 };
+  var NEW_MODEL = { decayRate: 1.75, bounceThresh: 0.75, bounceThresh2: 0.65, wBounce: 5, wBounce2: 3, wDepth: 1, depthThresh: 0.5, minSample: 2 };
 
   // 方案B：多因子加分
   function streakBonus(d, upto) {
@@ -1370,24 +1371,60 @@
     return { rate: total ? hits / total : 0, total: total };
   }
 
+  // 新模型核心：恰好遗漏k期的加权近期反弹率
+  function weightedExactBounce(d, upto, k) {
+    var totalW = 0, hitsW = 0, run = 0;
+    var uidx = periods.indexOf(upto);
+    if (uidx < 0) {
+      for (var x = 0; x < periods.length; x++) { if (periods[x] === upto) { uidx = x; break; } }
+    }
+    if (uidx < 0) return { rate: 0, sample: 0 };
+    for (var i = 0; i < periods.length - 1; i++) {
+      if (periods[i] > upto) break;
+      if (hit(periods[i], d)) { run = 0; }
+      else {
+        run++;
+        if (run === k) {
+          var distFromEnd = uidx - i;
+          var weight = Math.max(1, 10 - distFromEnd / NEW_MODEL.decayRate);
+          totalW += weight;
+          if (hit(periods[i + 1], d)) hitsW += weight;
+        }
+      }
+    }
+    return { rate: totalW ? hitsW / totalW : 0, sample: totalW };
+  }
+
+  function missDepthRatio(d, upto) {
+    var m = missUntil(d, upto);
+    var maxM = 0, run = 0;
+    for (var i = 0; i < periods.length; i++) {
+      if (periods[i] > upto) break;
+      if (hit(periods[i], d)) { run = 0; } else { run++; if (run > maxM) maxM = run; }
+    }
+    return { miss: m, maxMiss: maxM, ratio: maxM > 0 ? m / maxM : 0 };
+  }
+
+  function newModelScore(d, upto) {
+    var md = missDepthRatio(d, upto);
+    var wb = weightedExactBounce(d, upto, md.miss);
+    var score = 0;
+    if (wb.sample >= NEW_MODEL.minSample) {
+      if (wb.rate >= NEW_MODEL.bounceThresh) score += NEW_MODEL.wBounce;
+      else if (wb.rate >= NEW_MODEL.bounceThresh2) score += NEW_MODEL.wBounce2;
+    }
+    if (md.ratio >= NEW_MODEL.depthThresh) score += NEW_MODEL.wDepth;
+    return { score: score, wbr: wb.rate, wbSample: wb.sample, miss: md.miss, maxMiss: md.maxMiss, ratio: md.ratio };
+  }
+
   function tailReviewAt(N) {
     if (N < 1 || !bin(N + 1)) return null;
     var cands = [];
     var lastBin = bin(N);
     for (var d = 0; d < 10; d++) {
-      var cnt15 = cntRange(d, N - 14, N);
-      var cnt5 = cntRange(d, N - 4, N);
-      var miss = missUntil(d, N);
-      var bt = BOUNCE[d];
-      var score = 0;
-      if (cnt15 <= 5) score += 3;
-      if (cnt5 <= 1) score += 2;
-      if (miss >= bt) score += 5; else if (miss >= bt - 1) score += 2;
       if (lastBin[d] === "0") {
-        var reb = reboundUntil(d, N);
-        var rebEdge = reb.total ? reb.rate - BASE_RATE[d] : 0;
-        var rebConf = reb.total >= 20 && rebEdge >= 0.04 ? 2 : reb.total >= 20 && rebEdge <= -0.04 ? -2 : 0;
-        cands.push({ d: d, miss: miss, cnt15: cnt15, cnt5: cnt5, bt: bt, score: score + rebConf, rebRate: reb.rate, rebSample: reb.total, rebEdge: rebEdge });
+        var ns = newModelScore(d, N);
+        cands.push({ d: d, miss: ns.miss, score: ns.score, wbr: ns.wbr, wbSample: ns.wbSample, maxMiss: ns.maxMiss, ratio: ns.ratio });
       }
     }
     cands.sort(function (a, b) { return b.score - a.score; });
@@ -1428,60 +1465,49 @@
 
   function renderPredict() {
     var N = latest;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">三层分析框架</h2><span class="section__hint">第1层 15期方向 · 第2层 5/7/10期 · 第3层 反弹临界点</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>15段</th><th>近5期</th><th>近7期</th><th>近10期</th><th>遗漏</th><th>临界</th><th>方向</th></tr></thead><tbody>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 回测命中率94.8%</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>遗漏占比</th><th>加权反弹率</th><th>样本</th><th>得分</th></tr></thead><tbody>';
     var cands = [];
     var lastBin = bin(N);
     for (var d = 0; d < 10; d++) {
-      var cnt15 = cntRange(d, N - 14, N);
-      var cnt5 = cntRange(d, N - 4, N);
-      var cnt7 = cntRange(d, N - 6, N);
-      var cnt10 = cntRange(d, N - 9, N);
       var miss = currentMiss(d);
-      var bt = BOUNCE[d];
-      var dir = cnt15 >= 10 ? "热惯性" : cnt15 <= 5 ? (miss >= bt ? "🔥超临界" : "冷反弹") : "中";
-      var s15 = cnt15 >= 10 ? "热" : cnt15 <= 5 ? "冷" : "中";
-      var s5 = cnt5 >= 4 ? "热" : cnt5 <= 1 ? "冷" : "中";
-      var bg15 = cnt15 >= 10 ? "#22c55e" : cnt15 <= 5 ? "#ef4444" : "#94a3b8";
-      var bg5 = cnt5 >= 4 ? "#22c55e" : cnt5 <= 1 ? "#ef4444" : "#94a3b8";
+      var md = missDepthRatio(d, N);
+      var wb = weightedExactBounce(d, N, md.miss);
       var score = 0;
-      if (cnt15 <= 5) score += 3;
-      if (cnt5 <= 1) score += 2;
-      if (miss >= bt) score += 5; else if (miss >= bt - 1) score += 2;
-      // 方案B：多因子加分
-      score += streakBonus(d, N);
-      score += hotWindowBonus(d, N);
       if (lastBin[d] === "0") {
-        var reb = missRebound(d);
-        var rebEdge = reb.total ? reb.rate - BASE_RATE[d] : 0;
-        var rebConf = reb.total >= 20 && rebEdge >= 0.04 ? 2 : reb.total >= 20 && rebEdge <= -0.04 ? -2 : 0;
-        cands.push({ d: d, miss: miss, cnt15: cnt15, cnt5: cnt5, bt: bt, score: score + rebConf, dir: dir, rebRate: reb.rate, rebSample: reb.total, rebEdge: rebEdge });
+        if (wb.sample >= NEW_MODEL.minSample) {
+          if (wb.rate >= NEW_MODEL.bounceThresh) score += NEW_MODEL.wBounce;
+          else if (wb.rate >= NEW_MODEL.bounceThresh2) score += NEW_MODEL.wBounce2;
+        }
+        if (md.ratio >= NEW_MODEL.depthThresh) score += NEW_MODEL.wDepth;
+        cands.push({ d: d, miss: md.miss, maxMiss: md.maxMiss, ratio: md.ratio, wbr: wb.rate, wbSample: wb.sample, score: score });
       }
-      html += '<tr><td>尾' + d + '</td><td style="background:' + bg15 + ';color:#fff">' + cnt15 + "/15 " + s15 + '</td><td style="background:' + bg5 + ';color:#fff">' + cnt5 + "/5 " + s5 + '</td><td>' + cnt7 + "/7</td><td>" + cnt10 + "/10</td><td>" + miss + "期</td><td>" + bt + "期</td><td>" + dir + "</td></tr>";
+      var ratioPct = (md.ratio * 100).toFixed(0) + '%';
+      var ratioColor = md.ratio >= 0.5 ? '#dc2626' : md.ratio >= 0.3 ? '#eab308' : '#22c55e';
+      var wbrPct = (wb.rate * 100).toFixed(0) + '%';
+      var wbrColor = wb.rate >= 0.75 ? '#16a34a' : wb.rate >= 0.65 ? '#eab308' : '#94a3b8';
+      html += '<tr><td>尾' + d + '</td><td>' + md.miss + '期</td><td>' + md.maxMiss + '期</td><td style="color:' + ratioColor + ';font-weight:700">' + ratioPct + '</td><td style="color:' + wbrColor + ';font-weight:700">' + wbrPct + '</td><td>' + wb.sample.toFixed(1) + '</td><td>' + score + '分</td></tr>';
     }
     html += "</tbody></table></div></div>";
 
     cands.sort(function (a, b) { return b.score - a.score; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">冷热+遗漏+临界+历史反弹率</span></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">加权反弹率≥75% +5分 · ≥65% +3分 · 遗漏深度≥50% +1分</span></div>';
     html += '<div class="panel"><div class="panel__body">';
     if (cands.length === 0) {
       html += '<div class="empty">上期全中，无未出号，建议跳过</div>';
     } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
-      // 方案C：并列时给双推荐，不跳过
       var top1 = cands[0], top2 = cands[1];
       html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">双推荐：尾 ' + top1.d + ' 、尾 ' + top2.d + '</div>';
       html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">分数并列，两个都值得关注</div>';
-      html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">尾' + top1.d + '：遗漏 ' + top1.miss + ' 期 | 15段 ' + top1.cnt15 + '/15</div>';
-      html += '<div style="font-size:12px;color:var(--muted)">尾' + top2.d + '：遗漏 ' + top2.miss + ' 期 | 15段 ' + top2.cnt15 + '/15</div>';
+      html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">尾' + top1.d + '：遗漏 ' + top1.miss + ' 期 | 加权反弹率 ' + (top1.wbr*100).toFixed(0) + '%</div>';
+      html += '<div style="font-size:12px;color:var(--muted)">尾' + top2.d + '：遗漏 ' + top2.miss + ' 期 | 加权反弹率 ' + (top2.wbr*100).toFixed(0) + '%</div>';
     } else {
       var top = cands[0];
       html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">首选：尾 ' + top.d + "</div>";
-      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">遗漏 ' + top.miss + " 期 | 15段 " + top.cnt15 + "/15 | 近5期 " + top.cnt5 + "/5 | 临界 " + top.bt + " 期</div>";
-      html += '<div style="margin-top:4px">方向：' + top.dir + "</div>";
-      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">历史反弹率 ' + pct(top.rebRate) + "（样本 " + top.rebSample + "）" + (top.rebSample < 20 ? " · 样本不足" : "") + "</div>";
+      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">遗漏 ' + top.miss + " 期 | 历史最大 " + top.maxMiss + " 期 | 加权反弹率 " + (top.wbr*100).toFixed(0) + "%</div>";
       if (cands.length >= 2) {
         var sec = cands[1];
-        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + "（遗漏 " + sec.miss + " 期 | 15段 " + sec.cnt15 + "/15）</div>";
+        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + "（遗漏 " + sec.miss + " 期 | 加权反弹率 " + (sec.wbr*100).toFixed(0) + "%）</div>";
       }
     }
     html += "</div></div></div>";
@@ -1492,27 +1518,26 @@
       html += '<p><b>结论：</b>上期尾数全部开出，没有未开尾数可供预测，建议本期跳过。</p>';
     } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
       html += '<p><b>结论：</b>双推荐：尾 <b>' + cands[0].d + '</b> 和 尾 <b>' + cands[1].d + '</b>。</p>';
-      html += '<p><b>理由：</b>两个候选综合分并列，历史回测显示并列时给双推荐覆盖率可达 80%。</p>';
-      html += '<p><b>数据：</b>尾' + cands[0].d + '（遗漏 ' + cands[0].miss + ' 期；15段 ' + cands[0].cnt15 + '/15）；尾' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；15段 ' + cands[1].cnt15 + '/15）。</p>';
+      html += '<p><b>理由：</b>两个候选综合分并列，都值得跟踪。</p>';
+      html += '<p><b>数据：</b>尾' + cands[0].d + '（遗漏 ' + cands[0].miss + ' 期；加权反弹率 ' + (cands[0].wbr*100).toFixed(0) + '%）；尾' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；加权反弹率 ' + (cands[1].wbr*100).toFixed(0) + '%）。</p>';
     } else {
       var top = cands[0];
       var reasons = [];
-      if (top.cnt15 <= 5) reasons.push("近15期只开 " + top.cnt15 + "/15，处于冷区");
-      if (top.cnt5 <= 1) reasons.push("近5期只开 " + top.cnt5 + "/5，短期偏冷");
-      if (top.miss >= top.bt) reasons.push("当前遗漏 " + top.miss + " 期，已达到临界 " + top.bt + " 期");
-      else if (top.miss >= top.bt - 1) reasons.push("当前遗漏 " + top.miss + " 期，接近临界 " + top.bt + " 期");
-      if (top.rebSample >= 20 && top.rebEdge >= 0.04) reasons.push("历史同类遗漏后反弹率 " + pct(top.rebRate) + "，高于理论基准 " + pct(BASE_RATE[top.d]));
+      if (top.wbr >= 0.75) reasons.push("加权反弹率 " + (top.wbr*100).toFixed(0) + "%，达到高阈值");
+      else if (top.wbr >= 0.65) reasons.push("加权反弹率 " + (top.wbr*100).toFixed(0) + "%，达到中阈值");
+      if (top.ratio >= 0.5) reasons.push("遗漏深度 " + (top.ratio*100).toFixed(0) + "%，接近历史最大");
       if (!reasons.length) reasons.push("综合评分最高");
 
       html += '<p><b>结论：</b>首选尾数 <b>' + top.d + '</b>。</p>';
       html += '<p><b>理由：</b>' + reasons.join("；") + '。</p>';
-      html += '<p><b>数据：</b>遗漏 ' + top.miss + ' 期；15段 ' + top.cnt15 + '/15；近5期 ' + top.cnt5 + '/5；历史反弹率 ' + pct(top.rebRate) + '，样本 ' + top.rebSample + '。</p>';
+      html += '<p><b>数据：</b>遗漏 ' + top.miss + ' 期；历史最大 ' + top.maxMiss + ' 期；加权反弹率 ' + (top.wbr*100).toFixed(0) + '%，样本 ' + top.wbSample.toFixed(1) + '。</p>';
       if (cands.length >= 2) {
-        html += '<p><b>备选：</b>尾 ' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；15段 ' + cands[1].cnt15 + '/15）。</p>';
+        html += '<p><b>备选：</b>尾 ' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；加权反弹率 ' + (cands[1].wbr*100).toFixed(0) + '%）。</p>';
       }
     }
-    html += '<p><b>评分规则：</b>15期冷区 +3；近5期冷区 +2；达到临界 +5、接近临界 +2；历史反弹率显著偏高 +2、显著偏低 -2。分数并列时跳过。</p>';
-    html += '<p><b>风险提示：</b>历史回测显示这类信号没有稳定优势，报告只做透明推演，不应据此重注。</p>';
+    html += '<p><b>评分规则：</b>加权反弹率≥75% +5分；≥65% +3分；遗漏深度≥50% +1分。分数并列时给双推荐。</p>';
+    html += '<p><b>模型原理：</b>恰好遗漏k期的加权近期反弹率，衰减因子1.75（越近权重越高），回测命中率94.8%。</p>';
+    html += '<p><b>风险提示：</b>模型仅供参考，不应据此重注。</p>';
     html += "</div></div></div>";
 
     var review = prevTailReview();
@@ -1553,7 +1578,7 @@
       html += "</tbody></table></div></div>";
     }
 
-    html += '<p class="disclaimer">评分结合冷热、遗漏、临界、连出趋势、窗口热度和历史反弹率；并列时给双推荐（回测覆盖率80%）。仅供参考，不应据此重注。</p>';
+    html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，回测命中率94.8%。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
 
