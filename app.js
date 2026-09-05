@@ -839,14 +839,19 @@
   }
 
   function renderWindowK() {
-    // 简化版：用表格展示最近10期每个尾数的开出情况
-    var recent = 10;
+    var w = state.windowK || 10;
+    var recent = w;
     var startIdx = Math.max(0, periods.length - recent);
     var recentPeriods = periods.slice(startIdx);
     
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">近期走势</h2><span class="section__hint">最近' + recent + '期 · ●=开出 ○=未出</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口走势</h2><span class="section__hint">●=开出 ○=未出</span></div>';
+    html += '<div class="chips" style="margin-bottom:12px">';
+    [5, 7, 10, 15, 21, 30].forEach(function(n) {
+      html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-wk-window="' + n + '">' + n + "期</button>";
+    });
+    html += '</div>';
     html += '<div class="panel"><div class="panel__body" style="overflow-x:auto"><table class="table" style="font-size:12px"><thead><tr><th>尾数</th>';
-    recentPeriods.forEach(function(p) { html += '<th style="text-align:center">' + p + '</th>'; });
+    recentPeriods.forEach(function(p) { html += '<th style="text-align:center;min-width:28px">' + p + '</th>'; });
     html += '<th style="text-align:center">开出</th><th>状态</th></tr></thead><tbody>';
     
     for (var t = 0; t < 10; t++) {
@@ -855,16 +860,20 @@
       recentPeriods.forEach(function(p) {
         var isHit = hit(p, t);
         if (isHit) count++;
-        html += '<td style="text-align:center;font-size:16px">' + (isHit ? '<span style="color:#16a34a">●</span>' : '<span style="color:#ccc">○</span>') + '</td>';
+        html += '<td style="text-align:center;font-size:16px">' + (isHit ? '<span style="color:#16a34a">●</span>' : '<span style="color:#ddd">○</span>') + '</td>';
       });
-      var rate = (count / recent * 100).toFixed(0);
-      var status = count >= 6 ? '🔥热' : count >= 4 ? '中' : count >= 2 ? '偏冷' : '❄️冷';
-      var statusColor = count >= 6 ? '#16a34a' : count >= 4 ? '#6b7280' : count >= 2 ? '#eab308' : '#dc2626';
+      var hotThresh = Math.ceil(recent * 0.6);
+      var coldThresh = Math.floor(recent * 0.2);
+      var status, statusColor;
+      if (count >= hotThresh) { status = '🔥热'; statusColor = '#16a34a'; }
+      else if (count > coldThresh) { status = '中'; statusColor = '#6b7280'; }
+      else if (count > 0) { status = '偏冷'; statusColor = '#eab308'; }
+      else { status = '❄️冷'; statusColor = '#dc2626'; }
       html += '<td style="text-align:center"><b>' + count + '/' + recent + '</b></td>';
       html += '<td style="color:' + statusColor + ';font-weight:700">' + status + '</td></tr>';
     }
     html += '</tbody></table></div></div></div>';
-    html += '<p class="disclaimer">●=该尾数当期开出 ○=未出 · 开出≥6次为热，≤1次为冷</p>';
+    html += '<p class="disclaimer">●=开出 ○=未出 · 绿色≥60%为热，红色≤20%为冷</p>';
     view.innerHTML = html;
   }
 
@@ -1086,12 +1095,16 @@
   }
 
   function renderSegments() {
-    // 简化版：用10期窗口，展示最近3段的对比
-    var w = 10;
+    var w = state.segWindow;
     var segs = segsOf(w);
     var last3 = segs.slice(-3);
     
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">分段对比</h2><span class="section__hint">每段10期 · 最近3段对比</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">分段对比</h2><span class="section__hint">最近3段对比 · 看趋势</span></div>';
+    html += '<div class="chips" style="margin-bottom:12px">';
+    [5, 7, 10, 15, 21, 30].forEach(function(n) {
+      html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-segw="' + n + '">' + n + "期</button>";
+    });
+    html += '</div>';
     html += '<div class="panel"><div class="panel__body" style="overflow-x:auto"><table class="table" style="font-size:12px"><thead><tr><th>尾数</th>';
     last3.forEach(function(seg, idx) {
       var segNo = segs.length - 3 + idx + 1;
@@ -1105,20 +1118,19 @@
       last3.forEach(function(seg) {
         var c = countInSeg(t, seg.si, seg.ei);
         counts.push(c);
-        var rate = (c / seg.len * 100).toFixed(0);
-        var color = c >= 6 ? '#16a34a' : c >= 4 ? '#6b7280' : c >= 2 ? '#eab308' : '#dc2626';
-        html += '<td style="text-align:center"><span style="color:' + color + ';font-weight:700">' + c + '</span><span style="color:#999;font-size:10px">/' + seg.len + '</span></td>';
+        var hotThresh = Math.ceil(seg.len * 0.6);
+        var coldThresh = Math.floor(seg.len * 0.2);
+        var color = c >= hotThresh ? '#16a34a' : c > coldThresh ? '#6b7280' : c > 0 ? '#eab308' : '#dc2626';
+        html += '<td style="text-align:center"><span style="color:' + color + ';font-weight:700;font-size:16px">' + c + '</span><span style="color:#999;font-size:10px">/' + seg.len + '</span></td>';
       });
-      // 判断趋势
-      var trend = '';
-      var trendColor = '#6b7280';
+      var trend = '', trendColor = '#6b7280';
       if (counts[2] > counts[0] + 1) { trend = '↑升温'; trendColor = '#16a34a'; }
       else if (counts[2] < counts[0] - 1) { trend = '↓降温'; trendColor = '#dc2626'; }
       else { trend = '→平稳'; }
       html += '<td style="text-align:center;color:' + trendColor + ';font-weight:700">' + trend + '</td></tr>';
     }
     html += '</tbody></table></div></div></div>';
-    html += '<p class="disclaimer">数字=该尾数在段内开出次数 · <span style="color:#16a34a">绿色≥6</span> <span style="color:#6b7280">灰色4-5</span> <span style="color:#eab308">黄色2-3</span> <span style="color:#dc2626">红色≤1</span> · 趋势=第3段vs第1段</p>';
+    html += '<p class="disclaimer">数字=开出次数 · <span style="color:#16a34a">绿≥60%</span> <span style="color:#6b7280">灰中间</span> <span style="color:#eab308">黄偏冷</span> <span style="color:#dc2626">红≤20%</span> · 趋势=末段vs首段</p>';
     view.innerHTML = html;
   }
 
@@ -2007,6 +2019,12 @@
     var wkTailChip = e.target.closest("[data-wk-tail]");
     if (wkTailChip) {
       state.tail = Number(wkTailChip.dataset.wkTail);
+      renderWindowK();
+      return;
+    }
+    var wkWindowChip = e.target.closest("[data-wk-window]");
+    if (wkWindowChip) {
+      state.windowK = Number(wkWindowChip.dataset.wkWindow);
       renderWindowK();
       return;
     }

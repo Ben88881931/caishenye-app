@@ -1,0 +1,23 @@
+{
+  "predictions": [
+    {
+      "period": 249,
+      "based_on": 248,
+      "recommendation": 1,
+      "backup": 5,
+      "score": 5,
+      "wbr": 0.75,
+      "miss": 2,
+      "actual": null,
+      "hit": null,
+      "timestamp": "2026-09-06T02:23:00+08:00"
+    }
+  ],
+  "stats": {
+    "total": 0,
+    "hits": 0,
+    "recent10": { "total": 0, "hits": 0 },
+    "recent20": { "total": 0, "hits": 0 },
+    "consecutive_miss": 0
+  }
+}
