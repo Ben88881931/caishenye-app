@@ -337,21 +337,21 @@
   };
 
   var TABS = [
-    { id: "segments", label: "分段对比" },
     { id: "overview", label: "总览" },
-    { id: "trend", label: "遗漏热图" },
+    { id: "predict", label: "下期预估" },
+    { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
-    { id: "predict", label: "下期预估" },
+    { id: "trend", label: "遗漏热图" },
+    { id: "zodtrend", label: "生肖走势" },
     { id: "personality", label: "尾号性格" },
     { id: "datarecord", label: "三期规律" },
     { id: "miss", label: "遗漏监控" },
     { id: "tails", label: "冷热分析" },
     { id: "windowk", label: "窗口走势" },
-    { id: "backtest", label: "策略回测" },
     { id: "zodrecords", label: "生肖开奖" },
+    { id: "backtest", label: "策略回测" },
     { id: "numtrend", label: "号码走势" },
-    { id: "zodtrend", label: "生肖走势" },
     { id: "order", label: "下单追投" },
   ];
 
