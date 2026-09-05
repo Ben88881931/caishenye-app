@@ -1108,21 +1108,29 @@
     segs.forEach(function(seg, idx) {
       html += '<th style="text-align:center;min-width:36px">' + (idx+1) + '<br><span style="font-size:9px;color:#999">' + seg.s + '-' + seg.e + '</span></th>';
     });
-    html += '</tr></thead><tbody>';
+    html += '<th style="text-align:center;position:sticky;right:0;background:#fff;z-index:1">趋势</th></tr></thead><tbody>';
     
     for (var t = 0; t < 10; t++) {
       html += '<tr><td style="position:sticky;left:0;background:#fff;z-index:1"><b>尾' + t + '</b></td>';
-      segs.forEach(function(seg) {
+      var firstCount = 0, lastCount = 0;
+      segs.forEach(function(seg, idx) {
         var c = countInSeg(t, seg.si, seg.ei);
+        if (idx === 0) firstCount = c;
+        if (idx === segs.length - 1) lastCount = c;
         var hotThresh = Math.ceil(seg.len * 0.6);
         var coldThresh = Math.floor(seg.len * 0.2);
         var color = c >= hotThresh ? '#16a34a' : c > coldThresh ? '#6b7280' : c > 0 ? '#eab308' : '#dc2626';
         html += '<td style="text-align:center"><span style="color:' + color + ';font-weight:700">' + c + '</span></td>';
       });
-      html += '</tr>';
+      // 趋势判断
+      var trend = '', trendColor = '#6b7280';
+      if (lastCount > firstCount + 1) { trend = '↑升温'; trendColor = '#16a34a'; }
+      else if (lastCount < firstCount - 1) { trend = '↓降温'; trendColor = '#dc2626'; }
+      else { trend = '→平稳'; }
+      html += '<td style="text-align:center;position:sticky;right:0;background:#fff;z-index:1;color:' + trendColor + ';font-weight:700">' + trend + '</td></tr>';
     }
     html += '</tbody></table></div></div></div>';
-    html += '<p class="disclaimer">数字=开出次数 · <span style="color:#16a34a">绿≥60%</span> <span style="color:#6b7280">灰中间</span> <span style="color:#eab308">黄偏冷</span> <span style="color:#dc2626">红≤20%</span> · 可横向滑动查看全部历史</p>';
+    html += '<p class="disclaimer">数字=开出次数 · <span style="color:#16a34a">绿≥60%</span> <span style="color:#6b7280">灰中间</span> <span style="color:#eab308">黄偏冷</span> <span style="color:#dc2626">红≤20%</span> · 趋势=末段vs首段</p>';
     view.innerHTML = html;
   }
 
