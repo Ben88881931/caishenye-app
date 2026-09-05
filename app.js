@@ -325,7 +325,7 @@
   }
 
   var state = {
-    tab: lsGet("v2_current_tab", "overview"),
+    tab: lsGet("v2_current_tab", "segments"),
     window: 15,
     segWindow: 15,
     segTails: 7,
@@ -337,16 +337,16 @@
   };
 
   var TABS = [
+    { id: "segments", label: "分段对比" },
     { id: "overview", label: "总览" },
-    { id: "personality", label: "尾号性格" },
     { id: "trend", label: "遗漏热图" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
     { id: "predict", label: "下期预估" },
+    { id: "personality", label: "尾号性格" },
     { id: "datarecord", label: "三期规律" },
     { id: "miss", label: "遗漏监控" },
     { id: "tails", label: "冷热分析" },
-    { id: "segments", label: "分段对比" },
     { id: "windowk", label: "窗口走势" },
     { id: "backtest", label: "策略回测" },
     { id: "zodrecords", label: "生肖开奖" },
@@ -1131,6 +1131,11 @@
     html += '</tbody></table></div></div></div>';
     html += '<p class="disclaimer">数字=开出次数 · <span style="color:#16a34a">绿≥60%</span> <span style="color:#6b7280">灰中间</span> <span style="color:#eab308">黄偏冷</span> <span style="color:#dc2626">红≤20%</span> · 趋势=末段vs首段 · 可横向滑动</p>';
     view.innerHTML = html;
+    // 自动滚动到最新位置（最右边）
+    var scrollContainer = view.querySelector('.panel__body');
+    if (scrollContainer) {
+      scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+    }
   }
 
   // ===== 下单系统 =====
