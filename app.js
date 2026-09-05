@@ -1106,7 +1106,7 @@
     html += '</div>';
     html += '<div class="panel"><div class="panel__body" style="overflow-x:auto"><table class="table" style="font-size:11px;min-width:100%"><thead><tr><th style="position:sticky;left:0;background:#fff;z-index:1">尾数</th>';
     segs.forEach(function(seg, idx) {
-      html += '<th style="text-align:center;min-width:36px">' + (idx+1) + '<br><span style="font-size:9px;color:#999">' + seg.s + '-' + seg.e + '</span></th>';
+      html += '<th style="text-align:center;min-width:42px"><span style="font-size:10px">第' + (idx+1) + '段</span><br><span style="font-size:9px;color:#999">' + seg.s + '-' + seg.e + '期</span></th>';
     });
     html += '<th style="text-align:center;position:sticky;right:0;background:#fff;z-index:1">趋势</th></tr></thead><tbody>';
     
@@ -1120,7 +1120,7 @@
         var hotThresh = Math.ceil(seg.len * 0.6);
         var coldThresh = Math.floor(seg.len * 0.2);
         var color = c >= hotThresh ? '#16a34a' : c > coldThresh ? '#6b7280' : c > 0 ? '#eab308' : '#dc2626';
-        html += '<td style="text-align:center"><span style="color:' + color + ';font-weight:700">' + c + '</span></td>';
+        html += '<td style="text-align:center"><span style="color:' + color + ';font-weight:700">' + c + '</span><span style="color:#999;font-size:9px">/' + seg.len + '</span></td>';
       });
       // 趋势判断
       var trend = '', trendColor = '#6b7280';
