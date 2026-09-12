@@ -97,41 +97,12 @@
     return { k: k, hits: hits, total: total, rate: total ? hits / total : 0 };
   }
 
-  function countEnding(tail, upto, w) {
-    var c = 0;
-    for (var j = Math.max(0, upto - w + 1); j <= upto; j++) {
-      if (hit(periods[j], tail)) c++;
-    }
-    return c;
-  }
-
-  function missedRun(tail, upto, k) {
-    for (var j = upto; j > upto - k && j >= 0; j--) {
-      if (hit(periods[j], tail)) return false;
-    }
-    return true;
-  }
-
   function zScore(tail, w) {
     var c = countWindow(tail, w);
     var p = BASE_RATE[tail];
     var exp = w * p;
     var sd = Math.sqrt(w * p * (1 - p));
     return { count: c, expected: exp, rate: c / w, base: p, diff: c / w - p, z: sd > 0 ? (c - exp) / sd : 0 };
-  }
-
-  function backtestSignal(name, isSignal) {
-    var n = 0, hitSum = 0, baseSum = 0;
-    for (var i = 15; i < periods.length - 1; i++) {
-      for (var t = 0; t < 10; t++) {
-        if (isSignal(t, i)) {
-          n++;
-          if (hit(periods[i + 1], t)) hitSum++;
-          baseSum += BASE_RATE[t];
-        }
-      }
-    }
-    return { name: name, n: n, avgHit: n ? hitSum / n : 0, avgBase: n ? baseSum / n : 0, edge: n ? (hitSum - baseSum) / n : 0 };
   }
 
   function segsOf(w) {
@@ -350,7 +321,6 @@
     { id: "tails", label: "冷热分析" },
     { id: "windowk", label: "窗口走势" },
     { id: "zodrecords", label: "生肖开奖" },
-    { id: "backtest", label: "策略回测" },
     { id: "numtrend", label: "号码走势" },
     { id: "order", label: "下单追投" },
   ];
@@ -406,7 +376,6 @@
     else if (state.tab === "zodrecords") renderZodRecords();
     else if (state.tab === "records") renderRecords();
     else if (state.tab === "history") renderHistory();
-    else if (state.tab === "backtest") renderBacktest();
     else if (state.tab === "order") renderOrder();
     else if (state.tab === "predict") renderPredict();
     else if (state.tab === "personality") renderPersonality();
@@ -931,87 +900,6 @@
 
     html += '<div class="pager"><button data-prev="1" ' + (state.recordPage === 0 ? "disabled" : "") + '>上一页</button><span>' + (state.recordPage + 1) + " / " + totalPages + '</span><button data-next="1" ' + (state.recordPage >= totalPages - 1 ? "disabled" : "") + '>下一页</button></div>';
 
-    view.innerHTML = html;
-  }
-
-  function renderBacktest() {
-    var signals = [
-      backtestSignal("热号跟踪（近15期≥10次）", function (t, i) { return countEnding(t, i, 15) >= 10; }),
-      backtestSignal("冷号反弹（近15期≤5次）", function (t, i) { return countEnding(t, i, 15) <= 5; }),
-      backtestSignal("遗漏≥2期后反弹", function (t, i) { return missedRun(t, i, 2); }),
-      backtestSignal("遗漏≥3期后反弹", function (t, i) { return missedRun(t, i, 3); })
-    ];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">策略回测</h2><span class="section__hint">信号出现后，下一期真实命中率 vs 理论基准</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>信号</th><th>样本</th><th>实际命中</th><th>基准</th><th>差值</th><th>结论</th></tr></thead><tbody>';
-    signals.forEach(function (s) {
-      var verdict = "无优势", cls = "";
-      if (s.n < 50) { verdict = "样本不足"; }
-      else if (s.edge >= 0.03) { verdict = "略优"; cls = "cell--hot"; }
-      else if (s.edge <= -0.03) { verdict = "略劣"; cls = "cell--cold"; }
-      html += "<tr><td>" + s.name + '</td><td>' + s.n + '</td><td>' + pct(s.avgHit) + '</td><td>' + pct(s.avgBase) + '</td><td>' + (s.edge >= 0 ? "+" : "") + pct(s.edge) + '</td><td class="' + cls + '">' + verdict + "</td></tr>";
-    });
-    html += "</tbody></table></div></div>";
-    
-    // 添加当前信号板块
-    var N = latest;
-    var hotTails = [], coldTails = [], miss2Tails = [], miss3Tails = [];
-    for (var t = 0; t < 10; t++) {
-      if (countEnding(t, N, 15) >= 10) hotTails.push(t);
-      if (countEnding(t, N, 15) <= 5) coldTails.push(t);
-      if (missedRun(t, N, 2)) miss2Tails.push(t);
-      if (missedRun(t, N, 3)) miss3Tails.push(t);
-    }
-    
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前信号</h2><span class="section__hint">第' + N + '期后触发信号的尾数</span></div>';
-    html += '<div class="panel"><div class="panel__body">';
-    
-    // 热号信号
-    html += '<div style="margin-bottom:12px"><b style="color:#dc2626">🔥 热号信号（近15期≥10次）</b>';
-    if (hotTails.length > 0) {
-      html += '<div style="margin-top:6px">触发尾数：';
-      hotTails.forEach(function(t) { html += '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:700">尾' + t + '</span>'; });
-      html += '</div>';
-    } else {
-      html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
-    }
-    html += '</div>';
-    
-    // 冷号信号
-    html += '<div style="margin-bottom:12px"><b style="color:#2563eb">❄️ 冷号信号（近15期≤5次）</b>';
-    if (coldTails.length > 0) {
-      html += '<div style="margin-top:6px">触发尾数：';
-      coldTails.forEach(function(t) { html += '<span style="background:#dbeafe;color:#2563eb;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:700">尾' + t + '</span>'; });
-      html += '</div>';
-    } else {
-      html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
-    }
-    html += '</div>';
-    
-    // 遗漏2期信号
-    html += '<div style="margin-bottom:12px"><b style="color:#ea580c">⏰ 遗漏≥2期信号</b>';
-    if (miss2Tails.length > 0) {
-      html += '<div style="margin-top:6px">触发尾数：';
-      miss2Tails.forEach(function(t) { html += '<span style="background:#ffedd5;color:#ea580c;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:700">尾' + t + '</span>'; });
-      html += '</div>';
-    } else {
-      html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
-    }
-    html += '</div>';
-    
-    // 遗漏3期信号
-    html += '<div style="margin-bottom:0"><b style="color:#7c3aed">⏰ 遗漏≥3期信号</b>';
-    if (miss3Tails.length > 0) {
-      html += '<div style="margin-top:6px">触发尾数：';
-      miss3Tails.forEach(function(t) { html += '<span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:700">尾' + t + '</span>'; });
-      html += '</div>';
-    } else {
-      html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
-    }
-    html += '</div>';
-    
-    html += '</div></div></div>';
-    
-    html += '<p class="disclaimer">结论 = 信号出现后，下一期实际命中率与理论基准率的平均差值。差值接近 0 说明该信号没有稳定预测能力，不应据此加注。</p>';
     view.innerHTML = html;
   }
 
