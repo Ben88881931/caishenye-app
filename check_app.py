@@ -121,7 +121,7 @@ def main():
         except subprocess.CalledProcessError as e:
             fail("app.js 语法错误：" + (e.stderr or "").strip())
 
-        for func in ["renderPredict", "missRebound", "calcGapStats"]:
+        for func in ["renderPredict", "missRebound", "backtestSignal", "calcGapStats"]:
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少关键函数 {func}")
         else:
