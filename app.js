@@ -1664,6 +1664,38 @@
       }
     }
     html += '</div></div></div>';
+
+    // 模型A历史对错记录
+    var historyRows = [];
+    for (var N = 30; N <= latest - 1; N++) {
+      var lastBin2 = bin(N);
+      var cands2 = [];
+      for (var d2 = 0; d2 < 10; d2++) {
+        if (lastBin2[d2] === '1') continue;
+        var ns2 = newModelScore(d2, N);
+        cands2.push({ d: d2, score: ns2.score, wbr: ns2.wbr });
+      }
+      cands2.sort(function(a, b) { return b.score - a.score; });
+      var actual2 = tailsOf(N + 1);
+      if (cands2.length === 0) continue;
+      if (cands2.length >= 2 && cands2[0].score === cands2[1].score) {
+        historyRows.push({ period: N + 1, status: '跳过' });
+      } else {
+        var top2 = cands2[0];
+        var hit2 = actual2.indexOf(top2.d) >= 0;
+        historyRows.push({ period: N + 1, top: top2.d, sec: cands2.length >= 2 ? cands2[1].d : null, actual: actual2, status: hit2 ? '对' : '错' });
+      }
+    }
+    if (historyRows.length) {
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">模型A历史对错</h2><span class="section__hint">最近 ' + historyRows.length + ' 期回放</span></div>';
+      html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
+      historyRows.slice(-40).reverse().forEach(function(row) {
+        var cls = row.status === '对' ? 'cell--hot' : row.status === '错' ? 'cell--cold' : '';
+        html += '<tr><td>' + row.period + '</td><td>' + (row.top !== undefined ? '尾' + row.top : '-') + '</td><td>' + (row.sec !== undefined && row.sec !== null ? '尾' + row.sec : '-') + '</td><td>' + (row.actual ? row.actual.join(' ') : '-') + '</td><td class="' + cls + '">' + row.status + '</td></tr>';
+      });
+      html += '</tbody></table></div></div>';
+    }
+
     html += '<p class="disclaimer">模型A：只按得分排序，得分并列时跳过。回测命中率95.0%。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
@@ -1703,6 +1735,35 @@
       }
     }
     html += '</div></div></div>';
+
+    // 模型B历史对错记录
+    var historyRows = [];
+    for (var N = 30; N <= latest - 1; N++) {
+      var lastBin2 = bin(N);
+      var cands2 = [];
+      for (var d2 = 0; d2 < 10; d2++) {
+        if (lastBin2[d2] === '1') continue;
+        var ns2 = newModelScore(d2, N);
+        cands2.push({ d: d2, score: ns2.score, wbr: ns2.wbr });
+      }
+      // 模型B排序：先按得分，再按反弹率
+      cands2.sort(function(a, b) { return b.score - a.score || b.wbr - a.wbr; });
+      var actual2 = tailsOf(N + 1);
+      if (cands2.length === 0) continue;
+      var top2 = cands2[0];
+      var hit2 = actual2.indexOf(top2.d) >= 0;
+      historyRows.push({ period: N + 1, top: top2.d, sec: cands2.length >= 2 ? cands2[1].d : null, actual: actual2, status: hit2 ? '对' : '错' });
+    }
+    if (historyRows.length) {
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">模型B历史对错</h2><span class="section__hint">最近 ' + historyRows.length + ' 期回放</span></div>';
+      html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
+      historyRows.slice(-40).reverse().forEach(function(row) {
+        var cls = row.status === '对' ? 'cell--hot' : 'cell--cold';
+        html += '<tr><td>' + row.period + '</td><td>' + (row.top !== undefined ? '尾' + row.top : '-') + '</td><td>' + (row.sec !== undefined && row.sec !== null ? '尾' + row.sec : '-') + '</td><td>' + (row.actual ? row.actual.join(' ') : '-') + '</td><td class="' + cls + '">' + row.status + '</td></tr>';
+      });
+      html += '</tbody></table></div></div>';
+    }
+
     html += '<p class="disclaimer">模型B：先按得分，再按反弹率排序，得分并列时不跳过。回测命中率94.2%。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
