@@ -951,6 +951,66 @@
       html += "<tr><td>" + s.name + '</td><td>' + s.n + '</td><td>' + pct(s.avgHit) + '</td><td>' + pct(s.avgBase) + '</td><td>' + (s.edge >= 0 ? "+" : "") + pct(s.edge) + '</td><td class="' + cls + '">' + verdict + "</td></tr>";
     });
     html += "</tbody></table></div></div>";
+    
+    // 添加当前信号板块
+    var N = latest;
+    var hotTails = [], coldTails = [], miss2Tails = [], miss3Tails = [];
+    for (var t = 0; t < 10; t++) {
+      if (countEnding(t, N, 15) >= 10) hotTails.push(t);
+      if (countEnding(t, N, 15) <= 5) coldTails.push(t);
+      if (missedRun(t, N, 2)) miss2Tails.push(t);
+      if (missedRun(t, N, 3)) miss3Tails.push(t);
+    }
+    
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前信号</h2><span class="section__hint">第' + N + '期后触发信号的尾数</span></div>';
+    html += '<div class="panel"><div class="panel__body">';
+    
+    // 热号信号
+    html += '<div style="margin-bottom:12px"><b style="color:#dc2626">🔥 热号信号（近15期≥10次）</b>';
+    if (hotTails.length > 0) {
+      html += '<div style="margin-top:6px">触发尾数：';
+      hotTails.forEach(function(t) { html += '<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:700">尾' + t + '</span>'; });
+      html += '</div>';
+    } else {
+      html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
+    }
+    html += '</div>';
+    
+    // 冷号信号
+    html += '<div style="margin-bottom:12px"><b style="color:#2563eb">❄️ 冷号信号（近15期≤5次）</b>';
+    if (coldTails.length > 0) {
+      html += '<div style="margin-top:6px">触发尾数：';
+      coldTails.forEach(function(t) { html += '<span style="background:#dbeafe;color:#2563eb;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:700">尾' + t + '</span>'; });
+      html += '</div>';
+    } else {
+      html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
+    }
+    html += '</div>';
+    
+    // 遗漏2期信号
+    html += '<div style="margin-bottom:12px"><b style="color:#ea580c">⏰ 遗漏≥2期信号</b>';
+    if (miss2Tails.length > 0) {
+      html += '<div style="margin-top:6px">触发尾数：';
+      miss2Tails.forEach(function(t) { html += '<span style="background:#ffedd5;color:#ea580c;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:700">尾' + t + '</span>'; });
+      html += '</div>';
+    } else {
+      html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
+    }
+    html += '</div>';
+    
+    // 遗漏3期信号
+    html += '<div style="margin-bottom:0"><b style="color:#7c3aed">⏰ 遗漏≥3期信号</b>';
+    if (miss3Tails.length > 0) {
+      html += '<div style="margin-top:6px">触发尾数：';
+      miss3Tails.forEach(function(t) { html += '<span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:700">尾' + t + '</span>'; });
+      html += '</div>';
+    } else {
+      html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
+    }
+    html += '</div>';
+    
+    html += '</div></div></div>';
+    
     html += '<p class="disclaimer">结论 = 信号出现后，下一期实际命中率与理论基准率的平均差值。差值接近 0 说明该信号没有稳定预测能力，不应据此加注。</p>';
     view.innerHTML = html;
   }
