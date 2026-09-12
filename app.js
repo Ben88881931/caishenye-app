@@ -339,6 +339,8 @@
   var TABS = [
     { id: "overview", label: "总览" },
     { id: "predict", label: "下期预估" },
+    { id: "modelA", label: "模型A预测" },
+    { id: "modelB", label: "模型B预测" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -409,6 +411,8 @@
     else if (state.tab === "backtest") renderBacktest();
     else if (state.tab === "order") renderOrder();
     else if (state.tab === "predict") renderPredict();
+    else if (state.tab === "modelA") renderModelA();
+    else if (state.tab === "modelB") renderModelB();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     scrollToLatest();
@@ -1619,6 +1623,87 @@
     }
 
     html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，回测命中率94.8%。仅供参考，不应据此重注。</p>';
+    view.innerHTML = html;
+  }
+
+  // ===== 模型A预测页面（app.js逻辑，得分并列时跳过）=====
+  function renderModelA() {
+    var N = latest;
+    var lastBin = bin(N);
+    var cands = [];
+    for (var d = 0; d < 10; d++) {
+      if (lastBin[d] === '1') continue;
+      var ns = newModelScore(d, N);
+      cands.push({ d: d, miss: ns.miss, score: ns.score, wbr: ns.wbr, wbSample: ns.wbSample, maxMiss: ns.maxMiss, ratio: ns.ratio });
+    }
+    // app.js排序：只按得分排序
+    cands.sort(function(a, b) { return b.score - a.score; });
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">模型A预测</h2><span class="section__hint">app.js逻辑 · 命中率95.0% · 得分并列时跳过</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>得分</th><th>反弹率</th><th>遗漏</th><th>最大遗漏</th><th>深度占比</th></tr></thead><tbody>';
+    cands.forEach(function(c) {
+      var wbrColor = c.wbr >= 0.75 ? '#16a34a' : c.wbr >= 0.65 ? '#eab308' : '#94a3b8';
+      html += '<tr><td>尾' + c.d + '</td><td>' + c.score + '分</td><td style="color:' + wbrColor + ';font-weight:700">' + (c.wbr*100).toFixed(0) + '%</td><td>' + c.miss + '期</td><td>' + c.maxMiss + '期</td><td>' + (c.ratio*100).toFixed(0) + '%</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">模型A推荐</h2><span class="section__hint">只按得分排序，得分并列时跳过</span></div>';
+    html += '<div class="panel"><div class="panel__body">';
+    if (cands.length === 0) {
+      html += '<div class="empty">上期全中，无未出号，建议跳过</div>';
+    } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
+      html += '<div style="font-size:16px;font-weight:700;color:#dc2626">⚠️ 得分并列，建议跳过</div>';
+      html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">首选尾' + cands[0].d + '和尾' + cands[1].d + '得分都是' + cands[0].score + '分，模型没有强烈信号</div>';
+    } else {
+      var top = cands[0];
+      html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">首选：尾 ' + top.d + '</div>';
+      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">得分' + top.score + '分 | 遗漏' + top.miss + '期 | 反弹率' + (top.wbr*100).toFixed(0) + '%</div>';
+      if (cands.length >= 2) {
+        var sec = cands[1];
+        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + '（得分' + sec.score + '分 | 反弹率' + (sec.wbr*100).toFixed(0) + '%）</div>';
+      }
+    }
+    html += '</div></div></div>';
+    html += '<p class="disclaimer">模型A：只按得分排序，得分并列时跳过。回测命中率95.0%。仅供参考，不应据此重注。</p>';
+    view.innerHTML = html;
+  }
+
+  // ===== 模型B预测页面（按得分+反弹率排序，不跳过）=====
+  function renderModelB() {
+    var N = latest;
+    var lastBin = bin(N);
+    var cands = [];
+    for (var d = 0; d < 10; d++) {
+      if (lastBin[d] === '1') continue;
+      var ns = newModelScore(d, N);
+      cands.push({ d: d, miss: ns.miss, score: ns.score, wbr: ns.wbr, wbSample: ns.wbSample, maxMiss: ns.maxMiss, ratio: ns.ratio });
+    }
+    // 模型B排序：先按得分，再按反弹率
+    cands.sort(function(a, b) { return b.score - a.score || b.wbr - a.wbr; });
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">模型B预测</h2><span class="section__hint">得分+反弹率排序 · 命中率94.2% · 不跳过</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>得分</th><th>反弹率</th><th>遗漏</th><th>最大遗漏</th><th>深度占比</th></tr></thead><tbody>';
+    cands.forEach(function(c) {
+      var wbrColor = c.wbr >= 0.75 ? '#16a34a' : c.wbr >= 0.65 ? '#eab308' : '#94a3b8';
+      html += '<tr><td>尾' + c.d + '</td><td>' + c.score + '分</td><td style="color:' + wbrColor + ';font-weight:700">' + (c.wbr*100).toFixed(0) + '%</td><td>' + c.miss + '期</td><td>' + c.maxMiss + '期</td><td>' + (c.ratio*100).toFixed(0) + '%</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">模型B推荐</h2><span class="section__hint">先按得分，再按反弹率排序，不跳过</span></div>';
+    html += '<div class="panel"><div class="panel__body">';
+    if (cands.length === 0) {
+      html += '<div class="empty">上期全中，无未出号，建议跳过</div>';
+    } else {
+      var top = cands[0];
+      html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">首选：尾 ' + top.d + '</div>';
+      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">得分' + top.score + '分 | 遗漏' + top.miss + '期 | 反弹率' + (top.wbr*100).toFixed(0) + '%</div>';
+      if (cands.length >= 2) {
+        var sec = cands[1];
+        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + '（得分' + sec.score + '分 | 反弹率' + (sec.wbr*100).toFixed(0) + '%）</div>';
+      }
+    }
+    html += '</div></div></div>';
+    html += '<p class="disclaimer">模型B：先按得分，再按反弹率排序，得分并列时不跳过。回测命中率94.2%。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
 
