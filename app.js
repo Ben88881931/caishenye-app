@@ -1665,10 +1665,11 @@
     }
     html += '</div></div></div>';
 
-    // 模型A历史对错记录
+    // 模型A历史对错记录（从第一期到现在）
     var historyRows = [];
-    for (var N = 30; N <= latest - 1; N++) {
+    for (var N = 1; N <= latest - 1; N++) {
       var lastBin2 = bin(N);
+      if (!lastBin2) continue;
       var cands2 = [];
       for (var d2 = 0; d2 < 10; d2++) {
         if (lastBin2[d2] === '1') continue;
@@ -1686,10 +1687,13 @@
         historyRows.push({ period: N + 1, top: top2.d, sec: cands2.length >= 2 ? cands2[1].d : null, actual: actual2, status: hit2 ? '对' : '错' });
       }
     }
+    var modelA_correct = historyRows.filter(function(r) { return r.status === '对'; }).length;
+    var modelA_wrong = historyRows.filter(function(r) { return r.status === '错'; }).length;
+    var modelA_skip = historyRows.filter(function(r) { return r.status === '跳过'; }).length;
     if (historyRows.length) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">模型A历史对错</h2><span class="section__hint">最近 ' + historyRows.length + ' 期回放</span></div>';
-      html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
-      historyRows.slice(-40).reverse().forEach(function(row) {
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">模型A历史对错</h2><span class="section__hint">共 ' + historyRows.length + ' 期 | 命中' + modelA_correct + ' | 未中' + modelA_wrong + ' | 跳过' + modelA_skip + ' | 命中率' + (modelA_correct / (modelA_correct + modelA_wrong) * 100).toFixed(1) + '%</span></div>';
+      html += '<div class="panel" style="max-height:500px;overflow-y:auto"><table class="table"><thead><tr><th>期数</th><th>首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
+      historyRows.slice().reverse().forEach(function(row) {
         var cls = row.status === '对' ? 'cell--hot' : row.status === '错' ? 'cell--cold' : '';
         html += '<tr><td>' + row.period + '</td><td>' + (row.top !== undefined ? '尾' + row.top : '-') + '</td><td>' + (row.sec !== undefined && row.sec !== null ? '尾' + row.sec : '-') + '</td><td>' + (row.actual ? row.actual.join(' ') : '-') + '</td><td class="' + cls + '">' + row.status + '</td></tr>';
       });
@@ -1736,10 +1740,11 @@
     }
     html += '</div></div></div>';
 
-    // 模型B历史对错记录
+    // 模型B历史对错记录（从第一期到现在）
     var historyRows = [];
-    for (var N = 30; N <= latest - 1; N++) {
+    for (var N = 1; N <= latest - 1; N++) {
       var lastBin2 = bin(N);
+      if (!lastBin2) continue;
       var cands2 = [];
       for (var d2 = 0; d2 < 10; d2++) {
         if (lastBin2[d2] === '1') continue;
@@ -1754,10 +1759,12 @@
       var hit2 = actual2.indexOf(top2.d) >= 0;
       historyRows.push({ period: N + 1, top: top2.d, sec: cands2.length >= 2 ? cands2[1].d : null, actual: actual2, status: hit2 ? '对' : '错' });
     }
+    var modelB_correct = historyRows.filter(function(r) { return r.status === '对'; }).length;
+    var modelB_wrong = historyRows.filter(function(r) { return r.status === '错'; }).length;
     if (historyRows.length) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">模型B历史对错</h2><span class="section__hint">最近 ' + historyRows.length + ' 期回放</span></div>';
-      html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
-      historyRows.slice(-40).reverse().forEach(function(row) {
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">模型B历史对错</h2><span class="section__hint">共 ' + historyRows.length + ' 期 | 命中' + modelB_correct + ' | 未中' + modelB_wrong + ' | 命中率' + (modelB_correct / (modelB_correct + modelB_wrong) * 100).toFixed(1) + '%</span></div>';
+      html += '<div class="panel" style="max-height:500px;overflow-y:auto"><table class="table"><thead><tr><th>期数</th><th>首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
+      historyRows.slice().reverse().forEach(function(row) {
         var cls = row.status === '对' ? 'cell--hot' : 'cell--cold';
         html += '<tr><td>' + row.period + '</td><td>' + (row.top !== undefined ? '尾' + row.top : '-') + '</td><td>' + (row.sec !== undefined && row.sec !== null ? '尾' + row.sec : '-') + '</td><td>' + (row.actual ? row.actual.join(' ') : '-') + '</td><td class="' + cls + '">' + row.status + '</td></tr>';
       });
