@@ -341,6 +341,7 @@
     { id: "predict", label: "下期预估" },
     { id: "modelA", label: "模型A预测" },
     { id: "modelB", label: "模型B预测" },
+    { id: "modelV3", label: "多维度预测" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -413,6 +414,7 @@
     else if (state.tab === "predict") renderPredict();
     else if (state.tab === "modelA") renderModelA();
     else if (state.tab === "modelB") renderModelB();
+    else if (state.tab === "modelV3") renderModelV3();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     scrollToLatest();
@@ -2165,6 +2167,93 @@
     }
     html += "</tbody></table></div></div>";
     html += '<p class="disclaimer">统计口径：当某数字连续缺席 N 期后，接下来 3 期内出现的概率；样本量不足时优先放宽到 3。仅供参考。</p>';
+    view.innerHTML = html;
+  }
+
+  function renderModelV3() {
+    view.innerHTML = '<div class="section"><div class="panel"><div class="empty">正在加载推荐留痕…</div></div></div>';
+    fetch("recommend_log.json")
+      .then(function (resp) { return resp.json(); })
+      .then(function (log) {
+        renderModelV3Data(log);
+      })
+      .catch(function () {
+        view.innerHTML = '<div class="section"><div class="panel"><div class="empty">加载 recommend_log.json 失败</div></div></div>';
+      });
+  }
+
+  function renderModelV3Data(log) {
+    var bt = log["回测账"] || {};
+    var lv = log["实盘账"] || {};
+    var btRecords = bt.records || [];
+    var lvRecords = lv.records || [];
+
+    function hitText(h) {
+      if (h === true) return "命中";
+      if (h === false) return "未中";
+      return "待开奖";
+    }
+    function hitCls(h) {
+      if (h === true) return "cell--hot";
+      if (h === false) return "cell--cold";
+      return "";
+    }
+    function fmtNums(n) {
+      if (!n || !n.length) return "-";
+      return n.join(",");
+    }
+    function fmtTails(t) {
+      if (!t || !t.length) return "-";
+      return t.join(",");
+    }
+    function fmtSignals(s) {
+      if (!s || !s.length) return "-";
+      return s.map(function (x) { return '<span class="chip">' + x + "</span>"; }).join(" ");
+    }
+    function fmtCum(r) {
+      if (r == null || isNaN(r)) return "-";
+      return (r * 100).toFixed(1) + "%";
+    }
+    function fmtScore(s) {
+      return (s == null || isNaN(s)) ? "-" : (Math.round(s * 100) / 100);
+    }
+    function recordRow(r) {
+      return "<tr><td>第" + r.period + "期</td>" +
+        "<td>" + (r.time || "-") + "</td>" +
+        "<td>" + (r.type || "-") + "</td>" +
+        "<td>尾" + r.primary + "</td>" +
+        "<td>" + (r.secondary != null ? "尾" + r.secondary : "-") + "</td>" +
+        "<td>" + fmtScore(r.score) + "</td>" +
+        "<td>" + fmtSignals(r.signals) + "</td>" +
+        "<td>" + fmtNums(r.actualNums) + "</td>" +
+        "<td>" + fmtTails(r.actualTails) + "</td>" +
+        "<td class=\"" + hitCls(r.hit) + "\">" + hitText(r.hit) + "</td>" +
+        "<td>" + fmtCum(r.cumHitRate) + "</td></tr>";
+    }
+
+    var html = "";
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">多维度预测（v3）推荐留痕</h2><span class="section__hint">数据源：recommend_log.json，回测/实盘两本账分开</span></div></div>';
+
+    // 汇总卡
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value">' + pct(bt["命中率"] || 0) + '</div><div class="stat__label">回测命中率（' + bt["范围"] + "）</div></div>";
+    html += '<div class="stat"><div class="stat__value">' + pct(lv["命中率"] || 0) + '</div><div class="stat__label">实盘命中率（' + lv["范围"] + "）</div></div>";
+    html += "</div></div>";
+
+    // 回测账
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">回测账</h2><span class="section__hint">第201-255期模型回测，命中 ' + (bt["命中数"] || 0) + "/" + (bt["已开奖数"] || 0) + "</span></div>";
+    html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>时间</th><th>类型</th><th>首推</th><th>备选</th><th>得分</th><th>信号</th><th>实际号码</th><th>实际尾数</th><th>结果</th><th>累计命中率</th></tr></thead><tbody>';
+    btRecords.forEach(function (r) { html += recordRow(r); });
+    html += "</tbody></table></div></div>";
+
+    // 实盘账
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">实盘账</h2><span class="section__hint">第256期起开奖前真实预测，命中 ' + (lv["命中数"] || 0) + "/" + (lv["已开奖数"] || 0) + "</span></div>";
+    html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>时间</th><th>类型</th><th>首推</th><th>备选</th><th>得分</th><th>信号</th><th>实际号码</th><th>实际尾数</th><th>结果</th><th>累计命中率</th></tr></thead><tbody>';
+    lvRecords.forEach(function (r) { html += recordRow(r); });
+    html += "</tbody></table></div></div>";
+
+    html += '<p class="disclaimer">口径说明：回测命中率来自第201-256期样本外验证；实盘命中率仅统计第256期起的开奖前真实预测。两者分开计算，不混合。实盘需积攒10-20期后方可视为稳定战绩。</p>';
+
     view.innerHTML = html;
   }
 

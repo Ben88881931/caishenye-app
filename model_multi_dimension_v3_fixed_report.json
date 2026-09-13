@@ -1,33 +1,257 @@
 {
-  "模型": "model_multi_dimension_v3_fixed.js",
-  "命中率口径": "样本外（回测账）与实盘账分开计算",
-  "回测账": {
-    "名称": "回测",
-    "范围": "第201-255期",
-    "记录数": 45,
-    "已开奖数": 45,
-    "命中数": 33,
-    "命中率": 0.7333,
-    "records": [
+  "timestamp": "2026-09-13T14:21:09.093Z",
+  "modelVersion": "v3-fixed - 修复数据泄露+推荐率bug+报告标注",
+  "dataRange": "2026年第1-256期",
+  "trainRange": "第1-200期",
+  "testRange": "第201-256期",
+  "fixes": [
+    "reversalSignal 只用当前期及之前数据，移除 countAfter 未来数据",
+    "推荐率分母改为 testPeriods.length - 1（实际预测次数）",
+    "报告明确标注训练集/测试集"
+  ],
+  "personality": {
+    "0": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.21176470588235294,
+        "cold": 0.06470588235294118,
+        "streak": 0.029411764705882353
+      },
+      "dominant": 0.21176470588235294
+    },
+    "1": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.13529411764705881,
+        "cold": 0.07058823529411765,
+        "streak": 0.1
+      },
+      "dominant": 0.13529411764705881
+    },
+    "2": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.1411764705882353,
+        "cold": 0.08235294117647059,
+        "streak": 0.03529411764705882
+      },
+      "dominant": 0.1411764705882353
+    },
+    "3": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.13529411764705881,
+        "cold": 0.058823529411764705,
+        "streak": 0.023529411764705882
+      },
+      "dominant": 0.13529411764705881
+    },
+    "4": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.13529411764705881,
+        "cold": 0.041176470588235294,
+        "streak": 0.052941176470588235
+      },
+      "dominant": 0.13529411764705881
+    },
+    "5": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.12941176470588237,
+        "cold": 0.06470588235294118,
+        "streak": 0.029411764705882353
+      },
+      "dominant": 0.12941176470588237
+    },
+    "6": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.18235294117647058,
+        "cold": 0.08823529411764706,
+        "streak": 0.058823529411764705
+      },
+      "dominant": 0.18235294117647058
+    },
+    "7": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.18823529411764706,
+        "cold": 0.03529411764705882,
+        "streak": 0.01764705882352941
+      },
+      "dominant": 0.18823529411764706
+    },
+    "8": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.19411764705882353,
+        "cold": 0.058823529411764705,
+        "streak": 0.047058823529411764
+      },
+      "dominant": 0.19411764705882353
+    },
+    "9": {
+      "type": "hot",
+      "scores": {
+        "hot": 0.21176470588235294,
+        "cold": 0.07058823529411765,
+        "streak": 0.03529411764705882
+      },
+      "dominant": 0.21176470588235294
+    }
+  },
+  "bestParams": {
+    "trend": 3,
+    "streak": 1.5,
+    "reversal": 1,
+    "triple": 1,
+    "personalityMultiplier": 1.2,
+    "minSignals": 2
+  },
+  "trainResult": {
+    "note": "训练集内结果，仅用于调参，不用于验收",
+    "topParams": [
+      {
+        "params": {
+          "trend": 3,
+          "streak": 1.5,
+          "reversal": 1,
+          "triple": 1,
+          "personalityMultiplier": 1.2,
+          "minSignals": 2
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 1.5,
+          "reversal": 1,
+          "triple": 1,
+          "personalityMultiplier": 1.2,
+          "minSignals": 3
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 1.5,
+          "reversal": 1,
+          "triple": 1,
+          "personalityMultiplier": 1.5,
+          "minSignals": 2
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 1.5,
+          "reversal": 1,
+          "triple": 1,
+          "personalityMultiplier": 1.5,
+          "minSignals": 3
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 1.5,
+          "reversal": 2,
+          "triple": 1,
+          "personalityMultiplier": 1.2,
+          "minSignals": 2
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 1.5,
+          "reversal": 2,
+          "triple": 1,
+          "personalityMultiplier": 1.2,
+          "minSignals": 3
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 1.5,
+          "reversal": 2,
+          "triple": 1,
+          "personalityMultiplier": 1.5,
+          "minSignals": 2
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 1.5,
+          "reversal": 2,
+          "triple": 1,
+          "personalityMultiplier": 1.5,
+          "minSignals": 3
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 2.5,
+          "reversal": 1,
+          "triple": 1,
+          "personalityMultiplier": 1.2,
+          "minSignals": 2
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      },
+      {
+        "params": {
+          "trend": 3,
+          "streak": 2.5,
+          "reversal": 1,
+          "triple": 1,
+          "personalityMultiplier": 1.2,
+          "minSignals": 3
+        },
+        "hitRate": 0.88,
+        "recommendRate": 0.8823529411764706
+      }
+    ]
+  },
+  "testResult": {
+    "note": "样本外测试，用于验收",
+    "totalAttempts": 55,
+    "recommended": 46,
+    "recommendRate": 0.8363636363636363,
+    "correct": 34,
+    "total": 46,
+    "hitRate": 0.7391304347826086,
+    "details": [
       {
         "period": 203,
-        "time": "-",
-        "type": "回测",
         "primary": 8,
         "secondary": 2,
         "score": 2.9,
+        "signalCount": 2,
         "signals": [
           "trend_hot_5",
           "triple_reversal"
-        ],
-        "actualNums": [
-          12,
-          11,
-          31,
-          3,
-          44,
-          37,
-          25
         ],
         "actualTails": [
           1,
@@ -37,28 +261,17 @@
           5,
           7
         ],
-        "hit": false,
-        "cumHitRate": 0.0
+        "hit": false
       },
       {
         "period": 207,
-        "time": "-",
-        "type": "回测",
         "primary": 1,
         "secondary": 2,
         "score": 2.5,
+        "signalCount": 2,
         "signals": [
           "trend_hot_5",
           "triple_reversal"
-        ],
-        "actualNums": [
-          9,
-          40,
-          26,
-          23,
-          44,
-          13,
-          31
         ],
         "actualTails": [
           0,
@@ -68,30 +281,19 @@
           6,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.5
+        "hit": true
       },
       {
         "period": 208,
-        "time": "-",
-        "type": "回测",
         "primary": 7,
         "secondary": 2,
         "score": 2.6999999999999997,
+        "signalCount": 3,
         "signals": [
           "trend_hot_7",
           "trend_hot_10",
           "triple_hot"
         ],
-        "actualNums": [
-          7,
-          48,
-          40,
-          35,
-          23,
-          28,
-          19
-        ],
         "actualTails": [
           0,
           3,
@@ -100,30 +302,19 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.6667
+        "hit": true
       },
       {
         "period": 209,
-        "time": "-",
-        "type": "回测",
         "primary": 2,
         "secondary": null,
         "score": 6.96,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
         ],
-        "actualNums": [
-          44,
-          5,
-          39,
-          14,
-          21,
-          22,
-          8
-        ],
         "actualTails": [
           1,
           2,
@@ -132,30 +323,19 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.75
+        "hit": true
       },
       {
         "period": 210,
-        "time": "-",
-        "type": "回测",
         "primary": 0,
         "secondary": 3,
         "score": 6.839999999999999,
+        "signalCount": 4,
         "signals": [
           "ab_strong",
           "trend_hot_5",
           "trend_hot_7",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          40,
-          37,
-          15,
-          17,
-          42,
-          48,
-          49
         ],
         "actualTails": [
           0,
@@ -165,28 +345,17 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.8
+        "hit": true
       },
       {
         "period": 211,
-        "time": "-",
-        "type": "回测",
         "primary": 1,
         "secondary": null,
         "score": 4.68,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          13,
-          12,
-          39,
-          37,
-          38,
-          8,
-          1
         ],
         "actualTails": [
           1,
@@ -196,28 +365,17 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.8333
+        "hit": true
       },
       {
         "period": 212,
-        "time": "-",
-        "type": "回测",
         "primary": 0,
         "secondary": null,
         "score": 1.7999999999999998,
+        "signalCount": 2,
         "signals": [
           "trend_hot_7",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          43,
-          32,
-          16,
-          39,
-          19,
-          27,
-          6
         ],
         "actualTails": [
           2,
@@ -226,28 +384,17 @@
           7,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.7143
+        "hit": false
       },
       {
         "period": 213,
-        "time": "-",
-        "type": "回测",
         "primary": 5,
         "secondary": 8,
         "score": 4.68,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          9,
-          5,
-          12,
-          22,
-          1,
-          15,
-          35
         ],
         "actualTails": [
           1,
@@ -255,28 +402,17 @@
           5,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.75
+        "hit": true
       },
       {
         "period": 214,
-        "time": "-",
-        "type": "回测",
         "primary": 0,
         "secondary": 7,
         "score": 5.88,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          29,
-          30,
-          27,
-          38,
-          43,
-          31,
-          4
         ],
         "actualTails": [
           0,
@@ -287,30 +423,19 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7778
+        "hit": true
       },
       {
         "period": 215,
-        "time": "-",
-        "type": "回测",
         "primary": 2,
         "secondary": null,
         "score": 3.4,
+        "signalCount": 3,
         "signals": [
           "trend_hot_5",
           "trend_hot_15",
           "triple_reversal"
         ],
-        "actualNums": [
-          19,
-          38,
-          30,
-          13,
-          1,
-          11,
-          14
-        ],
         "actualTails": [
           0,
           1,
@@ -319,28 +444,17 @@
           8,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.7
+        "hit": false
       },
       {
         "period": 216,
-        "time": "-",
-        "type": "回测",
         "primary": 7,
         "secondary": 2,
         "score": 4.68,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          18,
-          41,
-          32,
-          44,
-          36,
-          45,
-          37
         ],
         "actualTails": [
           1,
@@ -351,28 +465,17 @@
           7,
           8
         ],
-        "hit": true,
-        "cumHitRate": 0.7273
+        "hit": true
       },
       {
         "period": 218,
-        "time": "-",
-        "type": "回测",
         "primary": 3,
         "secondary": null,
         "score": 4.68,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          2,
-          13,
-          47,
-          38,
-          46,
-          23,
-          17
         ],
         "actualTails": [
           2,
@@ -381,28 +484,17 @@
           7,
           8
         ],
-        "hit": true,
-        "cumHitRate": 0.75
+        "hit": true
       },
       {
         "period": 219,
-        "time": "-",
-        "type": "回测",
         "primary": 1,
         "secondary": 0,
         "score": 4.68,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          31,
-          41,
-          7,
-          8,
-          29,
-          22,
-          43
         ],
         "actualTails": [
           1,
@@ -412,30 +504,19 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7692
+        "hit": true
       },
       {
         "period": 220,
-        "time": "-",
-        "type": "回测",
         "primary": 4,
         "secondary": null,
         "score": 3,
+        "signalCount": 3,
         "signals": [
           "trend_hot_5",
           "trend_hot_7",
           "triple_reversal"
         ],
-        "actualNums": [
-          27,
-          39,
-          4,
-          12,
-          38,
-          25,
-          48
-        ],
         "actualTails": [
           2,
           4,
@@ -444,57 +525,35 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7857
+        "hit": true
       },
       {
         "period": 221,
-        "time": "-",
-        "type": "回测",
         "primary": 6,
         "secondary": null,
         "score": 2.28,
+        "signalCount": 2,
         "signals": [
           "ab_weak",
           "trend_hot_5"
         ],
-        "actualNums": [
-          24,
-          14,
-          18,
-          48,
-          46,
-          28,
-          1
-        ],
         "actualTails": [
           1,
           4,
           6,
           8
         ],
-        "hit": true,
-        "cumHitRate": 0.8
+        "hit": true
       },
       {
         "period": 224,
-        "time": "-",
-        "type": "回测",
         "primary": 2,
         "secondary": 6,
         "score": 2.28,
+        "signalCount": 2,
         "signals": [
           "ab_weak",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          25,
-          19,
-          8,
-          49,
-          18,
-          36,
-          9
         ],
         "actualTails": [
           5,
@@ -502,28 +561,17 @@
           8,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.75
+        "hit": false
       },
       {
         "period": 225,
-        "time": "-",
-        "type": "回测",
         "primary": 4,
         "secondary": null,
         "score": 1.7999999999999998,
+        "signalCount": 2,
         "signals": [
           "trend_hot_10",
           "triple_hot"
-        ],
-        "actualNums": [
-          7,
-          34,
-          27,
-          10,
-          19,
-          38,
-          1
         ],
         "actualTails": [
           0,
@@ -533,28 +581,17 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7647
+        "hit": true
       },
       {
         "period": 226,
-        "time": "-",
-        "type": "回测",
         "primary": 6,
         "secondary": null,
         "score": 1.7999999999999998,
+        "signalCount": 2,
         "signals": [
           "trend_hot_10",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          1,
-          11,
-          29,
-          38,
-          4,
-          33,
-          17
         ],
         "actualTails": [
           1,
@@ -564,29 +601,18 @@
           8,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.7222
+        "hit": false
       },
       {
         "period": 227,
-        "time": "-",
-        "type": "回测",
         "primary": 6,
         "secondary": null,
         "score": 6.96,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          23,
-          24,
-          29,
-          7,
-          13,
-          31,
-          16
         ],
         "actualTails": [
           1,
@@ -596,29 +622,18 @@
           7,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7368
+        "hit": true
       },
       {
         "period": 228,
-        "time": "-",
-        "type": "回测",
         "primary": 8,
         "secondary": null,
         "score": 5.76,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          38,
-          26,
-          8,
-          6,
-          29,
-          18,
-          23
         ],
         "actualTails": [
           3,
@@ -626,28 +641,17 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.75
+        "hit": true
       },
       {
         "period": 229,
-        "time": "-",
-        "type": "回测",
         "primary": 4,
         "secondary": null,
         "score": 1.7999999999999998,
+        "signalCount": 2,
         "signals": [
           "trend_hot_10",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          11,
-          7,
-          15,
-          13,
-          33,
-          16,
-          38
         ],
         "actualTails": [
           1,
@@ -657,29 +661,18 @@
           7,
           8
         ],
-        "hit": false,
-        "cumHitRate": 0.7143
+        "hit": false
       },
       {
         "period": 230,
-        "time": "-",
-        "type": "回测",
         "primary": 4,
         "secondary": 9,
         "score": 8.16,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          28,
-          26,
-          47,
-          14,
-          49,
-          10,
-          16
         ],
         "actualTails": [
           0,
@@ -689,28 +682,17 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7273
+        "hit": true
       },
       {
         "period": 231,
-        "time": "-",
-        "type": "回测",
         "primary": 3,
         "secondary": null,
         "score": 2.5,
+        "signalCount": 2,
         "signals": [
           "trend_hot_5",
           "triple_reversal"
-        ],
-        "actualNums": [
-          39,
-          46,
-          23,
-          11,
-          8,
-          13,
-          20
         ],
         "actualTails": [
           0,
@@ -720,28 +702,17 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7391
+        "hit": true
       },
       {
         "period": 233,
-        "time": "-",
-        "type": "回测",
         "primary": 8,
         "secondary": 3,
         "score": 4.68,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          18,
-          41,
-          5,
-          49,
-          4,
-          34,
-          7
         ],
         "actualTails": [
           1,
@@ -751,30 +722,19 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.75
+        "hit": true
       },
       {
         "period": 234,
-        "time": "-",
-        "type": "回测",
         "primary": 6,
         "secondary": 0,
         "score": 3.3,
+        "signalCount": 4,
         "signals": [
           "trend_hot_7",
           "trend_hot_10",
           "trend_hot_15",
           "triple_hot"
-        ],
-        "actualNums": [
-          25,
-          30,
-          37,
-          19,
-          7,
-          17,
-          39
         ],
         "actualTails": [
           0,
@@ -782,28 +742,17 @@
           7,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.72
+        "hit": false
       },
       {
         "period": 235,
-        "time": "-",
-        "type": "回测",
         "primary": 6,
         "secondary": null,
         "score": 8.28,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          27,
-          26,
-          35,
-          17,
-          44,
-          21,
-          32
         ],
         "actualTails": [
           1,
@@ -813,28 +762,17 @@
           6,
           7
         ],
-        "hit": true,
-        "cumHitRate": 0.7308
+        "hit": true
       },
       {
         "period": 236,
-        "time": "-",
-        "type": "回测",
         "primary": 9,
         "secondary": 0,
         "score": 4.68,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          26,
-          35,
-          42,
-          9,
-          14,
-          17,
-          11
         ],
         "actualTails": [
           1,
@@ -845,28 +783,17 @@
           7,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7407
+        "hit": true
       },
       {
         "period": 237,
-        "time": "-",
-        "type": "回测",
         "primary": 0,
         "secondary": null,
         "score": 1.7999999999999998,
+        "signalCount": 2,
         "signals": [
           "trend_hot_7",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          47,
-          36,
-          14,
-          6,
-          41,
-          25,
-          12
         ],
         "actualTails": [
           1,
@@ -876,30 +803,19 @@
           6,
           7
         ],
-        "hit": false,
-        "cumHitRate": 0.7143
+        "hit": false
       },
       {
         "period": 239,
-        "time": "-",
-        "type": "回测",
         "primary": 2,
         "secondary": 0,
         "score": 3.5999999999999996,
+        "signalCount": 4,
         "signals": [
           "trend_hot_5",
           "trend_hot_7",
           "trend_hot_10",
           "triple_hot"
-        ],
-        "actualNums": [
-          47,
-          43,
-          34,
-          17,
-          22,
-          7,
-          5
         ],
         "actualTails": [
           2,
@@ -908,28 +824,17 @@
           5,
           7
         ],
-        "hit": true,
-        "cumHitRate": 0.7241
+        "hit": true
       },
       {
         "period": 240,
-        "time": "-",
-        "type": "回测",
         "primary": 6,
         "secondary": 1,
         "score": 8.28,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          2,
-          34,
-          22,
-          26,
-          28,
-          37,
-          27
         ],
         "actualTails": [
           2,
@@ -938,31 +843,20 @@
           7,
           8
         ],
-        "hit": true,
-        "cumHitRate": 0.7333
+        "hit": true
       },
       {
         "period": 241,
-        "time": "-",
-        "type": "回测",
         "primary": 5,
         "secondary": null,
         "score": 3.5999999999999996,
+        "signalCount": 4,
         "signals": [
           "trend_hot_7",
           "trend_hot_10",
           "trend_hot_15",
           "triple_hot"
         ],
-        "actualNums": [
-          29,
-          45,
-          27,
-          21,
-          42,
-          41,
-          49
-        ],
         "actualTails": [
           1,
           2,
@@ -970,28 +864,17 @@
           7,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7419
+        "hit": true
       },
       {
         "period": 242,
-        "time": "-",
-        "type": "回测",
         "primary": 3,
         "secondary": 4,
         "score": 3.3000000000000003,
+        "signalCount": 2,
         "signals": [
           "trend_hot_5",
           "triple_reversal"
-        ],
-        "actualNums": [
-          29,
-          35,
-          46,
-          32,
-          13,
-          31,
-          9
         ],
         "actualTails": [
           1,
@@ -1001,29 +884,18 @@
           6,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.75
+        "hit": true
       },
       {
         "period": 243,
-        "time": "-",
-        "type": "回测",
         "primary": 7,
         "secondary": null,
         "score": 5.76,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          42,
-          17,
-          12,
-          46,
-          9,
-          24,
-          21
         ],
         "actualTails": [
           1,
@@ -1033,28 +905,17 @@
           7,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7576
+        "hit": true
       },
       {
         "period": 244,
-        "time": "-",
-        "type": "回测",
         "primary": 8,
         "secondary": 5,
         "score": 3.5999999999999996,
+        "signalCount": 2,
         "signals": [
           "ab_weak",
           "triple_reversal"
-        ],
-        "actualNums": [
-          9,
-          14,
-          3,
-          17,
-          33,
-          40,
-          46
         ],
         "actualTails": [
           0,
@@ -1064,28 +925,17 @@
           7,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.7353
+        "hit": false
       },
       {
         "period": 245,
-        "time": "-",
-        "type": "回测",
         "primary": 8,
         "secondary": 2,
         "score": 6.72,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "triple_reversal"
-        ],
-        "actualNums": [
-          22,
-          23,
-          14,
-          2,
-          13,
-          38,
-          18
         ],
         "actualTails": [
           2,
@@ -1093,29 +943,18 @@
           4,
           8
         ],
-        "hit": true,
-        "cumHitRate": 0.7429
+        "hit": true
       },
       {
         "period": 246,
-        "time": "-",
-        "type": "回测",
         "primary": 9,
         "secondary": 5,
         "score": 7.5600000000000005,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_5",
           "triple_reversal"
-        ],
-        "actualNums": [
-          22,
-          24,
-          19,
-          10,
-          20,
-          1,
-          30
         ],
         "actualTails": [
           0,
@@ -1124,28 +963,17 @@
           4,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.75
+        "hit": true
       },
       {
         "period": 247,
-        "time": "-",
-        "type": "回测",
         "primary": 6,
         "secondary": 5,
         "score": 8.16,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "triple_reversal"
-        ],
-        "actualNums": [
-          3,
-          9,
-          43,
-          29,
-          46,
-          4,
-          40
         ],
         "actualTails": [
           0,
@@ -1154,28 +982,17 @@
           6,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7568
+        "hit": true
       },
       {
         "period": 248,
-        "time": "-",
-        "type": "回测",
         "primary": 5,
         "secondary": 2,
         "score": 2.28,
+        "signalCount": 2,
         "signals": [
           "ab_weak",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          43,
-          26,
-          49,
-          39,
-          14,
-          27,
-          20
         ],
         "actualTails": [
           0,
@@ -1185,28 +1002,17 @@
           7,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.7368
+        "hit": false
       },
       {
         "period": 249,
-        "time": "-",
-        "type": "回测",
         "primary": 5,
         "secondary": 2,
         "score": 2.28,
+        "signalCount": 2,
         "signals": [
           "ab_weak",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          41,
-          22,
-          13,
-          36,
-          26,
-          29,
-          23
         ],
         "actualTails": [
           1,
@@ -1215,31 +1021,20 @@
           6,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.7179
+        "hit": false
       },
       {
         "period": 250,
-        "time": "-",
-        "type": "回测",
         "primary": 0,
         "secondary": 5,
         "score": 6.839999999999999,
+        "signalCount": 4,
         "signals": [
           "ab_strong",
           "trend_hot_5",
           "trend_hot_7",
           "triple_hot"
         ],
-        "actualNums": [
-          10,
-          6,
-          39,
-          47,
-          37,
-          17,
-          14
-        ],
         "actualTails": [
           0,
           4,
@@ -1247,29 +1042,18 @@
           7,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.725
+        "hit": true
       },
       {
         "period": 251,
-        "time": "-",
-        "type": "回测",
         "primary": 3,
         "secondary": null,
         "score": 2.6999999999999997,
+        "signalCount": 3,
         "signals": [
           "trend_hot_7",
           "trend_hot_10",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          9,
-          6,
-          11,
-          25,
-          8,
-          45,
-          30
         ],
         "actualTails": [
           0,
@@ -1279,29 +1063,18 @@
           8,
           9
         ],
-        "hit": false,
-        "cumHitRate": 0.7073
+        "hit": false
       },
       {
         "period": 252,
-        "time": "-",
-        "type": "回测",
         "primary": 3,
         "secondary": null,
         "score": 5.76,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
-        ],
-        "actualNums": [
-          33,
-          41,
-          43,
-          13,
-          6,
-          48,
-          22
         ],
         "actualTails": [
           1,
@@ -1310,29 +1083,18 @@
           6,
           8
         ],
-        "hit": true,
-        "cumHitRate": 0.7143
+        "hit": true
       },
       {
         "period": 253,
-        "time": "-",
-        "type": "回测",
         "primary": 9,
         "secondary": 0,
         "score": 5.76,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_7",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          5,
-          35,
-          15,
-          28,
-          13,
-          49,
-          16
         ],
         "actualTails": [
           3,
@@ -1341,29 +1103,18 @@
           8,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7209
+        "hit": true
       },
       {
         "period": 254,
-        "time": "-",
-        "type": "回测",
         "primary": 0,
         "secondary": 1,
         "score": 5.76,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
           "trend_hot_7",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          26,
-          44,
-          35,
-          6,
-          16,
-          10,
-          2
         ],
         "actualTails": [
           0,
@@ -1372,28 +1123,17 @@
           5,
           6
         ],
-        "hit": true,
-        "cumHitRate": 0.7273
+        "hit": true
       },
       {
         "period": 255,
-        "time": "-",
-        "type": "回测",
         "primary": 9,
         "secondary": 8,
         "score": 7.08,
+        "signalCount": 2,
         "signals": [
           "ab_strong",
           "trend_hot_10"
-        ],
-        "actualNums": [
-          36,
-          22,
-          6,
-          47,
-          39,
-          11,
-          44
         ],
         "actualTails": [
           1,
@@ -1403,39 +1143,18 @@
           7,
           9
         ],
-        "hit": true,
-        "cumHitRate": 0.7333
-      }
-    ]
-  },
-  "实盘账": {
-    "名称": "实盘",
-    "范围": "第256期起",
-    "记录数": 2,
-    "已开奖数": 1,
-    "命中数": 1,
-    "命中率": 1.0,
-    "records": [
+        "hit": true
+      },
       {
         "period": 256,
-        "time": "2026-09-13 15:41",
-        "type": "实盘",
         "primary": 5,
         "secondary": 8,
         "score": 3.8,
+        "signalCount": 3,
         "signals": [
           "trend_hot_5",
           "trend_hot_7",
           "triple_reversal"
-        ],
-        "actualNums": [
-          40,
-          15,
-          9,
-          37,
-          7,
-          3,
-          1
         ],
         "actualTails": [
           0,
@@ -1445,26 +1164,26 @@
           7,
           9
         ],
-        "hit": true,
-        "cumHitRate": 1.0
-      },
-      {
-        "period": 257,
-        "time": "2026-09-13 21:55",
-        "type": "实盘",
-        "primary": 2,
-        "secondary": 8,
-        "score": 2.9,
-        "signals": [
-          "trend_hot_5",
-          "triple_reversal"
-        ],
-        "actualNums": null,
-        "actualTails": null,
-        "hit": null,
-        "cumHitRate": 1.0
+        "hit": true
       }
     ]
   },
-  "更新时间": "2026-09-13 22:28:09"
+  "signalDist": {
+    "2": {
+      "total": 27,
+      "hit": 18
+    },
+    "3": {
+      "total": 14,
+      "hit": 12
+    },
+    "4": {
+      "total": 5,
+      "hit": 4
+    }
+  },
+  "conclusion": {
+    "hitRatePass": true,
+    "recommendRatePass": true
+  }
 }

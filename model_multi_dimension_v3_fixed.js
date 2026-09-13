@@ -428,9 +428,11 @@ for (let i = 0; i < testPeriods.length - 1; i++) {
     testDetails.push({
       period: nextP,
       primary: prediction.primary,
+      secondary: prediction.secondary,
       score: prediction.score,
       signalCount: prediction.signalCount,
       signals: prediction.signals,
+      actualTails: (function () { var t = []; for (var x = 0; x < 10; x++) if (hit(nextP, x)) t.push(x); return t; })(),
       hit: hitResult
     });
   }
