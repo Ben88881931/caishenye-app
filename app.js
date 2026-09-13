@@ -334,6 +334,7 @@
     tail: 0,
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
     recordPage: 0,
+    v3OnlyHigh: false,
   };
 
   var TABS = [
@@ -2170,11 +2171,15 @@
     view.innerHTML = html;
   }
 
+  var v3LogCache = null;
+
   function renderModelV3() {
+    if (v3LogCache) { renderModelV3Data(v3LogCache); return; }
     view.innerHTML = '<div class="section"><div class="panel"><div class="empty">正在加载推荐留痕…</div></div></div>';
     fetch("recommend_log.json")
       .then(function (resp) { return resp.json(); })
       .then(function (log) {
+        v3LogCache = log;
         renderModelV3Data(log);
       })
       .catch(function () {
@@ -2195,9 +2200,21 @@
       return '<div class="num">' + t + "</div>";
     }
     function hitBadge(h) {
-      if (h === true) return '<span style="color:#16a34a;font-weight:700">命中</span>';
-      if (h === false) return '<span style="color:#dc2626;font-weight:700">未中</span>';
-      return '<span style="color:#9ca3af;font-weight:700">待开奖</span>';
+      if (h === true) return '<span class="hit--yes">命中</span>';
+      if (h === false) return '<span class="hit--no">未中</span>';
+      return '<span class="hit--pending">待开奖</span>';
+    }
+    function confLevel(s) {
+      if (s == null || isNaN(s)) return { key: "none", label: "-", cls: "" };
+      if (s >= 3.5) return { key: "hi", label: "高置信", cls: "tag--conf-hi" };
+      if (s >= 2.5) return { key: "mid", label: "中置信", cls: "tag--conf-mid" };
+      return { key: "lo", label: "低置信", cls: "tag--conf-lo" };
+    }
+    function confBadge(r) {
+      var c = confLevel(r.score);
+      if (c.key === "none") return "";
+      var extra = c.key === "lo" ? ' <span class="tag tag--mid">命中率低于随机，仅供参考</span>' : "";
+      return '<span class="tag ' + c.cls + '">' + c.label + "</span>" + extra;
     }
     function typeBadge(t) {
       var c = t === "实盘" ? "#d97706" : "#64748b";
@@ -2235,6 +2252,9 @@
 
       // 得分 + 累计命中率
       h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
+      h += '<span>' + confBadge(r) + "</span>";
+      h += "</div>";
+      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
       h += '<span>得分 <b style="color:var(--accent)">' + fmtScore(r.score) + "</b></span>";
       h += '<span>累计命中率 <b style="color:var(--accent)">' + fmtCum(r.cumHitRate) + "</b></span>";
       h += "</div>";
@@ -2263,6 +2283,22 @@
       return h;
     }
 
+    function confStats(records) {
+      var hi = { h: 0, n: 0 }, mid = { h: 0, n: 0 }, lo = { h: 0, n: 0 };
+      records.forEach(function (r) {
+        if (r.hit !== true && r.hit !== false) return;
+        var c = confLevel(r.score);
+        if (c.key === "hi") { hi.n++; if (r.hit) hi.h++; }
+        else if (c.key === "mid") { mid.n++; if (r.hit) mid.h++; }
+        else if (c.key === "lo") { lo.n++; if (r.hit) lo.h++; }
+      });
+      return { hi: hi, mid: mid, lo: lo };
+    }
+    function visible(records) {
+      if (!state.v3OnlyHigh) return records;
+      return records.filter(function (r) { return r.score != null && r.score >= 3.5; });
+    }
+
     var html = "";
     html += '<div class="section"><div class="section__head"><h2 class="section__title">多维度预测（v3）推荐留痕</h2><span class="section__hint">数据源 recommend_log.json，回测/实盘两本账分开</span></div></div>';
 
@@ -2272,18 +2308,38 @@
     html += '<div class="stat"><div class="stat__value">' + pct(lv["命中率"] || 0) + '</div><div class="stat__label">实盘命中率（' + lv["范围"] + "）</div></div>";
     html += "</div></div>";
 
+    // 置信度分级（三级命中率透明展示，回测账口径，不混实盘）
+    var cs = confStats(btRecords);
+    var hiRate = cs.hi.n ? (cs.hi.h / cs.hi.n) : 0;
+    var midRate = cs.mid.n ? (cs.mid.h / cs.mid.n) : 0;
+    var loRate = cs.lo.n ? (cs.lo.h / cs.lo.n) : 0;
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">置信度分级</h2><span class="section__hint">按得分分档（≥3.5高 / 2.5~3.5中 / <2.5低），回测口径，三级命中率分开统计不混报</span></div></div>';
+    html += '<div class="section"><div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + pct(hiRate) + '</div><div class="stat__label">高置信 ≥3.5（' + cs.hi.h + "/" + cs.hi.n + "）</div></div>";
+    html += '<div class="stat"><div class="stat__value" style="color:#d97706">' + pct(midRate) + '</div><div class="stat__label">中置信 2.5~3.5（' + cs.mid.h + "/" + cs.mid.n + "）</div></div>";
+    html += '<div class="stat"><div class="stat__value" style="color:#6b7280">' + pct(loRate) + '</div><div class="stat__label">低置信 <2.5（' + cs.lo.h + "/" + cs.lo.n + '，低于随机55%）</div></div>';
+    html += "</div></div>";
+
+    // 只看高置信开关
+    html += '<div class="chips" style="margin-bottom:10px">';
+    html += '<button class="chip ' + (state.v3OnlyHigh ? "" : "is-active") + '" data-v3high="0">全部</button>';
+    html += '<button class="chip ' + (state.v3OnlyHigh ? "is-active" : "") + '" data-v3high="1">只看高置信（≥3.5）</button>';
+    html += "</div>";
+
     // 实盘账（最新在前）
+    var lvShown = visible(lvRecords).slice().reverse();
     html += '<div class="section"><div class="section__head"><h2 class="section__title">实盘账</h2><span class="section__hint">第256期起开奖前真实预测，命中 ' + (lv["命中数"] || 0) + "/" + (lv["已开奖数"] || 0) + "</span></div>";
     html += '<div class="panel">';
-    if (!lvRecords.length) html += '<div class="empty">暂无实盘记录</div>';
-    lvRecords.slice().reverse().forEach(function (r) { html += recCard(r); });
+    if (!lvShown.length) html += '<div class="empty">' + (state.v3OnlyHigh ? "暂无高置信实盘记录" : "暂无实盘记录") + "</div>";
+    lvShown.forEach(function (r) { html += recCard(r); });
     html += "</div></div>";
 
     // 回测账（最新在前，最多展示最近30条）
+    var btShown = visible(btRecords).slice(-30).reverse();
     html += '<div class="section"><div class="section__head"><h2 class="section__title">回测账</h2><span class="section__hint">第201-255期样本外回测，命中 ' + (bt["命中数"] || 0) + "/" + (bt["已开奖数"] || 0) + "（此处仅展示最近30条）</span></div>";
     html += '<div class="panel">';
-    if (!btRecords.length) html += '<div class="empty">暂无回测记录</div>';
-    btRecords.slice(-30).reverse().forEach(function (r) { html += recCard(r); });
+    if (!btShown.length) html += '<div class="empty">' + (state.v3OnlyHigh ? "暂无高置信回测记录" : "暂无回测记录") + "</div>";
+    btShown.forEach(function (r) { html += recCard(r); });
     html += "</div></div>";
 
     html += '<p class="disclaimer">口径说明：回测命中率来自第201-256期样本外验证；实盘命中率仅统计第256期起的开奖前真实预测。两者分开计算，不混合。实盘需积攒10-20期后方可视为稳定战绩。</p>';
@@ -2301,6 +2357,12 @@
   });
 
   view.addEventListener("click", function (e) {
+    var v3ch = e.target.closest("[data-v3high]");
+    if (v3ch) {
+      state.v3OnlyHigh = v3ch.dataset.v3high === "1";
+      renderModelV3Data(v3LogCache);
+      return;
+    }
     var ordsn = e.target.closest("[data-ordsn]");
     if (ordsn) {
       var t = Number(ordsn.dataset.ordsn);

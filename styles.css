@@ -238,6 +238,9 @@ body {
 .tag--hot { background: #fff1e6; color: var(--hot); }
 .tag--mid { background: #eef0f2; color: var(--mid); }
 .tag--cold { background: #e7efff; color: var(--cold); }
+.tag--conf-hi { background: #e8f6ec; color: #16a34a; }
+.tag--conf-mid { background: #fdf3d9; color: #d97706; }
+.tag--conf-lo { background: #eef0f2; color: #6b7280; }
 
 .bars {
   display: flex;
@@ -301,6 +304,10 @@ body {
 
 .cell--hot { color: var(--hot); font-weight: 700; }
 .cell--cold { color: var(--cold); font-weight: 700; }
+
+.hit--yes { color: #16a34a; font-weight: 700; }
+.hit--no { color: #dc2626; font-weight: 700; }
+.hit--pending { color: #9ca3af; font-weight: 700; }
 
 .miss-0 { color: var(--good); }
 .miss-1 { color: var(--good); }
