@@ -2188,51 +2188,83 @@
     var btRecords = bt.records || [];
     var lvRecords = lv.records || [];
 
-    function hitText(h) {
-      if (h === true) return "命中";
-      if (h === false) return "未中";
-      return "待开奖";
+    function numBall(n) {
+      return '<div class="num c' + numberColorOf(n) + '">' + (n < 10 ? "0" + n : n) + "</div>";
     }
-    function hitCls(h) {
-      if (h === true) return "cell--hot";
-      if (h === false) return "cell--cold";
-      return "";
+    function tailBall(t) {
+      return '<div class="num">' + t + "</div>";
     }
-    function fmtNums(n) {
-      if (!n || !n.length) return "-";
-      return n.join(",");
+    function hitBadge(h) {
+      if (h === true) return '<span style="color:#16a34a;font-weight:700">命中</span>';
+      if (h === false) return '<span style="color:#dc2626;font-weight:700">未中</span>';
+      return '<span style="color:#9ca3af;font-weight:700">待开奖</span>';
     }
-    function fmtTails(t) {
-      if (!t || !t.length) return "-";
-      return t.join(",");
-    }
-    function fmtSignals(s) {
-      if (!s || !s.length) return "-";
-      return s.map(function (x) { return '<span class="chip">' + x + "</span>"; }).join(" ");
-    }
-    function fmtCum(r) {
-      if (r == null || isNaN(r)) return "-";
-      return (r * 100).toFixed(1) + "%";
+    function typeBadge(t) {
+      var c = t === "实盘" ? "#d97706" : "#64748b";
+      return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;background:' + c + '">' + t + "</span>";
     }
     function fmtScore(s) {
-      return (s == null || isNaN(s)) ? "-" : (Math.round(s * 100) / 100);
+      return (s == null || isNaN(s)) ? "-" : Math.round(s * 100) / 100;
     }
-    function recordRow(r) {
-      return "<tr><td>第" + r.period + "期</td>" +
-        "<td>" + (r.time || "-") + "</td>" +
-        "<td>" + (r.type || "-") + "</td>" +
-        "<td>尾" + r.primary + "</td>" +
-        "<td>" + (r.secondary != null ? "尾" + r.secondary : "-") + "</td>" +
-        "<td>" + fmtScore(r.score) + "</td>" +
-        "<td>" + fmtSignals(r.signals) + "</td>" +
-        "<td>" + fmtNums(r.actualNums) + "</td>" +
-        "<td>" + fmtTails(r.actualTails) + "</td>" +
-        "<td class=\"" + hitCls(r.hit) + "\">" + hitText(r.hit) + "</td>" +
-        "<td>" + fmtCum(r.cumHitRate) + "</td></tr>";
+    function fmtCum(r) {
+      return (r == null || isNaN(r)) ? "-" : (r * 100).toFixed(1) + "%";
+    }
+
+    function recCard(r) {
+      var primaryHit = r.hit === true;
+      var h = '<div class="record">';
+
+      // 顶部：期数 + 时间 + 类型 + 命中
+      h += '<div class="record__top">';
+      h += '<span class="record__period">第 ' + r.period + ' 期</span>';
+      h += '<span class="record__meta">' + typeBadge(r.type || "回测") + " " + (r.time || "-") + "</span>";
+      h += "</div>";
+
+      // 首推 / 备选 / 命中
+      h += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
+      h += '<div style="display:flex;align-items:center;gap:6px">';
+      h += '<span style="font-size:12px;color:var(--muted)">首推</span>';
+      h += '<div class="num" style="width:40px;height:40px;font-size:16px;' + (primaryHit ? "background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;" : "") + '">尾' + r.primary + "</div>";
+      h += "</div>";
+      h += '<div style="display:flex;align-items:center;gap:6px">';
+      h += '<span style="font-size:12px;color:var(--muted)">备选</span>';
+      h += '<div class="num">' + (r.secondary != null ? "尾" + r.secondary : "-") + "</div>";
+      h += "</div>";
+      h += '<div style="margin-left:auto">' + hitBadge(r.hit) + "</div>";
+      h += "</div>";
+
+      // 得分 + 累计命中率
+      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
+      h += '<span>得分 <b style="color:var(--accent)">' + fmtScore(r.score) + "</b></span>";
+      h += '<span>累计命中率 <b style="color:var(--accent)">' + fmtCum(r.cumHitRate) + "</b></span>";
+      h += "</div>";
+
+      // 信号
+      if (r.signals && r.signals.length) {
+        h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px">';
+        r.signals.forEach(function (s) { h += '<span class="chip">' + s + "</span>"; });
+        h += "</div>";
+      }
+
+      // 实际号码
+      if (r.actualNums && r.actualNums.length) {
+        h += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际号码</div><div class="num-list">';
+        r.actualNums.forEach(function (n) { h += numBall(n); });
+        h += "</div></div>";
+      }
+      // 实际尾数
+      if (r.actualTails && r.actualTails.length) {
+        h += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际尾数</div><div class="num-list">';
+        r.actualTails.forEach(function (t) { h += tailBall(t); });
+        h += "</div></div>";
+      }
+
+      h += "</div>";
+      return h;
     }
 
     var html = "";
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">多维度预测（v3）推荐留痕</h2><span class="section__hint">数据源：recommend_log.json，回测/实盘两本账分开</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">多维度预测（v3）推荐留痕</h2><span class="section__hint">数据源 recommend_log.json，回测/实盘两本账分开</span></div></div>';
 
     // 汇总卡
     html += '<div class="section"><div class="grid-2">';
@@ -2240,17 +2272,19 @@
     html += '<div class="stat"><div class="stat__value">' + pct(lv["命中率"] || 0) + '</div><div class="stat__label">实盘命中率（' + lv["范围"] + "）</div></div>";
     html += "</div></div>";
 
-    // 回测账
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">回测账</h2><span class="section__hint">第201-255期模型回测，命中 ' + (bt["命中数"] || 0) + "/" + (bt["已开奖数"] || 0) + "</span></div>";
-    html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>时间</th><th>类型</th><th>首推</th><th>备选</th><th>得分</th><th>信号</th><th>实际号码</th><th>实际尾数</th><th>结果</th><th>累计命中率</th></tr></thead><tbody>';
-    btRecords.forEach(function (r) { html += recordRow(r); });
-    html += "</tbody></table></div></div>";
-
-    // 实盘账
+    // 实盘账（最新在前）
     html += '<div class="section"><div class="section__head"><h2 class="section__title">实盘账</h2><span class="section__hint">第256期起开奖前真实预测，命中 ' + (lv["命中数"] || 0) + "/" + (lv["已开奖数"] || 0) + "</span></div>";
-    html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>时间</th><th>类型</th><th>首推</th><th>备选</th><th>得分</th><th>信号</th><th>实际号码</th><th>实际尾数</th><th>结果</th><th>累计命中率</th></tr></thead><tbody>';
-    lvRecords.forEach(function (r) { html += recordRow(r); });
-    html += "</tbody></table></div></div>";
+    html += '<div class="panel">';
+    if (!lvRecords.length) html += '<div class="empty">暂无实盘记录</div>';
+    lvRecords.slice().reverse().forEach(function (r) { html += recCard(r); });
+    html += "</div></div>";
+
+    // 回测账（最新在前，最多展示最近30条）
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">回测账</h2><span class="section__hint">第201-255期样本外回测，命中 ' + (bt["命中数"] || 0) + "/" + (bt["已开奖数"] || 0) + "（此处仅展示最近30条）</span></div>";
+    html += '<div class="panel">';
+    if (!btRecords.length) html += '<div class="empty">暂无回测记录</div>';
+    btRecords.slice(-30).reverse().forEach(function (r) { html += recCard(r); });
+    html += "</div></div>";
 
     html += '<p class="disclaimer">口径说明：回测命中率来自第201-256期样本外验证；实盘命中率仅统计第256期起的开奖前真实预测。两者分开计算，不混合。实盘需积攒10-20期后方可视为稳定战绩。</p>';
 
