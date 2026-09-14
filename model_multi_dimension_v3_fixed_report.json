@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-09-13T14:21:09.093Z",
+  "timestamp": "2026-09-14T14:00:10.232Z",
   "modelVersion": "v3-fixed - 修复数据泄露+推荐率bug+报告标注",
-  "dataRange": "2026年第1-256期",
+  "dataRange": "2026年第1-257期",
   "trainRange": "第1-200期",
-  "testRange": "第201-256期",
+  "testRange": "第201-257期",
   "fixes": [
     "reversalSignal 只用当前期及之前数据，移除 countAfter 未来数据",
     "推荐率分母改为 testPeriods.length - 1（实际预测次数）",
@@ -236,12 +236,12 @@
   },
   "testResult": {
     "note": "样本外测试，用于验收",
-    "totalAttempts": 55,
-    "recommended": 46,
-    "recommendRate": 0.8363636363636363,
+    "totalAttempts": 56,
+    "recommended": 47,
+    "recommendRate": 0.8392857142857143,
     "correct": 34,
-    "total": 46,
-    "hitRate": 0.7391304347826086,
+    "total": 47,
+    "hitRate": 0.723404255319149,
     "details": [
       {
         "period": 203,
@@ -1165,12 +1165,31 @@
           9
         ],
         "hit": true
+      },
+      {
+        "period": 257,
+        "primary": 2,
+        "secondary": 8,
+        "score": 2.9,
+        "signalCount": 2,
+        "signals": [
+          "trend_hot_5",
+          "triple_reversal"
+        ],
+        "actualTails": [
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "hit": false
       }
     ]
   },
   "signalDist": {
     "2": {
-      "total": 27,
+      "total": 28,
       "hit": 18
     },
     "3": {

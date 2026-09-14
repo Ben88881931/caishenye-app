@@ -649,7 +649,7 @@ const ACTUAL_NUMS = loadActualNumsMap();
 // 回测账：第201-256期（训练集为前200期，逐期滚动预测下一期）
 const btRecords = [];
 let btHits = 0, btSettled = 0;
-const btRange = periods.slice(200); // 201..256
+const btRange = periods.slice(200).filter(p => p <= 256); // 固定 201..256（回测账不随数据增长漂移）
 for (let i = 0; i < btRange.length - 1; i++) {
   const p = btRange[i];
   const nextP = btRange[i + 1];
@@ -676,10 +676,16 @@ for (let i = 0; i < btRange.length - 1; i++) {
   });
 }
 
-// 实盘账：第257期起（V4 开奖前预测，待开奖）
-const lvRecords = [];
+// 实盘账：第257期起（开奖前真实预测；幂等：读既有推荐 + 回填已开奖 + 新增下一期）
+const liveHist = {};
+try {
+  const old = JSON.parse(fs.readFileSync('recommend_log_v4.json', 'utf8'));
+  const oldRecs = (old['实盘账'] && old['实盘账'].records) || [];
+  for (const r of oldRecs) liveHist[Number(r.period)] = r;
+} catch (e) {}
+
 if (PROD_PRED) {
-  lvRecords.push({
+  liveHist[PROD_NEXT] = {
     period: PROD_NEXT,
     time: nowStr(),
     type: '实盘',
@@ -691,6 +697,33 @@ if (PROD_PRED) {
     actualTails: null,
     hit: null,
     cumHitRate: 0
+  };
+}
+
+const lvRecords = [];
+let liveHits = 0, liveSettled = 0;
+for (const p of Object.keys(liveHist).map(Number).sort((a, b) => a - b)) {
+  const rec = liveHist[p];
+  const actualNums = ACTUAL_NUMS[p] || null;
+  const actualTails = tailsOfNums(actualNums);
+  let h = null;
+  if (actualTails !== null && rec.primary !== null) {
+    liveSettled++;
+    h = actualTails.includes(rec.primary);
+    if (h) liveHits++;
+  }
+  lvRecords.push({
+    period: p,
+    time: rec.time,
+    type: '实盘',
+    primary: rec.primary,
+    secondary: rec.secondary,
+    score: rec.score,
+    signals: rec.signals || [],
+    actualNums: actualNums,
+    actualTails: actualTails,
+    hit: h,
+    cumHitRate: liveSettled ? round4(liveHits / liveSettled) : 0
   });
 }
 
@@ -710,14 +743,14 @@ const v4ledger = {
     名称: '实盘',
     范围: '第257期起',
     记录数: lvRecords.length,
-    已开奖数: 0,
-    命中数: 0,
-    命中率: 0,
+    已开奖数: liveSettled,
+    命中数: liveHits,
+    命中率: liveSettled ? round4(liveHits / liveSettled) : 0,
     records: lvRecords
   },
   更新时间: nowStr()
 };
 fs.writeFileSync('recommend_log_v4.json', JSON.stringify(v4ledger, null, 2));
 console.log('回测账: ' + btRecords.length + ' 条, 命中 ' + btHits + '/' + btSettled + ' = ' + (btSettled ? (btHits / btSettled * 100).toFixed(1) + '%' : 'N/A'));
-console.log('实盘账: ' + lvRecords.length + ' 条（第' + PROD_NEXT + '期待开奖）');
+console.log('实盘账: ' + lvRecords.length + ' 条（已开 ' + liveSettled + ' 期，命中 ' + liveHits + '）');
 console.log('recommend_log_v4.json 已生成');
