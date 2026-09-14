@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-14T14:00:10.232Z",
+  "timestamp": "2026-09-14T14:02:32.219Z",
   "modelVersion": "v3-fixed - 修复数据泄露+推荐率bug+报告标注",
   "dataRange": "2026年第1-257期",
   "trainRange": "第1-200期",
