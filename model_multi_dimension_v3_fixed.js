@@ -322,11 +322,11 @@ function predictV3(p, personality, weights, minSignals = 2) {
 // ===== 主程序 =====
 console.log('\n===== 多维度交叉验证模型 v3 - 修复版 =====\n');
 
-const trainPeriods = periods.slice(0, 200);
-const testPeriods = periods.slice(200);
+const trainPeriods = periods.slice(0, 200); // 固定 1-200
+const testPeriods = periods.slice(200, 255); // 固定 201-255（与 recommend_log.json 回测账口径对齐）
 
 console.log('训练集: 第1-200期 (' + trainPeriods.length + '期)');
-console.log('测试集: 第201-' + periods[periods.length - 1] + '期 (' + testPeriods.length + '期)\n');
+console.log('测试集: 第201-' + testPeriods[testPeriods.length - 1] + '期 (' + testPeriods.length + '期)\n');
 
 // 步骤1：学习尾号性格
 console.log('【1】学习尾号性格（训练集）\n');
@@ -403,7 +403,7 @@ cvResults.slice(0, 5).forEach((r, i) => {
 const bestParams = cvResults[0].params;
 
 // 步骤3：测试集验证
-console.log('\n【3】测试集验证（第201-' + periods[periods.length - 1] + '期）\n');
+console.log('\n【3】测试集验证（第201-' + testPeriods[testPeriods.length - 1] + '期）\n');
 
 let testCorrect = 0, testTotal = 0, testRecommended = 0;
 const testDetails = [];
@@ -522,7 +522,7 @@ const report = {
   modelVersion: 'v3-fixed - 修复数据泄露+推荐率bug+报告标注',
   dataRange: '2026年第1-' + periods[periods.length - 1] + '期',
   trainRange: '第1-200期',
-  testRange: '第201-' + periods[periods.length - 1] + '期',
+  testRange: '第201-' + testPeriods[testPeriods.length - 1] + '期',
   fixes: [
     'reversalSignal 只用当前期及之前数据，移除 countAfter 未来数据',
     '推荐率分母改为 testPeriods.length - 1（实际预测次数）',
