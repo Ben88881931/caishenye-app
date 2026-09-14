@@ -197,10 +197,10 @@ body {
 }
 
 .score-map__row {
-  display: grid;
-  grid-template-columns: 64px 1fr 1.2fr;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 8px 14px;
   padding: 7px 10px;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -211,22 +211,25 @@ body {
 .score-map__score {
   font-weight: 700;
   color: var(--text);
+  min-width: 48px;
 }
 
-.score-map__cnt {
+.score-map__stat {
   color: var(--muted);
 }
 
-.score-map__rate {
-  text-align: right;
-  color: var(--accent);
+.score-map__stat b {
+  color: var(--text);
   font-weight: 700;
 }
 
-.score-map__rate.is-na {
-  color: var(--mid);
-  font-weight: 500;
-  font-size: 12px;
+.score-map__stat.is-hit b { color: var(--good); }
+.score-map__stat.is-miss b { color: var(--bad); }
+
+.score-map__rate {
+  margin-left: auto;
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .stat {

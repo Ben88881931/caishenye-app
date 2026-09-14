@@ -2341,19 +2341,19 @@
 
     // 分数 → 命中率明细对照表
     var sm = scoreMap(btRecords);
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">分数 → 命中率明细</h2><span class="section__hint">回测账每个出现过的具体分数，样本不足5条不写命中率</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">分数 → 命中率明细</h2><span class="section__hint">回测账每个出现过的具体分数，样本≥5才标命中率</span></div></div>';
     html += '<div class="section"><div class="score-map">';
     if (!sm.length) html += '<div class="empty">暂无数据</div>';
     sm.forEach(function (row) {
-      var rateHtml;
-      if (row.n >= 5) {
-        rateHtml = '<span class="score-map__rate">' + pct(row.h / row.n) + "</span>";
-      } else {
-        rateHtml = '<span class="score-map__rate is-na">样本不足，数据积累中</span>';
-      }
+      var z = row.n - row.h;
+      var rateHtml = row.n >= 5
+        ? '<span class="score-map__rate">' + pct(row.h / row.n) + "</span>"
+        : "";
       html += '<div class="score-map__row">'
         + '<span class="score-map__score">' + row.score.toFixed(2) + "</span>"
-        + '<span class="score-map__cnt">' + row.h + "/" + row.n + "</span>"
+        + '<span class="score-map__stat">开 <b>' + row.n + '</b> 次</span>'
+        + '<span class="score-map__stat is-hit">中 <b>' + row.h + '</b> 次</span>'
+        + '<span class="score-map__stat is-miss">错 <b>' + z + '</b> 次</span>'
         + rateHtml
         + "</div>";
     });
