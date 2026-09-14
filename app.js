@@ -2205,16 +2205,17 @@
       return '<span class="hit--pending">待开奖</span>';
     }
     function confLevel(s) {
-      if (s == null || isNaN(s)) return { key: "none", label: "-", cls: "" };
-      if (s >= 3.5) return { key: "hi", label: "高置信", cls: "tag--conf-hi" };
-      if (s >= 2.5) return { key: "mid", label: "中置信", cls: "tag--conf-mid" };
-      return { key: "lo", label: "低置信", cls: "tag--conf-lo" };
+      if (s == null || isNaN(s)) return { key: "none", idx: -1, label: "-", cls: "", range: "" };
+      if (s < 2.0) return { key: "t1", idx: 0, label: "极低", cls: "tag--conf-t1", range: "<2.0" };
+      if (s < 2.5) return { key: "t2", idx: 1, label: "低", cls: "tag--conf-t2", range: "2.0~2.5" };
+      if (s < 3.0) return { key: "t3", idx: 2, label: "中", cls: "tag--conf-t3", range: "2.5~3.0" };
+      if (s < 3.5) return { key: "t4", idx: 3, label: "中高", cls: "tag--conf-t4", range: "3.0~3.5" };
+      return { key: "t5", idx: 4, label: "高", cls: "tag--conf-t5", range: "≥3.5" };
     }
     function confBadge(r) {
       var c = confLevel(r.score);
       if (c.key === "none") return "";
-      var extra = c.key === "lo" ? ' <span class="tag tag--mid">命中率低于随机，仅供参考</span>' : "";
-      return '<span class="tag ' + c.cls + '">' + c.label + "</span>" + extra;
+      return '<span class="tag ' + c.cls + '">' + c.label + " (" + c.range + ")</span>";
     }
     function typeBadge(t) {
       var c = t === "实盘" ? "#d97706" : "#64748b";
@@ -2284,15 +2285,35 @@
     }
 
     function confStats(records) {
-      var hi = { h: 0, n: 0 }, mid = { h: 0, n: 0 }, lo = { h: 0, n: 0 };
+      var t = [
+        { key: "t1", h: 0, n: 0, range: "<2.0", label: "极低", cls: "tag--conf-t1", color: "#6b7280" },
+        { key: "t2", h: 0, n: 0, range: "2.0~2.5", label: "低", cls: "tag--conf-t2", color: "#2563eb" },
+        { key: "t3", h: 0, n: 0, range: "2.5~3.0", label: "中", cls: "tag--conf-t3", color: "#d97706" },
+        { key: "t4", h: 0, n: 0, range: "3.0~3.5", label: "中高", cls: "tag--conf-t4", color: "#ea580c" },
+        { key: "t5", h: 0, n: 0, range: "≥3.5", label: "高", cls: "tag--conf-t5", color: "#16a34a" }
+      ];
       records.forEach(function (r) {
         if (r.hit !== true && r.hit !== false) return;
         var c = confLevel(r.score);
-        if (c.key === "hi") { hi.n++; if (r.hit) hi.h++; }
-        else if (c.key === "mid") { mid.n++; if (r.hit) mid.h++; }
-        else if (c.key === "lo") { lo.n++; if (r.hit) lo.h++; }
+        if (c.idx < 0) return;
+        t[c.idx].n++;
+        if (r.hit) t[c.idx].h++;
       });
-      return { hi: hi, mid: mid, lo: lo };
+      return t;
+    }
+    function scoreMap(records) {
+      var m = {};
+      records.forEach(function (r) {
+        if (r.hit !== true && r.hit !== false) return;
+        var s = Math.round((r.score || 0) * 100) / 100;
+        if (!m[s]) m[s] = { h: 0, n: 0 };
+        m[s].n++;
+        if (r.hit) m[s].h++;
+      });
+      var arr = [];
+      for (var k in m) arr.push({ score: Number(k), h: m[k].h, n: m[k].n });
+      arr.sort(function (a, b) { return b.score - a.score; });
+      return arr;
     }
     function visible(records) {
       if (!state.v3OnlyHigh) return records;
@@ -2308,16 +2329,34 @@
     html += '<div class="stat"><div class="stat__value">' + pct(lv["命中率"] || 0) + '</div><div class="stat__label">实盘命中率（' + lv["范围"] + "）</div></div>";
     html += "</div></div>";
 
-    // 置信度分级（三级命中率透明展示，回测账口径，不混实盘）
+    // 置信度分级（五档命中率透明展示，回测账口径，不混实盘）
     var cs = confStats(btRecords);
-    var hiRate = cs.hi.n ? (cs.hi.h / cs.hi.n) : 0;
-    var midRate = cs.mid.n ? (cs.mid.h / cs.mid.n) : 0;
-    var loRate = cs.lo.n ? (cs.lo.h / cs.lo.n) : 0;
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">置信度分级</h2><span class="section__hint">按得分分档（≥3.5高 / 2.5~3.5中 / <2.5低），回测口径，三级命中率分开统计不混报</span></div></div>';
-    html += '<div class="section"><div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + pct(hiRate) + '</div><div class="stat__label">高置信 ≥3.5（' + cs.hi.h + "/" + cs.hi.n + "）</div></div>";
-    html += '<div class="stat"><div class="stat__value" style="color:#d97706">' + pct(midRate) + '</div><div class="stat__label">中置信 2.5~3.5（' + cs.mid.h + "/" + cs.mid.n + "）</div></div>";
-    html += '<div class="stat"><div class="stat__value" style="color:#6b7280">' + pct(loRate) + '</div><div class="stat__label">低置信 <2.5（' + cs.lo.h + "/" + cs.lo.n + '，低于随机55%）</div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">置信度分级</h2><span class="section__hint">按得分五档（<2.0 / 2.0~2.5 / 2.5~3.0 / 3.0~3.5 / ≥3.5），回测口径，每档命中率单独如实统计不混报</span></div></div>';
+    html += '<div class="section"><div class="grid-5">';
+    cs.forEach(function (g) {
+      var rate = g.n ? (g.h / g.n) : 0;
+      html += '<div class="stat"><div class="stat__value" style="color:' + g.color + '">' + pct(rate) + '</div><div class="stat__label">' + g.label + ' (' + g.range + ')　' + g.h + "/" + g.n + "</div></div>";
+    });
+    html += "</div></div>";
+
+    // 分数 → 命中率明细对照表
+    var sm = scoreMap(btRecords);
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">分数 → 命中率明细</h2><span class="section__hint">回测账每个出现过的具体分数，样本不足5条不写命中率</span></div></div>';
+    html += '<div class="section"><div class="score-map">';
+    if (!sm.length) html += '<div class="empty">暂无数据</div>';
+    sm.forEach(function (row) {
+      var rateHtml;
+      if (row.n >= 5) {
+        rateHtml = '<span class="score-map__rate">' + pct(row.h / row.n) + "</span>";
+      } else {
+        rateHtml = '<span class="score-map__rate is-na">样本不足，数据积累中</span>';
+      }
+      html += '<div class="score-map__row">'
+        + '<span class="score-map__score">' + row.score.toFixed(2) + "</span>"
+        + '<span class="score-map__cnt">' + row.h + "/" + row.n + "</span>"
+        + rateHtml
+        + "</div>";
+    });
     html += "</div></div>";
 
     // 只看高置信开关
