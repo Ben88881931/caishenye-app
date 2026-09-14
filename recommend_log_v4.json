@@ -1,0 +1,1470 @@
+{
+  "模型": "model_v4.js",
+  "命中率口径": "样本外（回测账）与实盘账分开计算",
+  "回测账": {
+    "名称": "回测",
+    "范围": "第201-256期",
+    "记录数": 46,
+    "已开奖数": 46,
+    "命中数": 35,
+    "命中率": 0.7609,
+    "records": [
+      {
+        "period": 203,
+        "time": "-",
+        "type": "回测",
+        "primary": 8,
+        "secondary": 2,
+        "score": 2.9,
+        "signals": [
+          "trend_hot_5",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          12,
+          11,
+          31,
+          3,
+          44,
+          37,
+          25
+        ],
+        "actualTails": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          7
+        ],
+        "hit": false,
+        "cumHitRate": 0
+      },
+      {
+        "period": 207,
+        "time": "-",
+        "type": "回测",
+        "primary": 1,
+        "secondary": 2,
+        "score": 2.5,
+        "signals": [
+          "trend_hot_5",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          9,
+          40,
+          26,
+          23,
+          44,
+          13,
+          31
+        ],
+        "actualTails": [
+          0,
+          1,
+          3,
+          4,
+          6,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.5
+      },
+      {
+        "period": 208,
+        "time": "-",
+        "type": "回测",
+        "primary": 7,
+        "secondary": 2,
+        "score": 2.7,
+        "signals": [
+          "trend_hot_7",
+          "trend_hot_10",
+          "triple_hot"
+        ],
+        "actualNums": [
+          7,
+          48,
+          40,
+          35,
+          23,
+          28,
+          19
+        ],
+        "actualTails": [
+          0,
+          3,
+          5,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.6667
+      },
+      {
+        "period": 209,
+        "time": "-",
+        "type": "回测",
+        "primary": 2,
+        "secondary": null,
+        "score": 6.96,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          44,
+          5,
+          39,
+          14,
+          21,
+          22,
+          8
+        ],
+        "actualTails": [
+          1,
+          2,
+          4,
+          5,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 210,
+        "time": "-",
+        "type": "回测",
+        "primary": 0,
+        "secondary": 3,
+        "score": 6.84,
+        "signals": [
+          "ab_strong",
+          "trend_hot_5",
+          "trend_hot_7",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          40,
+          37,
+          15,
+          17,
+          42,
+          48,
+          49
+        ],
+        "actualTails": [
+          0,
+          2,
+          5,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.8
+      },
+      {
+        "period": 211,
+        "time": "-",
+        "type": "回测",
+        "primary": 1,
+        "secondary": null,
+        "score": 4.68,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          13,
+          12,
+          39,
+          37,
+          38,
+          8,
+          1
+        ],
+        "actualTails": [
+          1,
+          2,
+          3,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.8333
+      },
+      {
+        "period": 212,
+        "time": "-",
+        "type": "回测",
+        "primary": 0,
+        "secondary": null,
+        "score": 1.8,
+        "signals": [
+          "trend_hot_7",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          43,
+          32,
+          16,
+          39,
+          19,
+          27,
+          6
+        ],
+        "actualTails": [
+          2,
+          3,
+          6,
+          7,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.7143
+      },
+      {
+        "period": 213,
+        "time": "-",
+        "type": "回测",
+        "primary": 5,
+        "secondary": 8,
+        "score": 4.68,
+        "signals": [
+          "ab_strong",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          9,
+          5,
+          12,
+          22,
+          1,
+          15,
+          35
+        ],
+        "actualTails": [
+          1,
+          2,
+          5,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 214,
+        "time": "-",
+        "type": "回测",
+        "primary": 0,
+        "secondary": 7,
+        "score": 5.88,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          29,
+          30,
+          27,
+          38,
+          43,
+          31,
+          4
+        ],
+        "actualTails": [
+          0,
+          1,
+          3,
+          4,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7778
+      },
+      {
+        "period": 215,
+        "time": "-",
+        "type": "回测",
+        "primary": 2,
+        "secondary": null,
+        "score": 3.4,
+        "signals": [
+          "trend_hot_5",
+          "trend_hot_15",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          19,
+          38,
+          30,
+          13,
+          1,
+          11,
+          14
+        ],
+        "actualTails": [
+          0,
+          1,
+          3,
+          4,
+          8,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.7
+      },
+      {
+        "period": 216,
+        "time": "-",
+        "type": "回测",
+        "primary": 7,
+        "secondary": 2,
+        "score": 4.68,
+        "signals": [
+          "ab_strong",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          18,
+          41,
+          32,
+          44,
+          36,
+          45,
+          37
+        ],
+        "actualTails": [
+          1,
+          2,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "hit": true,
+        "cumHitRate": 0.7273
+      },
+      {
+        "period": 218,
+        "time": "-",
+        "type": "回测",
+        "primary": 3,
+        "secondary": null,
+        "score": 4.68,
+        "signals": [
+          "ab_strong",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          2,
+          13,
+          47,
+          38,
+          46,
+          23,
+          17
+        ],
+        "actualTails": [
+          2,
+          3,
+          6,
+          7,
+          8
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 219,
+        "time": "-",
+        "type": "回测",
+        "primary": 1,
+        "secondary": 0,
+        "score": 4.68,
+        "signals": [
+          "ab_strong",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          31,
+          41,
+          7,
+          8,
+          29,
+          22,
+          43
+        ],
+        "actualTails": [
+          1,
+          2,
+          3,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7692
+      },
+      {
+        "period": 220,
+        "time": "-",
+        "type": "回测",
+        "primary": 4,
+        "secondary": null,
+        "score": 3,
+        "signals": [
+          "trend_hot_5",
+          "trend_hot_7",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          27,
+          39,
+          4,
+          12,
+          38,
+          25,
+          48
+        ],
+        "actualTails": [
+          2,
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7857
+      },
+      {
+        "period": 221,
+        "time": "-",
+        "type": "回测",
+        "primary": 6,
+        "secondary": null,
+        "score": 2.28,
+        "signals": [
+          "ab_weak",
+          "trend_hot_5"
+        ],
+        "actualNums": [
+          24,
+          14,
+          18,
+          48,
+          46,
+          28,
+          1
+        ],
+        "actualTails": [
+          1,
+          4,
+          6,
+          8
+        ],
+        "hit": true,
+        "cumHitRate": 0.8
+      },
+      {
+        "period": 224,
+        "time": "-",
+        "type": "回测",
+        "primary": 2,
+        "secondary": 6,
+        "score": 2.28,
+        "signals": [
+          "ab_weak",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          25,
+          19,
+          8,
+          49,
+          18,
+          36,
+          9
+        ],
+        "actualTails": [
+          5,
+          6,
+          8,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 225,
+        "time": "-",
+        "type": "回测",
+        "primary": 4,
+        "secondary": null,
+        "score": 1.8,
+        "signals": [
+          "trend_hot_10",
+          "triple_hot"
+        ],
+        "actualNums": [
+          7,
+          34,
+          27,
+          10,
+          19,
+          38,
+          1
+        ],
+        "actualTails": [
+          0,
+          1,
+          4,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7647
+      },
+      {
+        "period": 226,
+        "time": "-",
+        "type": "回测",
+        "primary": 6,
+        "secondary": null,
+        "score": 1.8,
+        "signals": [
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          1,
+          11,
+          29,
+          38,
+          4,
+          33,
+          17
+        ],
+        "actualTails": [
+          1,
+          3,
+          4,
+          7,
+          8,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.7222
+      },
+      {
+        "period": 227,
+        "time": "-",
+        "type": "回测",
+        "primary": 6,
+        "secondary": null,
+        "score": 6.96,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          23,
+          24,
+          29,
+          7,
+          13,
+          31,
+          16
+        ],
+        "actualTails": [
+          1,
+          3,
+          4,
+          6,
+          7,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7368
+      },
+      {
+        "period": 228,
+        "time": "-",
+        "type": "回测",
+        "primary": 8,
+        "secondary": null,
+        "score": 5.76,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          38,
+          26,
+          8,
+          6,
+          29,
+          18,
+          23
+        ],
+        "actualTails": [
+          3,
+          6,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 229,
+        "time": "-",
+        "type": "回测",
+        "primary": 4,
+        "secondary": null,
+        "score": 1.8,
+        "signals": [
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          11,
+          7,
+          15,
+          13,
+          33,
+          16,
+          38
+        ],
+        "actualTails": [
+          1,
+          3,
+          5,
+          6,
+          7,
+          8
+        ],
+        "hit": false,
+        "cumHitRate": 0.7143
+      },
+      {
+        "period": 230,
+        "time": "-",
+        "type": "回测",
+        "primary": 4,
+        "secondary": 9,
+        "score": 8.16,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          28,
+          26,
+          47,
+          14,
+          49,
+          10,
+          16
+        ],
+        "actualTails": [
+          0,
+          4,
+          6,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7273
+      },
+      {
+        "period": 231,
+        "time": "-",
+        "type": "回测",
+        "primary": 3,
+        "secondary": null,
+        "score": 2.5,
+        "signals": [
+          "trend_hot_5",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          39,
+          46,
+          23,
+          11,
+          8,
+          13,
+          20
+        ],
+        "actualTails": [
+          0,
+          1,
+          3,
+          6,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7391
+      },
+      {
+        "period": 233,
+        "time": "-",
+        "type": "回测",
+        "primary": 8,
+        "secondary": 3,
+        "score": 4.68,
+        "signals": [
+          "ab_strong",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          18,
+          41,
+          5,
+          49,
+          4,
+          34,
+          7
+        ],
+        "actualTails": [
+          1,
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 234,
+        "time": "-",
+        "type": "回测",
+        "primary": 6,
+        "secondary": 0,
+        "score": 3.3,
+        "signals": [
+          "trend_hot_7",
+          "trend_hot_10",
+          "trend_hot_15",
+          "triple_hot"
+        ],
+        "actualNums": [
+          25,
+          30,
+          37,
+          19,
+          7,
+          17,
+          39
+        ],
+        "actualTails": [
+          0,
+          5,
+          7,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.72
+      },
+      {
+        "period": 235,
+        "time": "-",
+        "type": "回测",
+        "primary": 6,
+        "secondary": null,
+        "score": 8.28,
+        "signals": [
+          "ab_strong",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          27,
+          26,
+          35,
+          17,
+          44,
+          21,
+          32
+        ],
+        "actualTails": [
+          1,
+          2,
+          4,
+          5,
+          6,
+          7
+        ],
+        "hit": true,
+        "cumHitRate": 0.7308
+      },
+      {
+        "period": 236,
+        "time": "-",
+        "type": "回测",
+        "primary": 9,
+        "secondary": 0,
+        "score": 4.68,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          26,
+          35,
+          42,
+          9,
+          14,
+          17,
+          11
+        ],
+        "actualTails": [
+          1,
+          2,
+          4,
+          5,
+          6,
+          7,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7407
+      },
+      {
+        "period": 237,
+        "time": "-",
+        "type": "回测",
+        "primary": 0,
+        "secondary": null,
+        "score": 1.8,
+        "signals": [
+          "trend_hot_7",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          47,
+          36,
+          14,
+          6,
+          41,
+          25,
+          12
+        ],
+        "actualTails": [
+          1,
+          2,
+          4,
+          5,
+          6,
+          7
+        ],
+        "hit": false,
+        "cumHitRate": 0.7143
+      },
+      {
+        "period": 239,
+        "time": "-",
+        "type": "回测",
+        "primary": 2,
+        "secondary": 0,
+        "score": 3.6,
+        "signals": [
+          "trend_hot_5",
+          "trend_hot_7",
+          "trend_hot_10",
+          "triple_hot"
+        ],
+        "actualNums": [
+          47,
+          43,
+          34,
+          17,
+          22,
+          7,
+          5
+        ],
+        "actualTails": [
+          2,
+          3,
+          4,
+          5,
+          7
+        ],
+        "hit": true,
+        "cumHitRate": 0.7241
+      },
+      {
+        "period": 240,
+        "time": "-",
+        "type": "回测",
+        "primary": 6,
+        "secondary": 1,
+        "score": 8.28,
+        "signals": [
+          "ab_strong",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          2,
+          34,
+          22,
+          26,
+          28,
+          37,
+          27
+        ],
+        "actualTails": [
+          2,
+          4,
+          6,
+          7,
+          8
+        ],
+        "hit": true,
+        "cumHitRate": 0.7333
+      },
+      {
+        "period": 241,
+        "time": "-",
+        "type": "回测",
+        "primary": 5,
+        "secondary": null,
+        "score": 3.6,
+        "signals": [
+          "trend_hot_7",
+          "trend_hot_10",
+          "trend_hot_15",
+          "triple_hot"
+        ],
+        "actualNums": [
+          29,
+          45,
+          27,
+          21,
+          42,
+          41,
+          49
+        ],
+        "actualTails": [
+          1,
+          2,
+          5,
+          7,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7419
+      },
+      {
+        "period": 242,
+        "time": "-",
+        "type": "回测",
+        "primary": 3,
+        "secondary": 4,
+        "score": 3.3,
+        "signals": [
+          "trend_hot_5",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          29,
+          35,
+          46,
+          32,
+          13,
+          31,
+          9
+        ],
+        "actualTails": [
+          1,
+          2,
+          3,
+          5,
+          6,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 243,
+        "time": "-",
+        "type": "回测",
+        "primary": 7,
+        "secondary": null,
+        "score": 5.76,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          42,
+          17,
+          12,
+          46,
+          9,
+          24,
+          21
+        ],
+        "actualTails": [
+          1,
+          2,
+          4,
+          6,
+          7,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7576
+      },
+      {
+        "period": 244,
+        "time": "-",
+        "type": "回测",
+        "primary": 8,
+        "secondary": 5,
+        "score": 3.6,
+        "signals": [
+          "ab_weak",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          9,
+          14,
+          3,
+          17,
+          33,
+          40,
+          46
+        ],
+        "actualTails": [
+          0,
+          3,
+          4,
+          6,
+          7,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.7353
+      },
+      {
+        "period": 245,
+        "time": "-",
+        "type": "回测",
+        "primary": 8,
+        "secondary": 2,
+        "score": 6.72,
+        "signals": [
+          "ab_strong",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          22,
+          23,
+          14,
+          2,
+          13,
+          38,
+          18
+        ],
+        "actualTails": [
+          2,
+          3,
+          4,
+          8
+        ],
+        "hit": true,
+        "cumHitRate": 0.7429
+      },
+      {
+        "period": 246,
+        "time": "-",
+        "type": "回测",
+        "primary": 9,
+        "secondary": 5,
+        "score": 7.56,
+        "signals": [
+          "ab_strong",
+          "trend_hot_5",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          22,
+          24,
+          19,
+          10,
+          20,
+          1,
+          30
+        ],
+        "actualTails": [
+          0,
+          1,
+          2,
+          4,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 247,
+        "time": "-",
+        "type": "回测",
+        "primary": 6,
+        "secondary": 5,
+        "score": 8.16,
+        "signals": [
+          "ab_strong",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          3,
+          9,
+          43,
+          29,
+          46,
+          4,
+          40
+        ],
+        "actualTails": [
+          0,
+          3,
+          4,
+          6,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7568
+      },
+      {
+        "period": 248,
+        "time": "-",
+        "type": "回测",
+        "primary": 2,
+        "secondary": 5,
+        "score": 1.8,
+        "signals": [
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          43,
+          26,
+          49,
+          39,
+          14,
+          27,
+          20
+        ],
+        "actualTails": [
+          0,
+          3,
+          4,
+          6,
+          7,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.7368
+      },
+      {
+        "period": 249,
+        "time": "-",
+        "type": "回测",
+        "primary": 2,
+        "secondary": 5,
+        "score": 1.8,
+        "signals": [
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          41,
+          22,
+          13,
+          36,
+          26,
+          29,
+          23
+        ],
+        "actualTails": [
+          1,
+          2,
+          3,
+          6,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7436
+      },
+      {
+        "period": 250,
+        "time": "-",
+        "type": "回测",
+        "primary": 0,
+        "secondary": 4,
+        "score": 6.84,
+        "signals": [
+          "ab_strong",
+          "trend_hot_5",
+          "trend_hot_7",
+          "triple_hot"
+        ],
+        "actualNums": [
+          10,
+          6,
+          39,
+          47,
+          37,
+          17,
+          14
+        ],
+        "actualTails": [
+          0,
+          4,
+          6,
+          7,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 251,
+        "time": "-",
+        "type": "回测",
+        "primary": 3,
+        "secondary": null,
+        "score": 2.7,
+        "signals": [
+          "trend_hot_7",
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          9,
+          6,
+          11,
+          25,
+          8,
+          45,
+          30
+        ],
+        "actualTails": [
+          0,
+          1,
+          5,
+          6,
+          8,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.7317
+      },
+      {
+        "period": 252,
+        "time": "-",
+        "type": "回测",
+        "primary": 3,
+        "secondary": null,
+        "score": 5.76,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10",
+          "trend_hot_15"
+        ],
+        "actualNums": [
+          33,
+          41,
+          43,
+          13,
+          6,
+          48,
+          22
+        ],
+        "actualTails": [
+          1,
+          2,
+          3,
+          6,
+          8
+        ],
+        "hit": true,
+        "cumHitRate": 0.7381
+      },
+      {
+        "period": 253,
+        "time": "-",
+        "type": "回测",
+        "primary": 9,
+        "secondary": 0,
+        "score": 5.76,
+        "signals": [
+          "ab_strong",
+          "trend_hot_7",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          5,
+          35,
+          15,
+          28,
+          13,
+          49,
+          16
+        ],
+        "actualTails": [
+          3,
+          5,
+          6,
+          8,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7442
+      },
+      {
+        "period": 254,
+        "time": "-",
+        "type": "回测",
+        "primary": 0,
+        "secondary": 1,
+        "score": 5.76,
+        "signals": [
+          "ab_strong",
+          "trend_hot_7",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          26,
+          44,
+          35,
+          6,
+          16,
+          10,
+          2
+        ],
+        "actualTails": [
+          0,
+          2,
+          4,
+          5,
+          6
+        ],
+        "hit": true,
+        "cumHitRate": 0.75
+      },
+      {
+        "period": 255,
+        "time": "-",
+        "type": "回测",
+        "primary": 9,
+        "secondary": 8,
+        "score": 7.08,
+        "signals": [
+          "ab_strong",
+          "trend_hot_10"
+        ],
+        "actualNums": [
+          36,
+          22,
+          6,
+          47,
+          39,
+          11,
+          44
+        ],
+        "actualTails": [
+          1,
+          2,
+          4,
+          6,
+          7,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7556
+      },
+      {
+        "period": 256,
+        "time": "-",
+        "type": "回测",
+        "primary": 5,
+        "secondary": 8,
+        "score": 3.8,
+        "signals": [
+          "trend_hot_5",
+          "trend_hot_7",
+          "triple_reversal"
+        ],
+        "actualNums": [
+          40,
+          15,
+          9,
+          37,
+          7,
+          3,
+          1
+        ],
+        "actualTails": [
+          0,
+          1,
+          3,
+          5,
+          7,
+          9
+        ],
+        "hit": true,
+        "cumHitRate": 0.7609
+      }
+    ]
+  },
+  "实盘账": {
+    "名称": "实盘",
+    "范围": "第257期起",
+    "记录数": 1,
+    "已开奖数": 0,
+    "命中数": 0,
+    "命中率": 0,
+    "records": [
+      {
+        "period": 257,
+        "time": "2026-09-14 19:57",
+        "type": "实盘",
+        "primary": 2,
+        "secondary": 8,
+        "score": 2.9,
+        "signals": [
+          "trend_hot_5",
+          "triple_reversal"
+        ],
+        "actualNums": null,
+        "actualTails": null,
+        "hit": null,
+        "cumHitRate": 0
+      }
+    ]
+  },
+  "更新时间": "2026-09-14 19:57"
+}

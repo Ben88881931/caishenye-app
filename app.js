@@ -335,6 +335,7 @@
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
     recordPage: 0,
     v3OnlyHigh: false,
+    v4OnlyHigh: false,
   };
 
   var TABS = [
@@ -343,6 +344,7 @@
     { id: "modelA", label: "模型A预测" },
     { id: "modelB", label: "模型B预测" },
     { id: "modelV3", label: "多维度预测" },
+    { id: "modelV4", label: "多维度预测V4" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -416,6 +418,7 @@
     else if (state.tab === "modelA") renderModelA();
     else if (state.tab === "modelB") renderModelB();
     else if (state.tab === "modelV3") renderModelV3();
+    else if (state.tab === "modelV4") renderModelV4();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     scrollToLatest();
@@ -2172,6 +2175,7 @@
   }
 
   var v3LogCache = null;
+  var v4LogCache = null;
 
   function renderModelV3() {
     if (v3LogCache) { renderModelV3Data(v3LogCache); return; }
@@ -2386,6 +2390,225 @@
     view.innerHTML = html;
   }
 
+  function renderModelV4() {
+    if (v4LogCache) { renderModelV4Data(v4LogCache); return; }
+    view.innerHTML = '<div class="section"><div class="panel"><div class="empty">正在加载推荐留痕…</div></div></div>';
+    fetch("recommend_log_v4.json")
+      .then(function (resp) { return resp.json(); })
+      .then(function (log) {
+        v4LogCache = log;
+        renderModelV4Data(log);
+      })
+      .catch(function () {
+        view.innerHTML = '<div class="section"><div class="panel"><div class="empty">加载 recommend_log_v4.json 失败</div></div></div>';
+      });
+  }
+
+  function renderModelV4Data(log) {
+    var bt = log["回测账"] || {};
+    var lv = log["实盘账"] || {};
+    var btRecords = bt.records || [];
+    var lvRecords = lv.records || [];
+
+    function numBall(n) {
+      return '<div class="num c' + numberColorOf(n) + '">' + (n < 10 ? "0" + n : n) + "</div>";
+    }
+    function tailBall(t) {
+      return '<div class="num">' + t + "</div>";
+    }
+    function hitBadge(h) {
+      if (h === true) return '<span class="hit--yes">命中</span>';
+      if (h === false) return '<span class="hit--no">未中</span>';
+      return '<span class="hit--pending">待开奖</span>';
+    }
+    function confLevel(s) {
+      if (s == null || isNaN(s)) return { key: "none", idx: -1, label: "-", cls: "", range: "" };
+      if (s < 2.0) return { key: "t1", idx: 0, label: "极低", cls: "tag--conf-t1", range: "<2.0" };
+      if (s < 2.5) return { key: "t2", idx: 1, label: "低", cls: "tag--conf-t2", range: "2.0~2.5" };
+      if (s < 3.0) return { key: "t3", idx: 2, label: "中", cls: "tag--conf-t3", range: "2.5~3.0" };
+      if (s < 3.5) return { key: "t4", idx: 3, label: "中高", cls: "tag--conf-t4", range: "3.0~3.5" };
+      return { key: "t5", idx: 4, label: "高", cls: "tag--conf-t5", range: "≥3.5" };
+    }
+    function confBadge(r) {
+      var c = confLevel(r.score);
+      if (c.key === "none") return "";
+      return '<span class="tag ' + c.cls + '">' + c.label + " (" + c.range + ")</span>";
+    }
+    function typeBadge(t) {
+      var c = t === "实盘" ? "#d97706" : "#64748b";
+      return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;background:' + c + '">' + t + "</span>";
+    }
+    function fmtScore(s) {
+      return (s == null || isNaN(s)) ? "-" : Math.round(s * 100) / 100;
+    }
+    function fmtCum(r) {
+      return (r == null || isNaN(r)) ? "-" : (r * 100).toFixed(1) + "%";
+    }
+
+    function recCard(r) {
+      var primaryHit = r.hit === true;
+      var h = '<div class="record">';
+
+      // 顶部：期数 + 时间 + 类型 + 命中
+      h += '<div class="record__top">';
+      h += '<span class="record__period">第 ' + r.period + ' 期</span>';
+      h += '<span class="record__meta">' + typeBadge(r.type || "回测") + " " + (r.time || "-") + "</span>";
+      h += "</div>";
+
+      // 首推 / 备选 / 命中
+      h += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
+      h += '<div style="display:flex;align-items:center;gap:6px">';
+      h += '<span style="font-size:12px;color:var(--muted)">首推</span>';
+      h += '<div class="num" style="width:40px;height:40px;font-size:16px;' + (primaryHit ? "background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;" : "") + '">尾' + r.primary + "</div>";
+      h += "</div>";
+      h += '<div style="display:flex;align-items:center;gap:6px">';
+      h += '<span style="font-size:12px;color:var(--muted)">备选</span>';
+      h += '<div class="num">' + (r.secondary != null ? "尾" + r.secondary : "-") + "</div>";
+      h += "</div>";
+      h += '<div style="margin-left:auto">' + hitBadge(r.hit) + "</div>";
+      h += "</div>";
+
+      // 得分 + 累计命中率
+      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
+      h += '<span>' + confBadge(r) + "</span>";
+      h += "</div>";
+      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
+      h += '<span>得分 <b style="color:var(--accent)">' + fmtScore(r.score) + "</b></span>";
+      h += '<span>累计命中率 <b style="color:var(--accent)">' + fmtCum(r.cumHitRate) + "</b></span>";
+      h += "</div>";
+
+      // 信号
+      if (r.signals && r.signals.length) {
+        h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px">';
+        r.signals.forEach(function (s) { h += '<span class="chip">' + s + "</span>"; });
+        h += "</div>";
+      }
+
+      // 实际号码
+      if (r.actualNums && r.actualNums.length) {
+        h += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际号码</div><div class="num-list">';
+        r.actualNums.forEach(function (n) { h += numBall(n); });
+        h += "</div></div>";
+      }
+      // 实际尾数
+      if (r.actualTails && r.actualTails.length) {
+        h += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际尾数</div><div class="num-list">';
+        r.actualTails.forEach(function (t) { h += tailBall(t); });
+        h += "</div></div>";
+      }
+
+      h += "</div>";
+      return h;
+    }
+
+    function confStats(records) {
+      var t = [
+        { key: "t1", h: 0, n: 0, range: "<2.0", label: "极低", cls: "tag--conf-t1", color: "#6b7280" },
+        { key: "t2", h: 0, n: 0, range: "2.0~2.5", label: "低", cls: "tag--conf-t2", color: "#2563eb" },
+        { key: "t3", h: 0, n: 0, range: "2.5~3.0", label: "中", cls: "tag--conf-t3", color: "#d97706" },
+        { key: "t4", h: 0, n: 0, range: "3.0~3.5", label: "中高", cls: "tag--conf-t4", color: "#ea580c" },
+        { key: "t5", h: 0, n: 0, range: "≥3.5", label: "高", cls: "tag--conf-t5", color: "#16a34a" }
+      ];
+      records.forEach(function (r) {
+        if (r.hit !== true && r.hit !== false) return;
+        var c = confLevel(r.score);
+        if (c.idx < 0) return;
+        t[c.idx].n++;
+        if (r.hit) t[c.idx].h++;
+      });
+      return t;
+    }
+    function scoreMap(records) {
+      var m = {};
+      records.forEach(function (r) {
+        if (r.hit !== true && r.hit !== false) return;
+        var s = Math.round((r.score || 0) * 100) / 100;
+        if (!m[s]) m[s] = { h: 0, n: 0 };
+        m[s].n++;
+        if (r.hit) m[s].h++;
+      });
+      var arr = [];
+      for (var k in m) arr.push({ score: Number(k), h: m[k].h, n: m[k].n });
+      arr.sort(function (a, b) { return b.score - a.score; });
+      return arr;
+    }
+    function visible(records) {
+      if (!state.v4OnlyHigh) return records;
+      return records.filter(function (r) { return r.score != null && r.score >= 3.5; });
+    }
+
+    var html = "";
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">多维度预测（V4）推荐留痕</h2><span class="section__hint">数据源 recommend_log_v4.json，回测/实盘两本账分开</span></div></div>';
+
+    // 口径提示（与 V3 页对比前必读，同口径对齐避免误读）
+    html += '<div class="section"><div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.7;color:#9a3412">';
+    html += 'V4 回测含第256期；V3 回测只到255期（第256期为 V3 实盘）。同口径对齐到第201-256期：V3 = 73.9%（34/46），V4 = 76.1%（35/46），V4 仅领先 +2.2pp。';
+    html += '</div></div>';
+
+    // 汇总卡
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value">' + pct(bt["命中率"] || 0) + '</div><div class="stat__label">回测命中率（' + bt["范围"] + "）</div></div>";
+    html += '<div class="stat"><div class="stat__value">' + pct(lv["命中率"] || 0) + '</div><div class="stat__label">实盘命中率（' + lv["范围"] + "）</div></div>";
+    html += "</div></div>";
+
+    // 置信度分级（五档命中率透明展示，回测账口径，不混实盘）
+    var cs = confStats(btRecords);
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">置信度分级</h2><span class="section__hint">按得分五档（<2.0 / 2.0~2.5 / 2.5~3.0 / 3.0~3.5 / ≥3.5），回测口径，每档命中率单独如实统计不混报</span></div></div>';
+    html += '<div class="section"><div class="grid-5">';
+    cs.forEach(function (g) {
+      var rate = g.n ? (g.h / g.n) : 0;
+      html += '<div class="stat"><div class="stat__value" style="color:' + g.color + '">' + pct(rate) + '</div><div class="stat__label">' + g.label + ' (' + g.range + ')　' + g.h + "/" + g.n + "</div></div>";
+    });
+    html += "</div></div>";
+
+    // 分数 → 命中率明细对照表
+    var sm = scoreMap(btRecords);
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">分数 → 命中率明细</h2><span class="section__hint">回测账每个出现过的具体分数，样本≥5才标命中率</span></div></div>';
+    html += '<div class="section"><div class="score-map">';
+    if (!sm.length) html += '<div class="empty">暂无数据</div>';
+    sm.forEach(function (row) {
+      var z = row.n - row.h;
+      var rateHtml = row.n >= 5
+        ? '<span class="score-map__rate">' + pct(row.h / row.n) + "</span>"
+        : "";
+      html += '<div class="score-map__row">'
+        + '<span class="score-map__score">' + row.score.toFixed(2) + "</span>"
+        + '<span class="score-map__stat">开 <b>' + row.n + '</b> 次</span>'
+        + '<span class="score-map__stat is-hit">中 <b>' + row.h + '</b> 次</span>'
+        + '<span class="score-map__stat is-miss">错 <b>' + z + '</b> 次</span>'
+        + rateHtml
+        + "</div>";
+    });
+    html += "</div></div>";
+
+    // 只看高置信开关
+    html += '<div class="chips" style="margin-bottom:10px">';
+    html += '<button class="chip ' + (state.v4OnlyHigh ? "" : "is-active") + '" data-v4high="0">全部</button>';
+    html += '<button class="chip ' + (state.v4OnlyHigh ? "is-active" : "") + '" data-v4high="1">只看高置信（≥3.5）</button>';
+    html += "</div>";
+
+    // 实盘账（最新在前）
+    var lvShown = visible(lvRecords).slice().reverse();
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">实盘账</h2><span class="section__hint">第257期起开奖前真实预测，命中 ' + (lv["命中数"] || 0) + "/" + (lv["已开奖数"] || 0) + "</span></div>";
+    html += '<div class="panel">';
+    if (!lvShown.length) html += '<div class="empty">' + (state.v4OnlyHigh ? "暂无高置信实盘记录" : "暂无实盘记录") + "</div>";
+    lvShown.forEach(function (r) { html += recCard(r); });
+    html += "</div></div>";
+
+    // 回测账（最新在前，最多展示最近30条）
+    var btShown = visible(btRecords).slice(-30).reverse();
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">回测账</h2><span class="section__hint">第201-256期样本外回测，命中 ' + (bt["命中数"] || 0) + "/" + (bt["已开奖数"] || 0) + "（此处仅展示最近30条）</span></div>";
+    html += '<div class="panel">';
+    if (!btShown.length) html += '<div class="empty">' + (state.v4OnlyHigh ? "暂无高置信回测记录" : "暂无回测记录") + "</div>";
+    btShown.forEach(function (r) { html += recCard(r); });
+    html += "</div></div>";
+
+    html += '<p class="disclaimer">口径说明：回测命中率来自第201-256期样本外验证；实盘命中率仅统计第257期起的开奖前真实预测。两者分开计算，不混合。实盘需积攒10-20期后方可视为稳定战绩。</p>';
+
+    view.innerHTML = html;
+  }
+
+
   tabsEl.addEventListener("click", function (e) {
     var btn = e.target.closest(".tab");
     if (btn) {
@@ -2400,6 +2623,12 @@
     if (v3ch) {
       state.v3OnlyHigh = v3ch.dataset.v3high === "1";
       renderModelV3Data(v3LogCache);
+      return;
+    }
+    var v4ch = e.target.closest("[data-v4high]");
+    if (v4ch) {
+      state.v4OnlyHigh = v4ch.dataset.v4high === "1";
+      renderModelV4Data(v4LogCache);
       return;
     }
     var ordsn = e.target.closest("[data-ordsn]");

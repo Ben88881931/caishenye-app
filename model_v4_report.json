@@ -1,0 +1,3926 @@
+{
+  "timestamp": "2026-09-14T11:57:31.599Z",
+  "dataRange": "2026年第1-256期（共256期）",
+  "coldParams": {
+    "enabled": false,
+    "threshold": 5,
+    "coldWeight": 0.5,
+    "factor": 0.3
+  },
+  "fixedSplits": [
+    {
+      "trainSize": 150,
+      "trainRange": "第1-150期",
+      "testRange": "第151-256期",
+      "trainBestHitRate": 0.8807339449541285,
+      "v3": {
+        "correct": 70,
+        "total": 87,
+        "hitRate": 0.8045977011494253,
+        "recommended": 87
+      },
+      "v4": {
+        "correct": 71,
+        "total": 87,
+        "hitRate": 0.8160919540229885,
+        "recommended": 87,
+        "coldPenalty": 0
+      },
+      "delta": 0.011494252873563204,
+      "v4Details": [
+        {
+          "period": 152,
+          "primary": 6,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 4,
+          "hit": true
+        },
+        {
+          "period": 153,
+          "primary": 3,
+          "score": 5.88,
+          "coldPenalty": 0,
+          "miss": 4,
+          "hit": true
+        },
+        {
+          "period": 154,
+          "primary": 4,
+          "score": 2.9,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 158,
+          "primary": 6,
+          "score": 3.7,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 160,
+          "primary": 3,
+          "score": 3.9,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 162,
+          "primary": 1,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 163,
+          "primary": 0,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 164,
+          "primary": 2,
+          "score": 5.3999999999999995,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 165,
+          "primary": 9,
+          "score": 7.199999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 166,
+          "primary": 4,
+          "score": 7.199999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 167,
+          "primary": 9,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 168,
+          "primary": 4,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 170,
+          "primary": 5,
+          "score": 2.1,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 171,
+          "primary": 5,
+          "score": 2.1,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": false
+        },
+        {
+          "period": 172,
+          "primary": 7,
+          "score": 6.4799999999999995,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 173,
+          "primary": 0,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 174,
+          "primary": 8,
+          "score": 7.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 175,
+          "primary": 6,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 176,
+          "primary": 2,
+          "score": 9.12,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 177,
+          "primary": 4,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 178,
+          "primary": 8,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 179,
+          "primary": 5,
+          "score": 5.199999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 181,
+          "primary": 5,
+          "score": 2.6999999999999997,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 182,
+          "primary": 1,
+          "score": 3,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 183,
+          "primary": 6,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 184,
+          "primary": 5,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 185,
+          "primary": 9,
+          "score": 10.319999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 186,
+          "primary": 3,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 188,
+          "primary": 9,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 189,
+          "primary": 2,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 190,
+          "primary": 9,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 191,
+          "primary": 3,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 192,
+          "primary": 8,
+          "score": 6.839999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 193,
+          "primary": 9,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 194,
+          "primary": 8,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 195,
+          "primary": 9,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 196,
+          "primary": 8,
+          "score": 2.28,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": false
+        },
+        {
+          "period": 197,
+          "primary": 8,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 4,
+          "hit": true
+        },
+        {
+          "period": 198,
+          "primary": 2,
+          "score": 9.12,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 200,
+          "primary": 3,
+          "score": 5.04,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 201,
+          "primary": 8,
+          "score": 4.2,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 203,
+          "primary": 8,
+          "score": 2.9,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 207,
+          "primary": 1,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 208,
+          "primary": 7,
+          "score": 2.6999999999999997,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 209,
+          "primary": 2,
+          "score": 6.96,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 210,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 211,
+          "primary": 1,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 212,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 213,
+          "primary": 5,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 214,
+          "primary": 0,
+          "score": 5.88,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 215,
+          "primary": 2,
+          "score": 3.4,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 216,
+          "primary": 7,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 218,
+          "primary": 3,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 219,
+          "primary": 1,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 220,
+          "primary": 4,
+          "score": 3,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 221,
+          "primary": 6,
+          "score": 2.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 224,
+          "primary": 2,
+          "score": 2.28,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": false
+        },
+        {
+          "period": 225,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 226,
+          "primary": 6,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 227,
+          "primary": 6,
+          "score": 6.96,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 228,
+          "primary": 8,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 229,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 230,
+          "primary": 4,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 231,
+          "primary": 3,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 233,
+          "primary": 8,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 234,
+          "primary": 6,
+          "score": 3.3,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 235,
+          "primary": 6,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 236,
+          "primary": 9,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 237,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": false
+        },
+        {
+          "period": 239,
+          "primary": 2,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 240,
+          "primary": 6,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 241,
+          "primary": 5,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 242,
+          "primary": 3,
+          "score": 3.3000000000000003,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 243,
+          "primary": 7,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 244,
+          "primary": 8,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": false
+        },
+        {
+          "period": 245,
+          "primary": 8,
+          "score": 6.72,
+          "coldPenalty": 0,
+          "miss": 4,
+          "hit": true
+        },
+        {
+          "period": 246,
+          "primary": 9,
+          "score": 7.5600000000000005,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 247,
+          "primary": 6,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 248,
+          "primary": 2,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 249,
+          "primary": 2,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 250,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 251,
+          "primary": 3,
+          "score": 2.6999999999999997,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 252,
+          "primary": 3,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 253,
+          "primary": 9,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 254,
+          "primary": 0,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 255,
+          "primary": 9,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 256,
+          "primary": 5,
+          "score": 3.8,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        }
+      ],
+      "v3Details": [
+        {
+          "period": 152,
+          "primary": 6,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 153,
+          "primary": 3,
+          "score": 5.88,
+          "hit": true
+        },
+        {
+          "period": 154,
+          "primary": 4,
+          "score": 2.9,
+          "hit": true
+        },
+        {
+          "period": 158,
+          "primary": 6,
+          "score": 3.7,
+          "hit": true
+        },
+        {
+          "period": 160,
+          "primary": 3,
+          "score": 3.9,
+          "hit": false
+        },
+        {
+          "period": 162,
+          "primary": 1,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 163,
+          "primary": 0,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 164,
+          "primary": 2,
+          "score": 5.3999999999999995,
+          "hit": true
+        },
+        {
+          "period": 165,
+          "primary": 9,
+          "score": 7.199999999999999,
+          "hit": true
+        },
+        {
+          "period": 166,
+          "primary": 4,
+          "score": 7.199999999999999,
+          "hit": true
+        },
+        {
+          "period": 167,
+          "primary": 9,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 168,
+          "primary": 4,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 170,
+          "primary": 5,
+          "score": 2.1,
+          "hit": false
+        },
+        {
+          "period": 171,
+          "primary": 5,
+          "score": 2.1,
+          "hit": false
+        },
+        {
+          "period": 172,
+          "primary": 7,
+          "score": 6.4799999999999995,
+          "hit": true
+        },
+        {
+          "period": 173,
+          "primary": 0,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 174,
+          "primary": 8,
+          "score": 7.68,
+          "hit": true
+        },
+        {
+          "period": 175,
+          "primary": 6,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 176,
+          "primary": 2,
+          "score": 9.12,
+          "hit": true
+        },
+        {
+          "period": 177,
+          "primary": 4,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 178,
+          "primary": 8,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 179,
+          "primary": 5,
+          "score": 5.199999999999999,
+          "hit": true
+        },
+        {
+          "period": 181,
+          "primary": 5,
+          "score": 2.6999999999999997,
+          "hit": true
+        },
+        {
+          "period": 182,
+          "primary": 1,
+          "score": 3,
+          "hit": true
+        },
+        {
+          "period": 183,
+          "primary": 6,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 184,
+          "primary": 5,
+          "score": 1.7999999999999998,
+          "hit": true
+        },
+        {
+          "period": 185,
+          "primary": 9,
+          "score": 10.319999999999999,
+          "hit": true
+        },
+        {
+          "period": 186,
+          "primary": 3,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 188,
+          "primary": 9,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 189,
+          "primary": 2,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 190,
+          "primary": 9,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 191,
+          "primary": 3,
+          "score": 1.7999999999999998,
+          "hit": true
+        },
+        {
+          "period": 192,
+          "primary": 8,
+          "score": 6.839999999999999,
+          "hit": true
+        },
+        {
+          "period": 193,
+          "primary": 9,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 194,
+          "primary": 8,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 195,
+          "primary": 9,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 196,
+          "primary": 8,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 197,
+          "primary": 8,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 198,
+          "primary": 2,
+          "score": 9.12,
+          "hit": true
+        },
+        {
+          "period": 200,
+          "primary": 3,
+          "score": 5.04,
+          "hit": true
+        },
+        {
+          "period": 201,
+          "primary": 8,
+          "score": 4.2,
+          "hit": true
+        },
+        {
+          "period": 203,
+          "primary": 8,
+          "score": 2.9,
+          "hit": false
+        },
+        {
+          "period": 207,
+          "primary": 1,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 208,
+          "primary": 7,
+          "score": 2.6999999999999997,
+          "hit": true
+        },
+        {
+          "period": 209,
+          "primary": 2,
+          "score": 6.96,
+          "hit": true
+        },
+        {
+          "period": 210,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "hit": true
+        },
+        {
+          "period": 211,
+          "primary": 1,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 212,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 213,
+          "primary": 5,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 214,
+          "primary": 0,
+          "score": 5.88,
+          "hit": true
+        },
+        {
+          "period": 215,
+          "primary": 2,
+          "score": 3.4,
+          "hit": false
+        },
+        {
+          "period": 216,
+          "primary": 7,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 218,
+          "primary": 3,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 219,
+          "primary": 1,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 220,
+          "primary": 4,
+          "score": 3,
+          "hit": true
+        },
+        {
+          "period": 221,
+          "primary": 6,
+          "score": 2.28,
+          "hit": true
+        },
+        {
+          "period": 224,
+          "primary": 2,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 225,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "hit": true
+        },
+        {
+          "period": 226,
+          "primary": 6,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 227,
+          "primary": 6,
+          "score": 6.96,
+          "hit": true
+        },
+        {
+          "period": 228,
+          "primary": 8,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 229,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 230,
+          "primary": 4,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 231,
+          "primary": 3,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 233,
+          "primary": 8,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 234,
+          "primary": 6,
+          "score": 3.3,
+          "hit": false
+        },
+        {
+          "period": 235,
+          "primary": 6,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 236,
+          "primary": 9,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 237,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 239,
+          "primary": 2,
+          "score": 3.5999999999999996,
+          "hit": true
+        },
+        {
+          "period": 240,
+          "primary": 6,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 241,
+          "primary": 5,
+          "score": 3.5999999999999996,
+          "hit": true
+        },
+        {
+          "period": 242,
+          "primary": 3,
+          "score": 3.3000000000000003,
+          "hit": true
+        },
+        {
+          "period": 243,
+          "primary": 7,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 244,
+          "primary": 8,
+          "score": 3.5999999999999996,
+          "hit": false
+        },
+        {
+          "period": 245,
+          "primary": 8,
+          "score": 6.72,
+          "hit": true
+        },
+        {
+          "period": 246,
+          "primary": 9,
+          "score": 7.5600000000000005,
+          "hit": true
+        },
+        {
+          "period": 247,
+          "primary": 6,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 248,
+          "primary": 5,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 249,
+          "primary": 5,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 250,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "hit": true
+        },
+        {
+          "period": 251,
+          "primary": 3,
+          "score": 2.6999999999999997,
+          "hit": false
+        },
+        {
+          "period": 252,
+          "primary": 3,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 253,
+          "primary": 9,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 254,
+          "primary": 0,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 255,
+          "primary": 9,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 256,
+          "primary": 5,
+          "score": 3.8,
+          "hit": true
+        }
+      ]
+    },
+    {
+      "trainSize": 180,
+      "trainRange": "第1-180期",
+      "testRange": "第181-256期",
+      "trainBestHitRate": 0.8787878787878788,
+      "v3": {
+        "correct": 50,
+        "total": 64,
+        "hitRate": 0.78125,
+        "recommended": 64
+      },
+      "v4": {
+        "correct": 51,
+        "total": 64,
+        "hitRate": 0.796875,
+        "recommended": 64,
+        "coldPenalty": 0
+      },
+      "delta": 0.015625,
+      "v4Details": [
+        {
+          "period": 182,
+          "primary": 1,
+          "score": 3,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 183,
+          "primary": 6,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 184,
+          "primary": 5,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 185,
+          "primary": 9,
+          "score": 10.319999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 186,
+          "primary": 3,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 188,
+          "primary": 9,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 189,
+          "primary": 2,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 190,
+          "primary": 9,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 191,
+          "primary": 3,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 192,
+          "primary": 8,
+          "score": 6.839999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 193,
+          "primary": 9,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 194,
+          "primary": 8,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 195,
+          "primary": 9,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 196,
+          "primary": 8,
+          "score": 2.28,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": false
+        },
+        {
+          "period": 197,
+          "primary": 8,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 4,
+          "hit": true
+        },
+        {
+          "period": 198,
+          "primary": 2,
+          "score": 9.12,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 200,
+          "primary": 3,
+          "score": 5.04,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 201,
+          "primary": 8,
+          "score": 4.2,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 203,
+          "primary": 8,
+          "score": 2.9,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 207,
+          "primary": 1,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 208,
+          "primary": 7,
+          "score": 2.6999999999999997,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 209,
+          "primary": 2,
+          "score": 6.96,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 210,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 211,
+          "primary": 1,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 212,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 213,
+          "primary": 5,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 214,
+          "primary": 0,
+          "score": 5.88,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 215,
+          "primary": 2,
+          "score": 3.4,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 216,
+          "primary": 7,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 218,
+          "primary": 3,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 219,
+          "primary": 1,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 220,
+          "primary": 4,
+          "score": 3,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 221,
+          "primary": 6,
+          "score": 2.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 224,
+          "primary": 2,
+          "score": 2.28,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": false
+        },
+        {
+          "period": 225,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 226,
+          "primary": 6,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 227,
+          "primary": 6,
+          "score": 6.96,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 228,
+          "primary": 8,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 229,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 230,
+          "primary": 4,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 231,
+          "primary": 3,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 233,
+          "primary": 8,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 234,
+          "primary": 6,
+          "score": 3.3,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 235,
+          "primary": 6,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 236,
+          "primary": 9,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 237,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": false
+        },
+        {
+          "period": 239,
+          "primary": 2,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 240,
+          "primary": 6,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 241,
+          "primary": 5,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 242,
+          "primary": 3,
+          "score": 3.3000000000000003,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 243,
+          "primary": 7,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 244,
+          "primary": 8,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": false
+        },
+        {
+          "period": 245,
+          "primary": 8,
+          "score": 6.72,
+          "coldPenalty": 0,
+          "miss": 4,
+          "hit": true
+        },
+        {
+          "period": 246,
+          "primary": 9,
+          "score": 7.5600000000000005,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 247,
+          "primary": 6,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 248,
+          "primary": 2,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 249,
+          "primary": 2,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 250,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 251,
+          "primary": 3,
+          "score": 2.6999999999999997,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 252,
+          "primary": 3,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 253,
+          "primary": 9,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 254,
+          "primary": 0,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 255,
+          "primary": 9,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 256,
+          "primary": 5,
+          "score": 3.8,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        }
+      ],
+      "v3Details": [
+        {
+          "period": 182,
+          "primary": 1,
+          "score": 3,
+          "hit": true
+        },
+        {
+          "period": 183,
+          "primary": 6,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 184,
+          "primary": 5,
+          "score": 1.7999999999999998,
+          "hit": true
+        },
+        {
+          "period": 185,
+          "primary": 9,
+          "score": 10.319999999999999,
+          "hit": true
+        },
+        {
+          "period": 186,
+          "primary": 3,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 188,
+          "primary": 9,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 189,
+          "primary": 2,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 190,
+          "primary": 9,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 191,
+          "primary": 3,
+          "score": 1.7999999999999998,
+          "hit": true
+        },
+        {
+          "period": 192,
+          "primary": 8,
+          "score": 6.839999999999999,
+          "hit": true
+        },
+        {
+          "period": 193,
+          "primary": 9,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 194,
+          "primary": 8,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 195,
+          "primary": 9,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 196,
+          "primary": 8,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 197,
+          "primary": 8,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 198,
+          "primary": 2,
+          "score": 9.12,
+          "hit": true
+        },
+        {
+          "period": 200,
+          "primary": 3,
+          "score": 5.04,
+          "hit": true
+        },
+        {
+          "period": 201,
+          "primary": 8,
+          "score": 4.2,
+          "hit": true
+        },
+        {
+          "period": 203,
+          "primary": 8,
+          "score": 2.9,
+          "hit": false
+        },
+        {
+          "period": 207,
+          "primary": 1,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 208,
+          "primary": 7,
+          "score": 2.6999999999999997,
+          "hit": true
+        },
+        {
+          "period": 209,
+          "primary": 2,
+          "score": 6.96,
+          "hit": true
+        },
+        {
+          "period": 210,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "hit": true
+        },
+        {
+          "period": 211,
+          "primary": 1,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 212,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 213,
+          "primary": 5,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 214,
+          "primary": 0,
+          "score": 5.88,
+          "hit": true
+        },
+        {
+          "period": 215,
+          "primary": 2,
+          "score": 3.4,
+          "hit": false
+        },
+        {
+          "period": 216,
+          "primary": 7,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 218,
+          "primary": 3,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 219,
+          "primary": 1,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 220,
+          "primary": 4,
+          "score": 3,
+          "hit": true
+        },
+        {
+          "period": 221,
+          "primary": 6,
+          "score": 2.28,
+          "hit": true
+        },
+        {
+          "period": 224,
+          "primary": 2,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 225,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "hit": true
+        },
+        {
+          "period": 226,
+          "primary": 6,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 227,
+          "primary": 6,
+          "score": 6.96,
+          "hit": true
+        },
+        {
+          "period": 228,
+          "primary": 8,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 229,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 230,
+          "primary": 4,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 231,
+          "primary": 3,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 233,
+          "primary": 8,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 234,
+          "primary": 6,
+          "score": 3.3,
+          "hit": false
+        },
+        {
+          "period": 235,
+          "primary": 6,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 236,
+          "primary": 9,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 237,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 239,
+          "primary": 2,
+          "score": 3.5999999999999996,
+          "hit": true
+        },
+        {
+          "period": 240,
+          "primary": 6,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 241,
+          "primary": 5,
+          "score": 3.5999999999999996,
+          "hit": true
+        },
+        {
+          "period": 242,
+          "primary": 3,
+          "score": 3.3000000000000003,
+          "hit": true
+        },
+        {
+          "period": 243,
+          "primary": 7,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 244,
+          "primary": 8,
+          "score": 3.5999999999999996,
+          "hit": false
+        },
+        {
+          "period": 245,
+          "primary": 8,
+          "score": 6.72,
+          "hit": true
+        },
+        {
+          "period": 246,
+          "primary": 9,
+          "score": 7.5600000000000005,
+          "hit": true
+        },
+        {
+          "period": 247,
+          "primary": 6,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 248,
+          "primary": 5,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 249,
+          "primary": 5,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 250,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "hit": true
+        },
+        {
+          "period": 251,
+          "primary": 3,
+          "score": 2.6999999999999997,
+          "hit": false
+        },
+        {
+          "period": 252,
+          "primary": 3,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 253,
+          "primary": 9,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 254,
+          "primary": 0,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 255,
+          "primary": 9,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 256,
+          "primary": 5,
+          "score": 3.8,
+          "hit": true
+        }
+      ]
+    },
+    {
+      "trainSize": 200,
+      "trainRange": "第1-200期",
+      "testRange": "第201-256期",
+      "trainBestHitRate": 0.88,
+      "v3": {
+        "correct": 34,
+        "total": 46,
+        "hitRate": 0.7391304347826086,
+        "recommended": 46
+      },
+      "v4": {
+        "correct": 35,
+        "total": 46,
+        "hitRate": 0.7608695652173914,
+        "recommended": 46,
+        "coldPenalty": 0
+      },
+      "delta": 0.021739130434782705,
+      "v4Details": [
+        {
+          "period": 203,
+          "primary": 8,
+          "score": 2.9,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 207,
+          "primary": 1,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 208,
+          "primary": 7,
+          "score": 2.6999999999999997,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 209,
+          "primary": 2,
+          "score": 6.96,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 210,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 211,
+          "primary": 1,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 212,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 213,
+          "primary": 5,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 214,
+          "primary": 0,
+          "score": 5.88,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": true
+        },
+        {
+          "period": 215,
+          "primary": 2,
+          "score": 3.4,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 216,
+          "primary": 7,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 218,
+          "primary": 3,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 219,
+          "primary": 1,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 220,
+          "primary": 4,
+          "score": 3,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 221,
+          "primary": 6,
+          "score": 2.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 224,
+          "primary": 2,
+          "score": 2.28,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": false
+        },
+        {
+          "period": 225,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 226,
+          "primary": 6,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 227,
+          "primary": 6,
+          "score": 6.96,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 228,
+          "primary": 8,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 229,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 230,
+          "primary": 4,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 231,
+          "primary": 3,
+          "score": 2.5,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 233,
+          "primary": 8,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 234,
+          "primary": 6,
+          "score": 3.3,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 235,
+          "primary": 6,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 236,
+          "primary": 9,
+          "score": 4.68,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 237,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": false
+        },
+        {
+          "period": 239,
+          "primary": 2,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 240,
+          "primary": 6,
+          "score": 8.28,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 241,
+          "primary": 5,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 242,
+          "primary": 3,
+          "score": 3.3000000000000003,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 243,
+          "primary": 7,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 244,
+          "primary": 8,
+          "score": 3.5999999999999996,
+          "coldPenalty": 0,
+          "miss": 3,
+          "hit": false
+        },
+        {
+          "period": 245,
+          "primary": 8,
+          "score": 6.72,
+          "coldPenalty": 0,
+          "miss": 4,
+          "hit": true
+        },
+        {
+          "period": 246,
+          "primary": 9,
+          "score": 7.5600000000000005,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 247,
+          "primary": 6,
+          "score": 8.16,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 248,
+          "primary": 2,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 249,
+          "primary": 2,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 250,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 251,
+          "primary": 3,
+          "score": 2.6999999999999997,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
+        },
+        {
+          "period": 252,
+          "primary": 3,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 253,
+          "primary": 9,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 254,
+          "primary": 0,
+          "score": 5.76,
+          "coldPenalty": 0,
+          "miss": 2,
+          "hit": true
+        },
+        {
+          "period": 255,
+          "primary": 9,
+          "score": 7.08,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        },
+        {
+          "period": 256,
+          "primary": 5,
+          "score": 3.8,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": true
+        }
+      ],
+      "v3Details": [
+        {
+          "period": 203,
+          "primary": 8,
+          "score": 2.9,
+          "hit": false
+        },
+        {
+          "period": 207,
+          "primary": 1,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 208,
+          "primary": 7,
+          "score": 2.6999999999999997,
+          "hit": true
+        },
+        {
+          "period": 209,
+          "primary": 2,
+          "score": 6.96,
+          "hit": true
+        },
+        {
+          "period": 210,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "hit": true
+        },
+        {
+          "period": 211,
+          "primary": 1,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 212,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 213,
+          "primary": 5,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 214,
+          "primary": 0,
+          "score": 5.88,
+          "hit": true
+        },
+        {
+          "period": 215,
+          "primary": 2,
+          "score": 3.4,
+          "hit": false
+        },
+        {
+          "period": 216,
+          "primary": 7,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 218,
+          "primary": 3,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 219,
+          "primary": 1,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 220,
+          "primary": 4,
+          "score": 3,
+          "hit": true
+        },
+        {
+          "period": 221,
+          "primary": 6,
+          "score": 2.28,
+          "hit": true
+        },
+        {
+          "period": 224,
+          "primary": 2,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 225,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "hit": true
+        },
+        {
+          "period": 226,
+          "primary": 6,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 227,
+          "primary": 6,
+          "score": 6.96,
+          "hit": true
+        },
+        {
+          "period": 228,
+          "primary": 8,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 229,
+          "primary": 4,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 230,
+          "primary": 4,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 231,
+          "primary": 3,
+          "score": 2.5,
+          "hit": true
+        },
+        {
+          "period": 233,
+          "primary": 8,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 234,
+          "primary": 6,
+          "score": 3.3,
+          "hit": false
+        },
+        {
+          "period": 235,
+          "primary": 6,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 236,
+          "primary": 9,
+          "score": 4.68,
+          "hit": true
+        },
+        {
+          "period": 237,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "hit": false
+        },
+        {
+          "period": 239,
+          "primary": 2,
+          "score": 3.5999999999999996,
+          "hit": true
+        },
+        {
+          "period": 240,
+          "primary": 6,
+          "score": 8.28,
+          "hit": true
+        },
+        {
+          "period": 241,
+          "primary": 5,
+          "score": 3.5999999999999996,
+          "hit": true
+        },
+        {
+          "period": 242,
+          "primary": 3,
+          "score": 3.3000000000000003,
+          "hit": true
+        },
+        {
+          "period": 243,
+          "primary": 7,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 244,
+          "primary": 8,
+          "score": 3.5999999999999996,
+          "hit": false
+        },
+        {
+          "period": 245,
+          "primary": 8,
+          "score": 6.72,
+          "hit": true
+        },
+        {
+          "period": 246,
+          "primary": 9,
+          "score": 7.5600000000000005,
+          "hit": true
+        },
+        {
+          "period": 247,
+          "primary": 6,
+          "score": 8.16,
+          "hit": true
+        },
+        {
+          "period": 248,
+          "primary": 5,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 249,
+          "primary": 5,
+          "score": 2.28,
+          "hit": false
+        },
+        {
+          "period": 250,
+          "primary": 0,
+          "score": 6.839999999999999,
+          "hit": true
+        },
+        {
+          "period": 251,
+          "primary": 3,
+          "score": 2.6999999999999997,
+          "hit": false
+        },
+        {
+          "period": 252,
+          "primary": 3,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 253,
+          "primary": 9,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 254,
+          "primary": 0,
+          "score": 5.76,
+          "hit": true
+        },
+        {
+          "period": 255,
+          "primary": 9,
+          "score": 7.08,
+          "hit": true
+        },
+        {
+          "period": 256,
+          "primary": 5,
+          "score": 3.8,
+          "hit": true
+        }
+      ]
+    }
+  ],
+  "walkForward": {
+    "note": "初始窗口150期定参+定人格，第151期起每期只用<=当期历史滚动预测下一期，无未来数据泄露",
+    "trainRange": "第1-150期",
+    "testRange": "第151-256期",
+    "v3": {
+      "correct": 70,
+      "total": 87,
+      "hitRate": 0.8045977011494253,
+      "recommended": 87
+    },
+    "v4": {
+      "correct": 71,
+      "total": 87,
+      "hitRate": 0.8160919540229885,
+      "recommended": 87
+    },
+    "delta": 0.011494252873563204,
+    "v4Details": [
+      {
+        "period": 152,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 4,
+        "hit": true
+      },
+      {
+        "period": 153,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 4,
+        "hit": true
+      },
+      {
+        "period": 154,
+        "primary": 4,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 158,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 160,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 162,
+        "primary": 1,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 163,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 164,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 165,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 166,
+        "primary": 4,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 167,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 168,
+        "primary": 4,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 170,
+        "primary": 5,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 171,
+        "primary": 5,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": false
+      },
+      {
+        "period": 172,
+        "primary": 7,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 173,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 174,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 175,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 176,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 3,
+        "hit": true
+      },
+      {
+        "period": 177,
+        "primary": 4,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 178,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 179,
+        "primary": 5,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 181,
+        "primary": 5,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 182,
+        "primary": 1,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 183,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 184,
+        "primary": 5,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 185,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 186,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 188,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 189,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 190,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 191,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 192,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 193,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 194,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 195,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 196,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 3,
+        "hit": false
+      },
+      {
+        "period": 197,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 4,
+        "hit": true
+      },
+      {
+        "period": 198,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 3,
+        "hit": true
+      },
+      {
+        "period": 200,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 3,
+        "hit": true
+      },
+      {
+        "period": 201,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 203,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 207,
+        "primary": 1,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 208,
+        "primary": 7,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 209,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 3,
+        "hit": true
+      },
+      {
+        "period": 210,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 211,
+        "primary": 1,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 212,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 213,
+        "primary": 5,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 214,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 3,
+        "hit": true
+      },
+      {
+        "period": 215,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 216,
+        "primary": 7,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 218,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 219,
+        "primary": 1,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 220,
+        "primary": 4,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 221,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 224,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 3,
+        "hit": false
+      },
+      {
+        "period": 225,
+        "primary": 4,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 226,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 227,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 228,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 229,
+        "primary": 4,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 230,
+        "primary": 4,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 231,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 233,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 234,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 235,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 236,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 237,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": false
+      },
+      {
+        "period": 239,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 240,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 241,
+        "primary": 5,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 242,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 243,
+        "primary": 7,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 244,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 3,
+        "hit": false
+      },
+      {
+        "period": 245,
+        "primary": 8,
+        "coldPenalty": 0,
+        "miss": 4,
+        "hit": true
+      },
+      {
+        "period": 246,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 247,
+        "primary": 6,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 248,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 249,
+        "primary": 2,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 250,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 251,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
+      },
+      {
+        "period": 252,
+        "primary": 3,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 253,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 254,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 2,
+        "hit": true
+      },
+      {
+        "period": 255,
+        "primary": 9,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      },
+      {
+        "period": 256,
+        "primary": 5,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": true
+      }
+    ],
+    "v3Details": [
+      {
+        "period": 152,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 153,
+        "primary": 3,
+        "hit": true
+      },
+      {
+        "period": 154,
+        "primary": 4,
+        "hit": true
+      },
+      {
+        "period": 158,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 160,
+        "primary": 3,
+        "hit": false
+      },
+      {
+        "period": 162,
+        "primary": 1,
+        "hit": true
+      },
+      {
+        "period": 163,
+        "primary": 0,
+        "hit": true
+      },
+      {
+        "period": 164,
+        "primary": 2,
+        "hit": true
+      },
+      {
+        "period": 165,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 166,
+        "primary": 4,
+        "hit": true
+      },
+      {
+        "period": 167,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 168,
+        "primary": 4,
+        "hit": true
+      },
+      {
+        "period": 170,
+        "primary": 5,
+        "hit": false
+      },
+      {
+        "period": 171,
+        "primary": 5,
+        "hit": false
+      },
+      {
+        "period": 172,
+        "primary": 7,
+        "hit": true
+      },
+      {
+        "period": 173,
+        "primary": 0,
+        "hit": true
+      },
+      {
+        "period": 174,
+        "primary": 8,
+        "hit": true
+      },
+      {
+        "period": 175,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 176,
+        "primary": 2,
+        "hit": true
+      },
+      {
+        "period": 177,
+        "primary": 4,
+        "hit": true
+      },
+      {
+        "period": 178,
+        "primary": 8,
+        "hit": true
+      },
+      {
+        "period": 179,
+        "primary": 5,
+        "hit": true
+      },
+      {
+        "period": 181,
+        "primary": 5,
+        "hit": true
+      },
+      {
+        "period": 182,
+        "primary": 1,
+        "hit": true
+      },
+      {
+        "period": 183,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 184,
+        "primary": 5,
+        "hit": true
+      },
+      {
+        "period": 185,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 186,
+        "primary": 3,
+        "hit": true
+      },
+      {
+        "period": 188,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 189,
+        "primary": 2,
+        "hit": true
+      },
+      {
+        "period": 190,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 191,
+        "primary": 3,
+        "hit": true
+      },
+      {
+        "period": 192,
+        "primary": 8,
+        "hit": true
+      },
+      {
+        "period": 193,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 194,
+        "primary": 8,
+        "hit": false
+      },
+      {
+        "period": 195,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 196,
+        "primary": 8,
+        "hit": false
+      },
+      {
+        "period": 197,
+        "primary": 8,
+        "hit": true
+      },
+      {
+        "period": 198,
+        "primary": 2,
+        "hit": true
+      },
+      {
+        "period": 200,
+        "primary": 3,
+        "hit": true
+      },
+      {
+        "period": 201,
+        "primary": 8,
+        "hit": true
+      },
+      {
+        "period": 203,
+        "primary": 8,
+        "hit": false
+      },
+      {
+        "period": 207,
+        "primary": 1,
+        "hit": true
+      },
+      {
+        "period": 208,
+        "primary": 7,
+        "hit": true
+      },
+      {
+        "period": 209,
+        "primary": 2,
+        "hit": true
+      },
+      {
+        "period": 210,
+        "primary": 0,
+        "hit": true
+      },
+      {
+        "period": 211,
+        "primary": 1,
+        "hit": true
+      },
+      {
+        "period": 212,
+        "primary": 0,
+        "hit": false
+      },
+      {
+        "period": 213,
+        "primary": 5,
+        "hit": true
+      },
+      {
+        "period": 214,
+        "primary": 0,
+        "hit": true
+      },
+      {
+        "period": 215,
+        "primary": 2,
+        "hit": false
+      },
+      {
+        "period": 216,
+        "primary": 7,
+        "hit": true
+      },
+      {
+        "period": 218,
+        "primary": 3,
+        "hit": true
+      },
+      {
+        "period": 219,
+        "primary": 1,
+        "hit": true
+      },
+      {
+        "period": 220,
+        "primary": 4,
+        "hit": true
+      },
+      {
+        "period": 221,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 224,
+        "primary": 2,
+        "hit": false
+      },
+      {
+        "period": 225,
+        "primary": 4,
+        "hit": true
+      },
+      {
+        "period": 226,
+        "primary": 6,
+        "hit": false
+      },
+      {
+        "period": 227,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 228,
+        "primary": 8,
+        "hit": true
+      },
+      {
+        "period": 229,
+        "primary": 4,
+        "hit": false
+      },
+      {
+        "period": 230,
+        "primary": 4,
+        "hit": true
+      },
+      {
+        "period": 231,
+        "primary": 3,
+        "hit": true
+      },
+      {
+        "period": 233,
+        "primary": 8,
+        "hit": true
+      },
+      {
+        "period": 234,
+        "primary": 6,
+        "hit": false
+      },
+      {
+        "period": 235,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 236,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 237,
+        "primary": 0,
+        "hit": false
+      },
+      {
+        "period": 239,
+        "primary": 2,
+        "hit": true
+      },
+      {
+        "period": 240,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 241,
+        "primary": 5,
+        "hit": true
+      },
+      {
+        "period": 242,
+        "primary": 3,
+        "hit": true
+      },
+      {
+        "period": 243,
+        "primary": 7,
+        "hit": true
+      },
+      {
+        "period": 244,
+        "primary": 8,
+        "hit": false
+      },
+      {
+        "period": 245,
+        "primary": 8,
+        "hit": true
+      },
+      {
+        "period": 246,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 247,
+        "primary": 6,
+        "hit": true
+      },
+      {
+        "period": 248,
+        "primary": 5,
+        "hit": false
+      },
+      {
+        "period": 249,
+        "primary": 5,
+        "hit": false
+      },
+      {
+        "period": 250,
+        "primary": 0,
+        "hit": true
+      },
+      {
+        "period": 251,
+        "primary": 3,
+        "hit": false
+      },
+      {
+        "period": 252,
+        "primary": 3,
+        "hit": true
+      },
+      {
+        "period": 253,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 254,
+        "primary": 0,
+        "hit": true
+      },
+      {
+        "period": 255,
+        "primary": 9,
+        "hit": true
+      },
+      {
+        "period": 256,
+        "primary": 5,
+        "hit": true
+      }
+    ]
+  },
+  "conclusion": {
+    "avgDelta": 0.015088159045477278,
+    "maxDelta": 0.021739130434782705,
+    "deltas": [
+      0.011494252873563204,
+      0.015625,
+      0.021739130434782705,
+      0.011494252873563204
+    ],
+    "verdict": "反追冷边际增益微弱（各切分样本外均仅多命中1个，疑似噪声），需实盘验证，不建议据此替换 v3",
+    "coldParams": {
+      "enabled": false,
+      "threshold": 5,
+      "coldWeight": 0.5,
+      "factor": 0.3
+    },
+    "honestNote": "反追冷在样本外平均增量仅 +1.5 个百分点（1.1%/1.6%/2.2%），每个切分都只是多命中 1 个，属噪声级别。结论如实标注「边际增益微弱，需实盘验证」，不夸大。V4 是否替换 v3 由 boss 看完报告决定。"
+  }
+}
