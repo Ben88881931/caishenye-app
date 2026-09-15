@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-15T13:55:23.368Z",
+  "timestamp": "2026-09-15T17:37:01.374Z",
   "modelVersion": "v3-fixed - 修复数据泄露+推荐率bug+报告标注",
   "dataRange": "2026年第1-258期",
   "trainRange": "第1-200期",
@@ -13,99 +13,99 @@
     "0": {
       "type": "hot",
       "scores": {
-        "hot": 0.21176470588235294,
+        "hot": 0.10588235294117647,
         "cold": 0.06470588235294118,
         "streak": 0.029411764705882353
       },
-      "dominant": 0.21176470588235294
+      "dominant": 0.10588235294117647
     },
     "1": {
-      "type": "hot",
+      "type": "streak",
       "scores": {
-        "hot": 0.13529411764705881,
+        "hot": 0.07647058823529412,
         "cold": 0.07058823529411765,
         "streak": 0.1
       },
-      "dominant": 0.13529411764705881
+      "dominant": 0.1
     },
     "2": {
-      "type": "hot",
+      "type": "cold",
       "scores": {
-        "hot": 0.1411764705882353,
+        "hot": 0.029411764705882353,
         "cold": 0.08235294117647059,
         "streak": 0.03529411764705882
       },
-      "dominant": 0.1411764705882353
+      "dominant": 0.08235294117647059
     },
     "3": {
-      "type": "hot",
+      "type": "cold",
       "scores": {
-        "hot": 0.13529411764705881,
+        "hot": 0.029411764705882353,
         "cold": 0.058823529411764705,
         "streak": 0.023529411764705882
       },
-      "dominant": 0.13529411764705881
+      "dominant": 0.058823529411764705
     },
     "4": {
       "type": "hot",
       "scores": {
-        "hot": 0.13529411764705881,
+        "hot": 0.07647058823529412,
         "cold": 0.041176470588235294,
         "streak": 0.052941176470588235
       },
-      "dominant": 0.13529411764705881
+      "dominant": 0.07647058823529412
     },
     "5": {
       "type": "hot",
       "scores": {
-        "hot": 0.12941176470588237,
+        "hot": 0.06470588235294118,
         "cold": 0.06470588235294118,
         "streak": 0.029411764705882353
       },
-      "dominant": 0.12941176470588237
+      "dominant": 0.06470588235294118
     },
     "6": {
       "type": "hot",
       "scores": {
-        "hot": 0.18235294117647058,
+        "hot": 0.11176470588235295,
         "cold": 0.08823529411764706,
         "streak": 0.058823529411764705
       },
-      "dominant": 0.18235294117647058
+      "dominant": 0.11176470588235295
     },
     "7": {
       "type": "hot",
       "scores": {
-        "hot": 0.18823529411764706,
+        "hot": 0.1,
         "cold": 0.03529411764705882,
         "streak": 0.01764705882352941
       },
-      "dominant": 0.18823529411764706
+      "dominant": 0.1
     },
     "8": {
       "type": "hot",
       "scores": {
-        "hot": 0.19411764705882353,
+        "hot": 0.06470588235294118,
         "cold": 0.058823529411764705,
         "streak": 0.047058823529411764
       },
-      "dominant": 0.19411764705882353
+      "dominant": 0.06470588235294118
     },
     "9": {
       "type": "hot",
       "scores": {
-        "hot": 0.21176470588235294,
+        "hot": 0.11764705882352941,
         "cold": 0.07058823529411765,
         "streak": 0.03529411764705882
       },
-      "dominant": 0.21176470588235294
+      "dominant": 0.11764705882352941
     }
   },
   "bestParams": {
-    "trend": 3,
+    "trend": 1.5,
     "streak": 1.5,
     "reversal": 1,
-    "triple": 1,
+    "triple": 1.5,
     "personalityMultiplier": 1.2,
     "minSignals": 2
   },
@@ -114,140 +114,140 @@
     "topParams": [
       {
         "params": {
-          "trend": 3,
+          "trend": 1.5,
           "streak": 1.5,
           "reversal": 1,
-          "triple": 1,
+          "triple": 1.5,
           "personalityMultiplier": 1.2,
           "minSignals": 2
         },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
       },
       {
         "params": {
-          "trend": 3,
+          "trend": 1.5,
           "streak": 1.5,
           "reversal": 1,
-          "triple": 1,
+          "triple": 1.5,
           "personalityMultiplier": 1.2,
           "minSignals": 3
         },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
       },
       {
         "params": {
-          "trend": 3,
-          "streak": 1.5,
-          "reversal": 1,
-          "triple": 1,
-          "personalityMultiplier": 1.5,
-          "minSignals": 2
-        },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
-      },
-      {
-        "params": {
-          "trend": 3,
-          "streak": 1.5,
-          "reversal": 1,
-          "triple": 1,
-          "personalityMultiplier": 1.5,
-          "minSignals": 3
-        },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
-      },
-      {
-        "params": {
-          "trend": 3,
+          "trend": 1.5,
           "streak": 1.5,
           "reversal": 2,
-          "triple": 1,
+          "triple": 1.5,
           "personalityMultiplier": 1.2,
           "minSignals": 2
         },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
       },
       {
         "params": {
-          "trend": 3,
+          "trend": 1.5,
           "streak": 1.5,
           "reversal": 2,
-          "triple": 1,
+          "triple": 1.5,
           "personalityMultiplier": 1.2,
           "minSignals": 3
         },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
       },
       {
         "params": {
-          "trend": 3,
-          "streak": 1.5,
-          "reversal": 2,
-          "triple": 1,
-          "personalityMultiplier": 1.5,
-          "minSignals": 2
-        },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
-      },
-      {
-        "params": {
-          "trend": 3,
-          "streak": 1.5,
-          "reversal": 2,
-          "triple": 1,
-          "personalityMultiplier": 1.5,
-          "minSignals": 3
-        },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
-      },
-      {
-        "params": {
-          "trend": 3,
+          "trend": 1.5,
           "streak": 2.5,
           "reversal": 1,
-          "triple": 1,
+          "triple": 1.5,
           "personalityMultiplier": 1.2,
           "minSignals": 2
         },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
       },
       {
         "params": {
-          "trend": 3,
+          "trend": 1.5,
           "streak": 2.5,
           "reversal": 1,
-          "triple": 1,
+          "triple": 1.5,
           "personalityMultiplier": 1.2,
           "minSignals": 3
         },
-        "hitRate": 0.88,
-        "recommendRate": 0.8823529411764706
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
+      },
+      {
+        "params": {
+          "trend": 1.5,
+          "streak": 2.5,
+          "reversal": 2,
+          "triple": 1.5,
+          "personalityMultiplier": 1.2,
+          "minSignals": 2
+        },
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
+      },
+      {
+        "params": {
+          "trend": 1.5,
+          "streak": 2.5,
+          "reversal": 2,
+          "triple": 1.5,
+          "personalityMultiplier": 1.2,
+          "minSignals": 3
+        },
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
+      },
+      {
+        "params": {
+          "trend": 1.5,
+          "streak": 3.5,
+          "reversal": 1,
+          "triple": 1.5,
+          "personalityMultiplier": 1.2,
+          "minSignals": 2
+        },
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
+      },
+      {
+        "params": {
+          "trend": 1.5,
+          "streak": 3.5,
+          "reversal": 1,
+          "triple": 1.5,
+          "personalityMultiplier": 1.2,
+          "minSignals": 3
+        },
+        "hitRate": 0.5945945945945946,
+        "recommendRate": 0.8705882352941177
       }
     ]
   },
   "testResult": {
     "note": "样本外测试，用于验收",
     "totalAttempts": 54,
-    "recommended": 45,
-    "recommendRate": 0.8333333333333334,
-    "correct": 33,
-    "total": 45,
-    "hitRate": 0.7333333333333333,
+    "recommended": 44,
+    "recommendRate": 0.8148148148148148,
+    "correct": 23,
+    "total": 44,
+    "hitRate": 0.5227272727272727,
     "details": [
       {
         "period": 203,
         "primary": 8,
         "secondary": 2,
-        "score": 2.9,
+        "score": 3.45,
         "signalCount": 2,
         "signals": [
           "trend_hot_5",
@@ -267,7 +267,7 @@
         "period": 207,
         "primary": 1,
         "secondary": 2,
-        "score": 2.5,
+        "score": 2.8500000000000005,
         "signalCount": 2,
         "signals": [
           "trend_hot_5",
@@ -287,7 +287,7 @@
         "period": 208,
         "primary": 7,
         "secondary": 2,
-        "score": 2.6999999999999997,
+        "score": 2.25,
         "signalCount": 3,
         "signals": [
           "trend_hot_7",
@@ -308,10 +308,10 @@
         "period": 209,
         "primary": 2,
         "secondary": null,
-        "score": 6.96,
+        "score": 1.9,
         "signalCount": 3,
         "signals": [
-          "ab_strong",
+          "ab_weak",
           "trend_hot_10",
           "trend_hot_15"
         ],
@@ -327,15 +327,15 @@
       },
       {
         "period": 210,
-        "primary": 0,
-        "secondary": 3,
-        "score": 6.839999999999999,
+        "primary": 3,
+        "secondary": 0,
+        "score": 2.25,
         "signalCount": 4,
         "signals": [
-          "ab_strong",
-          "trend_hot_5",
           "trend_hot_7",
-          "trend_hot_10"
+          "trend_hot_10",
+          "trend_hot_15",
+          "triple_hot"
         ],
         "actualTails": [
           0,
@@ -345,35 +345,16 @@
           8,
           9
         ],
-        "hit": true
-      },
-      {
-        "period": 211,
-        "primary": 1,
-        "secondary": null,
-        "score": 4.68,
-        "signalCount": 2,
-        "signals": [
-          "ab_strong",
-          "trend_hot_10"
-        ],
-        "actualTails": [
-          1,
-          2,
-          3,
-          7,
-          8,
-          9
-        ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 212,
         "primary": 0,
         "secondary": null,
-        "score": 1.7999999999999998,
-        "signalCount": 2,
+        "score": 4.68,
+        "signalCount": 3,
         "signals": [
+          "ab_strong",
           "trend_hot_7",
           "trend_hot_10"
         ],
@@ -388,13 +369,13 @@
       },
       {
         "period": 213,
-        "primary": 5,
-        "secondary": 8,
-        "score": 4.68,
+        "primary": 8,
+        "secondary": null,
+        "score": 3.45,
         "signalCount": 2,
         "signals": [
-          "ab_strong",
-          "trend_hot_15"
+          "trend_hot_5",
+          "triple_reversal"
         ],
         "actualTails": [
           1,
@@ -402,16 +383,16 @@
           5,
           9
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 214,
         "primary": 0,
         "secondary": 7,
-        "score": 5.88,
+        "score": 1.74,
         "signalCount": 2,
         "signals": [
-          "ab_strong",
+          "ab_weak",
           "trend_hot_10"
         ],
         "actualTails": [
@@ -429,7 +410,7 @@
         "period": 215,
         "primary": 2,
         "secondary": null,
-        "score": 3.4,
+        "score": 3.3000000000000003,
         "signalCount": 3,
         "signals": [
           "trend_hot_5",
@@ -450,7 +431,7 @@
         "period": 216,
         "primary": 7,
         "secondary": 2,
-        "score": 4.68,
+        "score": 4.14,
         "signalCount": 2,
         "signals": [
           "ab_strong",
@@ -468,33 +449,35 @@
         "hit": true
       },
       {
-        "period": 218,
-        "primary": 3,
+        "period": 217,
+        "primary": 9,
         "secondary": null,
-        "score": 4.68,
+        "score": 4.14,
         "signalCount": 2,
         "signals": [
           "ab_strong",
-          "trend_hot_15"
+          "trend_hot_10"
         ],
         "actualTails": [
+          0,
+          1,
           2,
-          3,
+          4,
           6,
-          7,
-          8
+          7
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 219,
-        "primary": 1,
-        "secondary": 0,
-        "score": 4.68,
-        "signalCount": 2,
+        "primary": 0,
+        "secondary": 1,
+        "score": 4.5,
+        "signalCount": 3,
         "signals": [
-          "ab_strong",
-          "trend_hot_15"
+          "trend_hot_5",
+          "trend_hot_15",
+          "triple_reversal"
         ],
         "actualTails": [
           1,
@@ -504,13 +487,13 @@
           8,
           9
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 220,
         "primary": 4,
         "secondary": null,
-        "score": 3,
+        "score": 2.7,
         "signalCount": 3,
         "signals": [
           "trend_hot_5",
@@ -531,7 +514,7 @@
         "period": 221,
         "primary": 6,
         "secondary": null,
-        "score": 2.28,
+        "score": 1.74,
         "signalCount": 2,
         "signals": [
           "ab_weak",
@@ -549,7 +532,7 @@
         "period": 224,
         "primary": 2,
         "secondary": 6,
-        "score": 2.28,
+        "score": 1.45,
         "signalCount": 2,
         "signals": [
           "ab_weak",
@@ -587,7 +570,7 @@
         "period": 226,
         "primary": 6,
         "secondary": null,
-        "score": 1.7999999999999998,
+        "score": 0.8999999999999999,
         "signalCount": 2,
         "signals": [
           "trend_hot_10",
@@ -607,7 +590,7 @@
         "period": 227,
         "primary": 6,
         "secondary": null,
-        "score": 6.96,
+        "score": 5.88,
         "signalCount": 3,
         "signals": [
           "ab_strong",
@@ -628,10 +611,9 @@
         "period": 228,
         "primary": 8,
         "secondary": null,
-        "score": 5.76,
-        "signalCount": 3,
+        "score": 0.8999999999999999,
+        "signalCount": 2,
         "signals": [
-          "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
         ],
@@ -647,7 +629,7 @@
         "period": 229,
         "primary": 4,
         "secondary": null,
-        "score": 1.7999999999999998,
+        "score": 0.8999999999999999,
         "signalCount": 2,
         "signals": [
           "trend_hot_10",
@@ -667,7 +649,7 @@
         "period": 230,
         "primary": 4,
         "secondary": 9,
-        "score": 8.16,
+        "score": 4.68,
         "signalCount": 3,
         "signals": [
           "ab_strong",
@@ -688,7 +670,7 @@
         "period": 231,
         "primary": 3,
         "secondary": null,
-        "score": 2.5,
+        "score": 2.8500000000000005,
         "signalCount": 2,
         "signals": [
           "trend_hot_5",
@@ -706,13 +688,13 @@
       },
       {
         "period": 233,
-        "primary": 8,
-        "secondary": 3,
-        "score": 4.68,
+        "primary": 3,
+        "secondary": null,
+        "score": 0.8999999999999999,
         "signalCount": 2,
         "signals": [
-          "ab_strong",
-          "trend_hot_15"
+          "trend_hot_7",
+          "trend_hot_10"
         ],
         "actualTails": [
           1,
@@ -722,18 +704,17 @@
           8,
           9
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 234,
-        "primary": 6,
-        "secondary": 0,
-        "score": 3.3,
-        "signalCount": 4,
+        "primary": 0,
+        "secondary": 6,
+        "score": 2.25,
+        "signalCount": 3,
         "signals": [
+          "trend_hot_5",
           "trend_hot_7",
-          "trend_hot_10",
-          "trend_hot_15",
           "triple_hot"
         ],
         "actualTails": [
@@ -742,13 +723,13 @@
           7,
           9
         ],
-        "hit": false
+        "hit": true
       },
       {
         "period": 235,
         "primary": 6,
-        "secondary": null,
-        "score": 8.28,
+        "secondary": 8,
+        "score": 5.34,
         "signalCount": 2,
         "signals": [
           "ab_strong",
@@ -767,8 +748,8 @@
       {
         "period": 236,
         "primary": 9,
-        "secondary": 0,
-        "score": 4.68,
+        "secondary": 3,
+        "score": 4.14,
         "signalCount": 2,
         "signals": [
           "ab_strong",
@@ -789,7 +770,7 @@
         "period": 237,
         "primary": 0,
         "secondary": null,
-        "score": 1.7999999999999998,
+        "score": 0.8999999999999999,
         "signalCount": 2,
         "signals": [
           "trend_hot_7",
@@ -807,15 +788,13 @@
       },
       {
         "period": 239,
-        "primary": 2,
-        "secondary": 0,
-        "score": 3.5999999999999996,
-        "signalCount": 4,
+        "primary": 0,
+        "secondary": 2,
+        "score": 5.34,
+        "signalCount": 2,
         "signals": [
-          "trend_hot_5",
-          "trend_hot_7",
-          "trend_hot_10",
-          "triple_hot"
+          "ab_strong",
+          "trend_hot_10"
         ],
         "actualTails": [
           2,
@@ -824,17 +803,18 @@
           5,
           7
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 240,
-        "primary": 6,
-        "secondary": 1,
-        "score": 8.28,
-        "signalCount": 2,
+        "primary": 1,
+        "secondary": 0,
+        "score": 5.8500000000000005,
+        "signalCount": 3,
         "signals": [
           "ab_strong",
-          "trend_hot_15"
+          "trend_hot_5",
+          "triple_reversal"
         ],
         "actualTails": [
           2,
@@ -843,13 +823,13 @@
           7,
           8
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 241,
         "primary": 5,
         "secondary": null,
-        "score": 3.5999999999999996,
+        "score": 2.6999999999999997,
         "signalCount": 4,
         "signals": [
           "trend_hot_7",
@@ -870,7 +850,7 @@
         "period": 242,
         "primary": 3,
         "secondary": 4,
-        "score": 3.3000000000000003,
+        "score": 4.05,
         "signalCount": 2,
         "signals": [
           "trend_hot_5",
@@ -890,10 +870,9 @@
         "period": 243,
         "primary": 7,
         "secondary": null,
-        "score": 5.76,
-        "signalCount": 3,
+        "score": 0.8999999999999999,
+        "signalCount": 2,
         "signals": [
-          "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
         ],
@@ -910,8 +889,8 @@
       {
         "period": 244,
         "primary": 8,
-        "secondary": 5,
-        "score": 3.5999999999999996,
+        "secondary": 3,
+        "score": 4.8,
         "signalCount": 2,
         "signals": [
           "ab_weak",
@@ -931,10 +910,10 @@
         "period": 245,
         "primary": 8,
         "secondary": 2,
-        "score": 6.72,
+        "score": 4.08,
         "signalCount": 2,
         "signals": [
-          "ab_strong",
+          "ab_weak",
           "triple_reversal"
         ],
         "actualTails": [
@@ -947,14 +926,14 @@
       },
       {
         "period": 246,
-        "primary": 9,
-        "secondary": 5,
-        "score": 7.5600000000000005,
+        "primary": 5,
+        "secondary": 9,
+        "score": 4.68,
         "signalCount": 3,
         "signals": [
           "ab_strong",
-          "trend_hot_5",
-          "triple_reversal"
+          "trend_hot_10",
+          "trend_hot_15"
         ],
         "actualTails": [
           0,
@@ -963,13 +942,13 @@
           4,
           9
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 247,
         "primary": 6,
-        "secondary": 5,
-        "score": 8.16,
+        "secondary": 7,
+        "score": 6.24,
         "signalCount": 2,
         "signals": [
           "ab_strong",
@@ -988,7 +967,7 @@
         "period": 248,
         "primary": 5,
         "secondary": 2,
-        "score": 2.28,
+        "score": 1.74,
         "signalCount": 2,
         "signals": [
           "ab_weak",
@@ -1008,7 +987,7 @@
         "period": 249,
         "primary": 5,
         "secondary": 2,
-        "score": 2.28,
+        "score": 1.74,
         "signalCount": 2,
         "signals": [
           "ab_weak",
@@ -1026,11 +1005,10 @@
       {
         "period": 250,
         "primary": 0,
-        "secondary": 5,
-        "score": 6.839999999999999,
-        "signalCount": 4,
+        "secondary": 4,
+        "score": 2.25,
+        "signalCount": 3,
         "signals": [
-          "ab_strong",
           "trend_hot_5",
           "trend_hot_7",
           "triple_hot"
@@ -1048,7 +1026,7 @@
         "period": 251,
         "primary": 3,
         "secondary": null,
-        "score": 2.6999999999999997,
+        "score": 1.3499999999999999,
         "signalCount": 3,
         "signals": [
           "trend_hot_7",
@@ -1069,10 +1047,9 @@
         "period": 252,
         "primary": 3,
         "secondary": null,
-        "score": 5.76,
-        "signalCount": 3,
+        "score": 0.8999999999999999,
+        "signalCount": 2,
         "signals": [
-          "ab_strong",
           "trend_hot_10",
           "trend_hot_15"
         ],
@@ -1087,9 +1064,9 @@
       },
       {
         "period": 253,
-        "primary": 9,
-        "secondary": 0,
-        "score": 5.76,
+        "primary": 0,
+        "secondary": 9,
+        "score": 4.68,
         "signalCount": 3,
         "signals": [
           "ab_strong",
@@ -1103,18 +1080,17 @@
           8,
           9
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 254,
-        "primary": 0,
-        "secondary": 1,
-        "score": 5.76,
-        "signalCount": 3,
+        "primary": 1,
+        "secondary": 0,
+        "score": 2.8500000000000005,
+        "signalCount": 2,
         "signals": [
-          "ab_strong",
-          "trend_hot_7",
-          "trend_hot_10"
+          "trend_hot_5",
+          "triple_reversal"
         ],
         "actualTails": [
           0,
@@ -1123,13 +1099,13 @@
           5,
           6
         ],
-        "hit": true
+        "hit": false
       },
       {
         "period": 255,
         "primary": 9,
         "secondary": 8,
-        "score": 7.08,
+        "score": 4.14,
         "signalCount": 2,
         "signals": [
           "ab_strong",
@@ -1149,20 +1125,20 @@
   },
   "signalDist": {
     "2": {
-      "total": 27,
-      "hit": 18
+      "total": 28,
+      "hit": 15
     },
     "3": {
-      "total": 13,
-      "hit": 11
+      "total": 14,
+      "hit": 7
     },
     "4": {
-      "total": 5,
-      "hit": 4
+      "total": 2,
+      "hit": 1
     }
   },
   "conclusion": {
-    "hitRatePass": true,
+    "hitRatePass": false,
     "recommendRatePass": true
   }
 }

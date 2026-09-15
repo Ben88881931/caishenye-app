@@ -81,7 +81,7 @@ function weightedExactBounce(d, upto, k) {
   if (uidx < 0) return { rate: 0, sample: 0 };
 
   for (let i = 0; i < periods.length - 1; i++) {
-    if (periods[i] > upto) break;
+    if (periods[i] >= upto) break;
     if (hit(periods[i], d)) { run = 0; }
     else {
       run++;

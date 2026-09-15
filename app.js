@@ -1372,7 +1372,7 @@
   }
 
   // ===== 预估三层框架 + 下期推荐 =====
-  // 新模型：加权恰好遗漏k期反弹率（回测命中率94.8%）
+  // 新模型：加权恰好遗漏k期反弹率（回测命中率52.3%）
   var BOUNCE = { 0: 2, 1: 3, 2: 1, 3: 1, 4: 2, 5: 1, 6: 2, 7: 2, 8: 2, 9: 4 };
   var NEW_MODEL = { decayRate: 1.75, bounceThresh: 0.75, bounceThresh2: 0.65, wBounce: 5, wBounce2: 3, wDepth: 1, depthThresh: 0.5, minSample: 2 };
 
@@ -1430,7 +1430,7 @@
     }
     if (uidx < 0) return { rate: 0, sample: 0 };
     for (var i = 0; i < periods.length - 1; i++) {
-      if (periods[i] > upto) break;
+      if (periods[i] >= upto) break;
       if (hit(periods[i], d)) { run = 0; }
       else {
         run++;
@@ -1515,7 +1515,7 @@
 
   function renderPredict() {
     var N = latest;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 回测命中率94.8%</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 回测命中率52.3%</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>遗漏占比</th><th>加权反弹率</th><th>样本</th><th>得分</th></tr></thead><tbody>';
     var cands = [];
     var lastBin = bin(N);
@@ -1586,7 +1586,7 @@
       }
     }
     html += '<p><b>评分规则：</b>加权反弹率≥75% +5分；≥65% +3分；遗漏深度≥50% +1分。分数并列时给双推荐。</p>';
-    html += '<p><b>模型原理：</b>恰好遗漏k期的加权近期反弹率，衰减因子1.75（越近权重越高），回测命中率94.8%。</p>';
+    html += '<p><b>模型原理：</b>恰好遗漏k期的加权近期反弹率，衰减因子1.75（越近权重越高），回测命中率52.3%。</p>';
     html += '<p><b>风险提示：</b>模型仅供参考，不应据此重注。</p>';
     html += "</div></div></div>";
 
@@ -1628,7 +1628,7 @@
       html += "</tbody></table></div></div>";
     }
 
-    html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，回测命中率94.8%。仅供参考，不应据此重注。</p>';
+    html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，回测命中率52.3%。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
 
@@ -1645,7 +1645,7 @@
     // app.js排序：只按得分排序
     cands.sort(function(a, b) { return b.score - a.score; });
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">模型A预测</h2><span class="section__hint">app.js逻辑 · 命中率95.0% · 得分并列时跳过</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">模型A预测</h2><span class="section__hint">app.js逻辑 · 命中率52.3% · 得分并列时跳过</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>得分</th><th>反弹率</th><th>遗漏</th><th>最大遗漏</th><th>深度占比</th></tr></thead><tbody>';
     cands.forEach(function(c) {
       var wbrColor = c.wbr >= 0.75 ? '#16a34a' : c.wbr >= 0.65 ? '#eab308' : '#94a3b8';
@@ -1706,7 +1706,7 @@
       html += '</tbody></table></div></div>';
     }
 
-    html += '<p class="disclaimer">模型A：只按得分排序，得分并列时跳过。回测命中率95.0%。仅供参考，不应据此重注。</p>';
+    html += '<p class="disclaimer">模型A：只按得分排序，得分并列时跳过。回测命中率52.3%。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
 
@@ -1723,7 +1723,7 @@
     // 模型B排序：先按得分，再按反弹率
     cands.sort(function(a, b) { return b.score - a.score || b.wbr - a.wbr; });
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">模型B预测</h2><span class="section__hint">得分+反弹率排序 · 命中率94.2% · 不跳过</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">模型B预测</h2><span class="section__hint">得分+反弹率排序 · 命中率52.3% · 不跳过</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>得分</th><th>反弹率</th><th>遗漏</th><th>最大遗漏</th><th>深度占比</th></tr></thead><tbody>';
     cands.forEach(function(c) {
       var wbrColor = c.wbr >= 0.75 ? '#16a34a' : c.wbr >= 0.65 ? '#eab308' : '#94a3b8';
@@ -1777,7 +1777,7 @@
       html += '</tbody></table></div></div>';
     }
 
-    html += '<p class="disclaimer">模型B：先按得分，再按反弹率排序，得分并列时不跳过。回测命中率94.2%。仅供参考，不应据此重注。</p>';
+    html += '<p class="disclaimer">模型B：先按得分，再按反弹率排序，得分并列时不跳过。回测命中率52.3%。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
 

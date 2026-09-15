@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-15T13:55:23.801Z",
+  "timestamp": "2026-09-15T17:37:08.705Z",
   "dataRange": "2026年第1-258期（共258期）",
   "coldParams": {
     "enabled": false,
@@ -12,50 +12,26 @@
       "trainSize": 150,
       "trainRange": "第1-150期",
       "testRange": "第151-258期",
-      "trainBestHitRate": 0.8807339449541285,
+      "trainBestHitRate": 0.576271186440678,
       "v3": {
-        "correct": 70,
-        "total": 89,
-        "hitRate": 0.7865168539325843,
-        "recommended": 89
+        "correct": 23,
+        "total": 38,
+        "hitRate": 0.6052631578947368,
+        "recommended": 38
       },
       "v4": {
-        "correct": 71,
-        "total": 89,
-        "hitRate": 0.797752808988764,
-        "recommended": 89,
+        "correct": 23,
+        "total": 38,
+        "hitRate": 0.6052631578947368,
+        "recommended": 38,
         "coldPenalty": 0
       },
-      "delta": 0.011235955056179692,
+      "delta": 0,
       "v4Details": [
         {
           "period": 152,
-          "primary": 6,
-          "score": 8.28,
-          "coldPenalty": 0,
-          "miss": 4,
-          "hit": true
-        },
-        {
-          "period": 153,
-          "primary": 3,
-          "score": 5.88,
-          "coldPenalty": 0,
-          "miss": 4,
-          "hit": true
-        },
-        {
-          "period": 154,
           "primary": 4,
-          "score": 2.9,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 158,
-          "primary": 6,
-          "score": 3.7,
+          "score": 4.2,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -69,33 +45,9 @@
           "hit": false
         },
         {
-          "period": 162,
-          "primary": 1,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 163,
-          "primary": 0,
-          "score": 7.08,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 164,
-          "primary": 2,
-          "score": 5.3999999999999995,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
           "period": 165,
           "primary": 9,
-          "score": 7.199999999999999,
+          "score": 3,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -103,7 +55,7 @@
         {
           "period": 166,
           "primary": 4,
-          "score": 7.199999999999999,
+          "score": 3,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -111,90 +63,34 @@
         {
           "period": 167,
           "primary": 9,
-          "score": 8.16,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
-        },
-        {
-          "period": 168,
-          "primary": 4,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 170,
-          "primary": 5,
-          "score": 2.1,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 171,
-          "primary": 5,
-          "score": 2.1,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": false
         },
         {
           "period": 172,
           "primary": 7,
-          "score": 6.4799999999999995,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 173,
-          "primary": 0,
-          "score": 5.76,
+          "score": 2.4,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
         },
         {
           "period": 174,
-          "primary": 8,
-          "score": 7.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 175,
-          "primary": 6,
-          "score": 7.08,
+          "primary": 4,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
         },
         {
           "period": 176,
-          "primary": 2,
-          "score": 9.12,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": true
-        },
-        {
-          "period": 177,
           "primary": 4,
-          "score": 7.08,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 178,
-          "primary": 8,
-          "score": 4.68,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
+          "hit": false
         },
         {
           "period": 179,
@@ -221,49 +117,17 @@
           "hit": true
         },
         {
-          "period": 183,
-          "primary": 6,
-          "score": 7.08,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 184,
-          "primary": 5,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
           "period": 185,
           "primary": 9,
-          "score": 10.319999999999999,
+          "score": 9.899999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 186,
-          "primary": 3,
-          "score": 2.5,
-          "coldPenalty": 0,
-          "miss": 2,
           "hit": true
         },
         {
           "period": 188,
           "primary": 9,
-          "score": 8.16,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 189,
-          "primary": 2,
-          "score": 2.5,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -271,15 +135,7 @@
         {
           "period": 190,
           "primary": 9,
-          "score": 8.16,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 191,
-          "primary": 3,
-          "score": 1.7999999999999998,
+          "score": 10.2,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -287,15 +143,7 @@
         {
           "period": 192,
           "primary": 8,
-          "score": 6.839999999999999,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 193,
-          "primary": 9,
-          "score": 7.08,
+          "score": 2.6999999999999997,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -303,71 +151,23 @@
         {
           "period": 194,
           "primary": 8,
-          "score": 1.7999999999999998,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 195,
-          "primary": 9,
-          "score": 7.08,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 196,
-          "primary": 8,
-          "score": 2.28,
-          "coldPenalty": 0,
-          "miss": 3,
           "hit": false
         },
         {
           "period": 197,
-          "primary": 8,
-          "score": 8.28,
+          "primary": 5,
+          "score": 3.4,
           "coldPenalty": 0,
-          "miss": 4,
-          "hit": true
-        },
-        {
-          "period": 198,
-          "primary": 2,
-          "score": 9.12,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": true
-        },
-        {
-          "period": 200,
-          "primary": 3,
-          "score": 5.04,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": true
+          "miss": 1,
+          "hit": false
         },
         {
           "period": 201,
           "primary": 8,
           "score": 4.2,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 203,
-          "primary": 8,
-          "score": 2.9,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 207,
-          "primary": 1,
-          "score": 2.5,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -383,50 +183,26 @@
         {
           "period": 209,
           "primary": 2,
-          "score": 6.96,
+          "score": 2.8,
           "coldPenalty": 0,
           "miss": 3,
           "hit": true
         },
         {
           "period": 210,
-          "primary": 0,
-          "score": 6.839999999999999,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 211,
-          "primary": 1,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 212,
-          "primary": 0,
-          "score": 1.7999999999999998,
+          "primary": 3,
+          "score": 3.3,
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
         },
         {
-          "period": 213,
-          "primary": 5,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 214,
+          "period": 212,
           "primary": 0,
-          "score": 5.88,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
-          "miss": 3,
-          "hit": true
+          "miss": 1,
+          "hit": false
         },
         {
           "period": 215,
@@ -437,28 +213,12 @@
           "hit": false
         },
         {
-          "period": 216,
-          "primary": 7,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 218,
-          "primary": 3,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 219,
-          "primary": 1,
-          "score": 4.68,
+          "primary": 0,
+          "score": 4.2,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
+          "hit": false
         },
         {
           "period": 220,
@@ -469,83 +229,19 @@
           "hit": true
         },
         {
-          "period": 221,
-          "primary": 6,
-          "score": 2.28,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 224,
-          "primary": 2,
-          "score": 2.28,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": false
-        },
-        {
-          "period": 225,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 226,
-          "primary": 6,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
           "period": 227,
           "primary": 6,
-          "score": 6.96,
+          "score": 8.7,
           "coldPenalty": 0,
           "miss": 2,
           "hit": true
-        },
-        {
-          "period": 228,
-          "primary": 8,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 229,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
         },
         {
           "period": 230,
           "primary": 4,
-          "score": 8.16,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 231,
-          "primary": 3,
-          "score": 2.5,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 233,
-          "primary": 8,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
           "hit": true
         },
         {
@@ -557,27 +253,11 @@
           "hit": false
         },
         {
-          "period": 235,
-          "primary": 6,
-          "score": 8.28,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 236,
-          "primary": 9,
-          "score": 4.68,
+          "primary": 0,
+          "score": 2.6999999999999997,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 237,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 2,
           "hit": false
         },
         {
@@ -590,11 +270,11 @@
         },
         {
           "period": 240,
-          "primary": 6,
-          "score": 8.28,
+          "primary": 1,
+          "score": 8.25,
           "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
+          "miss": 1,
+          "hit": false
         },
         {
           "period": 241,
@@ -605,73 +285,17 @@
           "hit": true
         },
         {
-          "period": 242,
-          "primary": 3,
-          "score": 3.3000000000000003,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 243,
-          "primary": 7,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 244,
-          "primary": 8,
-          "score": 3.5999999999999996,
+          "period": 246,
+          "primary": 5,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 3,
           "hit": false
         },
         {
-          "period": 245,
-          "primary": 8,
-          "score": 6.72,
-          "coldPenalty": 0,
-          "miss": 4,
-          "hit": true
-        },
-        {
-          "period": 246,
-          "primary": 9,
-          "score": 7.5600000000000005,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 247,
-          "primary": 6,
-          "score": 8.16,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 248,
-          "primary": 2,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 249,
-          "primary": 2,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 250,
           "primary": 0,
-          "score": 6.839999999999999,
+          "score": 2.6999999999999997,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -685,36 +309,20 @@
           "hit": false
         },
         {
-          "period": 252,
-          "primary": 3,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 253,
-          "primary": 9,
-          "score": 5.76,
+          "primary": 0,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 254,
-          "primary": 0,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
+          "hit": false
         },
         {
           "period": 255,
-          "primary": 9,
-          "score": 7.08,
+          "primary": 8,
+          "score": 2.6999999999999997,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
+          "hit": false
         },
         {
           "period": 256,
@@ -723,47 +331,13 @@
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
-        },
-        {
-          "period": 257,
-          "primary": 2,
-          "score": 2.9,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 258,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
         }
       ],
       "v3Details": [
         {
           "period": 152,
-          "primary": 6,
-          "score": 8.28,
-          "hit": true
-        },
-        {
-          "period": 153,
-          "primary": 3,
-          "score": 5.88,
-          "hit": true
-        },
-        {
-          "period": 154,
           "primary": 4,
-          "score": 2.9,
-          "hit": true
-        },
-        {
-          "period": 158,
-          "primary": 6,
-          "score": 3.7,
+          "score": 4.2,
           "hit": true
         },
         {
@@ -773,100 +347,40 @@
           "hit": false
         },
         {
-          "period": 162,
-          "primary": 1,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 163,
-          "primary": 0,
-          "score": 7.08,
-          "hit": true
-        },
-        {
-          "period": 164,
-          "primary": 2,
-          "score": 5.3999999999999995,
-          "hit": true
-        },
-        {
           "period": 165,
           "primary": 9,
-          "score": 7.199999999999999,
+          "score": 3,
           "hit": true
         },
         {
           "period": 166,
           "primary": 4,
-          "score": 7.199999999999999,
+          "score": 3,
           "hit": true
         },
         {
           "period": 167,
           "primary": 9,
-          "score": 8.16,
+          "score": 7.199999999999999,
           "hit": true
-        },
-        {
-          "period": 168,
-          "primary": 4,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 170,
-          "primary": 5,
-          "score": 2.1,
-          "hit": false
-        },
-        {
-          "period": 171,
-          "primary": 5,
-          "score": 2.1,
-          "hit": false
         },
         {
           "period": 172,
           "primary": 7,
-          "score": 6.4799999999999995,
-          "hit": true
-        },
-        {
-          "period": 173,
-          "primary": 0,
-          "score": 5.76,
+          "score": 2.4,
           "hit": true
         },
         {
           "period": 174,
-          "primary": 8,
-          "score": 7.68,
-          "hit": true
-        },
-        {
-          "period": 175,
-          "primary": 6,
-          "score": 7.08,
+          "primary": 4,
+          "score": 7.199999999999999,
           "hit": true
         },
         {
           "period": 176,
-          "primary": 2,
-          "score": 9.12,
-          "hit": true
-        },
-        {
-          "period": 177,
           "primary": 4,
-          "score": 7.08,
-          "hit": true
-        },
-        {
-          "period": 178,
-          "primary": 8,
-          "score": 4.68,
-          "hit": true
+          "score": 7.199999999999999,
+          "hit": false
         },
         {
           "period": 179,
@@ -887,117 +401,45 @@
           "hit": true
         },
         {
-          "period": 183,
-          "primary": 6,
-          "score": 7.08,
-          "hit": true
-        },
-        {
-          "period": 184,
-          "primary": 5,
-          "score": 1.7999999999999998,
-          "hit": true
-        },
-        {
           "period": 185,
           "primary": 9,
-          "score": 10.319999999999999,
-          "hit": true
-        },
-        {
-          "period": 186,
-          "primary": 3,
-          "score": 2.5,
+          "score": 9.899999999999999,
           "hit": true
         },
         {
           "period": 188,
           "primary": 9,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 189,
-          "primary": 2,
-          "score": 2.5,
+          "score": 7.199999999999999,
           "hit": true
         },
         {
           "period": 190,
           "primary": 9,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 191,
-          "primary": 3,
-          "score": 1.7999999999999998,
+          "score": 10.2,
           "hit": true
         },
         {
           "period": 192,
           "primary": 8,
-          "score": 6.839999999999999,
-          "hit": true
-        },
-        {
-          "period": 193,
-          "primary": 9,
-          "score": 7.08,
+          "score": 2.6999999999999997,
           "hit": true
         },
         {
           "period": 194,
           "primary": 8,
-          "score": 1.7999999999999998,
-          "hit": false
-        },
-        {
-          "period": 195,
-          "primary": 9,
-          "score": 7.08,
-          "hit": true
-        },
-        {
-          "period": 196,
-          "primary": 8,
-          "score": 2.28,
+          "score": 7.199999999999999,
           "hit": false
         },
         {
           "period": 197,
-          "primary": 8,
-          "score": 8.28,
-          "hit": true
-        },
-        {
-          "period": 198,
-          "primary": 2,
-          "score": 9.12,
-          "hit": true
-        },
-        {
-          "period": 200,
-          "primary": 3,
-          "score": 5.04,
-          "hit": true
+          "primary": 5,
+          "score": 3.4,
+          "hit": false
         },
         {
           "period": 201,
           "primary": 8,
           "score": 4.2,
-          "hit": true
-        },
-        {
-          "period": 203,
-          "primary": 8,
-          "score": 2.9,
-          "hit": false
-        },
-        {
-          "period": 207,
-          "primary": 1,
-          "score": 2.5,
           "hit": true
         },
         {
@@ -1009,38 +451,20 @@
         {
           "period": 209,
           "primary": 2,
-          "score": 6.96,
+          "score": 2.8,
           "hit": true
         },
         {
           "period": 210,
-          "primary": 0,
-          "score": 6.839999999999999,
-          "hit": true
-        },
-        {
-          "period": 211,
-          "primary": 1,
-          "score": 4.68,
-          "hit": true
+          "primary": 3,
+          "score": 3.3,
+          "hit": false
         },
         {
           "period": 212,
           "primary": 0,
-          "score": 1.7999999999999998,
+          "score": 7.199999999999999,
           "hit": false
-        },
-        {
-          "period": 213,
-          "primary": 5,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 214,
-          "primary": 0,
-          "score": 5.88,
-          "hit": true
         },
         {
           "period": 215,
@@ -1049,22 +473,10 @@
           "hit": false
         },
         {
-          "period": 216,
-          "primary": 7,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 218,
-          "primary": 3,
-          "score": 4.68,
-          "hit": true
-        },
-        {
           "period": 219,
-          "primary": 1,
-          "score": 4.68,
-          "hit": true
+          "primary": 0,
+          "score": 4.2,
+          "hit": false
         },
         {
           "period": 220,
@@ -1073,63 +485,15 @@
           "hit": true
         },
         {
-          "period": 221,
-          "primary": 6,
-          "score": 2.28,
-          "hit": true
-        },
-        {
-          "period": 224,
-          "primary": 2,
-          "score": 2.28,
-          "hit": false
-        },
-        {
-          "period": 225,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "hit": true
-        },
-        {
-          "period": 226,
-          "primary": 6,
-          "score": 1.7999999999999998,
-          "hit": false
-        },
-        {
           "period": 227,
           "primary": 6,
-          "score": 6.96,
+          "score": 8.7,
           "hit": true
-        },
-        {
-          "period": 228,
-          "primary": 8,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 229,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "hit": false
         },
         {
           "period": 230,
           "primary": 4,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 231,
-          "primary": 3,
-          "score": 2.5,
-          "hit": true
-        },
-        {
-          "period": 233,
-          "primary": 8,
-          "score": 4.68,
+          "score": 7.199999999999999,
           "hit": true
         },
         {
@@ -1139,21 +503,9 @@
           "hit": false
         },
         {
-          "period": 235,
-          "primary": 6,
-          "score": 8.28,
-          "hit": true
-        },
-        {
           "period": 236,
-          "primary": 9,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 237,
           "primary": 0,
-          "score": 1.7999999999999998,
+          "score": 2.6999999999999997,
           "hit": false
         },
         {
@@ -1164,9 +516,9 @@
         },
         {
           "period": 240,
-          "primary": 6,
-          "score": 8.28,
-          "hit": true
+          "primary": 1,
+          "score": 8.25,
+          "hit": false
         },
         {
           "period": 241,
@@ -1175,57 +527,15 @@
           "hit": true
         },
         {
-          "period": 242,
-          "primary": 3,
-          "score": 3.3000000000000003,
-          "hit": true
-        },
-        {
-          "period": 243,
-          "primary": 7,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 244,
-          "primary": 8,
-          "score": 3.5999999999999996,
-          "hit": false
-        },
-        {
-          "period": 245,
-          "primary": 8,
-          "score": 6.72,
-          "hit": true
-        },
-        {
           "period": 246,
-          "primary": 9,
-          "score": 7.5600000000000005,
-          "hit": true
-        },
-        {
-          "period": 247,
-          "primary": 6,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 248,
           "primary": 5,
-          "score": 2.28,
-          "hit": false
-        },
-        {
-          "period": 249,
-          "primary": 5,
-          "score": 2.28,
+          "score": 7.199999999999999,
           "hit": false
         },
         {
           "period": 250,
           "primary": 0,
-          "score": 6.839999999999999,
+          "score": 2.6999999999999997,
           "hit": true
         },
         {
@@ -1235,46 +545,22 @@
           "hit": false
         },
         {
-          "period": 252,
-          "primary": 3,
-          "score": 5.76,
-          "hit": true
-        },
-        {
           "period": 253,
-          "primary": 9,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 254,
           "primary": 0,
-          "score": 5.76,
-          "hit": true
+          "score": 7.199999999999999,
+          "hit": false
         },
         {
           "period": 255,
-          "primary": 9,
-          "score": 7.08,
-          "hit": true
+          "primary": 8,
+          "score": 2.6999999999999997,
+          "hit": false
         },
         {
           "period": 256,
           "primary": 5,
           "score": 3.8,
           "hit": true
-        },
-        {
-          "period": 257,
-          "primary": 2,
-          "score": 2.9,
-          "hit": false
-        },
-        {
-          "period": 258,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "hit": false
         }
       ]
     },
@@ -1282,42 +568,26 @@
       "trainSize": 180,
       "trainRange": "第1-180期",
       "testRange": "第181-258期",
-      "trainBestHitRate": 0.8787878787878788,
+      "trainBestHitRate": 0.5882352941176471,
       "v3": {
-        "correct": 50,
-        "total": 66,
-        "hitRate": 0.7575757575757576,
-        "recommended": 66
+        "correct": 16,
+        "total": 28,
+        "hitRate": 0.5714285714285714,
+        "recommended": 28
       },
       "v4": {
-        "correct": 51,
-        "total": 66,
-        "hitRate": 0.7727272727272727,
-        "recommended": 66,
+        "correct": 16,
+        "total": 28,
+        "hitRate": 0.5714285714285714,
+        "recommended": 28,
         "coldPenalty": 0
       },
-      "delta": 0.015151515151515138,
+      "delta": 0,
       "v4Details": [
         {
           "period": 182,
           "primary": 1,
-          "score": 3,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 183,
-          "primary": 6,
-          "score": 7.08,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 184,
-          "primary": 5,
-          "score": 1.7999999999999998,
+          "score": 2.1,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -1325,31 +595,15 @@
         {
           "period": 185,
           "primary": 9,
-          "score": 10.319999999999999,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 186,
-          "primary": 3,
-          "score": 2.5,
-          "coldPenalty": 0,
-          "miss": 2,
           "hit": true
         },
         {
           "period": 188,
           "primary": 9,
-          "score": 8.16,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 189,
-          "primary": 2,
-          "score": 2.5,
+          "score": 4.949999999999999,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -1357,15 +611,7 @@
         {
           "period": 190,
           "primary": 9,
-          "score": 8.16,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 191,
-          "primary": 3,
-          "score": 1.7999999999999998,
+          "score": 7.949999999999999,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -1373,15 +619,7 @@
         {
           "period": 192,
           "primary": 8,
-          "score": 6.839999999999999,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 193,
-          "primary": 9,
-          "score": 7.08,
+          "score": 1.65,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -1389,71 +627,23 @@
         {
           "period": 194,
           "primary": 8,
-          "score": 1.7999999999999998,
+          "score": 4.949999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 195,
-          "primary": 9,
-          "score": 7.08,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 196,
-          "primary": 8,
-          "score": 2.28,
-          "coldPenalty": 0,
-          "miss": 3,
           "hit": false
         },
         {
           "period": 197,
-          "primary": 8,
-          "score": 8.28,
-          "coldPenalty": 0,
-          "miss": 4,
-          "hit": true
-        },
-        {
-          "period": 198,
-          "primary": 2,
-          "score": 9.12,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": true
-        },
-        {
-          "period": 200,
-          "primary": 3,
-          "score": 5.04,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": true
-        },
-        {
-          "period": 201,
-          "primary": 8,
-          "score": 4.2,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 203,
-          "primary": 8,
-          "score": 2.9,
+          "primary": 5,
+          "score": 2.7,
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
         },
         {
-          "period": 207,
-          "primary": 1,
-          "score": 2.5,
+          "period": 201,
+          "primary": 8,
+          "score": 3.9,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -1461,7 +651,7 @@
         {
           "period": 208,
           "primary": 7,
-          "score": 2.6999999999999997,
+          "score": 1.65,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -1469,295 +659,119 @@
         {
           "period": 209,
           "primary": 2,
-          "score": 6.96,
+          "score": 1.3,
           "coldPenalty": 0,
           "miss": 3,
           "hit": true
         },
         {
           "period": 210,
-          "primary": 0,
-          "score": 6.839999999999999,
+          "primary": 3,
+          "score": 1.3499999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 211,
-          "primary": 1,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
+          "hit": false
         },
         {
           "period": 212,
           "primary": 0,
-          "score": 1.7999999999999998,
+          "score": 4.949999999999999,
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
-        },
-        {
-          "period": 213,
-          "primary": 5,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 214,
-          "primary": 0,
-          "score": 5.88,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": true
         },
         {
           "period": 215,
           "primary": 2,
-          "score": 3.4,
+          "score": 2.7,
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
         },
         {
-          "period": 216,
-          "primary": 7,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 218,
-          "primary": 3,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 219,
-          "primary": 1,
-          "score": 4.68,
+          "primary": 0,
+          "score": 3.9,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
+          "hit": false
         },
         {
           "period": 220,
           "primary": 4,
-          "score": 3,
+          "score": 2.1,
           "coldPenalty": 0,
           "miss": 2,
           "hit": true
-        },
-        {
-          "period": 221,
-          "primary": 6,
-          "score": 2.28,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 224,
-          "primary": 2,
-          "score": 2.28,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": false
-        },
-        {
-          "period": 225,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 226,
-          "primary": 6,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
         },
         {
           "period": 227,
           "primary": 6,
-          "score": 6.96,
+          "score": 6.449999999999999,
           "coldPenalty": 0,
           "miss": 2,
           "hit": true
-        },
-        {
-          "period": 228,
-          "primary": 8,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 229,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
         },
         {
           "period": 230,
           "primary": 4,
-          "score": 8.16,
+          "score": 4.949999999999999,
           "coldPenalty": 0,
           "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 231,
-          "primary": 3,
-          "score": 2.5,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 233,
-          "primary": 8,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
           "hit": true
         },
         {
           "period": 234,
-          "primary": 6,
-          "score": 3.3,
+          "primary": 0,
+          "score": 1.65,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 235,
-          "primary": 6,
-          "score": 8.28,
-          "coldPenalty": 0,
-          "miss": 2,
           "hit": true
         },
         {
           "period": 236,
-          "primary": 9,
-          "score": 4.68,
+          "primary": 0,
+          "score": 0.44999999999999996,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 237,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 2,
           "hit": false
         },
         {
           "period": 239,
           "primary": 2,
-          "score": 3.5999999999999996,
+          "score": 1.7999999999999998,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
         },
         {
           "period": 240,
-          "primary": 6,
-          "score": 8.28,
+          "primary": 1,
+          "score": 5.550000000000001,
           "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
+          "miss": 1,
+          "hit": false
         },
         {
           "period": 241,
           "primary": 5,
-          "score": 3.5999999999999996,
+          "score": 1.7999999999999998,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
         },
         {
-          "period": 242,
-          "primary": 3,
-          "score": 3.3000000000000003,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 243,
-          "primary": 7,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 244,
-          "primary": 8,
-          "score": 3.5999999999999996,
+          "period": 246,
+          "primary": 5,
+          "score": 3.3,
           "coldPenalty": 0,
           "miss": 3,
           "hit": false
         },
         {
-          "period": 245,
-          "primary": 8,
-          "score": 6.72,
-          "coldPenalty": 0,
-          "miss": 4,
-          "hit": true
-        },
-        {
-          "period": 246,
-          "primary": 9,
-          "score": 7.5600000000000005,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 247,
-          "primary": 6,
-          "score": 8.16,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 248,
-          "primary": 2,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 249,
-          "primary": 2,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 250,
           "primary": 0,
-          "score": 6.839999999999999,
+          "score": 1.65,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -1765,464 +779,204 @@
         {
           "period": 251,
           "primary": 3,
-          "score": 2.6999999999999997,
+          "score": 0.44999999999999996,
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
         },
         {
-          "period": 252,
-          "primary": 3,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 253,
-          "primary": 9,
-          "score": 5.76,
+          "primary": 0,
+          "score": 4.949999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 254,
-          "primary": 0,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
+          "hit": false
         },
         {
           "period": 255,
-          "primary": 9,
-          "score": 7.08,
+          "primary": 8,
+          "score": 0.44999999999999996,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
+          "hit": false
         },
         {
           "period": 256,
           "primary": 5,
-          "score": 3.8,
+          "score": 3.3,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
-        },
-        {
-          "period": 257,
-          "primary": 2,
-          "score": 2.9,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 258,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
         }
       ],
       "v3Details": [
         {
           "period": 182,
           "primary": 1,
-          "score": 3,
-          "hit": true
-        },
-        {
-          "period": 183,
-          "primary": 6,
-          "score": 7.08,
-          "hit": true
-        },
-        {
-          "period": 184,
-          "primary": 5,
-          "score": 1.7999999999999998,
+          "score": 2.1,
           "hit": true
         },
         {
           "period": 185,
           "primary": 9,
-          "score": 10.319999999999999,
-          "hit": true
-        },
-        {
-          "period": 186,
-          "primary": 3,
-          "score": 2.5,
+          "score": 7.199999999999999,
           "hit": true
         },
         {
           "period": 188,
           "primary": 9,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 189,
-          "primary": 2,
-          "score": 2.5,
+          "score": 4.949999999999999,
           "hit": true
         },
         {
           "period": 190,
           "primary": 9,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 191,
-          "primary": 3,
-          "score": 1.7999999999999998,
+          "score": 7.949999999999999,
           "hit": true
         },
         {
           "period": 192,
           "primary": 8,
-          "score": 6.839999999999999,
-          "hit": true
-        },
-        {
-          "period": 193,
-          "primary": 9,
-          "score": 7.08,
+          "score": 1.65,
           "hit": true
         },
         {
           "period": 194,
           "primary": 8,
-          "score": 1.7999999999999998,
-          "hit": false
-        },
-        {
-          "period": 195,
-          "primary": 9,
-          "score": 7.08,
-          "hit": true
-        },
-        {
-          "period": 196,
-          "primary": 8,
-          "score": 2.28,
+          "score": 4.949999999999999,
           "hit": false
         },
         {
           "period": 197,
-          "primary": 8,
-          "score": 8.28,
-          "hit": true
-        },
-        {
-          "period": 198,
-          "primary": 2,
-          "score": 9.12,
-          "hit": true
-        },
-        {
-          "period": 200,
-          "primary": 3,
-          "score": 5.04,
-          "hit": true
+          "primary": 5,
+          "score": 2.7,
+          "hit": false
         },
         {
           "period": 201,
           "primary": 8,
-          "score": 4.2,
-          "hit": true
-        },
-        {
-          "period": 203,
-          "primary": 8,
-          "score": 2.9,
-          "hit": false
-        },
-        {
-          "period": 207,
-          "primary": 1,
-          "score": 2.5,
+          "score": 3.9,
           "hit": true
         },
         {
           "period": 208,
           "primary": 7,
-          "score": 2.6999999999999997,
+          "score": 1.65,
           "hit": true
         },
         {
           "period": 209,
           "primary": 2,
-          "score": 6.96,
+          "score": 1.3,
           "hit": true
         },
         {
           "period": 210,
-          "primary": 0,
-          "score": 6.839999999999999,
-          "hit": true
-        },
-        {
-          "period": 211,
-          "primary": 1,
-          "score": 4.68,
-          "hit": true
+          "primary": 3,
+          "score": 1.3499999999999999,
+          "hit": false
         },
         {
           "period": 212,
           "primary": 0,
-          "score": 1.7999999999999998,
+          "score": 4.949999999999999,
           "hit": false
-        },
-        {
-          "period": 213,
-          "primary": 5,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 214,
-          "primary": 0,
-          "score": 5.88,
-          "hit": true
         },
         {
           "period": 215,
           "primary": 2,
-          "score": 3.4,
+          "score": 2.7,
           "hit": false
         },
         {
-          "period": 216,
-          "primary": 7,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 218,
-          "primary": 3,
-          "score": 4.68,
-          "hit": true
-        },
-        {
           "period": 219,
-          "primary": 1,
-          "score": 4.68,
-          "hit": true
+          "primary": 0,
+          "score": 3.9,
+          "hit": false
         },
         {
           "period": 220,
           "primary": 4,
-          "score": 3,
+          "score": 2.1,
           "hit": true
-        },
-        {
-          "period": 221,
-          "primary": 6,
-          "score": 2.28,
-          "hit": true
-        },
-        {
-          "period": 224,
-          "primary": 2,
-          "score": 2.28,
-          "hit": false
-        },
-        {
-          "period": 225,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "hit": true
-        },
-        {
-          "period": 226,
-          "primary": 6,
-          "score": 1.7999999999999998,
-          "hit": false
         },
         {
           "period": 227,
           "primary": 6,
-          "score": 6.96,
+          "score": 6.449999999999999,
           "hit": true
-        },
-        {
-          "period": 228,
-          "primary": 8,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 229,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "hit": false
         },
         {
           "period": 230,
           "primary": 4,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 231,
-          "primary": 3,
-          "score": 2.5,
-          "hit": true
-        },
-        {
-          "period": 233,
-          "primary": 8,
-          "score": 4.68,
+          "score": 4.949999999999999,
           "hit": true
         },
         {
           "period": 234,
-          "primary": 6,
-          "score": 3.3,
-          "hit": false
-        },
-        {
-          "period": 235,
-          "primary": 6,
-          "score": 8.28,
+          "primary": 0,
+          "score": 1.65,
           "hit": true
         },
         {
           "period": 236,
-          "primary": 9,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 237,
           "primary": 0,
-          "score": 1.7999999999999998,
+          "score": 0.44999999999999996,
           "hit": false
         },
         {
           "period": 239,
           "primary": 2,
-          "score": 3.5999999999999996,
+          "score": 1.7999999999999998,
           "hit": true
         },
         {
           "period": 240,
-          "primary": 6,
-          "score": 8.28,
-          "hit": true
+          "primary": 1,
+          "score": 5.550000000000001,
+          "hit": false
         },
         {
           "period": 241,
           "primary": 5,
-          "score": 3.5999999999999996,
-          "hit": true
-        },
-        {
-          "period": 242,
-          "primary": 3,
-          "score": 3.3000000000000003,
-          "hit": true
-        },
-        {
-          "period": 243,
-          "primary": 7,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 244,
-          "primary": 8,
-          "score": 3.5999999999999996,
-          "hit": false
-        },
-        {
-          "period": 245,
-          "primary": 8,
-          "score": 6.72,
+          "score": 1.7999999999999998,
           "hit": true
         },
         {
           "period": 246,
-          "primary": 9,
-          "score": 7.5600000000000005,
-          "hit": true
-        },
-        {
-          "period": 247,
-          "primary": 6,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 248,
           "primary": 5,
-          "score": 2.28,
-          "hit": false
-        },
-        {
-          "period": 249,
-          "primary": 5,
-          "score": 2.28,
+          "score": 3.3,
           "hit": false
         },
         {
           "period": 250,
           "primary": 0,
-          "score": 6.839999999999999,
+          "score": 1.65,
           "hit": true
         },
         {
           "period": 251,
           "primary": 3,
-          "score": 2.6999999999999997,
+          "score": 0.44999999999999996,
           "hit": false
         },
         {
-          "period": 252,
-          "primary": 3,
-          "score": 5.76,
-          "hit": true
-        },
-        {
           "period": 253,
-          "primary": 9,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 254,
           "primary": 0,
-          "score": 5.76,
-          "hit": true
+          "score": 4.949999999999999,
+          "hit": false
         },
         {
           "period": 255,
-          "primary": 9,
-          "score": 7.08,
-          "hit": true
+          "primary": 8,
+          "score": 0.44999999999999996,
+          "hit": false
         },
         {
           "period": 256,
           "primary": 5,
-          "score": 3.8,
+          "score": 3.3,
           "hit": true
-        },
-        {
-          "period": 257,
-          "primary": 2,
-          "score": 2.9,
-          "hit": false
-        },
-        {
-          "period": 258,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "hit": false
         }
       ]
     },
@@ -2230,38 +984,22 @@
       "trainSize": 200,
       "trainRange": "第1-200期",
       "testRange": "第201-258期",
-      "trainBestHitRate": 0.88,
+      "trainBestHitRate": 0.618421052631579,
       "v3": {
-        "correct": 34,
-        "total": 48,
-        "hitRate": 0.7083333333333334,
-        "recommended": 48
+        "correct": 9,
+        "total": 20,
+        "hitRate": 0.45,
+        "recommended": 20
       },
       "v4": {
-        "correct": 35,
-        "total": 48,
-        "hitRate": 0.7291666666666666,
-        "recommended": 48,
+        "correct": 9,
+        "total": 20,
+        "hitRate": 0.45,
+        "recommended": 20,
         "coldPenalty": 0
       },
-      "delta": 0.02083333333333326,
+      "delta": 0,
       "v4Details": [
-        {
-          "period": 203,
-          "primary": 8,
-          "score": 2.9,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 207,
-          "primary": 1,
-          "score": 2.5,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
         {
           "period": 208,
           "primary": 7,
@@ -2273,50 +1011,26 @@
         {
           "period": 209,
           "primary": 2,
-          "score": 6.96,
+          "score": 2.8,
           "coldPenalty": 0,
           "miss": 3,
           "hit": true
         },
         {
           "period": 210,
-          "primary": 0,
-          "score": 6.839999999999999,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 211,
-          "primary": 1,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 212,
-          "primary": 0,
-          "score": 1.7999999999999998,
+          "primary": 3,
+          "score": 3.3,
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
         },
         {
-          "period": 213,
-          "primary": 5,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 214,
+          "period": 212,
           "primary": 0,
-          "score": 5.88,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
-          "miss": 3,
-          "hit": true
+          "miss": 1,
+          "hit": false
         },
         {
           "period": 215,
@@ -2327,28 +1041,12 @@
           "hit": false
         },
         {
-          "period": 216,
-          "primary": 7,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 218,
-          "primary": 3,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 219,
-          "primary": 1,
-          "score": 4.68,
+          "primary": 0,
+          "score": 4.2,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
+          "hit": false
         },
         {
           "period": 220,
@@ -2359,83 +1057,19 @@
           "hit": true
         },
         {
-          "period": 221,
-          "primary": 6,
-          "score": 2.28,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 224,
-          "primary": 2,
-          "score": 2.28,
-          "coldPenalty": 0,
-          "miss": 3,
-          "hit": false
-        },
-        {
-          "period": 225,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 226,
-          "primary": 6,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
           "period": 227,
           "primary": 6,
-          "score": 6.96,
+          "score": 8.7,
           "coldPenalty": 0,
           "miss": 2,
           "hit": true
-        },
-        {
-          "period": 228,
-          "primary": 8,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 229,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
         },
         {
           "period": 230,
           "primary": 4,
-          "score": 8.16,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 231,
-          "primary": 3,
-          "score": 2.5,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 233,
-          "primary": 8,
-          "score": 4.68,
-          "coldPenalty": 0,
-          "miss": 1,
           "hit": true
         },
         {
@@ -2447,27 +1081,11 @@
           "hit": false
         },
         {
-          "period": 235,
-          "primary": 6,
-          "score": 8.28,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 236,
-          "primary": 9,
-          "score": 4.68,
+          "primary": 0,
+          "score": 2.6999999999999997,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 237,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 2,
           "hit": false
         },
         {
@@ -2480,11 +1098,11 @@
         },
         {
           "period": 240,
-          "primary": 6,
-          "score": 8.28,
+          "primary": 1,
+          "score": 5.5,
           "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
+          "miss": 1,
+          "hit": false
         },
         {
           "period": 241,
@@ -2495,73 +1113,17 @@
           "hit": true
         },
         {
-          "period": 242,
-          "primary": 3,
-          "score": 3.3000000000000003,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 243,
-          "primary": 7,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 244,
-          "primary": 8,
-          "score": 3.5999999999999996,
+          "period": 246,
+          "primary": 5,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 3,
           "hit": false
         },
         {
-          "period": 245,
-          "primary": 8,
-          "score": 6.72,
-          "coldPenalty": 0,
-          "miss": 4,
-          "hit": true
-        },
-        {
-          "period": 246,
-          "primary": 9,
-          "score": 7.5600000000000005,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 247,
-          "primary": 6,
-          "score": 8.16,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
-          "period": 248,
-          "primary": 2,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 249,
-          "primary": 2,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 250,
           "primary": 0,
-          "score": 6.839999999999999,
+          "score": 2.6999999999999997,
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
@@ -2575,36 +1137,20 @@
           "hit": false
         },
         {
-          "period": 252,
-          "primary": 3,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
-        },
-        {
           "period": 253,
-          "primary": 9,
-          "score": 5.76,
+          "primary": 0,
+          "score": 7.199999999999999,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
-        },
-        {
-          "period": 254,
-          "primary": 0,
-          "score": 5.76,
-          "coldPenalty": 0,
-          "miss": 2,
-          "hit": true
+          "hit": false
         },
         {
           "period": 255,
-          "primary": 9,
-          "score": 7.08,
+          "primary": 8,
+          "score": 2.6999999999999997,
           "coldPenalty": 0,
           "miss": 1,
-          "hit": true
+          "hit": false
         },
         {
           "period": 256,
@@ -2613,38 +1159,10 @@
           "coldPenalty": 0,
           "miss": 1,
           "hit": true
-        },
-        {
-          "period": 257,
-          "primary": 2,
-          "score": 2.9,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
-        },
-        {
-          "period": 258,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "coldPenalty": 0,
-          "miss": 1,
-          "hit": false
         }
       ],
       "v3Details": [
         {
-          "period": 203,
-          "primary": 8,
-          "score": 2.9,
-          "hit": false
-        },
-        {
-          "period": 207,
-          "primary": 1,
-          "score": 2.5,
-          "hit": true
-        },
-        {
           "period": 208,
           "primary": 7,
           "score": 2.6999999999999997,
@@ -2653,38 +1171,20 @@
         {
           "period": 209,
           "primary": 2,
-          "score": 6.96,
+          "score": 2.8,
           "hit": true
         },
         {
           "period": 210,
-          "primary": 0,
-          "score": 6.839999999999999,
-          "hit": true
-        },
-        {
-          "period": 211,
-          "primary": 1,
-          "score": 4.68,
-          "hit": true
+          "primary": 3,
+          "score": 3.3,
+          "hit": false
         },
         {
           "period": 212,
           "primary": 0,
-          "score": 1.7999999999999998,
+          "score": 7.199999999999999,
           "hit": false
-        },
-        {
-          "period": 213,
-          "primary": 5,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 214,
-          "primary": 0,
-          "score": 5.88,
-          "hit": true
         },
         {
           "period": 215,
@@ -2693,22 +1193,10 @@
           "hit": false
         },
         {
-          "period": 216,
-          "primary": 7,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 218,
-          "primary": 3,
-          "score": 4.68,
-          "hit": true
-        },
-        {
           "period": 219,
-          "primary": 1,
-          "score": 4.68,
-          "hit": true
+          "primary": 0,
+          "score": 4.2,
+          "hit": false
         },
         {
           "period": 220,
@@ -2717,63 +1205,15 @@
           "hit": true
         },
         {
-          "period": 221,
-          "primary": 6,
-          "score": 2.28,
-          "hit": true
-        },
-        {
-          "period": 224,
-          "primary": 2,
-          "score": 2.28,
-          "hit": false
-        },
-        {
-          "period": 225,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "hit": true
-        },
-        {
-          "period": 226,
-          "primary": 6,
-          "score": 1.7999999999999998,
-          "hit": false
-        },
-        {
           "period": 227,
           "primary": 6,
-          "score": 6.96,
+          "score": 8.7,
           "hit": true
-        },
-        {
-          "period": 228,
-          "primary": 8,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 229,
-          "primary": 4,
-          "score": 1.7999999999999998,
-          "hit": false
         },
         {
           "period": 230,
           "primary": 4,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 231,
-          "primary": 3,
-          "score": 2.5,
-          "hit": true
-        },
-        {
-          "period": 233,
-          "primary": 8,
-          "score": 4.68,
+          "score": 7.199999999999999,
           "hit": true
         },
         {
@@ -2783,21 +1223,9 @@
           "hit": false
         },
         {
-          "period": 235,
-          "primary": 6,
-          "score": 8.28,
-          "hit": true
-        },
-        {
           "period": 236,
-          "primary": 9,
-          "score": 4.68,
-          "hit": true
-        },
-        {
-          "period": 237,
           "primary": 0,
-          "score": 1.7999999999999998,
+          "score": 2.6999999999999997,
           "hit": false
         },
         {
@@ -2808,9 +1236,9 @@
         },
         {
           "period": 240,
-          "primary": 6,
-          "score": 8.28,
-          "hit": true
+          "primary": 1,
+          "score": 5.5,
+          "hit": false
         },
         {
           "period": 241,
@@ -2819,57 +1247,15 @@
           "hit": true
         },
         {
-          "period": 242,
-          "primary": 3,
-          "score": 3.3000000000000003,
-          "hit": true
-        },
-        {
-          "period": 243,
-          "primary": 7,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 244,
-          "primary": 8,
-          "score": 3.5999999999999996,
-          "hit": false
-        },
-        {
-          "period": 245,
-          "primary": 8,
-          "score": 6.72,
-          "hit": true
-        },
-        {
           "period": 246,
-          "primary": 9,
-          "score": 7.5600000000000005,
-          "hit": true
-        },
-        {
-          "period": 247,
-          "primary": 6,
-          "score": 8.16,
-          "hit": true
-        },
-        {
-          "period": 248,
           "primary": 5,
-          "score": 2.28,
-          "hit": false
-        },
-        {
-          "period": 249,
-          "primary": 5,
-          "score": 2.28,
+          "score": 7.199999999999999,
           "hit": false
         },
         {
           "period": 250,
           "primary": 0,
-          "score": 6.839999999999999,
+          "score": 2.6999999999999997,
           "hit": true
         },
         {
@@ -2879,46 +1265,22 @@
           "hit": false
         },
         {
-          "period": 252,
-          "primary": 3,
-          "score": 5.76,
-          "hit": true
-        },
-        {
           "period": 253,
-          "primary": 9,
-          "score": 5.76,
-          "hit": true
-        },
-        {
-          "period": 254,
           "primary": 0,
-          "score": 5.76,
-          "hit": true
+          "score": 7.199999999999999,
+          "hit": false
         },
         {
           "period": 255,
-          "primary": 9,
-          "score": 7.08,
-          "hit": true
+          "primary": 8,
+          "score": 2.6999999999999997,
+          "hit": false
         },
         {
           "period": 256,
           "primary": 5,
           "score": 3.8,
           "hit": true
-        },
-        {
-          "period": 257,
-          "primary": 2,
-          "score": 2.9,
-          "hit": false
-        },
-        {
-          "period": 258,
-          "primary": 0,
-          "score": 1.7999999999999998,
-          "hit": false
         }
       ]
     }
@@ -2928,43 +1290,22 @@
     "trainRange": "第1-150期",
     "testRange": "第151-258期",
     "v3": {
-      "correct": 70,
-      "total": 89,
-      "hitRate": 0.7865168539325843,
-      "recommended": 89
+      "correct": 23,
+      "total": 38,
+      "hitRate": 0.6052631578947368,
+      "recommended": 38
     },
     "v4": {
-      "correct": 71,
-      "total": 89,
-      "hitRate": 0.797752808988764,
-      "recommended": 89
+      "correct": 23,
+      "total": 38,
+      "hitRate": 0.6052631578947368,
+      "recommended": 38
     },
-    "delta": 0.011235955056179692,
+    "delta": 0,
     "v4Details": [
       {
         "period": 152,
-        "primary": 6,
-        "coldPenalty": 0,
-        "miss": 4,
-        "hit": true
-      },
-      {
-        "period": 153,
-        "primary": 3,
-        "coldPenalty": 0,
-        "miss": 4,
-        "hit": true
-      },
-      {
-        "period": 154,
         "primary": 4,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 158,
-        "primary": 6,
         "coldPenalty": 0,
         "miss": 1,
         "hit": true
@@ -2975,27 +1316,6 @@
         "coldPenalty": 0,
         "miss": 1,
         "hit": false
-      },
-      {
-        "period": 162,
-        "primary": 1,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 163,
-        "primary": 0,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 164,
-        "primary": 2,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
       },
       {
         "period": 165,
@@ -3019,27 +1339,6 @@
         "hit": true
       },
       {
-        "period": 168,
-        "primary": 4,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 170,
-        "primary": 5,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": false
-      },
-      {
-        "period": 171,
-        "primary": 5,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": false
-      },
-      {
         "period": 172,
         "primary": 7,
         "coldPenalty": 0,
@@ -3047,46 +1346,18 @@
         "hit": true
       },
       {
-        "period": 173,
-        "primary": 0,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
         "period": 174,
-        "primary": 8,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 175,
-        "primary": 6,
+        "primary": 4,
         "coldPenalty": 0,
         "miss": 1,
         "hit": true
       },
       {
         "period": 176,
-        "primary": 2,
-        "coldPenalty": 0,
-        "miss": 3,
-        "hit": true
-      },
-      {
-        "period": 177,
         "primary": 4,
         "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
-        "period": 178,
-        "primary": 8,
-        "coldPenalty": 0,
         "miss": 1,
-        "hit": true
+        "hit": false
       },
       {
         "period": 179,
@@ -3110,20 +1381,6 @@
         "hit": true
       },
       {
-        "period": 183,
-        "primary": 6,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 184,
-        "primary": 5,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
         "period": 185,
         "primary": 9,
         "coldPenalty": 0,
@@ -3131,22 +1388,8 @@
         "hit": true
       },
       {
-        "period": 186,
-        "primary": 3,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
         "period": 188,
         "primary": 9,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 189,
-        "primary": 2,
         "coldPenalty": 0,
         "miss": 1,
         "hit": true
@@ -3159,22 +1402,8 @@
         "hit": true
       },
       {
-        "period": 191,
-        "primary": 3,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
         "period": 192,
         "primary": 8,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 193,
-        "primary": 9,
         "coldPenalty": 0,
         "miss": 1,
         "hit": true
@@ -3187,57 +1416,15 @@
         "hit": false
       },
       {
-        "period": 195,
-        "primary": 9,
+        "period": 197,
+        "primary": 5,
         "coldPenalty": 0,
         "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 196,
-        "primary": 8,
-        "coldPenalty": 0,
-        "miss": 3,
         "hit": false
-      },
-      {
-        "period": 197,
-        "primary": 8,
-        "coldPenalty": 0,
-        "miss": 4,
-        "hit": true
-      },
-      {
-        "period": 198,
-        "primary": 2,
-        "coldPenalty": 0,
-        "miss": 3,
-        "hit": true
-      },
-      {
-        "period": 200,
-        "primary": 3,
-        "coldPenalty": 0,
-        "miss": 3,
-        "hit": true
       },
       {
         "period": 201,
         "primary": 8,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 203,
-        "primary": 8,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": false
-      },
-      {
-        "period": 207,
-        "primary": 1,
         "coldPenalty": 0,
         "miss": 1,
         "hit": true
@@ -3258,17 +1445,10 @@
       },
       {
         "period": 210,
-        "primary": 0,
+        "primary": 3,
         "coldPenalty": 0,
         "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 211,
-        "primary": 1,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
+        "hit": false
       },
       {
         "period": 212,
@@ -3278,20 +1458,6 @@
         "hit": false
       },
       {
-        "period": 213,
-        "primary": 5,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
-        "period": 214,
-        "primary": 0,
-        "coldPenalty": 0,
-        "miss": 3,
-        "hit": true
-      },
-      {
         "period": 215,
         "primary": 2,
         "coldPenalty": 0,
@@ -3299,25 +1465,11 @@
         "hit": false
       },
       {
-        "period": 216,
-        "primary": 7,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 218,
-        "primary": 3,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
         "period": 219,
-        "primary": 1,
+        "primary": 0,
         "coldPenalty": 0,
         "miss": 1,
-        "hit": true
+        "hit": false
       },
       {
         "period": 220,
@@ -3327,34 +1479,6 @@
         "hit": true
       },
       {
-        "period": 221,
-        "primary": 6,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
-        "period": 224,
-        "primary": 2,
-        "coldPenalty": 0,
-        "miss": 3,
-        "hit": false
-      },
-      {
-        "period": 225,
-        "primary": 4,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 226,
-        "primary": 6,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": false
-      },
-      {
         "period": 227,
         "primary": 6,
         "coldPenalty": 0,
@@ -3362,38 +1486,10 @@
         "hit": true
       },
       {
-        "period": 228,
-        "primary": 8,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 229,
-        "primary": 4,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": false
-      },
-      {
         "period": 230,
         "primary": 4,
         "coldPenalty": 0,
         "miss": 2,
-        "hit": true
-      },
-      {
-        "period": 231,
-        "primary": 3,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 233,
-        "primary": 8,
-        "coldPenalty": 0,
-        "miss": 1,
         "hit": true
       },
       {
@@ -3404,24 +1500,10 @@
         "hit": false
       },
       {
-        "period": 235,
-        "primary": 6,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
         "period": 236,
-        "primary": 9,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 237,
         "primary": 0,
         "coldPenalty": 0,
-        "miss": 2,
+        "miss": 1,
         "hit": false
       },
       {
@@ -3433,10 +1515,10 @@
       },
       {
         "period": 240,
-        "primary": 6,
+        "primary": 1,
         "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
+        "miss": 1,
+        "hit": false
       },
       {
         "period": 241,
@@ -3446,60 +1528,11 @@
         "hit": true
       },
       {
-        "period": 242,
-        "primary": 3,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
-        "period": 243,
-        "primary": 7,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 244,
-        "primary": 8,
+        "period": 246,
+        "primary": 5,
         "coldPenalty": 0,
         "miss": 3,
         "hit": false
-      },
-      {
-        "period": 245,
-        "primary": 8,
-        "coldPenalty": 0,
-        "miss": 4,
-        "hit": true
-      },
-      {
-        "period": 246,
-        "primary": 9,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 247,
-        "primary": 6,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
-        "period": 248,
-        "primary": 2,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": false
-      },
-      {
-        "period": 249,
-        "primary": 2,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
       },
       {
         "period": 250,
@@ -3516,32 +1549,18 @@
         "hit": false
       },
       {
-        "period": 252,
-        "primary": 3,
-        "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
-      },
-      {
         "period": 253,
-        "primary": 9,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": true
-      },
-      {
-        "period": 254,
         "primary": 0,
         "coldPenalty": 0,
-        "miss": 2,
-        "hit": true
+        "miss": 1,
+        "hit": false
       },
       {
         "period": 255,
-        "primary": 9,
+        "primary": 8,
         "coldPenalty": 0,
         "miss": 1,
-        "hit": true
+        "hit": false
       },
       {
         "period": 256,
@@ -3549,62 +1568,18 @@
         "coldPenalty": 0,
         "miss": 1,
         "hit": true
-      },
-      {
-        "period": 257,
-        "primary": 2,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": false
-      },
-      {
-        "period": 258,
-        "primary": 0,
-        "coldPenalty": 0,
-        "miss": 1,
-        "hit": false
       }
     ],
     "v3Details": [
       {
         "period": 152,
-        "primary": 6,
-        "hit": true
-      },
-      {
-        "period": 153,
-        "primary": 3,
-        "hit": true
-      },
-      {
-        "period": 154,
         "primary": 4,
-        "hit": true
-      },
-      {
-        "period": 158,
-        "primary": 6,
         "hit": true
       },
       {
         "period": 160,
         "primary": 3,
         "hit": false
-      },
-      {
-        "period": 162,
-        "primary": 1,
-        "hit": true
-      },
-      {
-        "period": 163,
-        "primary": 0,
-        "hit": true
-      },
-      {
-        "period": 164,
-        "primary": 2,
-        "hit": true
       },
       {
         "period": 165,
@@ -3622,54 +1597,19 @@
         "hit": true
       },
       {
-        "period": 168,
-        "primary": 4,
-        "hit": true
-      },
-      {
-        "period": 170,
-        "primary": 5,
-        "hit": false
-      },
-      {
-        "period": 171,
-        "primary": 5,
-        "hit": false
-      },
-      {
         "period": 172,
         "primary": 7,
         "hit": true
       },
       {
-        "period": 173,
-        "primary": 0,
-        "hit": true
-      },
-      {
         "period": 174,
-        "primary": 8,
-        "hit": true
-      },
-      {
-        "period": 175,
-        "primary": 6,
-        "hit": true
-      },
-      {
-        "period": 176,
-        "primary": 2,
-        "hit": true
-      },
-      {
-        "period": 177,
         "primary": 4,
         "hit": true
       },
       {
-        "period": 178,
-        "primary": 8,
-        "hit": true
+        "period": 176,
+        "primary": 4,
+        "hit": false
       },
       {
         "period": 179,
@@ -3687,23 +1627,8 @@
         "hit": true
       },
       {
-        "period": 183,
-        "primary": 6,
-        "hit": true
-      },
-      {
-        "period": 184,
-        "primary": 5,
-        "hit": true
-      },
-      {
         "period": 185,
         "primary": 9,
-        "hit": true
-      },
-      {
-        "period": 186,
-        "primary": 3,
         "hit": true
       },
       {
@@ -3712,18 +1637,8 @@
         "hit": true
       },
       {
-        "period": 189,
-        "primary": 2,
-        "hit": true
-      },
-      {
         "period": 190,
         "primary": 9,
-        "hit": true
-      },
-      {
-        "period": 191,
-        "primary": 3,
         "hit": true
       },
       {
@@ -3732,53 +1647,18 @@
         "hit": true
       },
       {
-        "period": 193,
-        "primary": 9,
-        "hit": true
-      },
-      {
         "period": 194,
         "primary": 8,
         "hit": false
       },
       {
-        "period": 195,
-        "primary": 9,
-        "hit": true
-      },
-      {
-        "period": 196,
-        "primary": 8,
-        "hit": false
-      },
-      {
         "period": 197,
-        "primary": 8,
-        "hit": true
-      },
-      {
-        "period": 198,
-        "primary": 2,
-        "hit": true
-      },
-      {
-        "period": 200,
-        "primary": 3,
-        "hit": true
+        "primary": 5,
+        "hit": false
       },
       {
         "period": 201,
         "primary": 8,
-        "hit": true
-      },
-      {
-        "period": 203,
-        "primary": 8,
-        "hit": false
-      },
-      {
-        "period": 207,
-        "primary": 1,
         "hit": true
       },
       {
@@ -3793,13 +1673,8 @@
       },
       {
         "period": 210,
-        "primary": 0,
-        "hit": true
-      },
-      {
-        "period": 211,
-        "primary": 1,
-        "hit": true
+        "primary": 3,
+        "hit": false
       },
       {
         "period": 212,
@@ -3807,34 +1682,14 @@
         "hit": false
       },
       {
-        "period": 213,
-        "primary": 5,
-        "hit": true
-      },
-      {
-        "period": 214,
-        "primary": 0,
-        "hit": true
-      },
-      {
         "period": 215,
         "primary": 2,
         "hit": false
       },
       {
-        "period": 216,
-        "primary": 7,
-        "hit": true
-      },
-      {
-        "period": 218,
-        "primary": 3,
-        "hit": true
-      },
-      {
         "period": 219,
-        "primary": 1,
-        "hit": true
+        "primary": 0,
+        "hit": false
       },
       {
         "period": 220,
@@ -3842,53 +1697,13 @@
         "hit": true
       },
       {
-        "period": 221,
-        "primary": 6,
-        "hit": true
-      },
-      {
-        "period": 224,
-        "primary": 2,
-        "hit": false
-      },
-      {
-        "period": 225,
-        "primary": 4,
-        "hit": true
-      },
-      {
-        "period": 226,
-        "primary": 6,
-        "hit": false
-      },
-      {
         "period": 227,
         "primary": 6,
         "hit": true
       },
       {
-        "period": 228,
-        "primary": 8,
-        "hit": true
-      },
-      {
-        "period": 229,
-        "primary": 4,
-        "hit": false
-      },
-      {
         "period": 230,
         "primary": 4,
-        "hit": true
-      },
-      {
-        "period": 231,
-        "primary": 3,
-        "hit": true
-      },
-      {
-        "period": 233,
-        "primary": 8,
         "hit": true
       },
       {
@@ -3897,17 +1712,7 @@
         "hit": false
       },
       {
-        "period": 235,
-        "primary": 6,
-        "hit": true
-      },
-      {
         "period": 236,
-        "primary": 9,
-        "hit": true
-      },
-      {
-        "period": 237,
         "primary": 0,
         "hit": false
       },
@@ -3918,8 +1723,8 @@
       },
       {
         "period": 240,
-        "primary": 6,
-        "hit": true
+        "primary": 1,
+        "hit": false
       },
       {
         "period": 241,
@@ -3927,42 +1732,7 @@
         "hit": true
       },
       {
-        "period": 242,
-        "primary": 3,
-        "hit": true
-      },
-      {
-        "period": 243,
-        "primary": 7,
-        "hit": true
-      },
-      {
-        "period": 244,
-        "primary": 8,
-        "hit": false
-      },
-      {
-        "period": 245,
-        "primary": 8,
-        "hit": true
-      },
-      {
         "period": 246,
-        "primary": 9,
-        "hit": true
-      },
-      {
-        "period": 247,
-        "primary": 6,
-        "hit": true
-      },
-      {
-        "period": 248,
-        "primary": 5,
-        "hit": false
-      },
-      {
-        "period": 249,
         "primary": 5,
         "hit": false
       },
@@ -3977,50 +1747,30 @@
         "hit": false
       },
       {
-        "period": 252,
-        "primary": 3,
-        "hit": true
-      },
-      {
         "period": 253,
-        "primary": 9,
-        "hit": true
-      },
-      {
-        "period": 254,
         "primary": 0,
-        "hit": true
+        "hit": false
       },
       {
         "period": 255,
-        "primary": 9,
-        "hit": true
+        "primary": 8,
+        "hit": false
       },
       {
         "period": 256,
         "primary": 5,
         "hit": true
-      },
-      {
-        "period": 257,
-        "primary": 2,
-        "hit": false
-      },
-      {
-        "period": 258,
-        "primary": 0,
-        "hit": false
       }
     ]
   },
   "conclusion": {
-    "avgDelta": 0.014614189649301945,
-    "maxDelta": 0.02083333333333326,
+    "avgDelta": 0,
+    "maxDelta": 0,
     "deltas": [
-      0.011235955056179692,
-      0.015151515151515138,
-      0.02083333333333326,
-      0.011235955056179692
+      0,
+      0,
+      0,
+      0
     ],
     "verdict": "反追冷边际增益微弱（各切分样本外均仅多命中1个，疑似噪声），需实盘验证，不建议据此替换 v3",
     "coldParams": {
