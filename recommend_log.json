@@ -1411,10 +1411,10 @@
   "实盘账": {
     "名称": "实盘",
     "范围": "第256期起",
-    "记录数": 3,
-    "已开奖数": 2,
+    "记录数": 4,
+    "已开奖数": 3,
     "命中数": 1,
-    "命中率": 0.5,
+    "命中率": 0.3333,
     "records": [
       {
         "period": 256,
@@ -1489,12 +1489,42 @@
           "trend_hot_10",
           "trend_hot_15"
         ],
+        "actualNums": [
+          3,
+          23,
+          21,
+          35,
+          5,
+          19,
+          46
+        ],
+        "actualTails": [
+          1,
+          3,
+          5,
+          6,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.3333
+      },
+      {
+        "period": 259,
+        "time": "2026-09-15 21:52",
+        "type": "实盘",
+        "primary": 4,
+        "secondary": 7,
+        "score": 7.2,
+        "signals": [
+          "ab_strong",
+          "triple_reversal"
+        ],
         "actualNums": null,
         "actualTails": null,
         "hit": null,
-        "cumHitRate": 0.5
+        "cumHitRate": 0.3333
       }
     ]
   },
-  "更新时间": "2026-09-14 22:00:53"
+  "更新时间": "2026-09-15 21:52:51"
 }

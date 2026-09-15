@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-14T14:02:32.554Z",
-  "dataRange": "2026年第1-257期（共257期）",
+  "timestamp": "2026-09-15T13:55:23.801Z",
+  "dataRange": "2026年第1-258期（共258期）",
   "coldParams": {
     "enabled": false,
     "threshold": 5,
@@ -11,22 +11,22 @@
     {
       "trainSize": 150,
       "trainRange": "第1-150期",
-      "testRange": "第151-257期",
+      "testRange": "第151-258期",
       "trainBestHitRate": 0.8807339449541285,
       "v3": {
         "correct": 70,
-        "total": 88,
-        "hitRate": 0.7954545454545454,
-        "recommended": 88
+        "total": 89,
+        "hitRate": 0.7865168539325843,
+        "recommended": 89
       },
       "v4": {
         "correct": 71,
-        "total": 88,
-        "hitRate": 0.8068181818181818,
-        "recommended": 88,
+        "total": 89,
+        "hitRate": 0.797752808988764,
+        "recommended": 89,
         "coldPenalty": 0
       },
-      "delta": 0.011363636363636354,
+      "delta": 0.011235955056179692,
       "v4Details": [
         {
           "period": 152,
@@ -731,6 +731,14 @@
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
+        },
+        {
+          "period": 258,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
         }
       ],
       "v3Details": [
@@ -1260,6 +1268,12 @@
           "period": 257,
           "primary": 2,
           "score": 2.9,
+          "hit": false
+        },
+        {
+          "period": 258,
+          "primary": 0,
+          "score": 1.7999999999999998,
           "hit": false
         }
       ]
@@ -1267,22 +1281,22 @@
     {
       "trainSize": 180,
       "trainRange": "第1-180期",
-      "testRange": "第181-257期",
+      "testRange": "第181-258期",
       "trainBestHitRate": 0.8787878787878788,
       "v3": {
         "correct": 50,
-        "total": 65,
-        "hitRate": 0.7692307692307693,
-        "recommended": 65
+        "total": 66,
+        "hitRate": 0.7575757575757576,
+        "recommended": 66
       },
       "v4": {
         "correct": 51,
-        "total": 65,
-        "hitRate": 0.7846153846153846,
-        "recommended": 65,
+        "total": 66,
+        "hitRate": 0.7727272727272727,
+        "recommended": 66,
         "coldPenalty": 0
       },
-      "delta": 0.01538461538461533,
+      "delta": 0.015151515151515138,
       "v4Details": [
         {
           "period": 182,
@@ -1803,6 +1817,14 @@
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
+        },
+        {
+          "period": 258,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
         }
       ],
       "v3Details": [
@@ -2194,6 +2216,12 @@
           "period": 257,
           "primary": 2,
           "score": 2.9,
+          "hit": false
+        },
+        {
+          "period": 258,
+          "primary": 0,
+          "score": 1.7999999999999998,
           "hit": false
         }
       ]
@@ -2201,22 +2229,22 @@
     {
       "trainSize": 200,
       "trainRange": "第1-200期",
-      "testRange": "第201-257期",
+      "testRange": "第201-258期",
       "trainBestHitRate": 0.88,
       "v3": {
         "correct": 34,
-        "total": 47,
-        "hitRate": 0.723404255319149,
-        "recommended": 47
+        "total": 48,
+        "hitRate": 0.7083333333333334,
+        "recommended": 48
       },
       "v4": {
         "correct": 35,
-        "total": 47,
-        "hitRate": 0.7446808510638298,
-        "recommended": 47,
+        "total": 48,
+        "hitRate": 0.7291666666666666,
+        "recommended": 48,
         "coldPenalty": 0
       },
-      "delta": 0.02127659574468077,
+      "delta": 0.02083333333333326,
       "v4Details": [
         {
           "period": 203,
@@ -2593,6 +2621,14 @@
           "coldPenalty": 0,
           "miss": 1,
           "hit": false
+        },
+        {
+          "period": 258,
+          "primary": 0,
+          "score": 1.7999999999999998,
+          "coldPenalty": 0,
+          "miss": 1,
+          "hit": false
         }
       ],
       "v3Details": [
@@ -2876,6 +2912,12 @@
           "period": 257,
           "primary": 2,
           "score": 2.9,
+          "hit": false
+        },
+        {
+          "period": 258,
+          "primary": 0,
+          "score": 1.7999999999999998,
           "hit": false
         }
       ]
@@ -2884,20 +2926,20 @@
   "walkForward": {
     "note": "初始窗口150期定参+定人格，第151期起每期只用<=当期历史滚动预测下一期，无未来数据泄露",
     "trainRange": "第1-150期",
-    "testRange": "第151-257期",
+    "testRange": "第151-258期",
     "v3": {
       "correct": 70,
-      "total": 88,
-      "hitRate": 0.7954545454545454,
-      "recommended": 88
+      "total": 89,
+      "hitRate": 0.7865168539325843,
+      "recommended": 89
     },
     "v4": {
       "correct": 71,
-      "total": 88,
-      "hitRate": 0.8068181818181818,
-      "recommended": 88
+      "total": 89,
+      "hitRate": 0.797752808988764,
+      "recommended": 89
     },
-    "delta": 0.011363636363636354,
+    "delta": 0.011235955056179692,
     "v4Details": [
       {
         "period": 152,
@@ -3514,6 +3556,13 @@
         "coldPenalty": 0,
         "miss": 1,
         "hit": false
+      },
+      {
+        "period": 258,
+        "primary": 0,
+        "coldPenalty": 0,
+        "miss": 1,
+        "hit": false
       }
     ],
     "v3Details": [
@@ -3956,17 +4005,22 @@
         "period": 257,
         "primary": 2,
         "hit": false
+      },
+      {
+        "period": 258,
+        "primary": 0,
+        "hit": false
       }
     ]
   },
   "conclusion": {
-    "avgDelta": 0.014847120964142202,
-    "maxDelta": 0.02127659574468077,
+    "avgDelta": 0.014614189649301945,
+    "maxDelta": 0.02083333333333326,
     "deltas": [
-      0.011363636363636354,
-      0.01538461538461533,
-      0.02127659574468077,
-      0.011363636363636354
+      0.011235955056179692,
+      0.015151515151515138,
+      0.02083333333333326,
+      0.011235955056179692
     ],
     "verdict": "反追冷边际增益微弱（各切分样本外均仅多命中1个，疑似噪声），需实盘验证，不建议据此替换 v3",
     "coldParams": {

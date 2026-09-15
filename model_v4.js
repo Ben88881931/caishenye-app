@@ -685,9 +685,12 @@ try {
 } catch (e) {}
 
 if (PROD_PRED) {
+  // time 幂等：已有该期记录则保留旧 time，仅真正新增期用 nowStr()
+  const prevRec = liveHist[PROD_NEXT];
+  const safeTime = (prevRec && prevRec.time && prevRec.time !== '-' && prevRec.time !== '') ? prevRec.time : nowStr();
   liveHist[PROD_NEXT] = {
     period: PROD_NEXT,
-    time: nowStr(),
+    time: safeTime,
     type: '实盘',
     primary: PROD_PRED.primary,
     secondary: PROD_PRED.secondary,
