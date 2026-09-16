@@ -394,6 +394,7 @@
   }
 
   function scrollToLatest() {
+    if (state.tab === "pick3") return;
     var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
     if (sc) {
       sc.scrollTop = sc.scrollHeight;
