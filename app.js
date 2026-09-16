@@ -69,7 +69,7 @@
     if (t < 10) return { txt: "样本不足", color: "#94a3b8" };
     var miss = t - h;
     var color = t < 20 ? "#eab308" : "#16a34a";
-    return { txt: "中" + h + "<br>错" + miss + "<br>共" + t, color: color };
+    return { txt: "中" + h + "·错" + miss + "·共" + t, color: color };
   }
 
   function reversalRate(tail) {
@@ -1553,7 +1553,7 @@
       var ratioTxt = md.maxMiss > 0 ? md.miss + "/" + md.maxMiss + "期" : "-";
       var ratioColor = md.ratio >= 0.5 ? '#dc2626' : md.ratio >= 0.3 ? '#eab308' : '#22c55e';
       var wbhm = hitMissTxt(wb.hits, wb.total);
-      html += '<tr><td>尾' + d + '</td><td>' + md.miss + '期</td><td>' + md.maxMiss + '期</td><td style="color:' + ratioColor + ';font-weight:700">' + ratioTxt + '</td><td style="color:' + wbhm.color + ';font-weight:700">' + wbhm.txt + '</td><td>' + wb.sample.toFixed(1) + '</td><td>' + score + '分</td></tr>';
+      html += '<tr><td>尾' + d + '</td><td>' + md.miss + '期</td><td>' + md.maxMiss + '期</td><td style="color:' + ratioColor + ';font-weight:700">' + ratioTxt + '</td><td style="color:' + wbhm.color + ';font-weight:700;white-space:nowrap">' + wbhm.txt + '</td><td>' + wb.sample.toFixed(1) + '</td><td>' + score + '分</td></tr>';
     }
     html += "</tbody></table></div></div>";
 
@@ -1650,13 +1650,14 @@
   }
 
   // ===== 三号推荐页面（连出惯性分层打分，每期推3个号，避尾0）=====
-  function renderPick3() {
-    var N = latest;
+  function pick3At(cur) {
     var picks = [];
     for (var d = 1; d <= 9; d++) {
-      var streak = currentStreak(d);
-      var c5 = countWindow(d, 5);
-      var c7 = countWindow(d, 7);
+      var streak = 0;
+      for (var p = cur; p >= 1; p--) { if (hit(p, d)) streak++; else break; }
+      var c5 = 0, c7 = 0;
+      for (var p = cur - 4; p <= cur; p++) if (p >= 1 && hit(p, d)) c5++;
+      for (var p = cur - 6; p <= cur; p++) if (p >= 1 && hit(p, d)) c7++;
       var item = null;
       if (streak === 4) item = { d: d, sc: 95.3, tag: "连出4" };
       else if (streak === 3) item = { d: d, sc: 93.9, tag: "连出3" };
@@ -1665,7 +1666,12 @@
       if (item) picks.push(item);
     }
     picks.sort(function (a, b) { return b.sc - a.sc; });
-    var top3 = picks.slice(0, 3);
+    return picks.slice(0, 3);
+  }
+
+  function renderPick3() {
+    var N = latest;
+    var top3 = pick3At(N);
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">三号推荐</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期动态重算</span></div>';
     html += '<div class="panel"><div class="panel__body">';
@@ -1681,15 +1687,51 @@
     }
     html += '</div></div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">回测口径</h2><span class="section__hint">样本 199 期（第61-259期 walk-forward 逐期喂数据）</span></div>';
-    html += '<div class="panel"><div class="panel__body" style="font-size:14px;line-height:1.9">';
-    html += '<p>至少中 1 个：<b style="color:#16a34a">中 186 · 错 13 · 共 199 期</b></p>';
-    html += '<p>单号命中：<b style="color:#16a34a">中 342 · 错 241 · 共 583 个号</b>（199 期每期推 ≤3 号）</p>';
-    html += '<p>理论基准（单号）：<b>55.39%</b></p>';
-    html += '<p>单注期望 <b style="color:#16a34a">+5.59%</b>（赔率 1.8，按单号命中率推导）</p>';
+    var hist = [], cum = 0, peak = 0, maxDD = 0;
+    var actDays = 0, tHits = 0, tPicks = 0;
+    var d0 = 0, d1 = 0, d2 = 0, d3 = 0;
+    for (var cur = 1; cur <= N - 1; cur++) {
+      var sel = pick3At(cur);
+      var actual = tailsOf(cur + 1);
+      if (!sel.length) {
+        hist.push({ period: cur + 1, picks: [], actual: actual, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: false });
+        continue;
+      }
+      var h = 0;
+      for (var i = 0; i < sel.length; i++) if (actual.indexOf(sel[i].d) >= 0) h++;
+      actDays++; tPicks += sel.length; tHits += h;
+      if (h === 0) d0++; else if (h === 1) d1++; else if (h === 2) d2++; else d3++;
+      var pnl = +(h * 0.8 - (sel.length - h) * 1).toFixed(2);
+      cum = +(cum + pnl).toFixed(2);
+      if (cum > peak) peak = cum;
+      var dd = +(peak - cum).toFixed(2);
+      if (dd > maxDD) maxDD = dd;
+      hist.push({ period: cur + 1, picks: sel.map(function (c) { return c.d; }), actual: actual, hits: h, pnl: pnl, cum: cum, dd: dd, live: false });
+    }
+    hist.push({ period: N + 1, picks: top3.map(function (c) { return c.d; }), actual: null, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: true });
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">第2~' + N + '期回测 · 第' + (N + 1) + '期实盘待开奖 · 每期推≤3号 · 赔率1.8</span></div>';
+    html += '<div class="panel"><div class="panel__body" style="font-size:14px;line-height:2">';
+    html += '<p>出手覆盖：<b>' + actDays + ' / ' + (N - 1) + ' 期</b>（空仓 ' + (N - 1 - actDays) + ' 期）</p>';
+    html += '<p>单号命中：<b style="color:#16a34a">中 ' + tHits + ' · 错 ' + (tPicks - tHits) + ' · 共 ' + tPicks + ' 个</b></p>';
+    html += '<p>每期命中：中0 ' + d0 + ' · 中1 ' + d1 + ' · 中2 ' + d2 + ' · 中3 ' + d3 + '（至少中1个 ' + (d1 + d2 + d3) + '/' + actDays + '）</p>';
+    html += '<p>累计盈亏（每期3注@1.8）：<b style="color:' + (cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (cum >= 0 ? '+' : '') + cum + ' 元</b></p>';
+    html += '<p>最大回撤：<b style="color:#dc2626">' + maxDD + ' 元</b></p>';
     html += '</div></div></div>';
 
-    html += '<p class="disclaimer">三号推荐基于连出惯性分层打分，每期动态重算推 3 个号。回测（样本199期）：至少中1个 中186·错13，单号命中 中342·错241（共583个号），单注期望 +5.59%（赔率1.8）。结果仅供参考，不做高命中承诺。</p>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序）· 回测/实盘全标注</span></div>';
+    html += '<div class="panel"><table class="table" style="font-size:12px"><thead><tr><th>期数</th><th>类型</th><th>推荐</th><th>实际开出</th><th>命中</th><th>盈亏</th><th>累计</th><th>回撤</th></tr></thead><tbody>';
+    for (var ri = hist.length - 1; ri >= 0; ri--) {
+      var r = hist[ri];
+      var hitColor = r.hits === 0 ? '#dc2626' : r.hits === 1 ? '#eab308' : r.hits === 2 ? '#16a34a' : '#15803d';
+      var pnlTxt = r.pnl === null ? '—' : (r.pnl >= 0 ? '+' : '') + r.pnl;
+      var pnlColor = r.pnl === null ? '#999' : r.pnl >= 0 ? '#16a34a' : '#dc2626';
+      var typeTag = r.live ? '<span style="color:#2563eb;font-weight:700">实盘·待开奖</span>' : '<span style="color:#9ca3af">回测</span>';
+      html += '<tr><td>' + r.period + '</td><td>' + typeTag + '</td><td>' + (r.picks.length ? r.picks.join(' ') : '空仓') + '</td><td>' + (r.actual ? r.actual.join(' ') : '—') + '</td><td style="color:' + hitColor + ';font-weight:700">' + (r.hits === null ? '—' : '中' + r.hits) + '</td><td style="color:' + pnlColor + ';white-space:nowrap">' + pnlTxt + '</td><td>' + r.cum + '</td><td>' + r.dd + '</td></tr>';
+    }
+    html += '</tbody></table></div></div>';
+
+    html += '<p class="disclaimer">三号推荐基于连出惯性分层打分，每期动态重算推3个号。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     view.innerHTML = html;
   }
 
@@ -1741,14 +1783,14 @@
 
   function renderPersonality() {
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾号性格</h2><span class="section__hint">该尾数「遗漏N期后下一期开出」的概率</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>遗4</th><th>遗5+</th><th>性格</th><th>当前遗漏</th></tr></thead><tbody>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>性格</th><th>当前遗漏</th></tr></thead><tbody>';
     for (var d = 0; d < 10; d++) {
       var b = bounceStats(d);
       function cell(x) {
         var s = b[x];
         if (!s) return "<td>-</td>";
         var hm = hitMissTxt(s.h, s.t);
-        return '<td style="color:' + hm.color + ';font-weight:700">' + hm.txt + "</td>";
+        return '<td style="color:' + hm.color + ';font-weight:700;white-space:nowrap">' + hm.txt + "</td>";
       }
       var arr = [];
       for (var x = 1; x <= 3; x++) { var s = b[x]; if (s && s.t >= 3) arr.push(s.h / s.t * 100); }
@@ -1759,18 +1801,18 @@
         gc = avg >= 62 ? "#16a34a" : avg >= 52 ? "#eab308" : "#dc2626";
       }
       var miss = currentMiss(d);
-      html += "<tr><td>尾" + d + "</td>" + cell(1) + cell(2) + cell(3) + cell(4) + cell(5) + '<td style="color:' + gc + ";font-weight:700\">" + grade + "</td><td>" + miss + "期</td></tr>";
+      html += "<tr><td>尾" + d + "</td>" + cell(1) + cell(2) + cell(3) + '<td style="color:' + gc + ";font-weight:700\">" + grade + "</td><td>" + miss + "期</td></tr>";
     }
     html += "</tbody></table></div></div>";
     html += '<div class="section"><div class="section__head"><h2 class="section__title">连出性格表</h2><span class="section__hint">该尾数「连续开出N期后下一期继续开出」的概率</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>连1</th><th>连2</th><th>连3</th><th>连4</th><th>连5+</th><th>性格</th><th>当前连出</th></tr></thead><tbody>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>连1</th><th>连2</th><th>连3</th><th>性格</th><th>当前连出</th></tr></thead><tbody>';
     for (var d2 = 0; d2 < 10; d2++) {
       var b2 = streakStats(d2);
       function scell(x) {
         var s = b2[x];
         if (!s) return "<td>-</td>";
         var hm = hitMissTxt(s.h, s.t);
-        return '<td style="color:' + hm.color + ';font-weight:700">' + hm.txt + "</td>";
+        return '<td style="color:' + hm.color + ';font-weight:700;white-space:nowrap">' + hm.txt + "</td>";
       }
       var arr2 = [];
       for (var x2 = 1; x2 <= 3; x2++) { var s2 = b2[x2]; if (s2 && s2.t >= 3) arr2.push(s2.h / s2.t * 100); }
@@ -1781,7 +1823,7 @@
         gc2 = avg2 >= 62 ? "#16a34a" : avg2 >= 52 ? "#eab308" : "#dc2626";
       }
       var cs = currentStreak(d2);
-      html += "<tr><td>尾" + d2 + "</td>" + scell(1) + scell(2) + scell(3) + scell(4) + scell(5) + '<td style="color:' + gc2 + ";font-weight:700\">" + grade2 + "</td><td>" + cs + "连</td></tr>";
+      html += "<tr><td>尾" + d2 + "</td>" + scell(1) + scell(2) + scell(3) + '<td style="color:' + gc2 + ";font-weight:700\">" + grade2 + "</td><td>" + cs + "连</td></tr>";
     }
     html += "</tbody></table></div></div>";
     html += '<p class="disclaimer">连出率 = 该尾数历史上「连续开出N期后、下一期继续开出」的命中/样本计数。样本<10显示「样本不足」，10~20标警示色，≥20正常显示。🟢稳 / 🟡中 / 🔴险 按连1-3连出率平均划分。</p>';
