@@ -1736,7 +1736,7 @@
 
     // 历史对错记录：横向滚动条（①第一推荐 ②第二推荐）
     html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">①第一推荐 ②第二推荐 · 对=绿 错=红 · 横向滑动 · 旧→新</span></div></div>';
-    html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div class="panel" id="pick3-hscroll" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="display:flex;gap:5px;min-width:max-content">';
     for (var ri2 = 0; ri2 < hist.length; ri2++) {
       var q = hist[ri2];
@@ -1804,6 +1804,8 @@
 
     html += '<p class="disclaimer">双号推荐基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     view.innerHTML = html;
+    var phs = document.getElementById('pick3-hscroll');
+    if (phs) { phs.scrollLeft = phs.scrollWidth; }
   }
 
 
