@@ -74,9 +74,8 @@ body {
 }
 
 .tabs {
-  position: sticky;
-  top: 63px;
-  z-index: 19;
+  position: static;
+  z-index: 1;
   display: flex;
   gap: 4px;
   max-width: 720px;
