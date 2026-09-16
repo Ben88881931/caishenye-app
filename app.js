@@ -1834,8 +1834,6 @@
 
     html += '<p class="disclaimer">双号推荐基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     view.innerHTML = html;
-    var phs = document.getElementById('pick3-hscroll');
-    if (phs) { phs.scrollLeft = phs.scrollWidth; }
   }
 
 
