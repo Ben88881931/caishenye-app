@@ -1779,9 +1779,9 @@
     }
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序，最新在上）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
-    html += '<div class="panel">';
-    for (var ri = hist.length - 1; ri >= 0; ri--) {
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第2期~第' + (N + 1) + '期（正序，最新在底部）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
+    html += '<div class="panel"><div class="panel__body hist-scroll">';
+    for (var ri = 0; ri < hist.length; ri++) {
       var r = hist[ri];
       html += '<div class="record">';
       html += '<div class="record__top">';
@@ -1824,10 +1824,12 @@
       }
       html += '</div>';
     }
-    html += '</div>';
+    html += '</div></div>';
 
     html += '<p class="disclaimer">双号推荐基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     view.innerHTML = html;
+    var psc = view.querySelector(".hist-scroll");
+    if (psc) psc.scrollTop = psc.scrollHeight;
   }
 
 
