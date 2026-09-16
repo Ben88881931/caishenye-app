@@ -1747,10 +1747,10 @@
       }
       var c1 = q.live ? '<span style="color:#2563eb">①待</span>' : (fh === null ? '<span style="color:#9ca3af">①空</span>' : (fh ? '<span style="color:#16a34a">①对</span>' : '<span style="color:#dc2626">①错</span>'));
       var c2 = q.live ? '<span style="color:#2563eb">②待</span>' : (sh === null ? '<span style="color:#9ca3af">②空</span>' : (sh ? '<span style="color:#16a34a">②对</span>' : '<span style="color:#dc2626">②错</span>'));
-      html += '<div style="min-width:48px;text-align:center;border:1px solid #eef0f3;border-radius:8px;padding:6px 3px;background:#fff">';
-      html += '<div style="font-size:10px;color:var(--muted);margin-bottom:3px">' + q.period + '</div>';
-      html += '<div style="font-size:12px;font-weight:700;line-height:1.6">' + c1 + '</div>';
-      html += '<div style="font-size:12px;font-weight:700;line-height:1.6">' + c2 + '</div>';
+      html += '<div style="min-width:54px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 3px;background:#fff">';
+      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:3px">' + q.period + '</div>';
+      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + c1 + '</div>';
+      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + c2 + '</div>';
       html += '</div>';
     }
     html += '</div></div>';
