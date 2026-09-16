@@ -1734,10 +1734,25 @@
     html += '<div class="stat"><div class="stat__value">' + d2 + '</div><div class="stat__label">中2</div></div>';
     html += '</div></div>';
 
-    // 历史对错记录：横向滚动条（①第一推荐 ②第二推荐）
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">①第一推荐 ②第二推荐 · 对=绿 错=红 · 横向滑动 · 旧→新</span></div></div>';
+    // 连错遗漏记录：横向滚动条（①第一推荐 ②第二推荐，显示连错遗漏值）
+    var fMiss = 0, sMiss = 0, fMax = 0, sMax = 0;
+    for (var ck = 0; ck < hist.length; ck++) {
+      var qk = hist[ck];
+      if (qk.live || !qk.picks.length) continue;
+      var fhk = qk.actual ? qk.actual.indexOf(qk.picks[0]) >= 0 : null;
+      if (fhk === null) continue;
+      if (fhk) { fMiss = 0; } else { fMiss++; if (fMiss > fMax) fMax = fMiss; }
+      if (qk.picks.length > 1 && qk.actual) {
+        var shk = qk.actual.indexOf(qk.picks[1]) >= 0;
+        if (shk) { sMiss = 0; } else { sMiss++; if (sMiss > sMax) sMax = sMiss; }
+      }
+    }
+    var fCur = fMiss, sCur = sMiss;
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">连错遗漏记录</h2><span class="section__hint">①第一推荐 最高连错 ' + fMax + ' 期 · ②第二推荐 最高连错 ' + sMax + ' 期 · 当前连错 ①' + fCur + ' ②' + sCur + ' · 横向滑动 · 旧→新</span></div></div>';
     html += '<div class="panel" id="pick3-hscroll" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="display:flex;gap:5px;min-width:max-content">';
+    var fm2 = 0, sm2 = 0;
     for (var ri2 = 0; ri2 < hist.length; ri2++) {
       var q = hist[ri2];
       var fh = null, sh = null;
@@ -1745,8 +1760,23 @@
         if (q.actual) fh = q.actual.indexOf(q.picks[0]) >= 0;
         if (q.picks.length > 1 && q.actual) sh = q.actual.indexOf(q.picks[1]) >= 0;
       }
-      var c1 = q.live ? '<span style="color:#2563eb">①待</span>' : (fh === null ? '<span style="color:#9ca3af">①空</span>' : (fh ? '<span style="color:#16a34a">①对</span>' : '<span style="color:#dc2626">①错</span>'));
-      var c2 = q.live ? '<span style="color:#2563eb">②待</span>' : (sh === null ? '<span style="color:#9ca3af">②空</span>' : (sh ? '<span style="color:#16a34a">②对</span>' : '<span style="color:#dc2626">②错</span>'));
+      var c1, c2;
+      if (q.live) {
+        c1 = '<span style="color:#2563eb">①待</span>';
+        c2 = '<span style="color:#2563eb">②待</span>';
+      } else if (fh === null) {
+        c1 = '<span style="color:#9ca3af">①空</span>';
+        c2 = '<span style="color:#9ca3af">②空</span>';
+      } else {
+        if (fh) { fm2 = 0; c1 = '<span style="color:#16a34a">①中</span>'; }
+        else { fm2++; c1 = '<span style="color:#dc2626">①' + fm2 + '</span>'; }
+        if (sh !== null) {
+          if (sh) { sm2 = 0; c2 = '<span style="color:#16a34a">②中</span>'; }
+          else { sm2++; c2 = '<span style="color:#dc2626">②' + sm2 + '</span>'; }
+        } else {
+          c2 = '<span style="color:#9ca3af">②空</span>';
+        }
+      }
       html += '<div style="min-width:54px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 3px;background:#fff">';
       html += '<div style="font-size:12px;color:var(--muted);margin-bottom:3px">' + q.period + '</div>';
       html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + c1 + '</div>';
