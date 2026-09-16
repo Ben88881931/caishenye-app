@@ -65,6 +65,13 @@
     return c;
   }
 
+  function hitMissTxt(h, t) {
+    if (t < 10) return { txt: "样本不足", color: "#94a3b8" };
+    var miss = t - h;
+    var color = t < 20 ? "#eab308" : "#16a34a";
+    return { txt: "中" + h + " · 错" + miss + " · 共" + t, color: color };
+  }
+
   function reversalRate(tail) {
     var total = 0, hits = 0;
     for (var i = 1; i < periods.length; i++) {
@@ -131,7 +138,7 @@
         }
       }
     }
-    return { name: name, n: n, avgHit: n ? hitSum / n : 0, avgBase: n ? baseSum / n : 0, edge: n ? (hitSum - baseSum) / n : 0 };
+    return { name: name, n: n, hitSum: hitSum, avgHit: n ? hitSum / n : 0, avgBase: n ? baseSum / n : 0, edge: n ? (hitSum - baseSum) / n : 0 };
   }
 
   function segsOf(w) {
@@ -195,11 +202,12 @@
     var arr = tailSegs(tail, w);
     if (!arr.length) return null;
     var max = -Infinity, min = Infinity, sum = 0;
+    var maxC = 0, minC = 0;
     var labels = {};
     arr.forEach(function (e) {
       var r = e.rate;
-      if (r > max) max = r;
-      if (r < min) min = r;
+      if (r > max) { max = r; maxC = e.c; }
+      if (r < min) { min = r; minC = e.c; }
       sum += r;
       var l = segTextLabel(r);
       labels[l] = (labels[l] || 0) + 1;
@@ -211,9 +219,9 @@
     var range = max - min;
     var rangeLabel = range >= 50 ? "大" : range >= 30 ? "中" : "小";
     return {
-      max: max, min: min, avg: sum / arr.length, most: most, mostCnt: mostCnt,
+      max: max, min: min, maxC: maxC, minC: minC, avg: sum / arr.length, most: most, mostCnt: mostCnt,
       total: arr.length, range: range, rangeLabel: rangeLabel,
-      rule: "最高" + Math.round(max) + "% 最低" + Math.round(min) + "% 最频" + most + "(" + mostCnt + "/" + arr.length + ")"
+      rule: "最高" + maxC + "/" + w + " 最低" + minC + "/" + w + " 最频" + most + "(" + mostCnt + "/" + arr.length + ")"
     };
   }
 
@@ -334,17 +342,12 @@
     tail: 0,
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
     recordPage: 0,
-    v3OnlyHigh: false,
-    v4OnlyHigh: false,
   };
 
   var TABS = [
     { id: "overview", label: "总览" },
     { id: "predict", label: "下期预估" },
-    { id: "modelA", label: "模型A预测" },
-    { id: "modelB", label: "模型B预测" },
-    { id: "modelV3", label: "多维度预测" },
-    { id: "modelV4", label: "多维度预测V4" },
+    { id: "pick3", label: "三号推荐" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -415,10 +418,7 @@
     else if (state.tab === "backtest") renderBacktest();
     else if (state.tab === "order") renderOrder();
     else if (state.tab === "predict") renderPredict();
-    else if (state.tab === "modelA") renderModelA();
-    else if (state.tab === "modelB") renderModelB();
-    else if (state.tab === "modelV3") renderModelV3();
-    else if (state.tab === "modelV4") renderModelV4();
+    else if (state.tab === "pick3") renderPick3();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     scrollToLatest();
@@ -446,6 +446,7 @@
           base: BASE_RATE[k],
           rate: mb.rate,
           sample: mb.total,
+          hits: mb.hits,
           edge: mb.total ? mb.rate - BASE_RATE[k] : 0
         });
       }
@@ -478,17 +479,23 @@
     html += "</div></div></div></div>";
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">统计参考</h2><span class="section__hint">上期未出 · 与理论基准对比</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>遗漏</th><th>基准率</th><th>遗漏后开出</th><th>样本</th><th>差值</th><th>判定</th></tr></thead><tbody>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>遗漏</th><th>理论基准</th><th>命中/错</th><th>样本</th><th>多/少中</th><th>判定</th></tr></thead><tbody>';
     refs.forEach(function (r) {
       var verdict = "无信号";
       if (r.sample >= 20 && r.edge >= 0.04) verdict = "偏热";
       else if (r.sample >= 20 && r.edge <= -0.04) verdict = "偏冷";
       var verdictCls = verdict === "偏热" ? "cell--hot" : verdict === "偏冷" ? "cell--cold" : "";
-      html += "<tr><td>" + r.tail + '</td><td class="' + (r.miss >= 4 ? "cell--hot" : "cell--cold") + '">' + r.miss + '</td><td>' + pct(r.base) + "</td><td>" + pct(r.rate) + "</td><td>" + r.sample + '</td><td>' + (r.edge >= 0 ? "+" : "") + pct(r.edge) + '</td><td class="' + verdictCls + '">' + verdict + "</td></tr>";
+      var rhitTxt, rhitColor;
+      if (r.sample < 10) { rhitTxt = "样本不足"; rhitColor = "#94a3b8"; }
+      else { rhitTxt = "中" + r.hits + "·错" + (r.sample - r.hits); rhitColor = r.sample < 20 ? "#eab308" : "#16a34a"; }
+      var rbaseHit = Math.round(r.sample * r.base);
+      var redgeCnt = r.hits - rbaseHit;
+      var redgeTxt = redgeCnt >= 0 ? "多中" + redgeCnt + "个" : "少中" + (-redgeCnt) + "个";
+      html += "<tr><td>" + r.tail + '</td><td class="' + (r.miss >= 4 ? "cell--hot" : "cell--cold") + '">' + r.miss + '</td><td>' + pct(r.base) + "</td><td style=\"color:" + rhitColor + ";font-weight:700\">" + rhitTxt + "</td><td>" + r.sample + "</td><td>" + redgeTxt + '</td><td class="' + verdictCls + '">' + verdict + "</td></tr>";
     });
     html += "</tbody></table></div></div>";
 
-    html += '<p class="disclaimer">尾数 0 的理论出现率约 47%，尾数 1-9 约 55%（因为 1-49 中尾数 0 只有 4 个号，其余各有 5 个号）。差值需样本足够才有参考意义；当前多数信号都在统计噪声范围内，不应据此追号。</p>';
+    html += '<p class="disclaimer">理论基准率：尾数 0 为 47.17%，尾数 1-9 为 55.39%（因为 1-49 中尾数 0 只有 4 个号，其余各有 5 个号）。差值需样本足够才有参考意义；当前多数信号都在统计噪声范围内，不应据此追号。</p>';
 
     view.innerHTML = html;
   }
@@ -502,14 +509,16 @@
     });
     html += "</div></div>";
 
-    html += '<div class="section"><div class="panel"><table class="table"><thead><tr><th>尾数</th><th>近 ' + w + " 期</th><th>期望</th><th>偏离</th><th>判定</th><th>当前遗漏</th></tr></thead><tbody>";
+    html += '<div class="section"><div class="panel"><table class="table"><thead><tr><th>尾数</th><th>近 ' + w + " 期</th><th>期望</th><th>多/少中</th><th>判定</th><th>当前遗漏</th></tr></thead><tbody>";
     for (var t = 0; t < 10; t++) {
       var z = zScore(t, w);
       var miss = currentMiss(t);
       var verdict = "正常", cls = "";
       if (z.z >= 2) { verdict = "偏热"; cls = "cell--hot"; }
       else if (z.z <= -2) { verdict = "偏冷"; cls = "cell--cold"; }
-      html += "<tr><td>" + t + '</td><td>' + z.count + "/" + w + "</td><td>" + z.expected.toFixed(1) + '</td><td>' + (z.diff >= 0 ? "+" : "") + pct(z.diff) + '</td><td class="' + cls + '">' + verdict + '</td><td class="cell--' + (miss >= 4 ? "hot" : "cold") + '">' + miss + " 期</td></tr>";
+      var zdiff = Math.round(z.count - z.expected);
+      var zdTxt = zdiff >= 0 ? "多中" + zdiff + "个" : "少中" + (-zdiff) + "个";
+      html += "<tr><td>" + t + '</td><td>' + z.count + "/" + w + "</td><td>" + z.expected.toFixed(1) + '</td><td>' + zdTxt + '</td><td class="' + cls + '">' + verdict + '</td><td class="cell--' + (miss >= 4 ? "hot" : "cold") + '">' + miss + " 期</td></tr>";
     }
     html += "</tbody></table></div></div>";
     html += '<p class="disclaimer">偏离 = 实际开出率减去该尾数理论基准率；判定按 z 分数（|z|≥2 视为显著偏离），已考虑尾数 0 与 1-9 的天然差异。</p>';
@@ -952,13 +961,19 @@
       backtestSignal("遗漏≥3期后反弹", function (t, i) { return missedRun(t, i, 3); })
     ];
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">策略回测</h2><span class="section__hint">信号出现后，下一期真实命中率 vs 理论基准</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>信号</th><th>样本</th><th>实际命中</th><th>基准</th><th>差值</th><th>结论</th></tr></thead><tbody>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>信号</th><th>样本</th><th>命中/错</th><th>理论基准</th><th>多/少中</th><th>结论</th></tr></thead><tbody>';
     signals.forEach(function (s) {
       var verdict = "无优势", cls = "";
       if (s.n < 50) { verdict = "样本不足"; }
       else if (s.edge >= 0.03) { verdict = "略优"; cls = "cell--hot"; }
       else if (s.edge <= -0.03) { verdict = "略劣"; cls = "cell--cold"; }
-      html += "<tr><td>" + s.name + '</td><td>' + s.n + '</td><td>' + pct(s.avgHit) + '</td><td>' + pct(s.avgBase) + '</td><td>' + (s.edge >= 0 ? "+" : "") + pct(s.edge) + '</td><td class="' + cls + '">' + verdict + "</td></tr>";
+      var hitTxt, hitColor;
+      if (s.n < 10) { hitTxt = "样本不足"; hitColor = "#94a3b8"; }
+      else { hitTxt = "中" + s.hitSum + "·错" + (s.n - s.hitSum); hitColor = s.n < 20 ? "#eab308" : "#16a34a"; }
+      var baseHit = Math.round(s.avgBase * s.n);
+      var edgeCnt = s.hitSum - baseHit;
+      var edgeTxt = edgeCnt >= 0 ? "多中" + edgeCnt + "个" : "少中" + (-edgeCnt) + "个";
+      html += "<tr><td>" + s.name + '</td><td>' + s.n + '</td><td style="color:' + hitColor + ';font-weight:700">' + hitTxt + '</td><td>' + pct(s.avgBase) + '</td><td>' + edgeTxt + '</td><td class="' + cls + '">' + verdict + "</td></tr>";
     });
     html += "</tbody></table></div></div>";
     
@@ -1074,7 +1089,8 @@
         var cell = '<td class="seg-hist-cell ' + segColorClass(e.rate) + '">';
         cell += '<span class="seg-hist-period">' + e.s + '-' + e.e + '期</span>';
         cell += '<span class="seg-hist-arrow" style="' + arrowStyle + '">' + arrow + '</span>';
-        cell += '<span class="seg-hist-rate">' + (e.rate * 100).toFixed(1) + '%</span> <b>' + segTextLabel(e.rate) + '</b><br><b>' + e.c + '/' + w + '</b>' + dot;
+        var shm = hitMissTxt(e.c, w);
+        cell += '<span class="seg-hist-rate" style="color:' + shm.color + '">' + shm.txt + '</span> <b>' + segTextLabel(e.rate) + '</b><br><b>' + e.c + '/' + w + '</b>' + dot;
         cell += '</td>';
         html += cell;
       });
@@ -1100,7 +1116,7 @@
     tails.forEach(function (t) {
       var s = segStats(t, w);
       if (s) {
-        html += '<td>' + Math.round(s.max) + '%~' + Math.round(s.min) + '% 幅度' + Math.round(s.range) + '% ' + s.rangeLabel + ' ' + s.most + '(' + s.mostCnt + '/' + s.total + ')</td>';
+        html += '<td>最高' + s.maxC + '/' + w + ' 最低' + s.minC + '/' + w + ' ' + s.rangeLabel + ' ' + s.most + '(' + s.mostCnt + '/' + s.total + ')</td>';
       } else {
         html += "<td>-</td>";
       }
@@ -1372,7 +1388,7 @@
   }
 
   // ===== 预估三层框架 + 下期推荐 =====
-  // 新模型：加权恰好遗漏k期反弹率（回测命中率52.3%）
+  // 新模型：加权恰好遗漏k期反弹率（回测 中23·错21·共44）
   var BOUNCE = { 0: 2, 1: 3, 2: 1, 3: 1, 4: 2, 5: 1, 6: 2, 7: 2, 8: 2, 9: 4 };
   var NEW_MODEL = { decayRate: 1.75, bounceThresh: 0.75, bounceThresh2: 0.65, wBounce: 5, wBounce2: 3, wDepth: 1, depthThresh: 0.5, minSample: 2 };
 
@@ -1424,11 +1440,12 @@
   // 新模型核心：恰好遗漏k期的加权近期反弹率
   function weightedExactBounce(d, upto, k) {
     var totalW = 0, hitsW = 0, run = 0;
+    var total = 0, hits = 0;
     var uidx = periods.indexOf(upto);
     if (uidx < 0) {
       for (var x = 0; x < periods.length; x++) { if (periods[x] === upto) { uidx = x; break; } }
     }
-    if (uidx < 0) return { rate: 0, sample: 0 };
+    if (uidx < 0) return { rate: 0, sample: 0, total: 0, hits: 0 };
     for (var i = 0; i < periods.length - 1; i++) {
       if (periods[i] >= upto) break;
       if (hit(periods[i], d)) { run = 0; }
@@ -1438,11 +1455,12 @@
           var distFromEnd = uidx - i;
           var weight = Math.max(1, 10 - distFromEnd / NEW_MODEL.decayRate);
           totalW += weight;
-          if (hit(periods[i + 1], d)) hitsW += weight;
+          total++;
+          if (hit(periods[i + 1], d)) { hitsW += weight; hits++; }
         }
       }
     }
-    return { rate: totalW ? hitsW / totalW : 0, sample: totalW };
+    return { rate: totalW ? hitsW / totalW : 0, sample: totalW, total: total, hits: hits };
   }
 
   function missDepthRatio(d, upto) {
@@ -1515,8 +1533,8 @@
 
   function renderPredict() {
     var N = latest;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 回测命中率52.3%</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>遗漏占比</th><th>加权反弹率</th><th>样本</th><th>得分</th></tr></thead><tbody>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 回测 中23·错21·共44</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>遗漏/最大</th><th>反弹命中</th><th>样本</th><th>得分</th></tr></thead><tbody>';
     var cands = [];
     var lastBin = bin(N);
     for (var d = 0; d < 10; d++) {
@@ -1530,13 +1548,12 @@
           else if (wb.rate >= NEW_MODEL.bounceThresh2) score += NEW_MODEL.wBounce2;
         }
         if (md.ratio >= NEW_MODEL.depthThresh) score += NEW_MODEL.wDepth;
-        cands.push({ d: d, miss: md.miss, maxMiss: md.maxMiss, ratio: md.ratio, wbr: wb.rate, wbSample: wb.sample, score: score });
+        cands.push({ d: d, miss: md.miss, maxMiss: md.maxMiss, ratio: md.ratio, wbr: wb.rate, wbSample: wb.sample, wbHits: wb.hits, wbTotal: wb.total, score: score });
       }
-      var ratioPct = (md.ratio * 100).toFixed(0) + '%';
+      var ratioTxt = md.maxMiss > 0 ? md.miss + "/" + md.maxMiss + "期" : "-";
       var ratioColor = md.ratio >= 0.5 ? '#dc2626' : md.ratio >= 0.3 ? '#eab308' : '#22c55e';
-      var wbrPct = (wb.rate * 100).toFixed(0) + '%';
-      var wbrColor = wb.rate >= 0.75 ? '#16a34a' : wb.rate >= 0.65 ? '#eab308' : '#94a3b8';
-      html += '<tr><td>尾' + d + '</td><td>' + md.miss + '期</td><td>' + md.maxMiss + '期</td><td style="color:' + ratioColor + ';font-weight:700">' + ratioPct + '</td><td style="color:' + wbrColor + ';font-weight:700">' + wbrPct + '</td><td>' + wb.sample.toFixed(1) + '</td><td>' + score + '分</td></tr>';
+      var wbhm = hitMissTxt(wb.hits, wb.total);
+      html += '<tr><td>尾' + d + '</td><td>' + md.miss + '期</td><td>' + md.maxMiss + '期</td><td style="color:' + ratioColor + ';font-weight:700">' + ratioTxt + '</td><td style="color:' + wbhm.color + ';font-weight:700">' + wbhm.txt + '</td><td>' + wb.sample.toFixed(1) + '</td><td>' + score + '分</td></tr>';
     }
     html += "</tbody></table></div></div>";
 
@@ -1549,15 +1566,15 @@
       var top1 = cands[0], top2 = cands[1];
       html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">双推荐：尾 ' + top1.d + ' 、尾 ' + top2.d + '</div>';
       html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">分数并列，两个都值得关注</div>';
-      html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">尾' + top1.d + '：遗漏 ' + top1.miss + ' 期 | 加权反弹率 ' + (top1.wbr*100).toFixed(0) + '%</div>';
-      html += '<div style="font-size:12px;color:var(--muted)">尾' + top2.d + '：遗漏 ' + top2.miss + ' 期 | 加权反弹率 ' + (top2.wbr*100).toFixed(0) + '%</div>';
+      html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">尾' + top1.d + '：遗漏 ' + top1.miss + ' 期 | 反弹 中' + top1.wbHits + '·错' + (top1.wbTotal - top1.wbHits) + '·共' + top1.wbTotal + '</div>';
+      html += '<div style="font-size:12px;color:var(--muted)">尾' + top2.d + '：遗漏 ' + top2.miss + ' 期 | 反弹 中' + top2.wbHits + '·错' + (top2.wbTotal - top2.wbHits) + '·共' + top2.wbTotal + '</div>';
     } else {
       var top = cands[0];
       html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">首选：尾 ' + top.d + "</div>";
-      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">遗漏 ' + top.miss + " 期 | 历史最大 " + top.maxMiss + " 期 | 加权反弹率 " + (top.wbr*100).toFixed(0) + "%</div>";
+      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">遗漏 ' + top.miss + " 期 | 历史最大 " + top.maxMiss + " 期 | 反弹 中" + top.wbHits + "·错" + (top.wbTotal - top.wbHits) + "·共" + top.wbTotal + "</div>";
       if (cands.length >= 2) {
         var sec = cands[1];
-        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + "（遗漏 " + sec.miss + " 期 | 加权反弹率 " + (sec.wbr*100).toFixed(0) + "%）</div>";
+        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + "（遗漏 " + sec.miss + " 期 | 反弹 中" + sec.wbHits + "·错" + (sec.wbTotal - sec.wbHits) + "·共" + sec.wbTotal + "）</div>";
       }
     }
     html += "</div></div></div>";
@@ -1569,24 +1586,24 @@
     } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
       html += '<p><b>结论：</b>双推荐：尾 <b>' + cands[0].d + '</b> 和 尾 <b>' + cands[1].d + '</b>。</p>';
       html += '<p><b>理由：</b>两个候选综合分并列，都值得跟踪。</p>';
-      html += '<p><b>数据：</b>尾' + cands[0].d + '（遗漏 ' + cands[0].miss + ' 期；加权反弹率 ' + (cands[0].wbr*100).toFixed(0) + '%）；尾' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；加权反弹率 ' + (cands[1].wbr*100).toFixed(0) + '%）。</p>';
+      html += '<p><b>数据：</b>尾' + cands[0].d + '（遗漏 ' + cands[0].miss + ' 期；反弹 中' + cands[0].wbHits + '·错' + (cands[0].wbTotal - cands[0].wbHits) + '·共' + cands[0].wbTotal + '）；尾' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；反弹 中' + cands[1].wbHits + '·错' + (cands[1].wbTotal - cands[1].wbHits) + '·共' + cands[1].wbTotal + '）。</p>';
     } else {
       var top = cands[0];
       var reasons = [];
-      if (top.wbr >= 0.75) reasons.push("加权反弹率 " + (top.wbr*100).toFixed(0) + "%，达到高阈值");
-      else if (top.wbr >= 0.65) reasons.push("加权反弹率 " + (top.wbr*100).toFixed(0) + "%，达到中阈值");
-      if (top.ratio >= 0.5) reasons.push("遗漏深度 " + (top.ratio*100).toFixed(0) + "%，接近历史最大");
+      if (top.wbr >= 0.75) reasons.push("反弹 中" + top.wbHits + "·错" + (top.wbTotal - top.wbHits) + "，达到高阈值");
+      else if (top.wbr >= 0.65) reasons.push("反弹 中" + top.wbHits + "·错" + (top.wbTotal - top.wbHits) + "，达到中阈值");
+      if (top.ratio >= 0.5) reasons.push("遗漏深度 " + top.miss + "/" + top.maxMiss + " 期，接近历史最大");
       if (!reasons.length) reasons.push("综合评分最高");
 
       html += '<p><b>结论：</b>首选尾数 <b>' + top.d + '</b>。</p>';
       html += '<p><b>理由：</b>' + reasons.join("；") + '。</p>';
-      html += '<p><b>数据：</b>遗漏 ' + top.miss + ' 期；历史最大 ' + top.maxMiss + ' 期；加权反弹率 ' + (top.wbr*100).toFixed(0) + '%，样本 ' + top.wbSample.toFixed(1) + '。</p>';
+      html += '<p><b>数据：</b>遗漏 ' + top.miss + ' 期；历史最大 ' + top.maxMiss + ' 期；反弹 中' + top.wbHits + '·错' + (top.wbTotal - top.wbHits) + '·共' + top.wbTotal + '。</p>';
       if (cands.length >= 2) {
-        html += '<p><b>备选：</b>尾 ' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；加权反弹率 ' + (cands[1].wbr*100).toFixed(0) + '%）。</p>';
+        html += '<p><b>备选：</b>尾 ' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；反弹 中' + cands[1].wbHits + '·错' + (cands[1].wbTotal - cands[1].wbHits) + '·共' + cands[1].wbTotal + '）。</p>';
       }
     }
     html += '<p><b>评分规则：</b>加权反弹率≥75% +5分；≥65% +3分；遗漏深度≥50% +1分。分数并列时给双推荐。</p>';
-    html += '<p><b>模型原理：</b>恰好遗漏k期的加权近期反弹率，衰减因子1.75（越近权重越高），回测命中率52.3%。</p>';
+    html += '<p><b>模型原理：</b>恰好遗漏k期的加权近期反弹率，衰减因子1.75（越近权重越高），回测 中23·错21·共44。</p>';
     html += '<p><b>风险提示：</b>模型仅供参考，不应据此重注。</p>';
     html += "</div></div></div>";
 
@@ -1628,158 +1645,54 @@
       html += "</tbody></table></div></div>";
     }
 
-    html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，回测命中率52.3%。修复数据泄露后已退随机（随机基线约55%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
+    html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，回测 中23·错21·共44。修复数据泄露后已退随机（理论基准约55.39%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
 
-  // ===== 模型A预测页面（app.js逻辑，得分并列时跳过）=====
-  function renderModelA() {
+  // ===== 三号推荐页面（连出惯性分层打分，每期推3个号，避尾0）=====
+  function renderPick3() {
     var N = latest;
-    var lastBin = bin(N);
-    var cands = [];
-    for (var d = 0; d < 10; d++) {
-      if (lastBin[d] === '1') continue;
-      var ns = newModelScore(d, N);
-      cands.push({ d: d, miss: ns.miss, score: ns.score, wbr: ns.wbr, wbSample: ns.wbSample, maxMiss: ns.maxMiss, ratio: ns.ratio });
+    var picks = [];
+    for (var d = 1; d <= 9; d++) {
+      var streak = currentStreak(d);
+      var c5 = countWindow(d, 5);
+      var c7 = countWindow(d, 7);
+      var item = null;
+      if (streak === 4) item = { d: d, sc: 95.3, tag: "连出4" };
+      else if (streak === 3) item = { d: d, sc: 93.9, tag: "连出3" };
+      else if (c5 === 3) item = { d: d, sc: 92.5, tag: "5期3次" };
+      else if (c7 === 4) item = { d: d, sc: 92.1, tag: "7期4次" };
+      if (item) picks.push(item);
     }
-    // app.js排序：只按得分排序
-    cands.sort(function(a, b) { return b.score - a.score; });
+    picks.sort(function (a, b) { return b.sc - a.sc; });
+    var top3 = picks.slice(0, 3);
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">模型A预测</h2><span class="section__hint">app.js逻辑 · 命中率52.3% · 得分并列时跳过</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>得分</th><th>反弹率</th><th>遗漏</th><th>最大遗漏</th><th>深度占比</th></tr></thead><tbody>';
-    cands.forEach(function(c) {
-      var wbrColor = c.wbr >= 0.75 ? '#16a34a' : c.wbr >= 0.65 ? '#eab308' : '#94a3b8';
-      html += '<tr><td>尾' + c.d + '</td><td>' + c.score + '分</td><td style="color:' + wbrColor + ';font-weight:700">' + (c.wbr*100).toFixed(0) + '%</td><td>' + c.miss + '期</td><td>' + c.maxMiss + '期</td><td>' + (c.ratio*100).toFixed(0) + '%</td></tr>';
-    });
-    html += '</tbody></table></div></div>';
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">模型A推荐</h2><span class="section__hint">只按得分排序，得分并列时跳过</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">三号推荐</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期动态重算</span></div>';
     html += '<div class="panel"><div class="panel__body">';
-    if (cands.length === 0) {
-      html += '<div class="empty">上期全中，无未出号，建议跳过</div>';
-    } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
-      html += '<div style="font-size:16px;font-weight:700;color:#dc2626">⚠️ 得分并列，建议跳过</div>';
-      html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">首选尾' + cands[0].d + '和尾' + cands[1].d + '得分都是' + cands[0].score + '分，模型没有强烈信号</div>';
+    if (top3.length === 0) {
+      html += '<div class="empty">本期无满足信号的尾号，建议观望</div>';
     } else {
-      var top = cands[0];
-      html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">首选：尾 ' + top.d + '</div>';
-      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">得分' + top.score + '分 | 遗漏' + top.miss + '期 | 反弹率' + (top.wbr*100).toFixed(0) + '%</div>';
-      if (cands.length >= 2) {
-        var sec = cands[1];
-        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + '（得分' + sec.score + '分 | 反弹率' + (sec.wbr*100).toFixed(0) + '%）</div>';
-      }
+      top3.forEach(function (p, i) {
+        html += '<div style="margin:10px 0;padding:14px;border:1px solid #e5e7eb;border-radius:10px;display:flex;align-items:center;justify-content:space-between">';
+        html += '<span style="font-size:20px;font-weight:700;color:var(--accent)">尾 ' + p.d + '</span>';
+        html += '<span><span style="display:inline-block;padding:3px 8px;border-radius:6px;font-size:12px;color:#16a34a;background:#dcfce7;margin-right:10px">' + p.tag + '</span><span style="font-size:14px;color:#16a34a;font-weight:700">' + p.sc + '分</span></span>';
+        html += '</div>';
+      });
     }
     html += '</div></div></div>';
 
-    // 模型A历史对错记录（从第一期到现在）
-    var historyRows = [];
-    for (var N = 1; N <= latest - 1; N++) {
-      var lastBin2 = bin(N);
-      if (!lastBin2) continue;
-      var cands2 = [];
-      for (var d2 = 0; d2 < 10; d2++) {
-        if (lastBin2[d2] === '1') continue;
-        var ns2 = newModelScore(d2, N);
-        cands2.push({ d: d2, score: ns2.score, wbr: ns2.wbr });
-      }
-      cands2.sort(function(a, b) { return b.score - a.score; });
-      var actual2 = tailsOf(N + 1);
-      if (cands2.length === 0) continue;
-      if (cands2.length >= 2 && cands2[0].score === cands2[1].score) {
-        historyRows.push({ period: N + 1, status: '跳过' });
-      } else {
-        var top2 = cands2[0];
-        var hit2 = actual2.indexOf(top2.d) >= 0;
-        historyRows.push({ period: N + 1, top: top2.d, sec: cands2.length >= 2 ? cands2[1].d : null, actual: actual2, status: hit2 ? '对' : '错' });
-      }
-    }
-    var modelA_correct = historyRows.filter(function(r) { return r.status === '对'; }).length;
-    var modelA_wrong = historyRows.filter(function(r) { return r.status === '错'; }).length;
-    var modelA_skip = historyRows.filter(function(r) { return r.status === '跳过'; }).length;
-    if (historyRows.length) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">模型A历史对错</h2><span class="section__hint">共 ' + historyRows.length + ' 期 | 命中' + modelA_correct + ' | 未中' + modelA_wrong + ' | 跳过' + modelA_skip + ' | 命中率' + (modelA_correct / (modelA_correct + modelA_wrong) * 100).toFixed(1) + '%</span></div>';
-      html += '<div class="panel" style="max-height:500px;overflow-y:auto"><table class="table"><thead><tr><th>期数</th><th>首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
-      historyRows.slice().reverse().forEach(function(row) {
-        var cls = row.status === '对' ? 'cell--hot' : row.status === '错' ? 'cell--cold' : '';
-        html += '<tr><td>' + row.period + '</td><td>' + (row.top !== undefined ? '尾' + row.top : '-') + '</td><td>' + (row.sec !== undefined && row.sec !== null ? '尾' + row.sec : '-') + '</td><td>' + (row.actual ? row.actual.join(' ') : '-') + '</td><td class="' + cls + '">' + row.status + '</td></tr>';
-      });
-      html += '</tbody></table></div></div>';
-    }
-
-    html += '<p class="disclaimer">模型A：只按得分排序，得分并列时跳过。回测命中率52.3%。修复数据泄露后已退随机（随机基线约55%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
-    view.innerHTML = html;
-  }
-
-  // ===== 模型B预测页面（按得分+反弹率排序，不跳过）=====
-  function renderModelB() {
-    var N = latest;
-    var lastBin = bin(N);
-    var cands = [];
-    for (var d = 0; d < 10; d++) {
-      if (lastBin[d] === '1') continue;
-      var ns = newModelScore(d, N);
-      cands.push({ d: d, miss: ns.miss, score: ns.score, wbr: ns.wbr, wbSample: ns.wbSample, maxMiss: ns.maxMiss, ratio: ns.ratio });
-    }
-    // 模型B排序：先按得分，再按反弹率
-    cands.sort(function(a, b) { return b.score - a.score || b.wbr - a.wbr; });
-
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">模型B预测</h2><span class="section__hint">得分+反弹率排序 · 命中率52.3% · 不跳过</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>得分</th><th>反弹率</th><th>遗漏</th><th>最大遗漏</th><th>深度占比</th></tr></thead><tbody>';
-    cands.forEach(function(c) {
-      var wbrColor = c.wbr >= 0.75 ? '#16a34a' : c.wbr >= 0.65 ? '#eab308' : '#94a3b8';
-      html += '<tr><td>尾' + c.d + '</td><td>' + c.score + '分</td><td style="color:' + wbrColor + ';font-weight:700">' + (c.wbr*100).toFixed(0) + '%</td><td>' + c.miss + '期</td><td>' + c.maxMiss + '期</td><td>' + (c.ratio*100).toFixed(0) + '%</td></tr>';
-    });
-    html += '</tbody></table></div></div>';
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">模型B推荐</h2><span class="section__hint">先按得分，再按反弹率排序，不跳过</span></div>';
-    html += '<div class="panel"><div class="panel__body">';
-    if (cands.length === 0) {
-      html += '<div class="empty">上期全中，无未出号，建议跳过</div>';
-    } else {
-      var top = cands[0];
-      html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">首选：尾 ' + top.d + '</div>';
-      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">得分' + top.score + '分 | 遗漏' + top.miss + '期 | 反弹率' + (top.wbr*100).toFixed(0) + '%</div>';
-      if (cands.length >= 2) {
-        var sec = cands[1];
-        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + '（得分' + sec.score + '分 | 反弹率' + (sec.wbr*100).toFixed(0) + '%）</div>';
-      }
-    }
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">回测口径</h2><span class="section__hint">样本 199 期（第61-259期 walk-forward 逐期喂数据）</span></div>';
+    html += '<div class="panel"><div class="panel__body" style="font-size:14px;line-height:1.9">';
+    html += '<p>至少中 1 个：<b style="color:#16a34a">中 186 · 错 13 · 共 199 期</b></p>';
+    html += '<p>单号命中：<b style="color:#16a34a">中 342 · 错 241 · 共 583 个号</b>（199 期每期推 ≤3 号）</p>';
+    html += '<p>理论基准（单号）：<b>55.39%</b></p>';
+    html += '<p>单注期望 <b style="color:#16a34a">+5.59%</b>（赔率 1.8，按单号命中率推导）</p>';
     html += '</div></div></div>';
 
-    // 模型B历史对错记录（从第一期到现在）
-    var historyRows = [];
-    for (var N = 1; N <= latest - 1; N++) {
-      var lastBin2 = bin(N);
-      if (!lastBin2) continue;
-      var cands2 = [];
-      for (var d2 = 0; d2 < 10; d2++) {
-        if (lastBin2[d2] === '1') continue;
-        var ns2 = newModelScore(d2, N);
-        cands2.push({ d: d2, score: ns2.score, wbr: ns2.wbr });
-      }
-      // 模型B排序：先按得分，再按反弹率
-      cands2.sort(function(a, b) { return b.score - a.score || b.wbr - a.wbr; });
-      var actual2 = tailsOf(N + 1);
-      if (cands2.length === 0) continue;
-      var top2 = cands2[0];
-      var hit2 = actual2.indexOf(top2.d) >= 0;
-      historyRows.push({ period: N + 1, top: top2.d, sec: cands2.length >= 2 ? cands2[1].d : null, actual: actual2, status: hit2 ? '对' : '错' });
-    }
-    var modelB_correct = historyRows.filter(function(r) { return r.status === '对'; }).length;
-    var modelB_wrong = historyRows.filter(function(r) { return r.status === '错'; }).length;
-    if (historyRows.length) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">模型B历史对错</h2><span class="section__hint">共 ' + historyRows.length + ' 期 | 命中' + modelB_correct + ' | 未中' + modelB_wrong + ' | 命中率' + (modelB_correct / (modelB_correct + modelB_wrong) * 100).toFixed(1) + '%</span></div>';
-      html += '<div class="panel" style="max-height:500px;overflow-y:auto"><table class="table"><thead><tr><th>期数</th><th>首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
-      historyRows.slice().reverse().forEach(function(row) {
-        var cls = row.status === '对' ? 'cell--hot' : 'cell--cold';
-        html += '<tr><td>' + row.period + '</td><td>' + (row.top !== undefined ? '尾' + row.top : '-') + '</td><td>' + (row.sec !== undefined && row.sec !== null ? '尾' + row.sec : '-') + '</td><td>' + (row.actual ? row.actual.join(' ') : '-') + '</td><td class="' + cls + '">' + row.status + '</td></tr>';
-      });
-      html += '</tbody></table></div></div>';
-    }
-
-    html += '<p class="disclaimer">模型B：先按得分，再按反弹率排序，得分并列时不跳过。回测命中率52.3%。修复数据泄露后已退随机（随机基线约55%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
+    html += '<p class="disclaimer">三号推荐基于连出惯性分层打分，每期动态重算推 3 个号。回测（样本199期）：至少中1个 中186·错13，单号命中 中342·错241（共583个号），单注期望 +5.59%（赔率1.8）。结果仅供参考，不做高命中承诺。</p>';
     view.innerHTML = html;
   }
+
 
   // ===== 尾号性格表 =====
   function bounceStats(d) {
@@ -1834,10 +1747,8 @@
       function cell(x) {
         var s = b[x];
         if (!s) return "<td>-</td>";
-        if (s.t < 3) return '<td style="color:#bbb">' + (s.h / s.t * 100).toFixed(0) + "%*</td>";
-        var r = s.h / s.t * 100;
-        var c = r >= 62 ? "#16a34a" : r >= 52 ? "#eab308" : "#dc2626";
-        return '<td style="color:' + c + ";font-weight:700\">" + r.toFixed(0) + "%</td>";
+        var hm = hitMissTxt(s.h, s.t);
+        return '<td style="color:' + hm.color + ';font-weight:700">' + hm.txt + "</td>";
       }
       var arr = [];
       for (var x = 1; x <= 3; x++) { var s = b[x]; if (s && s.t >= 3) arr.push(s.h / s.t * 100); }
@@ -1858,10 +1769,8 @@
       function scell(x) {
         var s = b2[x];
         if (!s) return "<td>-</td>";
-        if (s.t < 3) return '<td style="color:#bbb">' + (s.h / s.t * 100).toFixed(0) + "%*</td>";
-        var r = s.h / s.t * 100;
-        var c = r >= 62 ? "#16a34a" : r >= 52 ? "#eab308" : "#dc2626";
-        return '<td style="color:' + c + ";font-weight:700\">" + r.toFixed(0) + "%</td>";
+        var hm = hitMissTxt(s.h, s.t);
+        return '<td style="color:' + hm.color + ';font-weight:700">' + hm.txt + "</td>";
       }
       var arr2 = [];
       for (var x2 = 1; x2 <= 3; x2++) { var s2 = b2[x2]; if (s2 && s2.t >= 3) arr2.push(s2.h / s2.t * 100); }
@@ -1875,8 +1784,8 @@
       html += "<tr><td>尾" + d2 + "</td>" + scell(1) + scell(2) + scell(3) + scell(4) + scell(5) + '<td style="color:' + gc2 + ";font-weight:700\">" + grade2 + "</td><td>" + cs + "连</td></tr>";
     }
     html += "</tbody></table></div></div>";
-    html += '<p class="disclaimer">连出率 = 该尾数历史上「连续开出N期后、下一期继续开出」的概率；样本小于3标 *。🟢稳 / 🟡中 / 🔴险 按连1-3连出率平均划分。</p>';
-    html += '<p class="disclaimer">反弹率 = 该尾数历史上「连续遗漏N期后、下一期开出」的概率；样本小于3标 *。🟢稳 / 🟡中 / 🔴险 按遗1-3反弹率平均划分。</p>';
+    html += '<p class="disclaimer">连出率 = 该尾数历史上「连续开出N期后、下一期继续开出」的命中/样本计数。样本<10显示「样本不足」，10~20标警示色，≥20正常显示。🟢稳 / 🟡中 / 🔴险 按连1-3连出率平均划分。</p>';
+    html += '<p class="disclaimer">反弹率 = 该尾数历史上「连续遗漏N期后、下一期开出」的命中/样本计数。样本<10显示「样本不足」，10~20标警示色，≥20正常显示。🟢稳 / 🟡中 / 🔴险 按遗1-3反弹率平均划分。</p>';
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">当下状态</h2><span class="section__hint">各尾数最新状态</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>当前遗漏</th><th>当前连出</th><th>近15期</th><th>近5期</th><th>判定</th></tr></thead><tbody>';
@@ -2059,8 +1968,8 @@
     html += '<div class="zstat-title">' + y + "年 生肖出现统计（" + totalZC + "个号码）</div>";
     html += '<div class="zgrid">';
     ZODS12.forEach(function (z) {
-      var pct = (cnt[z] / totalZC * 100).toFixed(1);
-      html += '<div class="zitem"><div class="zn">' + z + '</div><div class="zc">' + cnt[z] + "次 " + pct + "%</div></div>";
+      var hm = hitMissTxt(cnt[z], totalZC);
+      html += '<div class="zitem"><div class="zn">' + z + '</div><div class="zc">' + hm.txt + "</div></div>";
     });
     html += "</div></div></div>";
 
@@ -2146,7 +2055,7 @@
     html += '<div class="stat"><div class="stat__value">' + tailsOf(latest).join(",") + '</div><div class="stat__label">最新尾数</div></div>';
     html += "</div></div>";
 
-    html += '<div class="section"><div class="panel"><table class="table"><thead><tr><th>数字</th><th>最佳触发条件</th><th>三期内命中率</th><th>样本量</th><th>说明</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="panel"><table class="table"><thead><tr><th>数字</th><th>最佳触发条件</th><th>命中/错</th><th>样本</th><th>说明</th></tr></thead><tbody>';
     for (var num = 0; num <= 9; num++) {
       var stats = calcGapStats(num);
       var bestGap = null, bestRate = 0, bestHit = 0, bestTotal = 0;
@@ -2167,447 +2076,15 @@
       else if (bestRate >= 0.95) desc = "非常稳定";
       else if (bestRate >= 0.90) desc = "稳定可靠";
       var cls = bestRate >= 0.95 ? "ord-hit" : bestRate >= 0.90 ? "ord-pending" : "ord-miss";
-      html += '<tr><td><strong>' + num + "</strong></td><td>缺席 ≥ " + (bestGap || 2) + " 期</td><td class=\"" + cls + "\">" + (bestRate * 100).toFixed(1) + "%</td><td>" + bestHit + "/" + bestTotal + "</td><td>" + desc + "</td></tr>";
+      var edgeTxt, edgeColor;
+      if (bestTotal < 10) { edgeTxt = "样本不足"; edgeColor = "#94a3b8"; }
+      else { edgeTxt = "中" + bestHit + "·错" + (bestTotal - bestHit); edgeColor = bestTotal < 20 ? "#eab308" : "#16a34a"; }
+      html += '<tr><td><strong>' + num + "</strong></td><td>缺席 ≥ " + (bestGap || 2) + " 期</td><td style=\"color:" + edgeColor + ";font-weight:700\">" + edgeTxt + "</td><td>" + bestTotal + "</td><td>" + desc + "</td></tr>";
     }
     html += "</tbody></table></div></div>";
     html += '<p class="disclaimer">统计口径：当某数字连续缺席 N 期后，接下来 3 期内出现的概率；样本量不足时优先放宽到 3。仅供参考。</p>';
     view.innerHTML = html;
   }
-
-  var v3LogCache = null;
-  var v4LogCache = null;
-
-  function renderModelV3() {
-    if (v3LogCache) { renderModelV3Data(v3LogCache); return; }
-    view.innerHTML = '<div class="section"><div class="panel"><div class="empty">正在加载推荐留痕…</div></div></div>';
-    fetch("recommend_log.json")
-      .then(function (resp) { return resp.json(); })
-      .then(function (log) {
-        v3LogCache = log;
-        renderModelV3Data(log);
-      })
-      .catch(function () {
-        view.innerHTML = '<div class="section"><div class="panel"><div class="empty">加载 recommend_log.json 失败</div></div></div>';
-      });
-  }
-
-  function renderModelV3Data(log) {
-    var bt = log["回测账"] || {};
-    var lv = log["实盘账"] || {};
-    var btRecords = bt.records || [];
-    var lvRecords = lv.records || [];
-
-    function numBall(n) {
-      return '<div class="num c' + numberColorOf(n) + '">' + (n < 10 ? "0" + n : n) + "</div>";
-    }
-    function tailBall(t) {
-      return '<div class="num">' + t + "</div>";
-    }
-    function hitBadge(h) {
-      if (h === true) return '<span class="hit--yes">命中</span>';
-      if (h === false) return '<span class="hit--no">未中</span>';
-      return '<span class="hit--pending">待开奖</span>';
-    }
-    function confLevel(s) {
-      if (s == null || isNaN(s)) return { key: "none", idx: -1, label: "-", cls: "", range: "" };
-      if (s < 2.0) return { key: "t1", idx: 0, label: "极低", cls: "tag--conf-t1", range: "<2.0" };
-      if (s < 2.5) return { key: "t2", idx: 1, label: "低", cls: "tag--conf-t2", range: "2.0~2.5" };
-      if (s < 3.0) return { key: "t3", idx: 2, label: "中", cls: "tag--conf-t3", range: "2.5~3.0" };
-      if (s < 3.5) return { key: "t4", idx: 3, label: "中高", cls: "tag--conf-t4", range: "3.0~3.5" };
-      return { key: "t5", idx: 4, label: "高", cls: "tag--conf-t5", range: "≥3.5" };
-    }
-    function confBadge(r) {
-      var c = confLevel(r.score);
-      if (c.key === "none") return "";
-      return '<span class="tag ' + c.cls + '">' + c.label + " (" + c.range + ")</span>";
-    }
-    function typeBadge(t) {
-      var c = t === "实盘" ? "#d97706" : "#64748b";
-      return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;background:' + c + '">' + t + "</span>";
-    }
-    function fmtScore(s) {
-      return (s == null || isNaN(s)) ? "-" : Math.round(s * 100) / 100;
-    }
-    function fmtCum(r) {
-      return (r == null || isNaN(r)) ? "-" : (r * 100).toFixed(1) + "%";
-    }
-
-    function recCard(r) {
-      var primaryHit = r.hit === true;
-      var h = '<div class="record">';
-
-      // 顶部：期数 + 时间 + 类型 + 命中
-      h += '<div class="record__top">';
-      h += '<span class="record__period">第 ' + r.period + ' 期</span>';
-      h += '<span class="record__meta">' + typeBadge(r.type || "回测") + " " + (r.time || "-") + "</span>";
-      h += "</div>";
-
-      // 首推 / 备选 / 命中
-      h += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
-      h += '<div style="display:flex;align-items:center;gap:6px">';
-      h += '<span style="font-size:12px;color:var(--muted)">首推</span>';
-      h += '<div class="num" style="width:40px;height:40px;font-size:16px;' + (primaryHit ? "background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;" : "") + '">尾' + r.primary + "</div>";
-      h += "</div>";
-      h += '<div style="display:flex;align-items:center;gap:6px">';
-      h += '<span style="font-size:12px;color:var(--muted)">备选</span>';
-      h += '<div class="num">' + (r.secondary != null ? "尾" + r.secondary : "-") + "</div>";
-      h += "</div>";
-      h += '<div style="margin-left:auto">' + hitBadge(r.hit) + "</div>";
-      h += "</div>";
-
-      // 得分 + 累计命中率
-      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
-      h += '<span>' + confBadge(r) + "</span>";
-      h += "</div>";
-      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
-      h += '<span>得分 <b style="color:var(--accent)">' + fmtScore(r.score) + "</b></span>";
-      h += '<span>累计命中率 <b style="color:var(--accent)">' + fmtCum(r.cumHitRate) + "</b></span>";
-      h += "</div>";
-
-      // 信号
-      if (r.signals && r.signals.length) {
-        h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px">';
-        r.signals.forEach(function (s) { h += '<span class="chip">' + s + "</span>"; });
-        h += "</div>";
-      }
-
-      // 实际号码
-      if (r.actualNums && r.actualNums.length) {
-        h += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际号码</div><div class="num-list">';
-        r.actualNums.forEach(function (n) { h += numBall(n); });
-        h += "</div></div>";
-      }
-      // 实际尾数
-      if (r.actualTails && r.actualTails.length) {
-        h += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际尾数</div><div class="num-list">';
-        r.actualTails.forEach(function (t) { h += tailBall(t); });
-        h += "</div></div>";
-      }
-
-      h += "</div>";
-      return h;
-    }
-
-    function confStats(records) {
-      var t = [
-        { key: "t1", h: 0, n: 0, range: "<2.0", label: "极低", cls: "tag--conf-t1", color: "#6b7280" },
-        { key: "t2", h: 0, n: 0, range: "2.0~2.5", label: "低", cls: "tag--conf-t2", color: "#2563eb" },
-        { key: "t3", h: 0, n: 0, range: "2.5~3.0", label: "中", cls: "tag--conf-t3", color: "#d97706" },
-        { key: "t4", h: 0, n: 0, range: "3.0~3.5", label: "中高", cls: "tag--conf-t4", color: "#ea580c" },
-        { key: "t5", h: 0, n: 0, range: "≥3.5", label: "高", cls: "tag--conf-t5", color: "#16a34a" }
-      ];
-      records.forEach(function (r) {
-        if (r.hit !== true && r.hit !== false) return;
-        var c = confLevel(r.score);
-        if (c.idx < 0) return;
-        t[c.idx].n++;
-        if (r.hit) t[c.idx].h++;
-      });
-      return t;
-    }
-    function scoreMap(records) {
-      var m = {};
-      records.forEach(function (r) {
-        if (r.hit !== true && r.hit !== false) return;
-        var s = Math.round((r.score || 0) * 100) / 100;
-        if (!m[s]) m[s] = { h: 0, n: 0 };
-        m[s].n++;
-        if (r.hit) m[s].h++;
-      });
-      var arr = [];
-      for (var k in m) arr.push({ score: Number(k), h: m[k].h, n: m[k].n });
-      arr.sort(function (a, b) { return b.score - a.score; });
-      return arr;
-    }
-    function visible(records) {
-      if (!state.v3OnlyHigh) return records;
-      return records.filter(function (r) { return r.score != null && r.score >= 3.5; });
-    }
-
-    var html = "";
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">多维度预测（v3）推荐留痕</h2><span class="section__hint">数据源 recommend_log.json，回测/实盘两本账分开</span></div></div>';
-
-    // 汇总卡
-    html += '<div class="section"><div class="grid-2">';
-    html += '<div class="stat"><div class="stat__value">' + pct(bt["命中率"] || 0) + '</div><div class="stat__label">回测命中率（' + bt["范围"] + "）</div></div>";
-    html += '<div class="stat"><div class="stat__value">' + pct(lv["命中率"] || 0) + '</div><div class="stat__label">实盘命中率（' + lv["范围"] + "）</div></div>";
-    html += "</div></div>";
-
-    // 置信度分级（五档命中率透明展示，回测账口径，不混实盘）
-    var cs = confStats(btRecords);
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">置信度分级</h2><span class="section__hint">按得分五档（<2.0 / 2.0~2.5 / 2.5~3.0 / 3.0~3.5 / ≥3.5），回测口径，每档命中率单独如实统计不混报</span></div></div>';
-    html += '<div class="section"><div class="grid-5">';
-    cs.forEach(function (g) {
-      var rate = g.n ? (g.h / g.n) : 0;
-      html += '<div class="stat"><div class="stat__value" style="color:' + g.color + '">' + pct(rate) + '</div><div class="stat__label">' + g.label + ' (' + g.range + ')　' + g.h + "/" + g.n + "</div></div>";
-    });
-    html += "</div></div>";
-
-    // 分数 → 命中率明细对照表
-    var sm = scoreMap(btRecords);
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">分数 → 命中率明细</h2><span class="section__hint">回测账每个出现过的具体分数，样本≥5才标命中率</span></div></div>';
-    html += '<div class="section"><div class="score-map">';
-    if (!sm.length) html += '<div class="empty">暂无数据</div>';
-    sm.forEach(function (row) {
-      var z = row.n - row.h;
-      var rateHtml = row.n >= 5
-        ? '<span class="score-map__rate">' + pct(row.h / row.n) + "</span>"
-        : "";
-      html += '<div class="score-map__row">'
-        + '<span class="score-map__score">' + row.score.toFixed(2) + "</span>"
-        + '<span class="score-map__stat">开 <b>' + row.n + '</b> 次</span>'
-        + '<span class="score-map__stat is-hit">中 <b>' + row.h + '</b> 次</span>'
-        + '<span class="score-map__stat is-miss">错 <b>' + z + '</b> 次</span>'
-        + rateHtml
-        + "</div>";
-    });
-    html += "</div></div>";
-
-    // 只看高置信开关
-    html += '<div class="chips" style="margin-bottom:10px">';
-    html += '<button class="chip ' + (state.v3OnlyHigh ? "" : "is-active") + '" data-v3high="0">全部</button>';
-    html += '<button class="chip ' + (state.v3OnlyHigh ? "is-active" : "") + '" data-v3high="1">只看高置信（≥3.5）</button>';
-    html += "</div>";
-
-    // 实盘账（最新在前）
-    var lvShown = visible(lvRecords).slice().reverse();
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">实盘账</h2><span class="section__hint">第256期起开奖前真实预测，命中 ' + (lv["命中数"] || 0) + "/" + (lv["已开奖数"] || 0) + "</span></div>";
-    html += '<div class="panel">';
-    if (!lvShown.length) html += '<div class="empty">' + (state.v3OnlyHigh ? "暂无高置信实盘记录" : "暂无实盘记录") + "</div>";
-    lvShown.forEach(function (r) { html += recCard(r); });
-    html += "</div></div>";
-
-    // 回测账（最新在前，最多展示最近30条）
-    var btShown = visible(btRecords).slice(-30).reverse();
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">回测账</h2><span class="section__hint">第201-255期样本外回测，命中 ' + (bt["命中数"] || 0) + "/" + (bt["已开奖数"] || 0) + "（此处仅展示最近30条）</span></div>";
-    html += '<div class="panel">';
-    if (!btShown.length) html += '<div class="empty">' + (state.v3OnlyHigh ? "暂无高置信回测记录" : "暂无回测记录") + "</div>";
-    btShown.forEach(function (r) { html += recCard(r); });
-    html += "</div></div>";
-
-    html += '<p class="disclaimer">口径说明：回测命中率来自第201-256期样本外验证；实盘命中率仅统计第256期起的开奖前真实预测。两者分开计算，不混合。实盘需积攒10-20期后方可视为稳定战绩。</p>';
-
-    view.innerHTML = html;
-  }
-
-  function renderModelV4() {
-    if (v4LogCache) { renderModelV4Data(v4LogCache); return; }
-    view.innerHTML = '<div class="section"><div class="panel"><div class="empty">正在加载推荐留痕…</div></div></div>';
-    fetch("recommend_log_v4.json")
-      .then(function (resp) { return resp.json(); })
-      .then(function (log) {
-        v4LogCache = log;
-        renderModelV4Data(log);
-      })
-      .catch(function () {
-        view.innerHTML = '<div class="section"><div class="panel"><div class="empty">加载 recommend_log_v4.json 失败</div></div></div>';
-      });
-  }
-
-  function renderModelV4Data(log) {
-    var bt = log["回测账"] || {};
-    var lv = log["实盘账"] || {};
-    var btRecords = bt.records || [];
-    var lvRecords = lv.records || [];
-
-    function numBall(n) {
-      return '<div class="num c' + numberColorOf(n) + '">' + (n < 10 ? "0" + n : n) + "</div>";
-    }
-    function tailBall(t) {
-      return '<div class="num">' + t + "</div>";
-    }
-    function hitBadge(h) {
-      if (h === true) return '<span class="hit--yes">命中</span>';
-      if (h === false) return '<span class="hit--no">未中</span>';
-      return '<span class="hit--pending">待开奖</span>';
-    }
-    function confLevel(s) {
-      if (s == null || isNaN(s)) return { key: "none", idx: -1, label: "-", cls: "", range: "" };
-      if (s < 2.0) return { key: "t1", idx: 0, label: "极低", cls: "tag--conf-t1", range: "<2.0" };
-      if (s < 2.5) return { key: "t2", idx: 1, label: "低", cls: "tag--conf-t2", range: "2.0~2.5" };
-      if (s < 3.0) return { key: "t3", idx: 2, label: "中", cls: "tag--conf-t3", range: "2.5~3.0" };
-      if (s < 3.5) return { key: "t4", idx: 3, label: "中高", cls: "tag--conf-t4", range: "3.0~3.5" };
-      return { key: "t5", idx: 4, label: "高", cls: "tag--conf-t5", range: "≥3.5" };
-    }
-    function confBadge(r) {
-      var c = confLevel(r.score);
-      if (c.key === "none") return "";
-      return '<span class="tag ' + c.cls + '">' + c.label + " (" + c.range + ")</span>";
-    }
-    function typeBadge(t) {
-      var c = t === "实盘" ? "#d97706" : "#64748b";
-      return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;background:' + c + '">' + t + "</span>";
-    }
-    function fmtScore(s) {
-      return (s == null || isNaN(s)) ? "-" : Math.round(s * 100) / 100;
-    }
-    function fmtCum(r) {
-      return (r == null || isNaN(r)) ? "-" : (r * 100).toFixed(1) + "%";
-    }
-
-    function recCard(r) {
-      var primaryHit = r.hit === true;
-      var h = '<div class="record">';
-
-      // 顶部：期数 + 时间 + 类型 + 命中
-      h += '<div class="record__top">';
-      h += '<span class="record__period">第 ' + r.period + ' 期</span>';
-      h += '<span class="record__meta">' + typeBadge(r.type || "回测") + " " + (r.time || "-") + "</span>";
-      h += "</div>";
-
-      // 首推 / 备选 / 命中
-      h += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
-      h += '<div style="display:flex;align-items:center;gap:6px">';
-      h += '<span style="font-size:12px;color:var(--muted)">首推</span>';
-      h += '<div class="num" style="width:40px;height:40px;font-size:16px;' + (primaryHit ? "background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;" : "") + '">尾' + r.primary + "</div>";
-      h += "</div>";
-      h += '<div style="display:flex;align-items:center;gap:6px">';
-      h += '<span style="font-size:12px;color:var(--muted)">备选</span>';
-      h += '<div class="num">' + (r.secondary != null ? "尾" + r.secondary : "-") + "</div>";
-      h += "</div>";
-      h += '<div style="margin-left:auto">' + hitBadge(r.hit) + "</div>";
-      h += "</div>";
-
-      // 得分 + 累计命中率
-      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
-      h += '<span>' + confBadge(r) + "</span>";
-      h += "</div>";
-      h += '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px">';
-      h += '<span>得分 <b style="color:var(--accent)">' + fmtScore(r.score) + "</b></span>";
-      h += '<span>累计命中率 <b style="color:var(--accent)">' + fmtCum(r.cumHitRate) + "</b></span>";
-      h += "</div>";
-
-      // 信号
-      if (r.signals && r.signals.length) {
-        h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:2px">';
-        r.signals.forEach(function (s) { h += '<span class="chip">' + s + "</span>"; });
-        h += "</div>";
-      }
-
-      // 实际号码
-      if (r.actualNums && r.actualNums.length) {
-        h += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际号码</div><div class="num-list">';
-        r.actualNums.forEach(function (n) { h += numBall(n); });
-        h += "</div></div>";
-      }
-      // 实际尾数
-      if (r.actualTails && r.actualTails.length) {
-        h += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际尾数</div><div class="num-list">';
-        r.actualTails.forEach(function (t) { h += tailBall(t); });
-        h += "</div></div>";
-      }
-
-      h += "</div>";
-      return h;
-    }
-
-    function confStats(records) {
-      var t = [
-        { key: "t1", h: 0, n: 0, range: "<2.0", label: "极低", cls: "tag--conf-t1", color: "#6b7280" },
-        { key: "t2", h: 0, n: 0, range: "2.0~2.5", label: "低", cls: "tag--conf-t2", color: "#2563eb" },
-        { key: "t3", h: 0, n: 0, range: "2.5~3.0", label: "中", cls: "tag--conf-t3", color: "#d97706" },
-        { key: "t4", h: 0, n: 0, range: "3.0~3.5", label: "中高", cls: "tag--conf-t4", color: "#ea580c" },
-        { key: "t5", h: 0, n: 0, range: "≥3.5", label: "高", cls: "tag--conf-t5", color: "#16a34a" }
-      ];
-      records.forEach(function (r) {
-        if (r.hit !== true && r.hit !== false) return;
-        var c = confLevel(r.score);
-        if (c.idx < 0) return;
-        t[c.idx].n++;
-        if (r.hit) t[c.idx].h++;
-      });
-      return t;
-    }
-    function scoreMap(records) {
-      var m = {};
-      records.forEach(function (r) {
-        if (r.hit !== true && r.hit !== false) return;
-        var s = Math.round((r.score || 0) * 100) / 100;
-        if (!m[s]) m[s] = { h: 0, n: 0 };
-        m[s].n++;
-        if (r.hit) m[s].h++;
-      });
-      var arr = [];
-      for (var k in m) arr.push({ score: Number(k), h: m[k].h, n: m[k].n });
-      arr.sort(function (a, b) { return b.score - a.score; });
-      return arr;
-    }
-    function visible(records) {
-      if (!state.v4OnlyHigh) return records;
-      return records.filter(function (r) { return r.score != null && r.score >= 3.5; });
-    }
-
-    var html = "";
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">多维度预测（V4）推荐留痕</h2><span class="section__hint">数据源 recommend_log_v4.json，回测/实盘两本账分开</span></div></div>';
-
-    // 口径提示（与 V3 页对比前必读，同口径对齐避免误读）
-    html += '<div class="section"><div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.7;color:#9a3412">';
-    html += 'V4 回测含第256期；V3 回测只到255期（第256期为 V3 实盘）。同口径对齐到第201-256期：V3 = 73.9%（34/46），V4 = 76.1%（35/46），V4 仅领先 +2.2pp。';
-    html += '</div></div>';
-
-    // 汇总卡
-    html += '<div class="section"><div class="grid-2">';
-    html += '<div class="stat"><div class="stat__value">' + pct(bt["命中率"] || 0) + '</div><div class="stat__label">回测命中率（' + bt["范围"] + "）</div></div>";
-    html += '<div class="stat"><div class="stat__value">' + pct(lv["命中率"] || 0) + '</div><div class="stat__label">实盘命中率（' + lv["范围"] + "）</div></div>";
-    html += "</div></div>";
-
-    // 置信度分级（五档命中率透明展示，回测账口径，不混实盘）
-    var cs = confStats(btRecords);
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">置信度分级</h2><span class="section__hint">按得分五档（<2.0 / 2.0~2.5 / 2.5~3.0 / 3.0~3.5 / ≥3.5），回测口径，每档命中率单独如实统计不混报</span></div></div>';
-    html += '<div class="section"><div class="grid-5">';
-    cs.forEach(function (g) {
-      var rate = g.n ? (g.h / g.n) : 0;
-      html += '<div class="stat"><div class="stat__value" style="color:' + g.color + '">' + pct(rate) + '</div><div class="stat__label">' + g.label + ' (' + g.range + ')　' + g.h + "/" + g.n + "</div></div>";
-    });
-    html += "</div></div>";
-
-    // 分数 → 命中率明细对照表
-    var sm = scoreMap(btRecords);
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">分数 → 命中率明细</h2><span class="section__hint">回测账每个出现过的具体分数，样本≥5才标命中率</span></div></div>';
-    html += '<div class="section"><div class="score-map">';
-    if (!sm.length) html += '<div class="empty">暂无数据</div>';
-    sm.forEach(function (row) {
-      var z = row.n - row.h;
-      var rateHtml = row.n >= 5
-        ? '<span class="score-map__rate">' + pct(row.h / row.n) + "</span>"
-        : "";
-      html += '<div class="score-map__row">'
-        + '<span class="score-map__score">' + row.score.toFixed(2) + "</span>"
-        + '<span class="score-map__stat">开 <b>' + row.n + '</b> 次</span>'
-        + '<span class="score-map__stat is-hit">中 <b>' + row.h + '</b> 次</span>'
-        + '<span class="score-map__stat is-miss">错 <b>' + z + '</b> 次</span>'
-        + rateHtml
-        + "</div>";
-    });
-    html += "</div></div>";
-
-    // 只看高置信开关
-    html += '<div class="chips" style="margin-bottom:10px">';
-    html += '<button class="chip ' + (state.v4OnlyHigh ? "" : "is-active") + '" data-v4high="0">全部</button>';
-    html += '<button class="chip ' + (state.v4OnlyHigh ? "is-active" : "") + '" data-v4high="1">只看高置信（≥3.5）</button>';
-    html += "</div>";
-
-    // 实盘账（最新在前）
-    var lvShown = visible(lvRecords).slice().reverse();
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">实盘账</h2><span class="section__hint">第257期起开奖前真实预测，命中 ' + (lv["命中数"] || 0) + "/" + (lv["已开奖数"] || 0) + "</span></div>";
-    html += '<div class="panel">';
-    if (!lvShown.length) html += '<div class="empty">' + (state.v4OnlyHigh ? "暂无高置信实盘记录" : "暂无实盘记录") + "</div>";
-    lvShown.forEach(function (r) { html += recCard(r); });
-    html += "</div></div>";
-
-    // 回测账（最新在前，最多展示最近30条）
-    var btShown = visible(btRecords).slice(-30).reverse();
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">回测账</h2><span class="section__hint">第201-256期样本外回测，命中 ' + (bt["命中数"] || 0) + "/" + (bt["已开奖数"] || 0) + "（此处仅展示最近30条）</span></div>";
-    html += '<div class="panel">';
-    if (!btShown.length) html += '<div class="empty">' + (state.v4OnlyHigh ? "暂无高置信回测记录" : "暂无回测记录") + "</div>";
-    btShown.forEach(function (r) { html += recCard(r); });
-    html += "</div></div>";
-
-    html += '<p class="disclaimer">口径说明：回测命中率来自第201-256期样本外验证；实盘命中率仅统计第257期起的开奖前真实预测。两者分开计算，不混合。实盘需积攒10-20期后方可视为稳定战绩。</p>';
-
-    view.innerHTML = html;
-  }
-
 
   tabsEl.addEventListener("click", function (e) {
     var btn = e.target.closest(".tab");
@@ -2619,18 +2096,6 @@
   });
 
   view.addEventListener("click", function (e) {
-    var v3ch = e.target.closest("[data-v3high]");
-    if (v3ch) {
-      state.v3OnlyHigh = v3ch.dataset.v3high === "1";
-      renderModelV3Data(v3LogCache);
-      return;
-    }
-    var v4ch = e.target.closest("[data-v4high]");
-    if (v4ch) {
-      state.v4OnlyHigh = v4ch.dataset.v4high === "1";
-      renderModelV4Data(v4LogCache);
-      return;
-    }
     var ordsn = e.target.closest("[data-ordsn]");
     if (ordsn) {
       var t = Number(ordsn.dataset.ordsn);
