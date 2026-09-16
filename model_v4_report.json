@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-09-15T17:37:08.705Z",
-  "dataRange": "2026年第1-258期（共258期）",
+  "timestamp": "2026-09-16T13:50:16.286Z",
+  "dataRange": "2026年第1-259期（共259期）",
   "coldParams": {
     "enabled": false,
     "threshold": 5,
@@ -11,7 +11,7 @@
     {
       "trainSize": 150,
       "trainRange": "第1-150期",
-      "testRange": "第151-258期",
+      "testRange": "第151-259期",
       "trainBestHitRate": 0.576271186440678,
       "v3": {
         "correct": 23,
@@ -567,7 +567,7 @@
     {
       "trainSize": 180,
       "trainRange": "第1-180期",
-      "testRange": "第181-258期",
+      "testRange": "第181-259期",
       "trainBestHitRate": 0.5882352941176471,
       "v3": {
         "correct": 16,
@@ -983,7 +983,7 @@
     {
       "trainSize": 200,
       "trainRange": "第1-200期",
-      "testRange": "第201-258期",
+      "testRange": "第201-259期",
       "trainBestHitRate": 0.618421052631579,
       "v3": {
         "correct": 9,
@@ -1288,7 +1288,7 @@
   "walkForward": {
     "note": "初始窗口150期定参+定人格，第151期起每期只用<=当期历史滚动预测下一期，无未来数据泄露",
     "trainRange": "第1-150期",
-    "testRange": "第151-258期",
+    "testRange": "第151-259期",
     "v3": {
       "correct": 23,
       "total": 38,

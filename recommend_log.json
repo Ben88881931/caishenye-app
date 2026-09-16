@@ -38,7 +38,7 @@
           7
         ],
         "hit": false,
-        "cumHitRate": 0.0
+        "cumHitRate": 0
       },
       {
         "period": 207,
@@ -1376,10 +1376,10 @@
   "实盘账": {
     "名称": "实盘",
     "范围": "第256期起",
-    "记录数": 4,
-    "已开奖数": 3,
+    "记录数": 5,
+    "已开奖数": 4,
     "命中数": 1,
-    "命中率": 0.3333,
+    "命中率": 0.25,
     "records": [
       {
         "period": 256,
@@ -1411,7 +1411,7 @@
           9
         ],
         "hit": true,
-        "cumHitRate": 1.0
+        "cumHitRate": 1
       },
       {
         "period": 257,
@@ -1484,12 +1484,42 @@
           "ab_strong",
           "triple_reversal"
         ],
+        "actualNums": [
+          43,
+          33,
+          49,
+          36,
+          19,
+          30,
+          22
+        ],
+        "actualTails": [
+          0,
+          2,
+          3,
+          6,
+          9
+        ],
+        "hit": false,
+        "cumHitRate": 0.25
+      },
+      {
+        "period": 260,
+        "time": "2026-09-16 21:49",
+        "type": "实盘",
+        "primary": 5,
+        "secondary": null,
+        "score": 0.9,
+        "signals": [
+          "trend_hot_7",
+          "trend_hot_10"
+        ],
         "actualNums": null,
         "actualTails": null,
         "hit": null,
-        "cumHitRate": 0.3333
+        "cumHitRate": 0.25
       }
     ]
   },
-  "更新时间": "2026-09-16 01:59:43"
+  "更新时间": "2026-09-16 21:49:29"
 }
