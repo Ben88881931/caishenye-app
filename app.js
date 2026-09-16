@@ -1779,9 +1779,9 @@
     }
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第2期~第' + (N + 1) + '期（正序）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序，最新在上）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
     html += '<div class="panel">';
-    for (var ri = 0; ri < hist.length; ri++) {
+    for (var ri = hist.length - 1; ri >= 0; ri--) {
       var r = hist[ri];
       html += '<div class="record">';
       html += '<div class="record__top">';
