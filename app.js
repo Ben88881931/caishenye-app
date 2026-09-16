@@ -350,7 +350,7 @@
   var TABS = [
     { id: "overview", label: "总览" },
     { id: "predict", label: "下期预估" },
-    { id: "pick3", label: "三号推荐" },
+    { id: "pick3", label: "双号推荐" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -1652,8 +1652,8 @@
     view.innerHTML = html;
   }
 
-  // ===== 三号推荐页面（连出惯性分层打分，每期推3个号，避尾0）=====
-  function pick3At(cur) {
+  // ===== 双号推荐页面（连出惯性分层打分，每期推2个号，避尾0）=====
+  function pickTopAt(cur, k) {
     var picks = [];
     for (var d = 1; d <= 9; d++) {
       var streak = 0;
@@ -1669,92 +1669,119 @@
       if (item) picks.push(item);
     }
     picks.sort(function (a, b) { return b.sc - a.sc; });
-    return picks.slice(0, 3);
+    return picks.slice(0, k);
   }
 
   function renderPick3() {
     var N = latest;
-    var top3 = pick3At(N);
+    var top2 = pickTopAt(N, 2);
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">三号推荐</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期动态重算</span></div>';
-    html += '<div class="panel"><div class="panel__body">';
-    if (top3.length === 0) {
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">双号推荐</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
+
+    html += '<div class="section"><div class="panel" style="padding:18px 14px">';
+    if (top2.length === 0) {
       html += '<div class="empty">本期无满足信号的尾号，建议观望</div>';
     } else {
-      top3.forEach(function (p, i) {
-        html += '<div style="margin:10px 0;padding:14px;border:1px solid #e5e7eb;border-radius:10px;display:flex;align-items:center;justify-content:space-between">';
-        html += '<span style="font-size:20px;font-weight:700;color:var(--accent)">尾 ' + p.d + '</span>';
-        html += '<span><span style="display:inline-block;padding:3px 8px;border-radius:6px;font-size:12px;color:#16a34a;background:#dcfce7;margin-right:10px">' + p.tag + '</span><span style="font-size:14px;color:#16a34a;font-weight:700">' + p.sc + '分</span></span>';
+      html += '<div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;justify-content:center">';
+      top2.forEach(function (p, i) {
+        html += '<div style="text-align:center;min-width:96px">';
+        html += '<div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">' + (i === 0 ? '第一推荐' : '第二推荐') + '</div>';
+        html += '<div class="num" style="width:60px;height:60px;font-size:26px;font-weight:800">尾' + p.d + '</div>';
+        html += '<div style="margin-top:8px"><span class="chip">' + p.tag + '</span></div>';
+        html += '<div style="font-size:14px;color:#16a34a;font-weight:700;margin-top:6px">' + p.sc + ' 分</div>';
         html += '</div>';
       });
+      html += '</div>';
     }
-    html += '</div></div></div>';
+    html += '</div></div>';
 
     var hist = [], cum = 0, peak = 0, maxDD = 0;
     var actDays = 0, tHits = 0, tPicks = 0;
-    var d0 = 0, d1 = 0, d2 = 0, d3 = 0;
+    var d0 = 0, d1 = 0, d2 = 0;
     for (var cur = 1; cur <= N - 1; cur++) {
-      var sel = pick3At(cur);
+      var sel = pickTopAt(cur, 2);
       var actual = tailsOf(cur + 1);
       if (!sel.length) {
-        hist.push({ period: cur + 1, picks: [], actual: actual, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: false });
+        hist.push({ period: cur + 1, picks: [], sig: [], actual: actual, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: false });
         continue;
       }
       var h = 0;
       for (var i = 0; i < sel.length; i++) if (actual.indexOf(sel[i].d) >= 0) h++;
       actDays++; tPicks += sel.length; tHits += h;
-      if (h === 0) d0++; else if (h === 1) d1++; else if (h === 2) d2++; else d3++;
+      if (h === 0) d0++; else if (h === 1) d1++; else d2++;
       var pnl = +(h * 0.8 - (sel.length - h) * 1).toFixed(2);
       cum = +(cum + pnl).toFixed(2);
       if (cum > peak) peak = cum;
       var dd = +(peak - cum).toFixed(2);
       if (dd > maxDD) maxDD = dd;
-      hist.push({ period: cur + 1, picks: sel.map(function (c) { return c.d; }), actual: actual, hits: h, pnl: pnl, cum: cum, dd: dd, live: false });
+      hist.push({ period: cur + 1, picks: sel.map(function (c) { return c.d; }), sig: sel.map(function (c) { return c.tag; }), actual: actual, hits: h, pnl: pnl, cum: cum, dd: dd, live: false });
     }
-    hist.push({ period: N + 1, picks: top3.map(function (c) { return c.d; }), actual: null, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: true });
+    hist.push({ period: N + 1, picks: top2.map(function (c) { return c.d; }), sig: top2.map(function (c) { return c.tag; }), actual: null, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: true });
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">第2~' + N + '期回测 · 第' + (N + 1) + '期实盘待开奖 · 每期推≤3号 · 赔率1.8</span></div>';
-    html += '<div class="panel"><div class="panel__body" style="font-size:14px;line-height:2">';
-    html += '<p>出手覆盖：<b>' + actDays + ' / ' + (N - 1) + ' 期</b>（空仓 ' + (N - 1 - actDays) + ' 期）</p>';
-    html += '<p>单号命中：<b style="color:#16a34a">中 ' + tHits + ' · 错 ' + (tPicks - tHits) + ' · 共 ' + tPicks + ' 个</b></p>';
-    html += '<p>每期命中：中0 ' + d0 + ' · 中1 ' + d1 + ' · 中2 ' + d2 + ' · 中3 ' + d3 + '（至少中1个 ' + (d1 + d2 + d3) + '/' + actDays + '）</p>';
-    html += '<p>累计盈亏（每期3注@1.8）：<b style="color:' + (cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (cum >= 0 ? '+' : '') + cum + ' 元</b></p>';
-    html += '<p>最大回撤：<b style="color:#dc2626">' + maxDD + ' 元</b></p>';
-    html += '</div></div></div>';
+    var singleRate = tPicks ? (tHits / tPicks * 100).toFixed(2) : '0.00';
+    var atLeast1 = actDays - d0;
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序）· ①=第一推荐 ②=第二 ③=第三 · 绿=中 灰=未中</span></div>';
-    html += '<div class="panel"><table class="table" style="font-size:12px"><thead><tr><th>期数</th><th>类型</th><th>推荐(①最强)</th><th>实际开出</th><th>命中</th><th>盈亏</th><th>累计</th><th>回撤</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">第2~' + N + '期回测 · 第' + (N + 1) + '期实盘待开奖 · 每期推2号 · 赔率1.8</span></div></div>';
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + singleRate + '%</div><div class="stat__label">单号命中率 中' + tHits + '·错' + (tPicks - tHits) + '·共' + tPicks + '</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + atLeast1 + '/' + actDays + '</div><div class="stat__label">至少中1个（落空' + d0 + '期）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (cum >= 0 ? '+' : '') + cum.toFixed(2) + '</div><div class="stat__label">累计盈亏（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + maxDD.toFixed(2) + '</div><div class="stat__label">最大回撤（元）</div></div>';
+    html += '</div></div>';
+    html += '<div class="section"><div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value">' + d0 + '</div><div class="stat__label">中0</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + d1 + '</div><div class="stat__label">中1</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + d2 + '</div><div class="stat__label">中2</div></div>';
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
+    html += '<div class="panel">';
     for (var ri = hist.length - 1; ri >= 0; ri--) {
       var r = hist[ri];
-      var mk = ['①', '②', '③'];
-      var picksHtml = '';
+      html += '<div class="record">';
+      html += '<div class="record__top">';
+      html += '<span class="record__period">第 ' + r.period + ' 期</span>';
+      html += '<span class="record__meta">' + (r.live ? '<span style="color:#2563eb;font-weight:700">实盘·待开奖</span>' : '<span style="color:#9ca3af">回测</span>') + '</span>';
+      html += '</div>';
+      html += '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">';
       if (r.picks.length) {
         for (var pj = 0; pj < r.picks.length; pj++) {
           var pn = r.picks[pj];
           var isHit = r.actual && r.actual.indexOf(pn) >= 0;
-          picksHtml += '<span style="color:' + (isHit ? '#16a34a' : '#9ca3af') + ';font-weight:' + (isHit ? '700' : '400') + '">' + mk[pj] + pn + '</span>';
-          if (pj < r.picks.length - 1) picksHtml += ' ';
+          html += '<div style="display:flex;align-items:center;gap:5px">';
+          html += '<span style="font-size:11px;color:var(--muted)">' + (pj === 0 ? '①' : '②') + '</span>';
+          html += '<div class="num" style="' + (isHit ? 'background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;' : '') + '">尾' + pn + '</div>';
+          html += '</div>';
         }
       } else {
-        picksHtml = '<span style="color:#9ca3af">空仓</span>';
+        html += '<span style="color:#9ca3af">空仓</span>';
       }
-      var hitTxt = '—', hitColor = '#999';
-      if (r.hits !== null) {
-        hitColor = r.hits === 0 ? '#dc2626' : r.hits === 1 ? '#eab308' : r.hits === 2 ? '#16a34a' : '#15803d';
-        var hitMark = [];
-        for (var hj = 0; hj < r.picks.length; hj++) {
-          if (r.actual.indexOf(r.picks[hj]) >= 0) hitMark.push(mk[hj]);
-        }
-        hitTxt = '中' + r.hits + (hitMark.length ? '<span style="font-weight:400;color:#6b7280">（' + hitMark.join('') + '）</span>' : '');
+      if (r.hits !== null && !r.live) {
+        html += '<div style="margin-left:auto">' + (r.hits >= 1 ? '<span class="hit--yes">中' + r.hits + '</span>' : '<span class="hit--no">未中</span>') + '</div>';
       }
-      var pnlTxt = r.pnl === null ? '—' : (r.pnl >= 0 ? '+' : '') + r.pnl;
-      var pnlColor = r.pnl === null ? '#999' : r.pnl >= 0 ? '#16a34a' : '#dc2626';
-      var typeTag = r.live ? '<span style="color:#2563eb;font-weight:700">实盘·待开奖</span>' : '<span style="color:#9ca3af">回测</span>';
-      html += '<tr><td>' + r.period + '</td><td>' + typeTag + '</td><td>' + picksHtml + '</td><td>' + (r.actual ? r.actual.join(' ') : '—') + '</td><td style="color:' + hitColor + ';font-weight:700;white-space:nowrap">' + hitTxt + '</td><td style="color:' + pnlColor + ';white-space:nowrap">' + pnlTxt + '</td><td>' + r.cum + '</td><td>' + r.dd + '</td></tr>';
+      html += '</div>';
+      if (r.sig && r.sig.length) {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">';
+        r.sig.forEach(function (s) { html += '<span class="chip">' + s + '</span>'; });
+        html += '</div>';
+      }
+      if (r.pnl !== null) {
+        html += '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)">';
+        html += '<span>盈亏 <b style="color:' + (r.pnl >= 0 ? '#16a34a' : '#dc2626') + '">' + (r.pnl >= 0 ? '+' : '') + r.pnl + '</b></span>';
+        html += '<span>累计 <b style="color:var(--accent)">' + r.cum + '</b></span>';
+        html += '<span>回撤 <b style="color:#dc2626">' + r.dd + '</b></span>';
+        html += '</div>';
+      }
+      if (r.actual && r.actual.length) {
+        html += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际尾数</div><div class="num-list">';
+        r.actual.forEach(function (t) { html += '<div class="num">' + t + '</div>'; });
+        html += '</div></div>';
+      }
+      html += '</div>';
     }
-    html += '</tbody></table></div></div>';
+    html += '</div>';
 
-    html += '<p class="disclaimer">三号推荐基于连出惯性分层打分，每期动态重算推3个号。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
+    html += '<p class="disclaimer">双号推荐基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     view.innerHTML = html;
   }
 
