@@ -1734,6 +1734,27 @@
     html += '<div class="stat"><div class="stat__value">' + d2 + '</div><div class="stat__label">中2</div></div>';
     html += '</div></div>';
 
+    // 历史对错记录：横向滚动条（①第一推荐 ②第二推荐）
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">①第一推荐 ②第二推荐 · 对=绿 错=红 · 横向滑动 · 旧→新</span></div></div>';
+    html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="display:flex;gap:5px;min-width:max-content">';
+    for (var ri2 = 0; ri2 < hist.length; ri2++) {
+      var q = hist[ri2];
+      var fh = null, sh = null;
+      if (q.picks.length) {
+        if (q.actual) fh = q.actual.indexOf(q.picks[0]) >= 0;
+        if (q.picks.length > 1 && q.actual) sh = q.actual.indexOf(q.picks[1]) >= 0;
+      }
+      var c1 = q.live ? '<span style="color:#2563eb">①待</span>' : (fh === null ? '<span style="color:#9ca3af">①空</span>' : (fh ? '<span style="color:#16a34a">①对</span>' : '<span style="color:#dc2626">①错</span>'));
+      var c2 = q.live ? '<span style="color:#2563eb">②待</span>' : (sh === null ? '<span style="color:#9ca3af">②空</span>' : (sh ? '<span style="color:#16a34a">②对</span>' : '<span style="color:#dc2626">②错</span>'));
+      html += '<div style="min-width:48px;text-align:center;border:1px solid #eef0f3;border-radius:8px;padding:6px 3px;background:#fff">';
+      html += '<div style="font-size:10px;color:var(--muted);margin-bottom:3px">' + q.period + '</div>';
+      html += '<div style="font-size:12px;font-weight:700;line-height:1.6">' + c1 + '</div>';
+      html += '<div style="font-size:12px;font-weight:700;line-height:1.6">' + c2 + '</div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+
     html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
     html += '<div class="panel">';
     for (var ri = hist.length - 1; ri >= 0; ri--) {
