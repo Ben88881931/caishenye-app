@@ -69,7 +69,7 @@
     if (t < 10) return { txt: "样本不足", color: "#94a3b8" };
     var miss = t - h;
     var color = t < 20 ? "#eab308" : "#16a34a";
-    return { txt: "中" + h + " · 错" + miss + " · 共" + t, color: color };
+    return { txt: "中" + h + "<br>错" + miss + "<br>共" + t, color: color };
   }
 
   function reversalRate(tail) {
@@ -1517,7 +1517,7 @@
       } else {
         row.top = r.cands[0].d;
         row.sec = r.cands.length >= 2 ? r.cands[1].d : null;
-        row.hit = r.actual.indexOf(row.top) >= 0 || (row.sec !== null && r.actual.indexOf(row.sec) >= 0);
+        row.hit = r.actual.indexOf(row.top) >= 0;
         row.status = row.hit ? "对" : "错";
       }
       out.push(row);
