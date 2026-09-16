@@ -69,7 +69,10 @@
     if (t < 10) return { txt: "样本不足", color: "#94a3b8" };
     var miss = t - h;
     var color = t < 20 ? "#eab308" : "#16a34a";
-    return { txt: "中" + h + "·错" + miss + "·共" + t, color: color };
+    return {
+      txt: '<span style="color:#16a34a">中' + h + '</span>·<span style="color:#dc2626">错' + miss + '</span>·<span style="color:#9ca3af">共' + t + '</span>',
+      color: color
+    };
   }
 
   function reversalRate(tail) {
@@ -1719,15 +1722,35 @@
     html += '<p>最大回撤：<b style="color:#dc2626">' + maxDD + ' 元</b></p>';
     html += '</div></div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序）· 回测/实盘全标注</span></div>';
-    html += '<div class="panel"><table class="table" style="font-size:12px"><thead><tr><th>期数</th><th>类型</th><th>推荐</th><th>实际开出</th><th>命中</th><th>盈亏</th><th>累计</th><th>回撤</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序）· ①=第一推荐 ②=第二 ③=第三 · 绿=中 灰=未中</span></div>';
+    html += '<div class="panel"><table class="table" style="font-size:12px"><thead><tr><th>期数</th><th>类型</th><th>推荐(①最强)</th><th>实际开出</th><th>命中</th><th>盈亏</th><th>累计</th><th>回撤</th></tr></thead><tbody>';
     for (var ri = hist.length - 1; ri >= 0; ri--) {
       var r = hist[ri];
-      var hitColor = r.hits === 0 ? '#dc2626' : r.hits === 1 ? '#eab308' : r.hits === 2 ? '#16a34a' : '#15803d';
+      var mk = ['①', '②', '③'];
+      var picksHtml = '';
+      if (r.picks.length) {
+        for (var pj = 0; pj < r.picks.length; pj++) {
+          var pn = r.picks[pj];
+          var isHit = r.actual && r.actual.indexOf(pn) >= 0;
+          picksHtml += '<span style="color:' + (isHit ? '#16a34a' : '#9ca3af') + ';font-weight:' + (isHit ? '700' : '400') + '">' + mk[pj] + pn + '</span>';
+          if (pj < r.picks.length - 1) picksHtml += ' ';
+        }
+      } else {
+        picksHtml = '<span style="color:#9ca3af">空仓</span>';
+      }
+      var hitTxt = '—', hitColor = '#999';
+      if (r.hits !== null) {
+        hitColor = r.hits === 0 ? '#dc2626' : r.hits === 1 ? '#eab308' : r.hits === 2 ? '#16a34a' : '#15803d';
+        var hitMark = [];
+        for (var hj = 0; hj < r.picks.length; hj++) {
+          if (r.actual.indexOf(r.picks[hj]) >= 0) hitMark.push(mk[hj]);
+        }
+        hitTxt = '中' + r.hits + (hitMark.length ? '<span style="font-weight:400;color:#6b7280">（' + hitMark.join('') + '）</span>' : '');
+      }
       var pnlTxt = r.pnl === null ? '—' : (r.pnl >= 0 ? '+' : '') + r.pnl;
       var pnlColor = r.pnl === null ? '#999' : r.pnl >= 0 ? '#16a34a' : '#dc2626';
       var typeTag = r.live ? '<span style="color:#2563eb;font-weight:700">实盘·待开奖</span>' : '<span style="color:#9ca3af">回测</span>';
-      html += '<tr><td>' + r.period + '</td><td>' + typeTag + '</td><td>' + (r.picks.length ? r.picks.join(' ') : '空仓') + '</td><td>' + (r.actual ? r.actual.join(' ') : '—') + '</td><td style="color:' + hitColor + ';font-weight:700">' + (r.hits === null ? '—' : '中' + r.hits) + '</td><td style="color:' + pnlColor + ';white-space:nowrap">' + pnlTxt + '</td><td>' + r.cum + '</td><td>' + r.dd + '</td></tr>';
+      html += '<tr><td>' + r.period + '</td><td>' + typeTag + '</td><td>' + picksHtml + '</td><td>' + (r.actual ? r.actual.join(' ') : '—') + '</td><td style="color:' + hitColor + ';font-weight:700;white-space:nowrap">' + hitTxt + '</td><td style="color:' + pnlColor + ';white-space:nowrap">' + pnlTxt + '</td><td>' + r.cum + '</td><td>' + r.dd + '</td></tr>';
     }
     html += '</tbody></table></div></div>';
 
