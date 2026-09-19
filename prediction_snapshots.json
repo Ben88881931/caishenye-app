@@ -1,0 +1,55 @@
+{
+  "modelVersion": "core-v1",
+  "description": "开奖前保存的真实预测快照，开奖后按实际尾数结算。",
+  "records": [
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-09-19T11:11:42.333Z",
+      "basedOn": 261,
+      "target": 262,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "picks": [
+            {
+              "tail": 3,
+              "score": 92.5,
+              "tag": "5期3次"
+            },
+            {
+              "tail": 7,
+              "score": 92.1,
+              "tag": "7期4次"
+            }
+          ]
+        },
+        "weightedBounce": {
+          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
+          "picks": [
+            {
+              "tail": 1,
+              "score": 6,
+              "miss": 3,
+              "maxMiss": 5,
+              "ratio": 0.6,
+              "weightedBounceRate": 0.7777777777777778,
+              "sample": 9
+            },
+            {
+              "tail": 0,
+              "score": 0,
+              "miss": 1,
+              "maxMiss": 9,
+              "ratio": 0.1111111111111111,
+              "weightedBounceRate": 0.5631067961165049,
+              "sample": 88.28571428571428
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "latestPeriod": 261,
+  "updatedAt": "2026-09-19T11:11:42.341Z"
+}

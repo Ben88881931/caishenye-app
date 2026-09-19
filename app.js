@@ -8,6 +8,7 @@
     .map(Number)
     .sort(function (a, b) { return a - b; });
   var latest = periods[periods.length - 1];
+  var MODEL = window.CAISHEN_MODEL.createModel(RAW);
 
   var byYearPeriod = new Map();
   D.forEach(function (e) {
@@ -1529,12 +1530,6 @@
     return out;
   }
 
-  function predictionFeedbackHTML() {
-    var html = "";
-    html += predictionFeedbackHTML();
-    return html;
-  }
-
   function renderPredict() {
     var N = latest;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 回测 中23·错21·共44</span></div>';
@@ -1655,22 +1650,7 @@
 
   // ===== 双号推荐页面（连出惯性分层打分，每期推2个号，避尾0）=====
   function pickTopAt(cur, k) {
-    var picks = [];
-    for (var d = 1; d <= 9; d++) {
-      var streak = 0;
-      for (var p = cur; p >= 1; p--) { if (hit(p, d)) streak++; else break; }
-      var c5 = 0, c7 = 0;
-      for (var p = cur - 4; p <= cur; p++) if (p >= 1 && hit(p, d)) c5++;
-      for (var p = cur - 6; p <= cur; p++) if (p >= 1 && hit(p, d)) c7++;
-      var item = null;
-      if (streak === 4) item = { d: d, sc: 95.3, tag: "连出4" };
-      else if (streak === 3) item = { d: d, sc: 93.9, tag: "连出3" };
-      else if (c5 === 3) item = { d: d, sc: 92.5, tag: "5期3次" };
-      else if (c7 === 4) item = { d: d, sc: 92.1, tag: "7期4次" };
-      if (item) picks.push(item);
-    }
-    picks.sort(function (a, b) { return b.sc - a.sc; });
-    return picks.slice(0, k);
+    return MODEL.pickTopAt(cur, k);
   }
 
   function renderPick3() {

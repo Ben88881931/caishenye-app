@@ -56,6 +56,28 @@ const bt20 = hitRate(btRecords.slice(-20));
 // 实盘命中率
 const live = hitRate(liveSettled);
 
+// 真实预测快照账（开奖前保存，开奖后结算）
+const snapshotPath = 'prediction_snapshots.json';
+let snapshotRecords = [];
+if (fs.existsSync(snapshotPath)) {
+  try {
+    const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+    snapshotRecords = snapshot.records || [];
+  } catch (e) {
+    snapshotRecords = [];
+  }
+}
+
+function snapshotSummary(key) {
+  const settled = snapshotRecords.filter(r => r.settled && r.results && r.results[key]);
+  const hits = settled.filter(r => r.results[key].hit === true).length;
+  return { n: settled.length, hits, rate: settled.length ? hits / settled.length : 0 };
+}
+
+const snapDouble = snapshotSummary('doubleRecommendation');
+const snapWeighted = snapshotSummary('weightedBounce');
+const snapPending = snapshotRecords.filter(r => !r.settled).length;
+
 console.log('===== v3 模型健康检查（分账）=====\n');
 console.log('数据源: recommend_log.json');
 
@@ -68,6 +90,11 @@ console.log('\n--- 实盘账（第256期起开奖前真实预测）---');
 console.log('已开奖 ' + liveSettled.length + ' 期, 命中 ' + live.hits + '/' + live.n + ' = ' + pct(live.rate));
 console.log('待开奖 ' + livePending.length + ' 期');
 console.log('当前连续未中 ' + missStreak + ' 期');
+
+console.log('\n--- 真实快照账（开奖前保存，开奖后结算）---');
+console.log('双号推荐: ' + snapDouble.hits + '/' + snapDouble.n + ' = ' + pct(snapDouble.rate));
+console.log('加权反弹: ' + snapWeighted.hits + '/' + snapWeighted.n + ' = ' + pct(snapWeighted.rate));
+console.log('待开奖: ' + snapPending + ' 期');
 
 // 预警判断（实盘样本不足时不作结论）
 const ALERT_THRESHOLD = 0.65;
@@ -82,4 +109,4 @@ if (liveSettled.length < 10) {
   console.log('✅ 状态正常：实盘 ' + pct(live.rate) + '，回测 ' + pct(bt['命中率'] || 0));
 }
 
-console.log('\n【健康检查结果】回测命中率 ' + pct(bt['命中率'] || 0) + '，实盘命中率 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期）');
+console.log('\n【健康检查结果】回测 ' + pct(bt['命中率'] || 0) + '，旧实盘 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期），真实快照双号 ' + snapDouble.hits + '/' + snapDouble.n + '，加权 ' + snapWeighted.hits + '/' + snapWeighted.n);

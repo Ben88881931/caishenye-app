@@ -105,6 +105,32 @@ node --check app.js
 - 不使用未开奖号码，不做伪造数据。
 - 每次改动后都要重新运行自检，通过后再提交。
 
+## 模型监督与真实快照
+
+从当前版本开始，预测模型统一放在 `model_core.js`，页面和监督脚本共用同一份算法。
+
+每次更新开奖号码前先运行：
+
+```bash
+node model_supervisor.js sync
+```
+
+这会先保存下一期预测快照。更新数据并运行 `python sync.py` 后，再次运行：
+
+```bash
+node model_supervisor.js sync
+```
+
+已开奖快照会被结算为真实对/错，保存到 `prediction_snapshots.json`。
+
+查看真实快照战绩：
+
+```bash
+node model_supervisor.js report
+```
+
+完整的下属执行和监督规则见 `SUPERVISOR_WORKFLOW.md`。
+
 ## 本地开发
 
 开发副本通常位于桌面：
