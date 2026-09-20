@@ -89,7 +89,7 @@
       "generatedAt": "2026-09-19T13:45:40.830Z",
       "basedOn": 262,
       "target": 263,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -129,9 +129,89 @@
             }
           ]
         }
+      },
+      "actualTails": [
+        2,
+        3,
+        4,
+        8,
+        9
+      ],
+      "actualPeriod": 263,
+      "settledAt": "2026-09-20T14:27:28.378Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            2,
+            5
+          ],
+          "hits": [
+            2
+          ],
+          "count": 1,
+          "hit": true
+        },
+        "weightedBounce": {
+          "picks": [
+            9,
+            1
+          ],
+          "hits": [
+            9
+          ],
+          "count": 1,
+          "hit": true
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-09-20T14:27:28.400Z",
+      "basedOn": 263,
+      "target": 264,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "picks": [
+            {
+              "tail": 3,
+              "score": 93.9,
+              "tag": "连出3"
+            },
+            {
+              "tail": 4,
+              "score": 92.5,
+              "tag": "5期3次"
+            }
+          ]
+        },
+        "weightedBounce": {
+          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
+          "picks": [
+            {
+              "tail": 1,
+              "score": 6,
+              "miss": 5,
+              "maxMiss": 5,
+              "ratio": 1,
+              "weightedBounceRate": 1,
+              "sample": 2
+            },
+            {
+              "tail": 0,
+              "score": 0,
+              "miss": 1,
+              "maxMiss": 9,
+              "ratio": 0.1111111111111111,
+              "weightedBounceRate": 0.6080246913580247,
+              "sample": 92.57142857142857
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 262,
-  "updatedAt": "2026-09-19T13:45:40.830Z"
+  "latestPeriod": 263,
+  "updatedAt": "2026-09-20T14:27:28.400Z"
 }
