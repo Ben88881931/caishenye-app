@@ -16,7 +16,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { createModel, gradeOf } = require("./model_core.js");
+const { createModel, gradeOf, GRADE_TIERS } = require("./model_core.js");
 
 const ROOT = __dirname;
 const DATA_PATH = path.join(ROOT, "data.js");
@@ -43,6 +43,62 @@ function loadSnapshots() {
 
 function saveSnapshots(data) {
   fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(data, null, 2) + "\n", "utf8");
+}
+
+// 结算后，把真实快照账各等级命中率写入 snapshots.js，供前端页面展示（等级用统一 gradeOf）
+function generateSnapshotsJs(snapshots) {
+  const records = snapshots.records || [];
+  const settled = records.filter((r) => r.settled && r.results && r.results.doubleRecommendation);
+
+  const gradeStats = {};
+  for (const t of GRADE_TIERS) {
+    gradeStats[t.key] = { single: { n: 0, hits: 0 }, atLeastOne: { n: 0, hits: 0 } };
+  }
+
+  const detail = [];
+  for (const rec of settled) {
+    const model = rec.models && rec.models.doubleRecommendation;
+    const picks = model && Array.isArray(model.picks) ? model.picks : [];
+    const actualTails = rec.actualTails || [];
+    const perPick = picks.map((p) => {
+      const g = p.grade != null ? p.grade : gradeOf(p.score);
+      const hit = actualTails.includes(p.tail);
+      const bucket = gradeStats[g];
+      if (bucket) {
+        bucket.single.n++;
+        if (hit) bucket.single.hits++;
+      }
+      return { tail: p.tail, score: p.score, grade: g, hit: hit };
+    });
+    let atLeastOne = false;
+    if (picks.length && perPick.length) {
+      const fg = perPick[0].grade;
+      const bucket = gradeStats[fg];
+      atLeastOne = perPick.some((p) => p.hit);
+      if (bucket) {
+        bucket.atLeastOne.n++;
+        if (atLeastOne) bucket.atLeastOne.hits++;
+      }
+    }
+    detail.push({
+      target: rec.target,
+      picks: perPick,
+      actualTails: actualTails,
+      atLeastOne: atLeastOne,
+      settledAt: rec.settledAt
+    });
+  }
+
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    settledCount: settled.length,
+    grades: gradeStats,
+    detail: detail
+  };
+
+  const outPath = path.join(ROOT, "snapshots.js");
+  fs.writeFileSync(outPath, "window.APP_SNAPSHOTS = " + JSON.stringify(payload, null, 2) + ";\n", "utf8");
+  console.log(`snapshots.js 已生成：结算 ${settled.length} 期`);
 }
 
 function modelHit(model, actualTails) {
@@ -107,6 +163,7 @@ function sync() {
   snapshots.latestPeriod = latest;
   snapshots.updatedAt = new Date().toISOString();
   saveSnapshots(snapshots);
+  generateSnapshotsJs(snapshots);
   console.log(`快照已同步：已开奖 ${snapshots.records.filter((r) => r.settled).length} 期，待开奖 ${snapshots.records.filter((r) => !r.settled).length} 期，下一期 ${target}`);
 }
 
@@ -148,6 +205,7 @@ function report() {
 const command = process.argv[2] || "sync";
 if (command === "sync") sync();
 else if (command === "report") report();
+else if (command === "snapjs") generateSnapshotsJs(loadSnapshots());
 else {
   console.error("未知命令：" + command);
   process.exit(1);

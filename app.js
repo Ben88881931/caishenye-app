@@ -1669,12 +1669,38 @@
         html += '<div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">' + (i === 0 ? '第一推荐' : '第二推荐') + '</div>';
         html += '<div class="num" style="width:60px;height:60px;font-size:26px;font-weight:800">尾' + p.d + '</div>';
         html += '<div style="margin-top:8px"><span class="chip">' + p.tag + '</span></div>';
-        html += '<div style="font-size:14px;color:#16a34a;font-weight:700;margin-top:6px">' + p.sc + ' 分</div>';
+        html += '<div style="font-size:14px;color:#16a34a;font-weight:700;margin-top:6px">' + p.sc + ' 分 · ' + MODEL.gradeOf(p.sc) + '级</div>';
         html += '</div>';
       });
       html += '</div>';
     }
     html += '</div></div>';
+
+    var snapStats = window.APP_SNAPSHOTS || null;
+    if (snapStats && snapStats.grades) {
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">五级强度 · 累计命中率</h2><span class="section__hint">真实快照账（开奖前保存·开奖后结算）· 单尾口径 & 双号至少中一口径 · 样本≥20期才显示命中率</span></div></div>';
+      html += '<div class="section"><div class="panel" style="padding:12px">';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">';
+      var confTiers = [
+        { k: "S", label: "S级 &#8805;95.0", color: "#16a34a" },
+        { k: "A", label: "A级 93.5-94.99", color: "#65a30d" },
+        { k: "B", label: "B级 92.8-93.49", color: "#d97706" },
+        { k: "C", label: "C级 92.2-92.79", color: "#ea580c" },
+        { k: "D", label: "D级 <92.2", color: "#6b7280" }
+      ];
+      confTiers.forEach(function (t) {
+        var st = snapStats.grades[t.k] || { single: { n: 0, hits: 0 }, atLeastOne: { n: 0, hits: 0 } };
+        var sRate = st.single.n >= 20 ? (st.single.hits / st.single.n * 100).toFixed(1) + '%' : '样本不足';
+        var aRate = st.atLeastOne.n >= 20 ? (st.atLeastOne.hits / st.atLeastOne.n * 100).toFixed(1) + '%' : '样本不足';
+        html += '<div style="border:1px solid #e0e3e8;border-radius:8px;padding:10px;background:#fff">';
+        html += '<div style="font-size:13px;font-weight:700;margin-bottom:6px;color:' + t.color + '">' + t.label + '</div>';
+        html += '<div style="font-size:12px;color:var(--muted);line-height:1.5">单尾 <b>' + st.single.hits + '/' + st.single.n + '</b> ' + sRate + '</div>';
+        html += '<div style="font-size:12px;color:var(--muted);line-height:1.5">至少中一 <b>' + st.atLeastOne.hits + '/' + st.atLeastOne.n + '</b> ' + aRate + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      html += '</div></div>';
+    }
 
     var hist = [], cum = 0, peak = 0, maxDD = 0;
     var actDays = 0, tHits = 0, tPicks = 0;
