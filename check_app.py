@@ -156,6 +156,14 @@ def main():
         except subprocess.CalledProcessError as e:
             fail(f"{js_path.name} 语法错误：" + (e.stderr or "").strip())
 
+    # 双号推荐五级强度等级必须统一定义在 model_core.js（禁止页面/监督脚本各算一套）
+    if model_core_path.exists():
+        core_text = model_core_path.read_text(encoding="utf-8")
+        if "function gradeOf" in core_text and "GRADE_TIERS" in core_text:
+            pass_("model_core.js 含统一等级函数 gradeOf / GRADE_TIERS")
+        else:
+            fail("model_core.js 缺少统一等级函数 gradeOf / GRADE_TIERS")
+
     if not snapshots_path.exists():
         fail("缺少 prediction_snapshots.json，请运行 node model_supervisor.js sync")
     else:

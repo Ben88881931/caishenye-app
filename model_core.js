@@ -20,6 +20,22 @@
     minSample: 2
   };
 
+  // 双号推荐五级强度映射（唯一权威定义，页面/监督脚本/统计脚本统一引用，禁止各算一套）
+  var GRADE_TIERS = [
+    { key: "S", min: 95.0 },
+    { key: "A", min: 93.5 },
+    { key: "B", min: 92.8 },
+    { key: "C", min: 92.2 },
+    { key: "D", min: -Infinity }
+  ];
+
+  function gradeOf(score) {
+    for (var i = 0; i < GRADE_TIERS.length; i++) {
+      if (score >= GRADE_TIERS[i].min) return GRADE_TIERS[i].key;
+    }
+    return "D";
+  }
+
   function createModel(raw) {
     var periods = Object.keys(raw).map(Number).sort(function (a, b) { return a - b; });
 
@@ -146,7 +162,7 @@
         basedOn: cur,
         target: cur + 1,
         doubleRecommendation: pickTopAt(cur, 2).map(function (p) {
-          return { tail: p.d, score: p.sc, tag: p.tag };
+          return { tail: p.d, score: p.sc, tag: p.tag, grade: gradeOf(p.sc) };
         }),
         weightedBounce: weightedPickAt(cur, 2).map(function (p) {
           return {
@@ -169,11 +185,12 @@
       pickTopAt: pickTopAt,
       weightedPickAt: weightedPickAt,
       buildPrediction: buildPrediction,
+      gradeOf: gradeOf,
       baseRate: BASE_RATE,
       thresholds: NEW_MODEL,
       bounceCritical: BOUNCE
     };
   }
 
-  return { createModel: createModel };
+  return { createModel: createModel, gradeOf: gradeOf, GRADE_TIERS: GRADE_TIERS };
 });
