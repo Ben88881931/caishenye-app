@@ -164,6 +164,14 @@ def main():
         else:
             fail("model_core.js 缺少统一等级函数 gradeOf / GRADE_TIERS")
 
+    # 逐期记录：结算结果必须含每个尾号命中详情（perPick）
+    if supervisor_path.exists():
+        sup_text = supervisor_path.read_text(encoding="utf-8")
+        if "perPick" in sup_text:
+            pass_("model_supervisor.js 结算含逐尾号命中记录 perPick")
+        else:
+            fail("model_supervisor.js 缺少逐尾号命中记录 perPick")
+
     if not snapshots_path.exists():
         fail("缺少 prediction_snapshots.json，请运行 node model_supervisor.js sync")
     else:

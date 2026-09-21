@@ -16,7 +16,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { createModel } = require("./model_core.js");
+const { createModel, gradeOf } = require("./model_core.js");
 
 const ROOT = __dirname;
 const DATA_PATH = path.join(ROOT, "data.js");
@@ -47,10 +47,17 @@ function saveSnapshots(data) {
 
 function modelHit(model, actualTails) {
   const picks = model.picks || [];
-  const hits = picks.filter((p) => actualTails.includes(p.tail));
+  const perPick = picks.map((p) => ({
+    tail: p.tail,
+    score: p.score,
+    grade: p.grade != null ? p.grade : gradeOf(p.score),
+    hit: actualTails.includes(p.tail)
+  }));
+  const hits = perPick.filter((p) => p.hit).map((p) => p.tail);
   return {
     picks: picks.map((p) => p.tail),
-    hits: hits.map((p) => p.tail),
+    perPick: perPick,
+    hits: hits,
     count: hits.length,
     hit: hits.length > 0
   };
