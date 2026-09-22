@@ -1677,10 +1677,13 @@
     html += '</div></div>';
 
     var snapStats = window.APP_SNAPSHOTS || null;
+    function snapRate(nr, hr) {
+      return nr >= 20 ? (hr / nr * 100).toFixed(1) + '%' : '样本不足';
+    }
     if (snapStats && snapStats.grades) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">五级强度 · 累计命中率</h2><span class="section__hint">真实快照账（开奖前保存·开奖后结算）· 单尾口径 & 双号至少中一口径 · 样本≥20期才显示命中率</span></div></div>';
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">五级强度 · 单尾命中率</h2><span class="section__hint">真实快照账（开奖前保存·开奖后结算）· 按各尾号等级分组 · 样本≥20期才显示命中率</span></div></div>';
       html += '<div class="section"><div class="panel" style="padding:12px">';
-      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">';
       var confTiers = [
         { k: "S", label: "S级 &#8805;95.0", color: "#16a34a" },
         { k: "A", label: "A级 93.5-94.99", color: "#65a30d" },
@@ -1689,15 +1692,35 @@
         { k: "D", label: "D级 <92.2", color: "#6b7280" }
       ];
       confTiers.forEach(function (t) {
-        var st = snapStats.grades[t.k] || { single: { n: 0, hits: 0 }, atLeastOne: { n: 0, hits: 0 } };
-        var sRate = st.single.n >= 20 ? (st.single.hits / st.single.n * 100).toFixed(1) + '%' : '样本不足';
-        var aRate = st.atLeastOne.n >= 20 ? (st.atLeastOne.hits / st.atLeastOne.n * 100).toFixed(1) + '%' : '样本不足';
+        var st = snapStats.grades[t.k] || { single: { n: 0, hits: 0 } };
+        var sRate = snapRate(st.single.n, st.single.hits);
         html += '<div style="border:1px solid #e0e3e8;border-radius:8px;padding:10px;background:#fff">';
         html += '<div style="font-size:13px;font-weight:700;margin-bottom:6px;color:' + t.color + '">' + t.label + '</div>';
         html += '<div style="font-size:12px;color:var(--muted);line-height:1.5">单尾 <b>' + st.single.hits + '/' + st.single.n + '</b> ' + sRate + '</div>';
-        html += '<div style="font-size:12px;color:var(--muted);line-height:1.5">至少中一 <b>' + st.atLeastOne.hits + '/' + st.atLeastOne.n + '</b> ' + aRate + '</div>';
         html += '</div>';
       });
+      html += '</div>';
+      html += '</div></div>';
+
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">双号整体 & 等级组合</h2><span class="section__hint">真实快照账 · 双号整体至少中一 + 按两尾号等级组合分组 · 样本≥20期才显示命中率</span></div></div>';
+      html += '<div class="section"><div class="panel" style="padding:12px">';
+      var ov = snapStats.overallAtLeastOne || { n: 0, hits: 0 };
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
+      html += '<span style="font-size:13px;font-weight:700">双号整体至少中一</span>';
+      html += '<span class="chip">' + ov.hits + '/' + ov.n + '</span>';
+      html += '<span style="font-size:13px;color:var(--muted)">' + snapRate(ov.n, ov.hits) + '</span>';
+      html += '</div>';
+      var comboMap = snapStats.combos || {};
+      var comboKeys = Object.keys(comboMap);
+      comboKeys.sort(function (a, b) { return comboMap[b].n - comboMap[a].n; });
+      html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+      comboKeys.forEach(function (ck) {
+        var c = comboMap[ck];
+        html += '<div style="border:1px solid #e0e3e8;border-radius:8px;padding:6px 10px;background:#fff;font-size:12px">';
+        html += '<b>' + ck + '</b> ' + c.hits + '/' + c.n + ' <span style="color:var(--muted)">' + snapRate(c.n, c.hits) + '</span>';
+        html += '</div>';
+      });
+      if (!comboKeys.length) html += '<span style="color:#9ca3af;font-size:12px">暂无组合样本</span>';
       html += '</div>';
       html += '</div></div>';
     }

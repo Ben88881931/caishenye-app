@@ -8,11 +8,13 @@
  * 用法：
  *   node score_calibration.js report
  *
- * 口径：
+ * 口径（2026-09-22 修正版）：
  *   单尾样本 —— 每个已结算快照的 doubleRecommendation 每个推荐尾号算一个样本，
- *              命中 = 该尾号落在实际尾数集合里。
- *   双号至少中一个 —— 每个已结算快照算一个样本，按首推尾号的等级分组，
- *              命中 = 该快照两个推荐尾号至少一个落在实际尾数集合里。
+ *              按该尾号自己的等级分组，命中 = 该尾号落在实际尾数集合里。
+ *   双号整体至少中一 —— 每个已结算快照算一个样本（不分等级），
+ *              命中 = 两个推荐尾号至少一个落在实际尾数集合里。
+ *   等级组合至少中一 —— 每个已结算快照按两个尾号的等级组合分组（如 A+C、C+C、C+D），
+ *              命中 = 两个推荐尾号至少一个落在实际尾数集合里。
  *   Wilson 95% 置信区间 —— z=1.96。
  *   样本 < 20 —— 显示「样本不足」。
  *
@@ -28,7 +30,7 @@ const MIN_SAMPLE = 20;
 const Z = 1.96;
 
 function wilson(k, n) {
-  if (n <= 0) return { lo: null, hi: null };
+  if (n <= 0) return null;
   const p = k / n;
   const z2 = Z * Z;
   const denom = 1 + z2 / n;
@@ -60,16 +62,26 @@ function gradeFrom(pick) {
   return pick.grade != null ? pick.grade : gradeOf(pick.score);
 }
 
+function comboKey(g1, g2) {
+  const i1 = GRADE_TIERS.findIndex((t) => t.key === g1);
+  const i2 = GRADE_TIERS.findIndex((t) => t.key === g2);
+  return i1 <= i2 ? g1 + "+" + g2 : g2 + "+" + g1;
+}
+
+function rateText(n, hits) {
+  if (n < MIN_SAMPLE) return "样本不足";
+  let s = pct(hits / n);
+  const ci = wilson(hits, n);
+  if (ci) s += "（95%CI " + pct(ci.lo) + "~" + pct(ci.hi) + "）";
+  return s;
+}
+
 function fmtPerPick(picks) {
-  return picks
-    .map((p) => `${p.tail}-${gradeFrom(p)}(${p.score})`)
-    .join(", ");
+  return picks.map((p) => `${p.tail}-${gradeFrom(p)}(${p.score})`).join(", ");
 }
 
 function fmtHit(picks) {
-  return picks
-    .map((p) => (p.hit ? `${p.tail}✓` : `${p.tail}✗`))
-    .join(" ");
+  return picks.map((p) => (p.hit ? `${p.tail}✓` : `${p.tail}✗`)).join(" ");
 }
 
 function report() {
@@ -83,7 +95,6 @@ function report() {
     (r) => r.settled && r.results && r.results.doubleRecommendation
   );
 
-  // 逐期记录：优先用快照自身保存的 perPick（新结算自带），否则用实际尾数即时判定
   console.log("===== 双号推荐五级强度 · 真实命中率统计 =====");
   console.log("数据源：prediction_snapshots.json 真实快照账（仅已结算，不含回测）");
   console.log("等级统一引用 model_core.js gradeOf；历史快照按原分数临时映射，不反写");
@@ -97,7 +108,7 @@ function report() {
     let perPick;
     const saved = rec.results.doubleRecommendation.perPick;
     if (Array.isArray(saved) && saved.length === picks.length) {
-      perPick = saved.map((pp, i) => ({
+      perPick = saved.map((pp) => ({
         tail: pp.tail,
         score: pp.score,
         grade: pp.grade != null ? pp.grade : gradeOf(pp.score),
@@ -118,54 +129,62 @@ function report() {
   }
   console.log("");
 
-  // 等级累计统计
-  const single = {};
-  const atLeastOneStat = {};
-  for (const g of GRADE_TIERS) {
-    single[g.key] = { n: 0, hits: 0 };
-    atLeastOneStat[g.key] = { n: 0, hits: 0 };
-  }
+  // 统计
+  const single = {}; // { grade: {n, hits} }
+  const overall = { n: 0, hits: 0 }; // 双号整体至少中一
+  const combos = {}; // { "A+C": {n, hits} }
 
   for (const rec of settled) {
     const model = rec.models && rec.models.doubleRecommendation;
     const picks = model && Array.isArray(model.picks) ? model.picks : [];
     const actualTails = rec.actualTails || [];
-    if (!picks.length) continue;
+    if (!picks.length) continue; // 空仓快照不计样本，不伪造
 
-    for (const pick of picks) {
-      const g = gradeFrom(pick);
+    const grades = picks.map((p) => gradeFrom(p));
+    for (let i = 0; i < picks.length; i++) {
+      const g = grades[i];
       const s = single[g] || (single[g] = { n: 0, hits: 0 });
       s.n++;
-      if (actualTails.includes(pick.tail)) s.hits++;
+      if (actualTails.includes(picks[i].tail)) s.hits++;
     }
 
-    const first = picks[0];
-    const fg = gradeFrom(first);
-    const d = atLeastOneStat[fg] || (atLeastOneStat[fg] = { n: 0, hits: 0 });
-    d.n++;
-    if (picks.some((p) => actualTails.includes(p.tail))) d.hits++;
+    overall.n++;
+    if (picks.some((p) => actualTails.includes(p.tail))) overall.hits++;
+
+    if (picks.length >= 2) {
+      const ck = comboKey(grades[0], grades[1]);
+      const c = combos[ck] || (combos[ck] = { n: 0, hits: 0 });
+      c.n++;
+      if (picks.some((p) => actualTails.includes(p.tail))) c.hits++;
+    }
   }
 
-  console.log("--- 等级累计统计 ---");
+  console.log("--- 单尾命中率（按各尾号等级分组）---");
   for (const g of GRADE_TIERS) {
     const s = single[g.key] || { n: 0, hits: 0 };
-    const d = atLeastOneStat[g.key] || { n: 0, hits: 0 };
-    const missed = s.n - s.hits;
-    const dMissed = d.n - d.hits;
+    console.log(
+      `${tierLabel(g.key)}：样本${s.n} 命中${s.hits} 未中${s.n - s.hits} 命中率${rateText(s.n, s.hits)}`
+    );
+  }
+  console.log("");
 
-    console.log(tierLabel(g.key));
-    const sRateTxt = s.n < MIN_SAMPLE ? "样本不足" : pct(s.hits / s.n);
-    const dRateTxt = d.n < MIN_SAMPLE ? "样本不足" : pct(d.hits / d.n);
+  console.log("--- 双号整体至少中一（不分等级）---");
+  console.log(
+    `样本${overall.n}期 命中${overall.hits} 未中${overall.n - overall.hits} 命中率${rateText(overall.n, overall.hits)}`
+  );
+  console.log("");
 
-    let ciTxt = "样本不足";
-    if (s.n >= MIN_SAMPLE) {
-      const ci = wilson(s.hits, s.n);
-      ciTxt = `${pct(ci.lo)} ~ ${pct(ci.hi)}`;
+  console.log("--- 等级组合至少中一 ---");
+  const comboKeys = Object.keys(combos).sort((a, b) => combos[b].n - combos[a].n);
+  if (!comboKeys.length) {
+    console.log("（暂无组合样本）");
+  } else {
+    for (const ck of comboKeys) {
+      const c = combos[ck];
+      console.log(
+        `${ck}：样本${c.n} 命中${c.hits} 未中${c.n - c.hits} 命中率${rateText(c.n, c.hits)}`
+      );
     }
-
-    console.log(`  单尾：样本${s.n} 命中${s.hits} 未中${missed} 命中率${sRateTxt}`);
-    console.log(`  双号至少中一：样本${d.n} 命中${d.hits} 未中${dMissed} 命中率${dRateTxt}`);
-    console.log(`  置信区间：${ciTxt}`);
   }
 }
 

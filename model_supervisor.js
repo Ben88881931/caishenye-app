@@ -52,8 +52,16 @@ function generateSnapshotsJs(snapshots) {
 
   const gradeStats = {};
   for (const t of GRADE_TIERS) {
-    gradeStats[t.key] = { single: { n: 0, hits: 0 }, atLeastOne: { n: 0, hits: 0 } };
+    gradeStats[t.key] = { single: { n: 0, hits: 0 } };
   }
+  const overall = { n: 0, hits: 0 };
+  const combos = {};
+
+  const comboKeyOf = function (g1, g2) {
+    const i1 = GRADE_TIERS.findIndex(function (t) { return t.key === g1; });
+    const i2 = GRADE_TIERS.findIndex(function (t) { return t.key === g2; });
+    return i1 <= i2 ? g1 + "+" + g2 : g2 + "+" + g1;
+  };
 
   const detail = [];
   for (const rec of settled) {
@@ -70,15 +78,16 @@ function generateSnapshotsJs(snapshots) {
       }
       return { tail: p.tail, score: p.score, grade: g, hit: hit };
     });
-    let atLeastOne = false;
-    if (picks.length && perPick.length) {
-      const fg = perPick[0].grade;
-      const bucket = gradeStats[fg];
-      atLeastOne = perPick.some((p) => p.hit);
-      if (bucket) {
-        bucket.atLeastOne.n++;
-        if (atLeastOne) bucket.atLeastOne.hits++;
-      }
+    const atLeastOne = perPick.some((p) => p.hit);
+    if (picks.length) {
+      overall.n++;
+      if (atLeastOne) overall.hits++;
+    }
+    if (picks.length >= 2) {
+      const ck = comboKeyOf(perPick[0].grade, perPick[1].grade);
+      const c = combos[ck] || (combos[ck] = { n: 0, hits: 0 });
+      c.n++;
+      if (atLeastOne) c.hits++;
     }
     detail.push({
       target: rec.target,
@@ -93,6 +102,8 @@ function generateSnapshotsJs(snapshots) {
     generatedAt: new Date().toISOString(),
     settledCount: settled.length,
     grades: gradeStats,
+    overallAtLeastOne: overall,
+    combos: combos,
     detail: detail
   };
 

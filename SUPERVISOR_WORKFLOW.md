@@ -39,7 +39,7 @@ python sync.py
 node model_supervisor.js sync
 ```
 
-作用：把已经开奖的预测快照结算为对/错、命中尾数、命中数量。
+作用：把已经开奖的预测快照结算为对/错、命中尾数、命中数量。结算后会自动重新生成 `snapshots.js`（各等级单尾命中率、双号整体至少中一、等级组合统计）。
 
 ### 5. 强制自检
 
@@ -47,6 +47,7 @@ node model_supervisor.js sync
 python check_app.py
 node health_check.js
 node model_supervisor.js report
+node score_calibration.js report
 ```
 
 全部通过后才能发布。
@@ -64,10 +65,14 @@ node model_supervisor.js report
 ### 7. 提交发布
 
 ```bash
-git add data.js lottery_data.json 号码走势图.html prediction_snapshots.json
+git add data.js lottery_data.json 号码走势图.html prediction_snapshots.json snapshots.js
+# index.html 的缓存版本号有变化时，一并提交：
+git add index.html
 git commit -m "更新第N期数据并结算预测快照"
 git push origin main
 ```
+
+> 每次结算后（第 4 步）都会自动重新生成 `snapshots.js`，务必一并提交，否则页面显示的等级命中率会滞后。
 
 ## 监督智能体每日审核
 

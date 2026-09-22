@@ -38,6 +38,8 @@ def main():
     model_core_path = REPO / "model_core.js"
     supervisor_path = REPO / "model_supervisor.js"
     snapshots_path = REPO / "prediction_snapshots.json"
+    score_calibration_path = REPO / "score_calibration.js"
+    snapshots_js_path = REPO / "snapshots.js"
 
     if not raw_path.exists():
         fail("缺少 lottery_data.json")
@@ -136,15 +138,24 @@ def main():
     else:
         index_text = index_path.read_text(encoding="utf-8")
         core_pos = index_text.find("model_core.js")
+        snap_pos = index_text.find("snapshots.js")
         app_pos = index_text.find("app.js")
         if core_pos < 0:
             fail("index.html 未加载 model_core.js")
-        elif app_pos < 0 or core_pos > app_pos:
-            fail("index.html 中 model_core.js 必须在 app.js 之前加载")
+        elif snap_pos < 0:
+            fail("index.html 未加载 snapshots.js")
+        elif app_pos < 0:
+            fail("index.html 未加载 app.js")
+        elif not (core_pos < snap_pos < app_pos):
+            fail("index.html 加载顺序必须为 model_core.js → snapshots.js → app.js")
         else:
-            pass_("model_core.js 加载顺序正确")
+            pass_("model_core.js → snapshots.js → app.js 加载顺序正确")
+        if "88d2a63" in index_text:
+            fail("index.html 仍使用旧缓存版本 88d2a63，请更新为最新构建版本")
+        else:
+            pass_("index.html 无旧缓存版本 88d2a63")
 
-    for js_path in [model_core_path, supervisor_path]:
+    for js_path in [model_core_path, supervisor_path, score_calibration_path, snapshots_js_path]:
         if not js_path.exists():
             fail(f"缺少 {js_path.name}")
             continue
@@ -155,6 +166,14 @@ def main():
             print(f"WARN: 未找到 node，跳过 {js_path.name} 语法检查")
         except subprocess.CalledProcessError as e:
             fail(f"{js_path.name} 语法错误：" + (e.stderr or "").strip())
+
+    # snapshots.js 必须含 window.APP_SNAPSHOTS
+    if snapshots_js_path.exists():
+        snap_js_text = snapshots_js_path.read_text(encoding="utf-8")
+        if "window.APP_SNAPSHOTS" in snap_js_text:
+            pass_("snapshots.js 含 window.APP_SNAPSHOTS")
+        else:
+            fail("snapshots.js 缺少 window.APP_SNAPSHOTS")
 
     # 双号推荐五级强度等级必须统一定义在 model_core.js（禁止页面/监督脚本各算一套）
     if model_core_path.exists():
