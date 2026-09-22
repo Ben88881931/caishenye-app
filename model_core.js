@@ -36,6 +36,50 @@
     return "D";
   }
 
+  // 分数整数分档（1分一档，供细分统计与风险标记；与 GRADE_TIERS 并存，不互相替代）
+  var SCORE_BUCKETS = ["95.x", "94.x", "93.x", "92.x", "91.x", "其他"];
+
+  function scoreBucketOf(score) {
+    var f = Math.floor(Number(score));
+    if (f === 95) return "95.x";
+    if (f === 94) return "94.x";
+    if (f === 93) return "93.x";
+    if (f === 92) return "92.x";
+    if (f === 91) return "91.x";
+    return "其他";
+  }
+
+  // 单尾风险标记口径（以单个推荐尾号命中率为准，不用「双号至少中一」代替）
+  var WILSON_Z = 1.96;
+  var MIN_SAMPLE = 20;
+  var DANGER_SAMPLE = 30;
+  var BASE_RATE_SINGLE = 0.5539; // 单尾理论基准 55.39%
+
+  function wilson(k, n) {
+    if (!n || n <= 0) return null;
+    var p = k / n;
+    var z2 = WILSON_Z * WILSON_Z;
+    var denom = 1 + z2 / n;
+    var center = (p + z2 / (2 * n)) / denom;
+    var margin = (WILSON_Z * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n))) / denom;
+    return { lo: Math.max(0, center - margin), hi: Math.min(1, center + margin) };
+  }
+
+  function riskOf(n, hits) {
+    if (n < MIN_SAMPLE) {
+      if (n <= 0) return { label: "样本不足", flag: "insufficient" };
+      var hint = hits / n < BASE_RATE_SINGLE ? "·初步偏弱" : "";
+      return { label: "样本不足" + hint, flag: "insufficient" };
+    }
+    var ci = wilson(hits, n);
+    if (n < DANGER_SAMPLE) {
+      return { label: "观察", flag: "observe", ci: ci };
+    }
+    if (ci.hi < BASE_RATE_SINGLE) return { label: "🔴危险", flag: "danger", ci: ci };
+    if (ci.lo > BASE_RATE_SINGLE) return { label: "🟢优势", flag: "advantage", ci: ci };
+    return { label: "🟡正常或待观察", flag: "normal", ci: ci };
+  }
+
   function createModel(raw) {
     var periods = Object.keys(raw).map(Number).sort(function (a, b) { return a - b; });
 
@@ -192,5 +236,14 @@
     };
   }
 
-  return { createModel: createModel, gradeOf: gradeOf, GRADE_TIERS: GRADE_TIERS };
+  return {
+    createModel: createModel,
+    gradeOf: gradeOf,
+    GRADE_TIERS: GRADE_TIERS,
+    SCORE_BUCKETS: SCORE_BUCKETS,
+    scoreBucketOf: scoreBucketOf,
+    wilson: wilson,
+    riskOf: riskOf,
+    BASE_RATE_SINGLE: BASE_RATE_SINGLE
+  };
 });

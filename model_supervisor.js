@@ -16,7 +16,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { createModel, gradeOf, GRADE_TIERS } = require("./model_core.js");
+const { createModel, gradeOf, GRADE_TIERS, scoreBucketOf, SCORE_BUCKETS } = require("./model_core.js");
 
 const ROOT = __dirname;
 const DATA_PATH = path.join(ROOT, "data.js");
@@ -57,6 +57,13 @@ function generateSnapshotsJs(snapshots) {
   const overall = { n: 0, hits: 0, miss: 0 };
   const combos = {};
 
+  // 分数整数分档 + 信号标签 细分统计（单尾口径，含逐期 rolls）
+  const scoreBuckets = {};
+  for (const b of SCORE_BUCKETS) {
+    scoreBuckets[b] = { n: 0, hits: 0, miss: 0, rolls: [] };
+  }
+  const tags = {};
+
   const comboKeyOf = function (g1, g2) {
     const i1 = GRADE_TIERS.findIndex(function (t) { return t.key === g1; });
     const i2 = GRADE_TIERS.findIndex(function (t) { return t.key === g2; });
@@ -71,13 +78,26 @@ function generateSnapshotsJs(snapshots) {
     const perPick = picks.map((p) => {
       const g = p.grade != null ? p.grade : gradeOf(p.score);
       const hit = actualTails.includes(p.tail);
+      const tag = p.tag || "其他";
+      const bname = scoreBucketOf(p.score);
       const bucket = gradeStats[g];
       if (bucket) {
         bucket.single.n++;
         if (hit) bucket.single.hits++;
         else bucket.single.miss++;
       }
-      return { tail: p.tail, score: p.score, grade: g, hit: hit };
+      if (scoreBuckets[bname]) {
+        scoreBuckets[bname].n++;
+        if (hit) scoreBuckets[bname].hits++;
+        else scoreBuckets[bname].miss++;
+        scoreBuckets[bname].rolls.push({ target: rec.target, tail: p.tail, score: p.score, tag: tag, hit: hit });
+      }
+      const tg = tags[tag] || (tags[tag] = { n: 0, hits: 0, miss: 0, rolls: [] });
+      tg.n++;
+      if (hit) tg.hits++;
+      else tg.miss++;
+      tg.rolls.push({ target: rec.target, tail: p.tail, score: p.score, bucket: bname, hit: hit });
+      return { tail: p.tail, score: p.score, tag: tag, bucket: bname, grade: g, hit: hit };
     });
     const atLeastOne = perPick.some((p) => p.hit);
     if (picks.length) {
@@ -107,6 +127,8 @@ function generateSnapshotsJs(snapshots) {
     grades: gradeStats,
     overallAtLeastOne: overall,
     combos: combos,
+    scoreBuckets: scoreBuckets,
+    tags: tags,
     detail: detail
   };
 
@@ -120,6 +142,7 @@ function modelHit(model, actualTails) {
   const perPick = picks.map((p) => ({
     tail: p.tail,
     score: p.score,
+    tag: p.tag || null,
     grade: p.grade != null ? p.grade : gradeOf(p.score),
     hit: actualTails.includes(p.tail)
   }));

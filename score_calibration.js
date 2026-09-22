@@ -23,24 +23,18 @@
 
 const fs = require("fs");
 const path = require("path");
-const { gradeOf, GRADE_TIERS } = require("./model_core.js");
+const {
+  gradeOf,
+  GRADE_TIERS,
+  scoreBucketOf,
+  SCORE_BUCKETS,
+  wilson,
+  riskOf,
+  BASE_RATE_SINGLE
+} = require("./model_core.js");
 
 const SNAPSHOT_PATH = path.join(__dirname, "prediction_snapshots.json");
 const MIN_SAMPLE = 20;
-const Z = 1.96;
-
-function wilson(k, n) {
-  if (n <= 0) return null;
-  const p = k / n;
-  const z2 = Z * Z;
-  const denom = 1 + z2 / n;
-  const center = (p + z2 / (2 * n)) / denom;
-  const margin = (Z * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n))) / denom;
-  return {
-    lo: Math.max(0, center - margin),
-    hi: Math.min(1, center + margin)
-  };
-}
 
 function pct(x) {
   return (x * 100).toFixed(1) + "%";
@@ -133,6 +127,9 @@ function report() {
   const single = {}; // { grade: {n, hits} }
   const overall = { n: 0, hits: 0 }; // 双号整体至少中一
   const combos = {}; // { "A+C": {n, hits} }
+  const scoreBuckets = {}; // 分数整数分档
+  for (const b of SCORE_BUCKETS) scoreBuckets[b] = { n: 0, hits: 0 };
+  const tagStats = {}; // 信号标签
 
   for (const rec of settled) {
     const model = rec.models && rec.models.doubleRecommendation;
@@ -143,9 +140,20 @@ function report() {
     const grades = picks.map((p) => gradeFrom(p));
     for (let i = 0; i < picks.length; i++) {
       const g = grades[i];
+      const hitI = actualTails.includes(picks[i].tail);
       const s = single[g] || (single[g] = { n: 0, hits: 0 });
       s.n++;
-      if (actualTails.includes(picks[i].tail)) s.hits++;
+      if (hitI) s.hits++;
+
+      const bname = scoreBucketOf(picks[i].score);
+      const sb = scoreBuckets[bname] || (scoreBuckets[bname] = { n: 0, hits: 0 });
+      sb.n++;
+      if (hitI) sb.hits++;
+
+      const tg = picks[i].tag || "其他";
+      const ts = tagStats[tg] || (tagStats[tg] = { n: 0, hits: 0 });
+      ts.n++;
+      if (hitI) ts.hits++;
     }
 
     overall.n++;
@@ -186,6 +194,69 @@ function report() {
       );
     }
   }
+
+  console.log("");
+  console.log("--- 分数细分（1分一档，单尾口径，基准55.39%）---");
+  for (const b of SCORE_BUCKETS) {
+    const s = scoreBuckets[b] || { n: 0, hits: 0 };
+    const miss = s.n - s.hits;
+    const r = riskOf(s.n, s.hits);
+    let line = `${b}：样本${s.n} 命中${s.hits} 未中${miss}`;
+    if (s.n < MIN_SAMPLE) {
+      line += ` 命中率${rateText(s.n, s.hits)} 错误率${s.n ? pct(miss / s.n) : "-"}`;
+    } else {
+      line += ` 命中率${pct(s.hits / s.n)} 错误率${pct(miss / s.n)} 95%CI ${pct(r.ci.lo)}~${pct(r.ci.hi)}`;
+    }
+    line += ` 状态${r.label}`;
+    console.log(line);
+  }
+  console.log("");
+
+  console.log("--- 信号标签命中率（单尾口径，基准55.39%）---");
+  const TAG_ORDER = ["连出4", "连出3", "5期3次", "7期4次"];
+  const tagKeys = Object.keys(tagStats);
+  const orderedTags = TAG_ORDER.filter((t) => tagStats[t])
+    .concat(tagKeys.filter((t) => !TAG_ORDER.includes(t)).sort());
+  if (!orderedTags.length) {
+    console.log("（暂无标签样本）");
+  } else {
+    for (const tg of orderedTags) {
+      const s = tagStats[tg];
+      const miss = s.n - s.hits;
+      const r = riskOf(s.n, s.hits);
+      let line = `${tg}：样本${s.n} 命中${s.hits} 未中${miss}`;
+      if (s.n < MIN_SAMPLE) {
+        line += ` 命中率${rateText(s.n, s.hits)} 错误率${s.n ? pct(miss / s.n) : "-"}`;
+      } else {
+        line += ` 命中率${pct(s.hits / s.n)} 错误率${pct(miss / s.n)} 95%CI ${pct(r.ci.lo)}~${pct(r.ci.hi)}`;
+      }
+      line += ` 状态${r.label}`;
+      console.log(line);
+    }
+  }
+  console.log("");
+
+  console.log("--- 风险状态汇总 ---");
+  const dangerList = [];
+  const observeList = [];
+  const advantageList = [];
+  for (const b of SCORE_BUCKETS) {
+    const s = scoreBuckets[b] || { n: 0, hits: 0 };
+    const r = riskOf(s.n, s.hits);
+    if (r.flag === "danger") dangerList.push(`${b}(${s.hits}/${s.n})`);
+    else if (r.flag === "observe") observeList.push(`${b}(${s.hits}/${s.n})`);
+    else if (r.flag === "advantage") advantageList.push(`${b}(${s.hits}/${s.n})`);
+  }
+  for (const tg of orderedTags) {
+    const s = tagStats[tg];
+    const r = riskOf(s.n, s.hits);
+    if (r.flag === "danger") dangerList.push(`${tg}(${s.hits}/${s.n})`);
+    else if (r.flag === "observe") observeList.push(`${tg}(${s.hits}/${s.n})`);
+    else if (r.flag === "advantage") advantageList.push(`${tg}(${s.hits}/${s.n})`);
+  }
+  console.log(`🔴危险：${dangerList.length ? dangerList.join("、") : "无"}`);
+  console.log(`🟡观察：${observeList.length ? observeList.join("、") : "无"}`);
+  console.log(`🟢优势：${advantageList.length ? advantageList.join("、") : "无"}`);
 }
 
 const command = process.argv[2] || "report";

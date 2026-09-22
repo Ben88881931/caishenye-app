@@ -1768,6 +1768,78 @@
       if (!comboKeys.length) html += '<span style="color:#9ca3af;font-size:12px">暂无组合样本</span>';
       html += '</div>';
       html += '</div></div>';
+
+      var CM = window.CAISHEN_MODEL || {};
+      var riskOfFn = CM.riskOf || function () { return { label: "样本不足", flag: "insufficient" }; };
+      var pctFn = function (x) { return (x * 100).toFixed(1) + '%'; };
+      var riskColor = { danger: "#dc2626", observe: "#d97706", advantage: "#16a34a", normal: "#6b7280", insufficient: "#9ca3af" };
+
+      var riskRowCard = function (title, stat, rolls) {
+        var n = stat.n || 0;
+        var hits = stat.hits || 0;
+        var miss = (stat.miss != null) ? stat.miss : (n - hits);
+        var r = riskOfFn(n, hits);
+        var flag = r.flag || "insufficient";
+        var color = riskColor[flag] || "#9ca3af";
+        var rateText2 = n >= 20 ? (n ? pctFn(hits / n) : "-") : "样本不足";
+        var missRate = n ? pctFn(miss / n) : "-";
+        var ciText = "";
+        if (n >= 20 && r.ci) ciText = "95%CI " + pctFn(r.ci.lo) + "~" + pctFn(r.ci.hi);
+        var canRoll = (flag === "danger" || flag === "observe") && rolls && rolls.length;
+        var h = '';
+        h += '<div style="border:1px solid #e0e3e8;border-radius:10px;padding:10px 12px;background:#fff;min-width:0">';
+        h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">';
+        h += '<b style="font-size:13px">' + title + '</b>';
+        h += '<span class="chip">' + hits + '/' + n + '</span>';
+        h += '<span style="font-size:12px;color:var(--muted)">未中' + miss + ' · 错误率' + missRate + '</span>';
+        h += '<span style="margin-left:auto;font-size:12px;font-weight:700;color:' + color + '">' + (r.label || "") + '</span>';
+        h += '</div>';
+        h += '<div style="font-size:11px;color:var(--muted)">命中率 ' + rateText2 + (ciText ? ' · ' + ciText : '') + '</div>';
+        if (canRoll) {
+          h += '<div style="margin-top:6px;font-size:11px;color:var(--muted);font-weight:700">逐期对错</div>';
+          h += '<div style="max-height:150px;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa">';
+          h += '<div style="position:sticky;top:0;background:#f3f4f6;padding:4px 8px;font-size:10px;font-weight:700;color:#6b7280;border-bottom:1px solid #e5e7eb">期 · 尾 · 分数 · 结果</div>';
+          for (var ri = rolls.length - 1; ri >= 0; ri--) {
+            var rr = rolls[ri];
+            h += '<div style="padding:4px 8px;border-bottom:1px solid #f0f0f0;font-size:11px;display:flex;gap:8px;align-items:center">';
+            h += '<span style="font-weight:700">第' + rr.target + '期</span>';
+            h += '<span>尾' + rr.tail + '</span>';
+            h += '<span style="color:var(--muted)">' + rr.score + '分</span>';
+            h += '<span style="margin-left:auto;font-weight:700">' + (rr.hit ? '<span style="color:#16a34a">✅</span>' : '<span style="color:#dc2626">❌</span>') + '</span>';
+            h += '</div>';
+          }
+          h += '</div>';
+        }
+        h += '</div>';
+        return h;
+      };
+
+      var sBuckets = snapStats.scoreBuckets || {};
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">分数细分风险表</h2><span class="section__hint">1分一档 · 单尾口径 · 基准55.39% · 样本≥20显示命中率，样本不足不标危险</span></div></div>';
+      html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">';
+      var bucketOrder = (CM.SCORE_BUCKETS || []).slice();
+      if (!bucketOrder.length) bucketOrder = Object.keys(sBuckets);
+      bucketOrder.forEach(function (b) {
+        var st = sBuckets[b] || { n: 0, hits: 0, miss: 0, rolls: [] };
+        html += riskRowCard(b, st, st.rolls || []);
+      });
+      html += '</div></div>';
+
+      var sTags = snapStats.tags || {};
+      var TAG_ORDER = ["连出4", "连出3", "5期3次", "7期4次"];
+      var tagKeys3 = Object.keys(sTags);
+      var orderedTags3 = TAG_ORDER.filter(function (t) { return sTags[t]; }).concat(tagKeys3.filter(function (t) { return TAG_ORDER.indexOf(t) < 0; }).sort());
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">信号标签命中率表</h2><span class="section__hint">按信号标签分组 · 单尾口径 · 基准55.39%</span></div></div>';
+      html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">';
+      if (!orderedTags3.length) {
+        html += '<span style="color:#9ca3af;font-size:12px">暂无标签样本</span>';
+      } else {
+        orderedTags3.forEach(function (tg) {
+          var st = sTags[tg] || { n: 0, hits: 0, miss: 0, rolls: [] };
+          html += riskRowCard(tg, st, st.rolls || []);
+        });
+      }
+      html += '</div></div>';
     }
 
     var hist = [], cum = 0, peak = 0, maxDD = 0;

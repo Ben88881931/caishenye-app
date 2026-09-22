@@ -238,6 +238,32 @@ def main():
                         fail("snapshots.js 缺少 combos（等级组合统计）")
                     else:
                         pass_("snapshots.js 含等级组合统计")
+
+                    buckets = snap_data.get("scoreBuckets")
+                    if not isinstance(buckets, dict) or not buckets:
+                        fail("snapshots.js 缺少 scoreBuckets（分数细分统计）")
+                    else:
+                        ok_b = all(
+                            all(f in st for f in ["n", "hits", "miss", "rolls"])
+                            for st in buckets.values()
+                        )
+                        if ok_b:
+                            pass_("snapshots.js 分数细分含样本/命中/未中/逐期 rolls")
+                        else:
+                            fail("snapshots.js scoreBuckets 缺少 n/hits/miss/rolls 字段")
+
+                    tags = snap_data.get("tags")
+                    if not isinstance(tags, dict):
+                        fail("snapshots.js 缺少 tags（信号标签统计）")
+                    else:
+                        ok_t = all(
+                            all(f in st for f in ["n", "hits", "miss", "rolls"])
+                            for st in tags.values()
+                        )
+                        if ok_t:
+                            pass_("snapshots.js 标签统计含样本/命中/未中/逐期 rolls")
+                        else:
+                            fail("snapshots.js tags 缺少 n/hits/miss/rolls 字段")
     else:
         fail("缺少 snapshots.js，请运行 node model_supervisor.js sync")
 
@@ -248,6 +274,11 @@ def main():
             pass_("model_core.js 含统一等级函数 gradeOf / GRADE_TIERS")
         else:
             fail("model_core.js 缺少统一等级函数 gradeOf / GRADE_TIERS")
+        for fn in ["scoreBucketOf", "riskOf", "wilson", "SCORE_BUCKETS"]:
+            if f"function {fn}" in core_text or f"var {fn}" in core_text:
+                pass_(f"model_core.js 含 {fn}")
+            else:
+                fail(f"model_core.js 缺少 {fn}")
 
     # 逐期记录：结算结果必须含每个尾号命中详情（perPick）
     if supervisor_path.exists():

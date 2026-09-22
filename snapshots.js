@@ -1,5 +1,5 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-22T14:12:27.011Z",
+  "generatedAt": "2026-09-22T14:47:35.666Z",
   "settledCount": 4,
   "grades": {
     "S": {
@@ -65,6 +65,181 @@ window.APP_SNAPSHOTS = {
       "miss": 1
     }
   },
+  "scoreBuckets": {
+    "95.x": {
+      "n": 0,
+      "hits": 0,
+      "miss": 0,
+      "rolls": []
+    },
+    "94.x": {
+      "n": 0,
+      "hits": 0,
+      "miss": 0,
+      "rolls": []
+    },
+    "93.x": {
+      "n": 3,
+      "hits": 0,
+      "miss": 3,
+      "rolls": [
+        {
+          "target": 264,
+          "tail": 3,
+          "score": 93.9,
+          "tag": "连出3",
+          "hit": false
+        },
+        {
+          "target": 265,
+          "tail": 2,
+          "score": 93.9,
+          "tag": "连出3",
+          "hit": false
+        },
+        {
+          "target": 265,
+          "tail": 8,
+          "score": 93.9,
+          "tag": "连出3",
+          "hit": false
+        }
+      ]
+    },
+    "92.x": {
+      "n": 5,
+      "hits": 4,
+      "miss": 1,
+      "rolls": [
+        {
+          "target": 262,
+          "tail": 3,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": true
+        },
+        {
+          "target": 262,
+          "tail": 7,
+          "score": 92.1,
+          "tag": "7期4次",
+          "hit": true
+        },
+        {
+          "target": 263,
+          "tail": 2,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": true
+        },
+        {
+          "target": 263,
+          "tail": 5,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": false
+        },
+        {
+          "target": 264,
+          "tail": 4,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": true
+        }
+      ]
+    },
+    "91.x": {
+      "n": 0,
+      "hits": 0,
+      "miss": 0,
+      "rolls": []
+    },
+    "其他": {
+      "n": 0,
+      "hits": 0,
+      "miss": 0,
+      "rolls": []
+    }
+  },
+  "tags": {
+    "5期3次": {
+      "n": 4,
+      "hits": 3,
+      "miss": 1,
+      "rolls": [
+        {
+          "target": 262,
+          "tail": 3,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": true
+        },
+        {
+          "target": 263,
+          "tail": 2,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": true
+        },
+        {
+          "target": 263,
+          "tail": 5,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": false
+        },
+        {
+          "target": 264,
+          "tail": 4,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": true
+        }
+      ]
+    },
+    "7期4次": {
+      "n": 1,
+      "hits": 1,
+      "miss": 0,
+      "rolls": [
+        {
+          "target": 262,
+          "tail": 7,
+          "score": 92.1,
+          "bucket": "92.x",
+          "hit": true
+        }
+      ]
+    },
+    "连出3": {
+      "n": 3,
+      "hits": 0,
+      "miss": 3,
+      "rolls": [
+        {
+          "target": 264,
+          "tail": 3,
+          "score": 93.9,
+          "bucket": "93.x",
+          "hit": false
+        },
+        {
+          "target": 265,
+          "tail": 2,
+          "score": 93.9,
+          "bucket": "93.x",
+          "hit": false
+        },
+        {
+          "target": 265,
+          "tail": 8,
+          "score": 93.9,
+          "bucket": "93.x",
+          "hit": false
+        }
+      ]
+    }
+  },
   "detail": [
     {
       "target": 262,
@@ -72,12 +247,16 @@ window.APP_SNAPSHOTS = {
         {
           "tail": 3,
           "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
           "grade": "C",
           "hit": true
         },
         {
           "tail": 7,
           "score": 92.1,
+          "tag": "7期4次",
+          "bucket": "92.x",
           "grade": "D",
           "hit": true
         }
@@ -99,12 +278,16 @@ window.APP_SNAPSHOTS = {
         {
           "tail": 2,
           "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
           "grade": "C",
           "hit": true
         },
         {
           "tail": 5,
           "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
           "grade": "C",
           "hit": false
         }
@@ -125,12 +308,16 @@ window.APP_SNAPSHOTS = {
         {
           "tail": 3,
           "score": 93.9,
+          "tag": "连出3",
+          "bucket": "93.x",
           "grade": "A",
           "hit": false
         },
         {
           "tail": 4,
           "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
           "grade": "C",
           "hit": true
         }
@@ -152,12 +339,16 @@ window.APP_SNAPSHOTS = {
         {
           "tail": 2,
           "score": 93.9,
+          "tag": "连出3",
+          "bucket": "93.x",
           "grade": "A",
           "hit": false
         },
         {
           "tail": 8,
           "score": 93.9,
+          "tag": "连出3",
+          "bucket": "93.x",
           "grade": "A",
           "hit": false
         }
