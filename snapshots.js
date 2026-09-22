@@ -1,54 +1,63 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-22T12:28:12.998Z",
+  "generatedAt": "2026-09-22T12:49:13.892Z",
   "settledCount": 3,
   "grades": {
     "S": {
       "single": {
         "n": 0,
-        "hits": 0
+        "hits": 0,
+        "miss": 0
       }
     },
     "A": {
       "single": {
         "n": 1,
-        "hits": 0
+        "hits": 0,
+        "miss": 1
       }
     },
     "B": {
       "single": {
         "n": 0,
-        "hits": 0
+        "hits": 0,
+        "miss": 0
       }
     },
     "C": {
       "single": {
         "n": 4,
-        "hits": 3
+        "hits": 3,
+        "miss": 1
       }
     },
     "D": {
       "single": {
         "n": 1,
-        "hits": 1
+        "hits": 1,
+        "miss": 0
       }
     }
   },
   "overallAtLeastOne": {
     "n": 3,
-    "hits": 3
+    "hits": 3,
+    "miss": 0
   },
   "combos": {
     "C+D": {
       "n": 1,
-      "hits": 1
+      "hits": 1,
+      "miss": 0
     },
     "C+C": {
       "n": 1,
-      "hits": 1
+      "hits": 1,
+      "miss": 0
     },
     "A+C": {
       "n": 1,
-      "hits": 1
+      "hits": 1,
+      "miss": 0
     }
   },
   "detail": [

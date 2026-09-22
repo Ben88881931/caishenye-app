@@ -52,9 +52,9 @@ function generateSnapshotsJs(snapshots) {
 
   const gradeStats = {};
   for (const t of GRADE_TIERS) {
-    gradeStats[t.key] = { single: { n: 0, hits: 0 } };
+    gradeStats[t.key] = { single: { n: 0, hits: 0, miss: 0 } };
   }
-  const overall = { n: 0, hits: 0 };
+  const overall = { n: 0, hits: 0, miss: 0 };
   const combos = {};
 
   const comboKeyOf = function (g1, g2) {
@@ -75,6 +75,7 @@ function generateSnapshotsJs(snapshots) {
       if (bucket) {
         bucket.single.n++;
         if (hit) bucket.single.hits++;
+        else bucket.single.miss++;
       }
       return { tail: p.tail, score: p.score, grade: g, hit: hit };
     });
@@ -82,12 +83,14 @@ function generateSnapshotsJs(snapshots) {
     if (picks.length) {
       overall.n++;
       if (atLeastOne) overall.hits++;
+      else overall.miss++;
     }
     if (picks.length >= 2) {
       const ck = comboKeyOf(perPick[0].grade, perPick[1].grade);
-      const c = combos[ck] || (combos[ck] = { n: 0, hits: 0 });
+      const c = combos[ck] || (combos[ck] = { n: 0, hits: 0, miss: 0 });
       c.n++;
       if (atLeastOne) c.hits++;
+      else c.miss++;
     }
     detail.push({
       target: rec.target,

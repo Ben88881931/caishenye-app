@@ -154,6 +154,16 @@ def main():
             fail("index.html 仍使用旧缓存版本 88d2a63，请更新为最新构建版本")
         else:
             pass_("index.html 无旧缓存版本 88d2a63")
+        # 所有资源版本号必须一致
+        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
+        if not m_versions:
+            fail("index.html 未找到带版本号的资源引用")
+        else:
+            unique_versions = set(m_versions)
+            if len(unique_versions) != 1:
+                fail("index.html 资源版本号不一致：" + ", ".join(sorted(unique_versions)))
+            else:
+                pass_(f"index.html 资源版本一致：{m_versions[0]}")
 
     for js_path in [model_core_path, supervisor_path, score_calibration_path, snapshots_js_path]:
         if not js_path.exists():
@@ -167,13 +177,69 @@ def main():
         except subprocess.CalledProcessError as e:
             fail(f"{js_path.name} 语法错误：" + (e.stderr or "").strip())
 
-    # snapshots.js 必须含 window.APP_SNAPSHOTS
+    # snapshots.js 必须含 window.APP_SNAPSHOTS，且含五级/整体/组合/逐期字段
     if snapshots_js_path.exists():
         snap_js_text = snapshots_js_path.read_text(encoding="utf-8")
-        if "window.APP_SNAPSHOTS" in snap_js_text:
-            pass_("snapshots.js 含 window.APP_SNAPSHOTS")
-        else:
+        if "window.APP_SNAPSHOTS" not in snap_js_text:
             fail("snapshots.js 缺少 window.APP_SNAPSHOTS")
+        else:
+            pass_("snapshots.js 含 window.APP_SNAPSHOTS")
+            m2 = re.search(r"window\.APP_SNAPSHOTS\s*=\s*(\{[\s\S]*\});", snap_js_text)
+            if not m2:
+                fail("snapshots.js 无法解析 APP_SNAPSHOTS JSON")
+            else:
+                try:
+                    snap_data = json.loads(m2.group(1))
+                except Exception as e:
+                    fail("snapshots.js JSON 解析失败：" + str(e))
+                else:
+                    grades = snap_data.get("grades", {})
+                    all_grades_ok = True
+                    for g in ["S", "A", "B", "C", "D"]:
+                        if g not in grades:
+                            fail(f"snapshots.js 缺少 {g} 级统计")
+                            all_grades_ok = False
+                            continue
+                        single = grades[g].get("single", {})
+                        for f in ["n", "hits", "miss"]:
+                            if f not in single:
+                                fail(f"snapshots.js {g}级.single 缺少 {f} 字段")
+                                all_grades_ok = False
+                    if all_grades_ok:
+                        pass_("snapshots.js 含 S/A/B/C/D 五级及 single 字段")
+
+                    detail = snap_data.get("detail")
+                    if not isinstance(detail, list):
+                        fail("snapshots.js detail 不是数组")
+                    else:
+                        ok_d = True
+                        for rec in detail:
+                            if not all(f in rec for f in ["target", "picks", "actualTails"]):
+                                fail("snapshots.js detail 记录缺 target/picks/actualTails")
+                                ok_d = False
+                                break
+                            for p in rec.get("picks", []):
+                                if not all(f in p for f in ["tail", "score", "grade", "hit"]):
+                                    fail("snapshots.js detail pick 缺 tail/score/grade/hit")
+                                    ok_d = False
+                                    break
+                            if not ok_d:
+                                break
+                        if ok_d:
+                            pass_("snapshots.js detail 含期数/尾号/分数/对错字段")
+
+                    ov = snap_data.get("overallAtLeastOne")
+                    if not isinstance(ov, dict) or "n" not in ov or "hits" not in ov:
+                        fail("snapshots.js 缺少 overallAtLeastOne（双号整体至少中一）")
+                    else:
+                        pass_("snapshots.js 含双号整体至少中一统计")
+
+                    if "combos" not in snap_data:
+                        fail("snapshots.js 缺少 combos（等级组合统计）")
+                    else:
+                        pass_("snapshots.js 含等级组合统计")
+    else:
+        fail("缺少 snapshots.js，请运行 node model_supervisor.js sync")
 
     # 双号推荐五级强度等级必须统一定义在 model_core.js（禁止页面/监督脚本各算一套）
     if model_core_path.exists():

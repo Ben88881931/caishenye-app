@@ -1680,10 +1680,10 @@
     function snapRate(nr, hr) {
       return nr >= 20 ? (hr / nr * 100).toFixed(1) + '%' : '样本不足';
     }
+    function snapTime(iso) {
+      return (iso || '').replace('T', ' ').slice(0, 16);
+    }
     if (snapStats && snapStats.grades) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">五级强度 · 单尾命中率</h2><span class="section__hint">真实快照账（开奖前保存·开奖后结算）· 按各尾号等级分组 · 样本≥20期才显示命中率</span></div></div>';
-      html += '<div class="section"><div class="panel" style="padding:12px">';
-      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">';
       var confTiers = [
         { k: "S", label: "S级 &#8805;95.0", color: "#16a34a" },
         { k: "A", label: "A级 93.5-94.99", color: "#65a30d" },
@@ -1691,24 +1691,68 @@
         { k: "C", label: "C级 92.2-92.79", color: "#ea580c" },
         { k: "D", label: "D级 <92.2", color: "#6b7280" }
       ];
+      var gradeRecords = { S: [], A: [], B: [], C: [], D: [] };
+      (snapStats.detail || []).forEach(function (rec) {
+        (rec.picks || []).forEach(function (p) {
+          var g = p.grade;
+          if (gradeRecords[g]) {
+            gradeRecords[g].push({
+              target: rec.target,
+              tail: p.tail,
+              score: p.score,
+              actualTails: rec.actualTails || [],
+              hit: p.hit,
+              settledAt: rec.settledAt
+            });
+          }
+        });
+      });
+
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">五级强度 · 逐期对错</h2><span class="section__hint">真实快照账（开奖前保存·开奖后结算）· 每级累计摘要 + 逐期滚动记录（最新在上）· 样本≥20期才显示命中率</span></div></div>';
+      html += '<div class="section">';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">';
       confTiers.forEach(function (t) {
-        var st = snapStats.grades[t.k] || { single: { n: 0, hits: 0 } };
+        var st = snapStats.grades[t.k] || { single: { n: 0, hits: 0, miss: 0 } };
+        var missed = (st.single.miss != null) ? st.single.miss : (st.single.n - st.single.hits);
         var sRate = snapRate(st.single.n, st.single.hits);
-        html += '<div style="border:1px solid #e0e3e8;border-radius:8px;padding:10px;background:#fff">';
-        html += '<div style="font-size:13px;font-weight:700;margin-bottom:6px;color:' + t.color + '">' + t.label + '</div>';
-        html += '<div style="font-size:12px;color:var(--muted);line-height:1.5">单尾 <b>' + st.single.hits + '/' + st.single.n + '</b> ' + sRate + '</div>';
+        var recs = gradeRecords[t.k] || [];
+        html += '<div style="border:1px solid #e0e3e8;border-radius:10px;padding:12px;background:#fff;display:flex;flex-direction:column;min-width:0">';
+        html += '<div style="font-size:14px;font-weight:800;color:' + t.color + ';margin-bottom:6px">' + t.label + '</div>';
+        html += '<div style="font-size:12px;color:var(--muted);line-height:1.6">样本 <b>' + st.single.n + '</b> · 命中 <b>' + st.single.hits + '</b> · 未中 <b>' + missed + '</b></div>';
+        html += '<div style="font-size:12px;margin:2px 0 8px">单尾命中率 <b style="color:' + t.color + '">' + sRate + '</b></div>';
+        html += '<div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">逐期对错记录</div>';
+        html += '<div style="max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa">';
+        html += '<div style="position:sticky;top:0;background:#f3f4f6;padding:5px 8px;font-size:11px;font-weight:700;color:#6b7280;z-index:1;border-bottom:1px solid #e5e7eb">期 · 尾 · 分数 · 结果</div>';
+        if (!recs.length) {
+          html += '<div style="padding:14px 8px;font-size:11px;color:#9ca3af;text-align:center">暂无记录</div>';
+        } else {
+          for (var rr = recs.length - 1; rr >= 0; rr--) {
+            var rc = recs[rr];
+            html += '<div style="padding:6px 8px;border-bottom:1px solid #f0f0f0">';
+            html += '<div style="display:flex;align-items:center;gap:8px;font-size:11px;white-space:nowrap">';
+            html += '<span style="font-weight:700">第' + rc.target + '期</span>';
+            html += '<span class="num" style="width:26px;height:26px;font-size:14px;font-weight:800">' + rc.tail + '</span>';
+            html += '<span style="color:var(--muted)">' + rc.score + '分</span>';
+            html += '<span style="margin-left:auto;font-weight:700">' + (rc.hit ? '<span style="color:#16a34a">✅命中</span>' : '<span style="color:#dc2626">❌未中</span>') + '</span>';
+            html += '</div>';
+            html += '<div style="font-size:10px;color:var(--muted);margin-top:2px">实际 ' + rc.actualTails.join(',') + ' · 结算 ' + snapTime(rc.settledAt) + '</div>';
+            html += '</div>';
+          }
+        }
+        html += '</div>';
         html += '</div>';
       });
       html += '</div>';
-      html += '</div></div>';
+      html += '</div>';
 
       html += '<div class="section"><div class="section__head"><h2 class="section__title">双号整体 & 等级组合</h2><span class="section__hint">真实快照账 · 双号整体至少中一 + 按两尾号等级组合分组 · 样本≥20期才显示命中率</span></div></div>';
       html += '<div class="section"><div class="panel" style="padding:12px">';
-      var ov = snapStats.overallAtLeastOne || { n: 0, hits: 0 };
+      var ov = snapStats.overallAtLeastOne || { n: 0, hits: 0, miss: 0 };
+      var ovMiss = (ov.miss != null) ? ov.miss : (ov.n - ov.hits);
       html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
       html += '<span style="font-size:13px;font-weight:700">双号整体至少中一</span>';
       html += '<span class="chip">' + ov.hits + '/' + ov.n + '</span>';
-      html += '<span style="font-size:13px;color:var(--muted)">' + snapRate(ov.n, ov.hits) + '</span>';
+      html += '<span style="font-size:13px;color:var(--muted)">未中' + ovMiss + ' · ' + snapRate(ov.n, ov.hits) + '</span>';
       html += '</div>';
       var comboMap = snapStats.combos || {};
       var comboKeys = Object.keys(comboMap);
@@ -1716,8 +1760,9 @@
       html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
       comboKeys.forEach(function (ck) {
         var c = comboMap[ck];
+        var cMiss = (c.miss != null) ? c.miss : (c.n - c.hits);
         html += '<div style="border:1px solid #e0e3e8;border-radius:8px;padding:6px 10px;background:#fff;font-size:12px">';
-        html += '<b>' + ck + '</b> ' + c.hits + '/' + c.n + ' <span style="color:var(--muted)">' + snapRate(c.n, c.hits) + '</span>';
+        html += '<b>' + ck + '</b> ' + c.hits + '/' + c.n + '（未中' + cMiss + '） <span style="color:var(--muted)">' + snapRate(c.n, c.hits) + '</span>';
         html += '</div>';
       });
       if (!comboKeys.length) html += '<span style="color:#9ca3af;font-size:12px">暂无组合样本</span>';
