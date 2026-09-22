@@ -142,8 +142,16 @@ git push origin main
 
 推送前设置密钥：
 
+macOS / Linux：
+
 ```bash
 export GIT_SSH_COMMAND='ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=accept-new'
+```
+
+Windows PowerShell：
+
+```powershell
+$env:GIT_SSH_COMMAND = 'ssh -i "$HOME\.ssh\id_ed25519" -o StrictHostKeyChecking=accept-new'
 ```
 
 ---
