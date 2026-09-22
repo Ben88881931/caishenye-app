@@ -1,6 +1,6 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-22T12:49:13.892Z",
-  "settledCount": 3,
+  "generatedAt": "2026-09-22T14:12:27.011Z",
+  "settledCount": 4,
   "grades": {
     "S": {
       "single": {
@@ -11,9 +11,9 @@ window.APP_SNAPSHOTS = {
     },
     "A": {
       "single": {
-        "n": 1,
+        "n": 3,
         "hits": 0,
-        "miss": 1
+        "miss": 3
       }
     },
     "B": {
@@ -39,9 +39,9 @@ window.APP_SNAPSHOTS = {
     }
   },
   "overallAtLeastOne": {
-    "n": 3,
+    "n": 4,
     "hits": 3,
-    "miss": 0
+    "miss": 1
   },
   "combos": {
     "C+D": {
@@ -58,6 +58,11 @@ window.APP_SNAPSHOTS = {
       "n": 1,
       "hits": 1,
       "miss": 0
+    },
+    "A+A": {
+      "n": 1,
+      "hits": 0,
+      "miss": 1
     }
   },
   "detail": [
@@ -140,6 +145,33 @@ window.APP_SNAPSHOTS = {
       ],
       "atLeastOne": true,
       "settledAt": "2026-09-21T15:05:32.139Z"
+    },
+    {
+      "target": 265,
+      "picks": [
+        {
+          "tail": 2,
+          "score": 93.9,
+          "grade": "A",
+          "hit": false
+        },
+        {
+          "tail": 8,
+          "score": 93.9,
+          "grade": "A",
+          "hit": false
+        }
+      ],
+      "actualTails": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        9
+      ],
+      "atLeastOne": false,
+      "settledAt": "2026-09-22T14:12:26.982Z"
     }
   ]
 };
