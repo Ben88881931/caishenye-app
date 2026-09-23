@@ -357,6 +357,8 @@
     { id: "parity", label: "单双热图" },
     { id: "trend", label: "遗漏热图" },
     { id: "zodtrend", label: "生肖走势" },
+    { id: "zodwindow", label: "生肖窗口" },
+    { id: "zodmonitor", label: "生肖遗漏" },
     { id: "personality", label: "尾号性格" },
     { id: "datarecord", label: "三期规律" },
     { id: "miss", label: "遗漏监控" },
@@ -417,6 +419,8 @@
     else if (state.tab === "parity") view.innerHTML = renderParityHeatmap();
     else if (state.tab === "numtrend") renderNumTrend();
     else if (state.tab === "zodtrend") renderZodTrend();
+    else if (state.tab === "zodwindow") renderZodWindow();
+    else if (state.tab === "zodmonitor") renderZodMonitor();
     else if (state.tab === "zodrecords") renderZodRecords();
     else if (state.tab === "records") renderRecords();
     else if (state.tab === "history") renderHistory();
@@ -2226,6 +2230,181 @@
     return map;
   }
 
+  function choose(n, k) {
+    if (k < 0 || k > n) return 0;
+    var r = 1;
+    for (var i = 1; i <= k; i++) r = r * (n - k + i) / i;
+    return r;
+  }
+
+  function zodBaseRate(z, y) {
+    var map = numZodMap(y);
+    var count = 0;
+    for (var n = 1; n <= 49; n++) if (map[n] === z) count++;
+    if (!count) return 0;
+    return 1 - choose(49 - count, 7) / choose(49, 7);
+  }
+
+  function zodOpen(record, z) {
+    return !!(record && record.zods && record.zods.indexOf(z) >= 0);
+  }
+
+  function zodCurrentMiss(records, z) {
+    var miss = 0;
+    for (var i = records.length - 1; i >= 0; i--) {
+      if (zodOpen(records[i], z)) break;
+      miss++;
+    }
+    return miss;
+  }
+
+  function zodCurrentStreak(records, z) {
+    var streak = 0;
+    for (var i = records.length - 1; i >= 0; i--) {
+      if (!zodOpen(records[i], z)) break;
+      streak++;
+    }
+    return streak;
+  }
+
+  function zodMaxMiss(records, z) {
+    var max = 0, run = 0;
+    records.forEach(function (r) {
+      if (zodOpen(r, z)) run = 0;
+      else {
+        run++;
+        if (run > max) max = run;
+      }
+    });
+    return max;
+  }
+
+  function zodRecentMissRuns(records, z, n) {
+    var out = [], run = 0;
+    for (var i = records.length - 1; i >= 0 && out.length < n; i--) {
+      if (zodOpen(records[i], z)) {
+        if (run > 0) out.push(run);
+        run = 0;
+      } else {
+        run++;
+      }
+    }
+    while (out.length < n) out.push(0);
+    return out.reverse();
+  }
+
+  function renderZodWindow() {
+    var y = state.year;
+    var records = D.filter(function (r) { return r.y === y; });
+    var w = state.zodWindow || 10;
+    var recent = records.slice(Math.max(0, records.length - w));
+    var lastPeriod = recent.length ? recent[recent.length - 1].p : "-";
+    var rows = [];
+    var hot = [], cold = [], warming = [], cooling = [];
+
+    ZODS12.forEach(function (z) {
+      var count = 0, olderHits = 0, newerHits = 0;
+      var split = Math.floor(recent.length / 2);
+      var cells = [];
+      recent.forEach(function (r, idx) {
+        var isHit = zodOpen(r, z);
+        if (isHit) count++;
+        if (idx < split) {
+          if (isHit) olderHits++;
+        } else if (isHit) newerHits++;
+        var bg = isHit ? "#dcfce7" : "#f3f4f6";
+        var color = isHit ? "#16a34a" : "#9ca3af";
+        var border = r.p === lastPeriod ? "box-shadow:inset 0 0 0 2px #2563eb;" : "";
+        cells.push('<span title="第' + r.p + "期 " + (isHit ? "出现" : "未出") + '" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:' + bg + ';color:' + color + ';font-weight:800;' + border + '">' + (isHit ? "●" : "○") + "</span>");
+      });
+      var rate = recent.length ? count / recent.length : 0;
+      var base = zodBaseRate(z, y);
+      var expected = recent.length * base;
+      var olderRate = split ? olderHits / split : 0;
+      var newerLen = recent.length - split;
+      var newerRate = newerLen ? newerHits / newerLen : 0;
+      var trend = "平稳", trendColor = "#6b7280";
+      if (newerRate - olderRate >= 0.2) { trend = "↑升温"; trendColor = "#16a34a"; }
+      else if (newerRate - olderRate <= -0.2) { trend = "↓降温"; trendColor = "#2563eb"; }
+      var status, statusColor;
+      if (rate >= 0.6) { status = "热"; statusColor = "#16a34a"; }
+      else if (rate <= 0.2) { status = "冷"; statusColor = "#dc2626"; }
+      else { status = "中"; statusColor = "#6b7280"; }
+      if (status === "热") hot.push(z);
+      if (status === "冷") cold.push(z);
+      if (trend === "↑升温") warming.push(z);
+      if (trend === "↓降温") cooling.push(z);
+      rows.push({
+        z: z,
+        count: count,
+        rate: rate,
+        expected: expected,
+        delta: count - expected,
+        trend: trend,
+        trendColor: trendColor,
+        status: status,
+        statusColor: statusColor,
+        miss: zodCurrentMiss(records, z),
+        streak: zodCurrentStreak(records, z),
+        lastHit: recent.length ? zodOpen(recent[recent.length - 1], z) : false,
+        cells: cells.join("")
+      });
+    });
+
+    var fmt = function (arr) { return arr.length ? arr.join("、") : "无"; };
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">生肖窗口走势</h2><span class="section__hint">' + y + " 年 · 第" + (recent[0] ? recent[0].p : "-") + "期 - 第" + lastPeriod + "期 · 共" + recent.length + "期</span></div>";
+    html += trendYearChips(y);
+    html += '<div class="chips" style="margin-bottom:12px">';
+    [5, 7, 10, 15, 21, 30].forEach(function (n) {
+      html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-zod-window="' + n + '">' + n + "期</button>";
+    });
+    html += "</div></div>";
+
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px">';
+    html += '<div class="stat"><div class="stat__value" style="font-size:15px">' + fmt(hot) + '</div><div class="stat__label">本窗口偏热</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:15px">' + fmt(cold) + '</div><div class="stat__label">本窗口偏冷</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:15px">' + fmt(warming) + '</div><div class="stat__label">后半段升温</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:15px">' + fmt(cooling) + '</div><div class="stat__label">后半段降温</div></div>';
+    html += '</div>';
+
+    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="font-size:12px;min-width:760px"><thead><tr><th style="position:sticky;left:0;z-index:2;background:#fafafa">生肖</th><th>当前（漏/连）</th><th>本窗口</th><th>比基准</th><th>升温/降温</th><th>最新</th><th style="min-width:230px">窗口逐期</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      html += '<tr><td style="position:sticky;left:0;z-index:1;background:#fff"><b>' + r.z + "</b></td>";
+      html += "<td>漏" + r.miss + " · 连" + r.streak + "</td>";
+      html += '<td><b>' + r.count + "/" + recent.length + '</b> <span style="color:' + r.statusColor + ';font-weight:700">' + r.status + '</span><br><small style="color:var(--muted)">' + Math.round(r.rate * 100) + "%</small></td>";
+      var delta = Math.round(r.delta * 10) / 10;
+      html += '<td><span style="color:' + (delta >= 0 ? "#16a34a" : "#dc2626") + ';font-weight:700">' + (delta >= 0 ? "+" : "") + delta + "</span><br><small style=\"color:var(--muted)\">期望" + r.expected.toFixed(1) + "</small></td>";
+      html += '<td style="color:' + r.trendColor + ';font-weight:700">' + r.trend + "</td>";
+      html += '<td><span style="color:' + (r.lastHit ? "#16a34a" : "#9ca3af") + ';font-weight:700">' + (r.lastHit ? "出现" : "未出") + "</span></td>";
+      html += '<td><div style="display:flex;gap:3px;align-items:center">' + r.cells + "</div></td></tr>";
+    });
+    html += "</tbody></table></div></div></div>";
+    html += '<p class="disclaimer">理论基准按当年各生肖实际包含的号码个数计算；升温/降温对比窗口前半段与后半段。</p>';
+    view.innerHTML = html;
+  }
+
+  function renderZodMonitor() {
+    var y = state.year;
+    var records = D.filter(function (r) { return r.y === y; });
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">生肖遗漏监控</h2><span class="section__hint">' + y + " 年 · 最近15次记录按旧到新排列</span></div>";
+    html += trendYearChips(y);
+    html += '</div><div class="panel"><table class="table"><thead><tr><th>生肖</th><th>当前遗漏</th><th>历史最大</th><th>近15次遗漏（旧→新）</th></tr></thead><tbody>';
+    ZODS12.forEach(function (z) {
+      var current = zodCurrentMiss(records, z);
+      var max = zodMaxMiss(records, z);
+      var history = zodRecentMissRuns(records, z, 15);
+      var chips = history.map(function (v) {
+        var bg = v >= 4 ? "#fee2e2" : v === 3 ? "#fef3c7" : v === 2 ? "#dcfce7" : v === 1 ? "#dbeafe" : "#f3f4f6";
+        var color = v >= 4 ? "#b91c1c" : v === 3 ? "#a16207" : v === 2 ? "#15803d" : v === 1 ? "#1d4ed8" : "#6b7280";
+        return '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 5px;border-radius:5px;background:' + bg + ';color:' + color + ';font-weight:700">' + v + "</span>";
+      }).join("");
+      html += '<tr><td><b>' + z + '</b></td><td class="' + missClass(current) + '">' + current + ' 期</td><td>' + max + ' 期</td><td><div style="display:flex;flex-wrap:wrap;gap:4px;min-width:220px">' + chips + "</div></td></tr>";
+    });
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">当前遗漏 = 截至该年最新一期连续未出现的期数；历史遗漏按已完成的一轮遗漏统计。</p>';
+    view.innerHTML = html;
+  }
+
   function trendYearChips(y) {
     var h = '<div class="chips" style="margin-bottom:8px">';
     [2026, 2025, 2024, 2023, 2022, 2021].forEach(function (yy) {
@@ -2558,12 +2737,20 @@
       renderWindowK();
       return;
     }
+    var zodWindowChip = e.target.closest("[data-zod-window]");
+    if (zodWindowChip) {
+      state.zodWindow = Number(zodWindowChip.dataset.zodWindow);
+      renderZodWindow();
+      return;
+    }
     var yearChip = e.target.closest("[data-year]");
     if (yearChip) {
       state.year = Number(yearChip.dataset.year);
       if (state.tab === "trend") renderTrend();
       else if (state.tab === "numtrend") renderNumTrend();
       else if (state.tab === "zodtrend") renderZodTrend();
+      else if (state.tab === "zodwindow") renderZodWindow();
+      else if (state.tab === "zodmonitor") renderZodMonitor();
       else if (state.tab === "zodrecords") renderZodRecords();
       else if (state.tab === "records") renderRecords();
       return;

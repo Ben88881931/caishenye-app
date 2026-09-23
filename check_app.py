@@ -132,6 +132,18 @@ def main():
         else:
             pass_("预测关键函数存在")
 
+        for func in ["renderZodWindow", "renderZodMonitor"]:
+            if f"function {func}" not in app_text:
+                fail(f"app.js 缺少生肖页面函数 {func}")
+        else:
+            pass_("生肖窗口/遗漏页面函数存在")
+
+        for tab_id in ["zodwindow", "zodmonitor"]:
+            if f'id: "{tab_id}"' not in app_text:
+                fail(f"app.js 缺少导航标签 {tab_id}")
+        else:
+            pass_("生肖窗口/遗漏导航标签存在")
+
     index_path = REPO / "index.html"
     if not index_path.exists():
         fail("缺少 index.html")
