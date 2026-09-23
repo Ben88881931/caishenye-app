@@ -870,40 +870,104 @@
 
   function renderWindowK() {
     var w = state.windowK || 10;
-    var recent = w;
-    var startIdx = Math.max(0, periods.length - recent);
+    var startIdx = Math.max(0, periods.length - w);
     var recentPeriods = periods.slice(startIdx);
-    
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口走势</h2><span class="section__hint">●=开出 ○=未出</span></div>';
+    var recent = recentPeriods.length;
+    var lastPeriod = recentPeriods[recentPeriods.length - 1];
+    var rows = [];
+    var hotTails = [], coldTails = [], warmingTails = [], coolingTails = [];
+
+    for (var t = 0; t < 10; t++) {
+      var count = 0;
+      var split = Math.floor(recentPeriods.length / 2);
+      var older = recentPeriods.slice(0, split);
+      var newer = recentPeriods.slice(split);
+      var olderHits = 0, newerHits = 0;
+      var cells = [];
+      recentPeriods.forEach(function (p, idx) {
+        var isHit = hit(p, t);
+        if (isHit) count++;
+        if (idx < split) {
+          if (isHit) olderHits++;
+        } else if (isHit) {
+          newerHits++;
+        }
+        var bg = isHit ? "#dcfce7" : "#f3f4f6";
+        var color = isHit ? "#16a34a" : "#9ca3af";
+        var border = p === lastPeriod ? "box-shadow:inset 0 0 0 2px #2563eb;" : "";
+        cells.push('<span title="第' + p + "期 " + (isHit ? "开出" : "未出") + '" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;background:' + bg + ';color:' + color + ';font-weight:800;' + border + '">' + (isHit ? "●" : "○") + "</span>");
+      });
+
+      var rate = recent ? count / recent : 0;
+      var expected = recent * BASE_RATE[t];
+      var delta = count - expected;
+      var olderRate = older.length ? olderHits / older.length : 0;
+      var newerRate = newer.length ? newerHits / newer.length : 0;
+      var trend = "平稳", trendColor = "#6b7280";
+      if (newerRate - olderRate >= 0.2) { trend = "↑升温"; trendColor = "#16a34a"; }
+      else if (newerRate - olderRate <= -0.2) { trend = "↓降温"; trendColor = "#2563eb"; }
+
+      var status, statusColor;
+      if (rate >= 0.6) { status = "热"; statusColor = "#16a34a"; }
+      else if (rate <= 0.2) { status = "冷"; statusColor = "#dc2626"; }
+      else { status = "中"; statusColor = "#6b7280"; }
+
+      if (status === "热") hotTails.push(t);
+      if (status === "冷") coldTails.push(t);
+      if (trend === "↑升温") warmingTails.push(t);
+      if (trend === "↓降温") coolingTails.push(t);
+
+      rows.push({
+        tail: t,
+        count: count,
+        rate: rate,
+        expected: expected,
+        delta: delta,
+        trend: trend,
+        trendColor: trendColor,
+        status: status,
+        statusColor: statusColor,
+        miss: currentMiss(t),
+        streak: currentStreak(t),
+        lastHit: hit(lastPeriod, t),
+        cells: cells.join("")
+      });
+    }
+
+    var fmtTails = function (arr) {
+      return arr.length ? arr.map(function (x) { return "尾" + x; }).join("、") : "无";
+    };
+    var deltaText = function (x) {
+      var v = Math.round(Math.abs(x) * 10) / 10;
+      return x >= 0 ? "+" + v : "-" + v;
+    };
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口走势</h2><span class="section__hint">第' + recentPeriods[0] + '期 - 第' + lastPeriod + "期 · 共" + recent + "期</span></div>";
     html += '<div class="chips" style="margin-bottom:12px">';
     [5, 7, 10, 15, 21, 30].forEach(function(n) {
       html += '<button class="chip ' + (w === n ? "is-active" : "") + '" data-wk-window="' + n + '">' + n + "期</button>";
     });
     html += '</div>';
-    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto"><table class="table" style="font-size:12px"><thead><tr><th>尾数</th>';
-    recentPeriods.forEach(function(p) { html += '<th style="text-align:center;min-width:28px">' + p + '</th>'; });
-    html += '<th style="text-align:center">开出</th><th>状态</th></tr></thead><tbody>';
-    
-    for (var t = 0; t < 10; t++) {
-      html += '<tr><td><b>尾' + t + '</b></td>';
-      var count = 0;
-      recentPeriods.forEach(function(p) {
-        var isHit = hit(p, t);
-        if (isHit) count++;
-        html += '<td style="text-align:center;font-size:16px">' + (isHit ? '<span style="color:#16a34a">●</span>' : '<span style="color:#ddd">○</span>') + '</td>';
-      });
-      var hotThresh = Math.ceil(recent * 0.6);
-      var coldThresh = Math.floor(recent * 0.2);
-      var status, statusColor;
-      if (count >= hotThresh) { status = '🔥热'; statusColor = '#16a34a'; }
-      else if (count > coldThresh) { status = '中'; statusColor = '#6b7280'; }
-      else if (count > 0) { status = '偏冷'; statusColor = '#eab308'; }
-      else { status = '❄️冷'; statusColor = '#dc2626'; }
-      html += '<td style="text-align:center"><b>' + count + '/' + recent + '</b></td>';
-      html += '<td style="color:' + statusColor + ';font-weight:700">' + status + '</td></tr>';
-    }
-    html += '</tbody></table></div></div></div>';
-    html += '<p class="disclaimer">●=开出 ○=未出 · 绿色≥60%为热，红色≤20%为冷</p>';
+
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px">';
+    html += '<div class="stat"><div class="stat__value" style="font-size:15px">' + fmtTails(hotTails) + '</div><div class="stat__label">本窗口偏热</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:15px">' + fmtTails(coldTails) + '</div><div class="stat__label">本窗口偏冷</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:15px">' + fmtTails(warmingTails) + '</div><div class="stat__label">后半段升温</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:15px">' + fmtTails(coolingTails) + '</div><div class="stat__label">后半段降温</div></div>';
+    html += '</div>';
+
+    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="font-size:12px;min-width:760px"><thead><tr><th style="position:sticky;left:0;z-index:2;background:#fafafa">尾号</th><th>当前（漏/连）</th><th>本窗口</th><th>比基准</th><th>升温/降温</th><th>最新</th><th style="min-width:230px">窗口逐期</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      html += '<tr><td style="position:sticky;left:0;z-index:1;background:#fff"><b>尾' + r.tail + "</b></td>";
+      html += "<td>漏" + r.miss + " · 连" + r.streak + "</td>";
+      html += '<td><b>' + r.count + "/" + recent + '</b> <span style="color:' + r.statusColor + ';font-weight:700">' + r.status + '</span><br><small style="color:var(--muted)">' + Math.round(r.rate * 100) + "%</small></td>";
+      html += '<td><span style="color:' + (r.delta >= 0 ? "#16a34a" : "#dc2626") + ';font-weight:700">' + deltaText(r.delta) + "</span><br><small style=\"color:var(--muted)\">期望" + r.expected.toFixed(1) + "</small></td>";
+      html += '<td style="color:' + r.trendColor + ';font-weight:700">' + r.trend + "</td>";
+      html += '<td><span style="color:' + (r.lastHit ? "#16a34a" : "#9ca3af") + ';font-weight:700">' + (r.lastHit ? "开出" : "未出") + "</span></td>";
+      html += '<td><div style="display:flex;gap:3px;align-items:center">' + r.cells + "</div></td></tr>";
+    });
+    html += "</tbody></table></div></div></div>";
+    html += '<p class="disclaimer">“比基准”=本窗口实际开出次数减去按该尾数理论概率计算的期望次数；升温/降温按窗口前半段与后半段开出率的变化判断。</p>';
     view.innerHTML = html;
   }
 
@@ -2036,14 +2100,16 @@
       return { txt: "🔴险", color: "#dc2626" };
     }
 
-    function avgSample(stats) {
-      var vals = [];
-      for (var x = 1; x <= 3; x++) {
+    function overallRate(stats) {
+      var total = 0, hits = 0;
+      for (var x = 1; x <= 10; x++) {
         var s = stats[x];
-        if (s && s.t >= 3) vals.push(s.h / s.t * 100);
+        if (s && s.t) {
+          total += s.t;
+          hits += s.h;
+        }
       }
-      if (!vals.length) return null;
-      return vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+      return total ? hits / total * 100 : null;
     }
 
     function rateCell(s) {
@@ -2074,8 +2140,8 @@
         tail: d,
         bounce: b,
         streak: b2,
-        bounceGrade: gradeInfo(avgSample(b)),
-        streakGrade: gradeInfo(avgSample(b2)),
+        bounceGrade: gradeInfo(overallRate(b)),
+        streakGrade: gradeInfo(overallRate(b2)),
         miss: currentMiss(d),
         streakNow: currentStreak(d),
         c15: countWindow(d, 15),
@@ -2096,23 +2162,29 @@
     });
     html += "</tbody></table></div></div>";
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">遗漏后反弹明细</h2><span class="section__hint">遗漏N期后，下一期开出的历史命中率</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>遗漏1期后</th><th>遗漏2期后</th><th>遗漏3期后</th><th>反弹判定</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">遗漏后反弹明细</h2><span class="section__hint">遗漏1至10期后，下一期开出的历史命中率 · 横向滑动</span></div>';
+    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1180px"><thead><tr><th style="position:sticky;left:0;z-index:2;background:#fafafa">尾号</th>';
+    for (var bx = 1; bx <= 10; bx++) html += "<th>遗漏" + bx + "期后</th>";
+    html += "<th>反弹判定</th></tr></thead><tbody>";
     rows.forEach(function (r) {
-      html += "<tr><td>尾" + r.tail + "</td>" + rateCell(r.bounce[1]) + rateCell(r.bounce[2]) + rateCell(r.bounce[3]);
+      html += '<tr><td style="position:sticky;left:0;z-index:1;background:#fff"><b>尾' + r.tail + "</b></td>";
+      for (var x = 1; x <= 10; x++) html += rateCell(r.bounce[x]);
       html += '<td style="color:' + r.bounceGrade.color + ';font-weight:700">' + r.bounceGrade.txt + "</td></tr>";
     });
-    html += "</tbody></table></div></div>";
+    html += "</tbody></table></div></div></div>";
     html += '<p class="disclaimer">样本不足时只显示记录数；10~19期为观察样本，达到20期后再用命中率判断稳定程度。</p>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">连出后延续明细</h2><span class="section__hint">连续开出N期后，下一期继续开出的历史命中率</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>连出1期后</th><th>连出2期后</th><th>连出3期后</th><th>连出判定</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">连出后延续明细</h2><span class="section__hint">连出1至10期后，下一期继续开出的历史命中率 · 横向滑动</span></div>';
+    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1180px"><thead><tr><th style="position:sticky;left:0;z-index:2;background:#fafafa">尾号</th>';
+    for (var sx = 1; sx <= 10; sx++) html += "<th>连出" + sx + "期后</th>";
+    html += "<th>连出判定</th></tr></thead><tbody>";
     rows.forEach(function (r) {
-      html += "<tr><td>尾" + r.tail + "</td>" + rateCell(r.streak[1]) + rateCell(r.streak[2]) + rateCell(r.streak[3]);
+      html += '<tr><td style="position:sticky;left:0;z-index:1;background:#fff"><b>尾' + r.tail + "</b></td>";
+      for (var x = 1; x <= 10; x++) html += rateCell(r.streak[x]);
       html += '<td style="color:' + r.streakGrade.color + ';font-weight:700">' + r.streakGrade.txt + "</td></tr>";
     });
-    html += "</tbody></table></div></div>";
-    html += '<p class="disclaimer">判定综合连1至连3的历史表现；样本较少时以观察为主，不单独作为推荐依据。</p>';
+    html += "</tbody></table></div></div></div>";
+    html += '<p class="disclaimer">判定综合连出1至10期的历史表现；样本较少时以观察为主，不单独作为推荐依据。</p>';
 
     view.innerHTML = html;
   }
