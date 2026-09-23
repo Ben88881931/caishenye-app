@@ -144,6 +144,28 @@ def main():
         else:
             pass_("生肖窗口/遗漏导航标签存在")
 
+        # 导航自定义排序检查
+        if "function getVisibleTabs" in app_text:
+            pass_("app.js 存在 getVisibleTabs")
+        else:
+            fail("app.js 缺少 getVisibleTabs")
+        if "v2_tab_order" in app_text:
+            pass_("app.js 使用 v2_tab_order 保存排序")
+        else:
+            fail("app.js 未使用 v2_tab_order 保存排序")
+        if "function resetTabOrder" in app_text or "恢复默认" in app_text:
+            pass_("app.js 存在恢复默认顺序逻辑")
+        else:
+            fail("app.js 缺少恢复默认顺序逻辑")
+        if re.search(r"var TABS\s*=\s*\[", app_text):
+            pass_("app.js 存在 TABS 定义")
+        else:
+            fail("app.js 未找到 TABS 定义")
+        if "renderTabs" in app_text and "getVisibleTabs()" in app_text:
+            pass_("renderTabs 通过 getVisibleTabs 生成导航")
+        else:
+            fail("renderTabs 未通过 getVisibleTabs 生成导航")
+
     index_path = REPO / "index.html"
     if not index_path.exists():
         fail("缺少 index.html")

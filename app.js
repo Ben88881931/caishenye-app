@@ -383,12 +383,66 @@
     return (x * 100).toFixed(digits == null ? 1 : digits) + "%";
   }
 
+  // ===== 导航自定义排序 =====
+  var TAB_ORDER_KEY = "v2_tab_order";
+  var tabSortMode = false;
+
+  // 合并默认顺序与自定义顺序：已保存且仍存在→按保存顺序；新增→追加末尾；已删除→忽略
+  function getVisibleTabs() {
+    var saved = lsGet(TAB_ORDER_KEY, null);
+    if (!Array.isArray(saved) || !saved.length) return TABS.slice();
+    var byId = {};
+    TABS.forEach(function (t) { byId[t.id] = t; });
+    var seen = {};
+    var result = [];
+    saved.forEach(function (id) {
+      if (byId[id] && !seen[id]) {
+        result.push(byId[id]);
+        seen[id] = true;
+      }
+    });
+    TABS.forEach(function (t) {
+      if (!seen[t.id]) {
+        result.push(t);
+        seen[t.id] = true;
+      }
+    });
+    return result;
+  }
+
+  function saveTabOrder(tabs) {
+    lsSet(TAB_ORDER_KEY, tabs.map(function (t) { return t.id; }));
+  }
+
+  function resetTabOrder() {
+    try { localStorage.removeItem(TAB_ORDER_KEY); } catch (e) {}
+  }
+
   function renderTabs() {
-    tabsEl.innerHTML = TABS.map(function (t) {
+    var tabs = getVisibleTabs();
+    var html = tabs.map(function (t) {
       if (t.group) return '<span class="tab-group">' + t.group + "</span>";
+      if (tabSortMode) {
+        return '<span class="sort-item-wrap">' +
+          '<button class="sort-btn" type="button" data-sort="up" data-tab="' + t.id + '" aria-label="' + t.label + ' 前移">↑</button>' +
+          '<button class="tab sort-item' + (state.tab === t.id ? " is-active" : "") + '" type="button" data-tab="' + t.id + '">' + t.label + "</button>" +
+          '<button class="sort-btn" type="button" data-sort="down" data-tab="' + t.id + '" aria-label="' + t.label + ' 后移">↓</button>' +
+          "</span>";
+      }
       return '<button class="tab ' + (state.tab === t.id ? "is-active" : "") +
-        '" data-tab="' + t.id + '">' + t.label + "</button>";
+        '" type="button" data-tab="' + t.id + '">' + t.label + "</button>";
     }).join("");
+
+    html += '<div class="tab-sort-tail">';
+    html += '<button class="tab sort-toggle' + (tabSortMode ? " is-on" : "") + '" type="button" data-sort-toggle="1">' +
+      (tabSortMode ? "退出排序" : "导航排序") + "</button>";
+    if (tabSortMode) {
+      html += '<button class="tab sort-reset" type="button" data-sort-reset="1">恢复默认</button>';
+    }
+    html += "</div>";
+
+    tabsEl.classList.toggle("sorting", tabSortMode);
+    tabsEl.innerHTML = html;
   }
 
   function renderHeader() {
@@ -2663,8 +2717,40 @@
   }
 
   tabsEl.addEventListener("click", function (e) {
+    // 箭头移动（↑前移 / ↓后移），立即保存，不重渲染页面内容
+    var sortBtn = e.target.closest(".sort-btn");
+    if (sortBtn) {
+      var sid = sortBtn.dataset.tab;
+      var dir = sortBtn.dataset.sort;
+      var tabs = getVisibleTabs();
+      var idx = -1;
+      for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === sid) { idx = i; break; } }
+      if (idx < 0) return;
+      if (dir === "up" && idx > 0) {
+        var tmp = tabs[idx - 1]; tabs[idx - 1] = tabs[idx]; tabs[idx] = tmp;
+      } else if (dir === "down" && idx < tabs.length - 1) {
+        var tmp2 = tabs[idx + 1]; tabs[idx + 1] = tabs[idx]; tabs[idx] = tmp2;
+      } else {
+        return;
+      }
+      saveTabOrder(tabs);
+      renderTabs();
+      return;
+    }
+    // 进入/退出排序模式，只重渲染导航，不重渲染页面内容
+    if (e.target.closest(".sort-toggle")) {
+      tabSortMode = !tabSortMode;
+      renderTabs();
+      return;
+    }
+    // 恢复默认顺序
+    if (e.target.closest(".sort-reset")) {
+      resetTabOrder();
+      renderTabs();
+      return;
+    }
     var btn = e.target.closest(".tab");
-    if (btn) {
+    if (btn && !btn.dataset.sortToggle && !btn.dataset.sortReset) {
       state.tab = btn.dataset.tab;
       lsSet("v2_current_tab", state.tab);
       render();

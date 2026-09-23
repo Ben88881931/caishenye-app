@@ -121,6 +121,70 @@ body {
   box-shadow: var(--shadow);
 }
 
+/* ===== 导航自定义排序 ===== */
+.tab-sort-tail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.tab.sort-toggle,
+.tab.sort-reset {
+  flex: 0 0 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tab.sort-toggle.is-on {
+  background: #eef2ff;
+  color: var(--accent);
+}
+
+.tab.sort-reset {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.sort-item-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.tab.sort-item {
+  flex: 0 0 auto;
+  min-width: 64px;
+}
+
+.sort-btn {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.sort-btn:hover { background: #c7d2fe; }
+.sort-btn:active { background: #a5b4fc; }
+
+.tabs.sorting {
+  align-items: center;
+}
+
 .tab-group {
   flex: 0 0 auto;
   padding: 10px 11px;
