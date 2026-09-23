@@ -1029,6 +1029,8 @@
   }
 
   function renderBacktest() {
+    var CM = window.CAISHEN_MODEL || {};
+    var wilsonFn = CM.wilson || function () { return null; };
     var signals = [
       backtestSignal("热号跟踪（近15期≥10次）", function (t, i) { return countEnding(t, i, 15) >= 10; }),
       backtestSignal("冷号反弹（近15期≤5次）", function (t, i) { return countEnding(t, i, 15) <= 5; }),
@@ -1036,21 +1038,31 @@
       backtestSignal("遗漏≥3期后反弹", function (t, i) { return missedRun(t, i, 3); })
     ];
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">策略回测</h2><span class="section__hint">信号出现后，下一期真实命中率 vs 理论基准</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>信号</th><th>样本</th><th>命中/错</th><th>理论基准</th><th>多/少中</th><th>结论</th></tr></thead><tbody>';
+    html += '<div class="panel"><div class="panel__body" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:880px"><thead><tr><th style="position:sticky;left:0;z-index:2;background:#fafafa">信号</th><th>样本</th><th>命中/未中</th><th>命中率</th><th>理论基准</th><th>差值</th><th>95%CI</th><th>结论</th></tr></thead><tbody>';
     signals.forEach(function (s) {
-      var verdict = "无优势", cls = "";
-      if (s.n < 50) { verdict = "样本不足"; }
-      else if (s.edge >= 0.03) { verdict = "略优"; cls = "cell--hot"; }
-      else if (s.edge <= -0.03) { verdict = "略劣"; cls = "cell--cold"; }
+      var ci = s.n ? wilsonFn(s.hitSum, s.n) : null;
+      var verdict = "样本不足", cls = "";
+      if (s.n >= 30 && ci) {
+        if (ci.lo > s.avgBase) { verdict = "有优势"; cls = "cell--hot"; }
+        else if (ci.hi < s.avgBase) { verdict = "偏弱"; cls = "cell--cold"; }
+        else { verdict = "无显著优势"; }
+      }
       var hitTxt, hitColor;
       if (s.n < 10) { hitTxt = "样本不足"; hitColor = "#94a3b8"; }
-      else { hitTxt = "中" + s.hitSum + "·错" + (s.n - s.hitSum); hitColor = s.n < 20 ? "#eab308" : "#16a34a"; }
-      var baseHit = Math.round(s.avgBase * s.n);
-      var edgeCnt = s.hitSum - baseHit;
-      var edgeTxt = edgeCnt >= 0 ? "多中" + edgeCnt + "个" : "少中" + (-edgeCnt) + "个";
-      html += "<tr><td>" + s.name + '</td><td>' + s.n + '</td><td style="color:' + hitColor + ';font-weight:700">' + hitTxt + '</td><td>' + pct(s.avgBase) + '</td><td>' + edgeTxt + '</td><td class="' + cls + '">' + verdict + "</td></tr>";
+      else { hitTxt = "中" + s.hitSum + "·未中" + (s.n - s.hitSum); hitColor = s.n < 30 ? "#d97706" : "#16a34a"; }
+      var edgePct = (s.avgHit - s.avgBase) * 100;
+      var edgeTxt = (edgePct >= 0 ? "+" : "") + edgePct.toFixed(1) + "个百分点";
+      var ciTxt = ci ? pct(ci.lo) + "~" + pct(ci.hi) : "样本不足";
+      html += '<tr><td style="position:sticky;left:0;z-index:1;background:#fff;text-align:left;font-weight:700">' + s.name + "</td>";
+      html += "<td>" + s.n + "</td>";
+      html += '<td style="color:' + hitColor + ';font-weight:700">' + hitTxt + "</td>";
+      html += "<td><b>" + pct(s.avgHit) + "</b></td>";
+      html += "<td>" + pct(s.avgBase) + "</td>";
+      html += '<td style="color:' + (edgePct >= 0 ? "#16a34a" : "#dc2626") + ';font-weight:700">' + edgeTxt + "</td>";
+      html += "<td>" + ciTxt + "</td>";
+      html += '<td class="' + cls + '">' + verdict + "</td></tr>";
     });
-    html += "</tbody></table></div></div>";
+    html += "</tbody></table></div></div></div>";
     
     // 添加当前信号板块
     var N = latest;
@@ -1111,7 +1123,7 @@
     
     html += '</div></div></div>';
     
-    html += '<p class="disclaimer">结论 = 信号出现后，下一期实际命中率与理论基准率的平均差值。差值接近 0 说明该信号没有稳定预测能力，不应据此加注。</p>';
+    html += '<p class="disclaimer">结论依据真实命中率的Wilson 95%区间：区间整体高于理论基准才算有优势，整体低于基准才算偏弱；区间跨过基准时不能判定有优势。样本少于30期统一显示样本不足。</p>';
     view.innerHTML = html;
   }
 

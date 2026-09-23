@@ -77,13 +77,14 @@ body {
   position: static;
   z-index: 1;
   display: flex;
-  gap: 4px;
+  gap: 6px;
   max-width: 720px;
   margin: 0 auto;
-  padding: 8px 16px;
+  padding: 10px 16px 12px;
   background: rgba(244, 245, 247, 0.96);
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tabs::-webkit-scrollbar { display: none; }
@@ -97,14 +98,16 @@ body {
 
 .tab {
   flex: 1 0 auto;
-  min-width: 64px;
-  padding: 8px 10px;
+  min-width: 78px;
+  min-height: 42px;
+  padding: 10px 13px;
   border: 0;
   border-radius: var(--radius);
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -114,13 +117,14 @@ body {
 .tab.is-active {
   background: var(--surface);
   color: var(--text);
+  border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
 
 .tab-group {
   flex: 0 0 auto;
-  padding: 8px 9px;
-  font-size: 11px;
+  padding: 10px 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--muted);
   border-left: 2px solid var(--line);
