@@ -540,16 +540,22 @@
   }
 
   function renderMiss() {
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏监控</h2><span class="section__hint">颜色越深，遗漏越久</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>近 5 次遗漏</th></tr></thead><tbody>';
+    var historyCount = 15;
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏监控</h2><span class="section__hint">颜色越深，遗漏越久 · 最近 15 次记录按新到旧排列</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>近 15 次遗漏（新→旧）</th></tr></thead><tbody>';
     for (var t = 0; t < 10; t++) {
       var miss = currentMiss(t);
       var max = maxMiss(t);
-      var history = recentMisses(t, 5);
-      html += '<tr><td>' + t + '</td><td class="' + missClass(miss) + '">' + miss + " 期</td><td>" + max + " 期</td><td>" + history.join(" · ") + "</td></tr>";
+      var history = recentMisses(t, historyCount);
+      var chips = history.map(function (v) {
+        var bg = v >= 4 ? "#fee2e2" : v === 3 ? "#fef3c7" : v === 2 ? "#dcfce7" : v === 1 ? "#dbeafe" : "#f3f4f6";
+        var color = v >= 4 ? "#b91c1c" : v === 3 ? "#a16207" : v === 2 ? "#15803d" : v === 1 ? "#1d4ed8" : "#6b7280";
+        return '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 5px;border-radius:5px;background:' + bg + ';color:' + color + ';font-weight:700">' + v + "</span>";
+      }).join("");
+      html += '<tr><td>' + t + '</td><td class="' + missClass(miss) + '">' + miss + " 期</td><td>" + max + " 期</td><td><div style=\"display:flex;flex-wrap:wrap;gap:4px;min-width:220px\">" + chips + "</div></td></tr>";
     }
     html += "</tbody></table></div></div>";
-    html += '<p class="disclaimer">当前遗漏 = 截至最新一期连续未开出的期数。</p>';
+    html += '<p class="disclaimer">当前遗漏 = 截至最新一期连续未开出的期数；历史遗漏按完成一次遗漏后重新开出的记录统计。</p>';
     view.innerHTML = html;
   }
 
@@ -2023,67 +2029,90 @@
   }
 
   function renderPersonality() {
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾号性格</h2><span class="section__hint">该尾数「遗漏N期后下一期开出」的概率</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>遗1</th><th>遗2</th><th>遗3</th><th>性格</th><th>当前遗漏</th></tr></thead><tbody>';
+    function gradeInfo(avg) {
+      if (avg == null) return { txt: "—", color: "#999" };
+      if (avg >= 62) return { txt: "🟢稳", color: "#16a34a" };
+      if (avg >= 52) return { txt: "🟡中", color: "#d97706" };
+      return { txt: "🔴险", color: "#dc2626" };
+    }
+
+    function avgSample(stats) {
+      var vals = [];
+      for (var x = 1; x <= 3; x++) {
+        var s = stats[x];
+        if (s && s.t >= 3) vals.push(s.h / s.t * 100);
+      }
+      if (!vals.length) return null;
+      return vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+    }
+
+    function rateCell(s) {
+      if (!s || !s.t) return '<td><span style="color:#9ca3af">—</span></td>';
+      if (s.t < 10) {
+        return '<td><span style="color:#94a3b8;font-weight:700">样本不足</span><br><small style="color:#9ca3af">' + s.h + "/" + s.t + "</small></td>";
+      }
+      var rate = s.h / s.t * 100;
+      var color = s.t < 20 ? "#d97706" : (rate >= 55.39 ? "#16a34a" : "#dc2626");
+      return '<td><b style="color:' + color + '">' + rate.toFixed(1) + '%</b><br><small style="color:#9ca3af">' + s.h + "/" + s.t + "</small></td>";
+    }
+
+    function windowCell(count, size) {
+      var text = count + "/" + size;
+      var color = "#6b7280";
+      var hi = size === 15 ? 10 : 4;
+      var lo = size === 15 ? 5 : 1;
+      if (count >= hi) color = "#16a34a";
+      else if (count <= lo) color = "#2563eb";
+      return '<td><b style="color:' + color + '">' + text + "</b></td>";
+    }
+
+    var rows = [];
     for (var d = 0; d < 10; d++) {
       var b = bounceStats(d);
-      function cell(x) {
-        var s = b[x];
-        if (!s) return "<td>-</td>";
-        var hm = hitMissTxt(s.h, s.t);
-        return '<td style="color:' + hm.color + ';font-weight:700;white-space:nowrap">' + hm.txt + "</td>";
-      }
-      var arr = [];
-      for (var x = 1; x <= 3; x++) { var s = b[x]; if (s && s.t >= 3) arr.push(s.h / s.t * 100); }
-      var grade = "—", gc = "#999";
-      if (arr.length) {
-        var avg = arr.reduce(function (a, b2) { return a + b2; }, 0) / arr.length;
-        grade = avg >= 62 ? "🟢稳" : avg >= 52 ? "🟡中" : "🔴险";
-        gc = avg >= 62 ? "#16a34a" : avg >= 52 ? "#eab308" : "#dc2626";
-      }
-      var miss = currentMiss(d);
-      html += "<tr><td>尾" + d + "</td>" + cell(1) + cell(2) + cell(3) + '<td style="color:' + gc + ";font-weight:700\">" + grade + "</td><td>" + miss + "期</td></tr>";
+      var b2 = streakStats(d);
+      rows.push({
+        tail: d,
+        bounce: b,
+        streak: b2,
+        bounceGrade: gradeInfo(avgSample(b)),
+        streakGrade: gradeInfo(avgSample(b2)),
+        miss: currentMiss(d),
+        streakNow: currentStreak(d),
+        c15: countWindow(d, 15),
+        c5: countWindow(d, 5)
+      });
     }
-    html += "</tbody></table></div></div>";
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">连出性格表</h2><span class="section__hint">该尾数「连续开出N期后下一期继续开出」的概率</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>连1</th><th>连2</th><th>连3</th><th>性格</th><th>当前连出</th></tr></thead><tbody>';
-    for (var d2 = 0; d2 < 10; d2++) {
-      var b2 = streakStats(d2);
-      function scell(x) {
-        var s = b2[x];
-        if (!s) return "<td>-</td>";
-        var hm = hitMissTxt(s.h, s.t);
-        return '<td style="color:' + hm.color + ';font-weight:700;white-space:nowrap">' + hm.txt + "</td>";
-      }
-      var arr2 = [];
-      for (var x2 = 1; x2 <= 3; x2++) { var s2 = b2[x2]; if (s2 && s2.t >= 3) arr2.push(s2.h / s2.t * 100); }
-      var grade2 = "—", gc2 = "#999";
-      if (arr2.length) {
-        var avg2 = arr2.reduce(function (a, b3) { return a + b3; }, 0) / arr2.length;
-        grade2 = avg2 >= 62 ? "🟢稳" : avg2 >= 52 ? "🟡中" : "🔴险";
-        gc2 = avg2 >= 62 ? "#16a34a" : avg2 >= 52 ? "#eab308" : "#dc2626";
-      }
-      var cs = currentStreak(d2);
-      html += "<tr><td>尾" + d2 + "</td>" + scell(1) + scell(2) + scell(3) + '<td style="color:' + gc2 + ";font-weight:700\">" + grade2 + "</td><td>" + cs + "连</td></tr>";
-    }
-    html += "</tbody></table></div></div>";
-    html += '<p class="disclaimer">连出率 = 该尾数历史上「连续开出N期后、下一期继续开出」的命中/样本计数。样本<10显示「样本不足」，10~20标警示色，≥20正常显示。🟢稳 / 🟡中 / 🔴险 按连1-3连出率平均划分。</p>';
-    html += '<p class="disclaimer">反弹率 = 该尾数历史上「连续遗漏N期后、下一期开出」的命中/样本计数。样本<10显示「样本不足」，10~20标警示色，≥20正常显示。🟢稳 / 🟡中 / 🔴险 按遗1-3反弹率平均划分。</p>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当下状态</h2><span class="section__hint">各尾数最新状态</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>当前遗漏</th><th>当前连出</th><th>近15期</th><th>近5期</th><th>判定</th></tr></thead><tbody>';
-    for (var d3 = 0; d3 < 10; d3++) {
-      var miss3 = currentMiss(d3);
-      var streak3 = currentStreak(d3);
-      var c15 = countWindow(d3, 15);
-      var c5 = countWindow(d3, 5);
-      var s15 = c15 >= 10 ? "热" : c15 <= 5 ? "冷" : "中";
-      var s5 = c5 >= 4 ? "热" : c5 <= 1 ? "冷" : "中";
-      var status = miss3 >= BOUNCE[d3] ? "临界反弹" : c15 >= 10 ? "热惯性" : c15 <= 5 ? "冷待反弹" : streak3 >= 3 ? "连出中" : "中";
-      var statusColor = miss3 >= BOUNCE[d3] ? "#dc2626" : c15 >= 10 ? "#16a34a" : c15 <= 5 ? "#2563eb" : "#6b7280";
-      html += '<tr><td>尾' + d3 + '</td><td>' + miss3 + '期</td><td>' + streak3 + '连</td><td>' + c15 + '/15 ' + s15 + '</td><td>' + c5 + '/5 ' + s5 + '</td><td style="color:' + statusColor + ';font-weight:700">' + status + "</td></tr>";
-    }
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾号性格 · 当下速览</h2><span class="section__hint">先看当前遗漏、连出和短窗热度，再查看下方明细</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>当前（漏/连）</th><th>近15期</th><th>近5期</th><th>反弹性格</th><th>连出性格</th><th>当前判定</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var status = r.miss >= BOUNCE[r.tail] ? "临界反弹" : r.c15 >= 10 ? "热惯性" : r.c15 <= 5 ? "冷待反弹" : r.streakNow >= 3 ? "连出中" : "中";
+      var statusColor = r.miss >= BOUNCE[r.tail] ? "#dc2626" : r.c15 >= 10 ? "#16a34a" : r.c15 <= 5 ? "#2563eb" : "#6b7280";
+      html += "<tr><td>尾" + r.tail + '</td><td><b>漏' + r.miss + " · 连" + r.streakNow + "</b></td>";
+      html += windowCell(r.c15, 15) + windowCell(r.c5, 5);
+      html += '<td style="color:' + r.bounceGrade.color + ';font-weight:700">' + r.bounceGrade.txt + "</td>";
+      html += '<td style="color:' + r.streakGrade.color + ';font-weight:700">' + r.streakGrade.txt + "</td>";
+      html += '<td style="color:' + statusColor + ';font-weight:700">' + status + "</td></tr>";
+    });
     html += "</tbody></table></div></div>";
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">遗漏后反弹明细</h2><span class="section__hint">遗漏N期后，下一期开出的历史命中率</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>遗漏1期后</th><th>遗漏2期后</th><th>遗漏3期后</th><th>反弹判定</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      html += "<tr><td>尾" + r.tail + "</td>" + rateCell(r.bounce[1]) + rateCell(r.bounce[2]) + rateCell(r.bounce[3]);
+      html += '<td style="color:' + r.bounceGrade.color + ';font-weight:700">' + r.bounceGrade.txt + "</td></tr>";
+    });
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">样本不足时只显示记录数；10~19期为观察样本，达到20期后再用命中率判断稳定程度。</p>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">连出后延续明细</h2><span class="section__hint">连续开出N期后，下一期继续开出的历史命中率</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>连出1期后</th><th>连出2期后</th><th>连出3期后</th><th>连出判定</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      html += "<tr><td>尾" + r.tail + "</td>" + rateCell(r.streak[1]) + rateCell(r.streak[2]) + rateCell(r.streak[3]);
+      html += '<td style="color:' + r.streakGrade.color + ';font-weight:700">' + r.streakGrade.txt + "</td></tr>";
+    });
+    html += "</tbody></table></div></div>";
+    html += '<p class="disclaimer">判定综合连1至连3的历史表现；样本较少时以观察为主，不单独作为推荐依据。</p>';
 
     view.innerHTML = html;
   }
