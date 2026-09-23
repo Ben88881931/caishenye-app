@@ -186,6 +186,7 @@ $env:GIT_SSH_COMMAND = 'ssh -i "$HOME\.ssh\id_ed25519" -o StrictHostKeyChecking=
 - “策略回测”必须展示样本数、命中/未中、命中率、理论基准、差值、Wilson 95%区间和结论；样本少于 30 期统一显示“样本不足”。
 - `app.js`、`styles.css`、`index.html` 任一项变化后，必须统一提升 `?v=YYYYMMDD-N` 缓存版本。
 - 前端修改后必须运行 `python check_app.py`，全部通过后才能提交。
+- 修改页面后必须在浏览器实际打开受影响页面，确认内容正常渲染且无运行时报错。
 
 ---
 

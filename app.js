@@ -541,8 +541,8 @@
 
   function renderMiss() {
     var historyCount = 15;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏监控</h2><span class="section__hint">颜色越深，遗漏越久 · 最近 15 次记录按新到旧排列</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>近 15 次遗漏（新→旧）</th></tr></thead><tbody>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏监控</h2><span class="section__hint">颜色越深，遗漏越久 · 最近 15 次记录按旧到新排列</span></div>';
+    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>近 15 次遗漏（旧→新）</th></tr></thead><tbody>';
     for (var t = 0; t < 10; t++) {
       var miss = currentMiss(t);
       var max = maxMiss(t);
@@ -571,7 +571,7 @@
       }
     }
     while (out.length < n) out.push(0);
-    return out;
+    return out.reverse();
   }
 
   function lastOpenIdx(tail) {
@@ -1065,16 +1065,17 @@
     html += "</tbody></table></div></div></div>";
     
     // 添加当前信号板块
-    var N = latest;
+    var currentIdx = periods.length - 1;
+    var currentPeriod = periods[currentIdx];
     var hotTails = [], coldTails = [], miss2Tails = [], miss3Tails = [];
     for (var t = 0; t < 10; t++) {
-      if (countEnding(t, N, 15) >= 10) hotTails.push(t);
-      if (countEnding(t, N, 15) <= 5) coldTails.push(t);
-      if (missedRun(t, N, 2)) miss2Tails.push(t);
-      if (missedRun(t, N, 3)) miss3Tails.push(t);
+      if (countEnding(t, currentIdx, 15) >= 10) hotTails.push(t);
+      if (countEnding(t, currentIdx, 15) <= 5) coldTails.push(t);
+      if (missedRun(t, currentIdx, 2)) miss2Tails.push(t);
+      if (missedRun(t, currentIdx, 3)) miss3Tails.push(t);
     }
     
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前信号</h2><span class="section__hint">第' + N + '期后触发信号的尾数</span></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前信号</h2><span class="section__hint">第' + currentPeriod + '期后触发信号的尾数</span></div>';
     html += '<div class="panel"><div class="panel__body">';
     
     // 热号信号
