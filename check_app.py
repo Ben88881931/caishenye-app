@@ -161,6 +161,10 @@ def main():
             pass_("下期预估含首推/备选独立连错统计")
         else:
             fail("下期预估缺少首推/备选连错统计")
+        if "function weightedHistoryPerformance" in app_text and "累计盈亏" in app_text and "最大回撤" in app_text:
+            pass_("下期预估含历史业绩统计")
+        else:
+            fail("下期预估缺少历史业绩统计")
 
         # 导航自定义排序检查
         if "function getVisibleTabs" in app_text:
