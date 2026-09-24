@@ -1,6 +1,6 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-23T13:59:57.932Z",
-  "settledCount": 5,
+  "generatedAt": "2026-09-24T13:41:00.219Z",
+  "settledCount": 6,
   "grades": {
     "S": {
       "single": {
@@ -25,9 +25,9 @@ window.APP_SNAPSHOTS = {
     },
     "C": {
       "single": {
-        "n": 5,
+        "n": 7,
         "hits": 4,
-        "miss": 1
+        "miss": 3
       }
     },
     "D": {
@@ -39,9 +39,9 @@ window.APP_SNAPSHOTS = {
     }
   },
   "overallAtLeastOne": {
-    "n": 5,
+    "n": 6,
     "hits": 4,
-    "miss": 1
+    "miss": 2
   },
   "combos": {
     "C+D": {
@@ -50,9 +50,9 @@ window.APP_SNAPSHOTS = {
       "miss": 0
     },
     "C+C": {
-      "n": 1,
+      "n": 2,
       "hits": 1,
-      "miss": 0
+      "miss": 1
     },
     "A+C": {
       "n": 2,
@@ -114,9 +114,9 @@ window.APP_SNAPSHOTS = {
       ]
     },
     "92.x": {
-      "n": 6,
+      "n": 8,
       "hits": 5,
-      "miss": 1,
+      "miss": 3,
       "rolls": [
         {
           "target": 262,
@@ -159,6 +159,20 @@ window.APP_SNAPSHOTS = {
           "score": 92.5,
           "tag": "5期3次",
           "hit": true
+        },
+        {
+          "target": 267,
+          "tail": 3,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": false
+        },
+        {
+          "target": 267,
+          "tail": 4,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": false
         }
       ]
     },
@@ -177,9 +191,9 @@ window.APP_SNAPSHOTS = {
   },
   "tags": {
     "5期3次": {
-      "n": 5,
+      "n": 7,
       "hits": 4,
-      "miss": 1,
+      "miss": 3,
       "rolls": [
         {
           "target": 262,
@@ -215,6 +229,20 @@ window.APP_SNAPSHOTS = {
           "score": 92.5,
           "bucket": "92.x",
           "hit": true
+        },
+        {
+          "target": 267,
+          "tail": 3,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": false
+        },
+        {
+          "target": 267,
+          "tail": 4,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": false
         }
       ]
     },
@@ -421,6 +449,37 @@ window.APP_SNAPSHOTS = {
       ],
       "atLeastOne": true,
       "settledAt": "2026-09-23T13:59:57.866Z"
+    },
+    {
+      "target": 267,
+      "picks": [
+        {
+          "tail": 3,
+          "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
+          "grade": "C",
+          "hit": false
+        },
+        {
+          "tail": 4,
+          "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
+          "grade": "C",
+          "hit": false
+        }
+      ],
+      "actualTails": [
+        0,
+        1,
+        2,
+        5,
+        6,
+        9
+      ],
+      "atLeastOne": false,
+      "settledAt": "2026-09-24T13:41:00.211Z"
     }
   ]
 };
