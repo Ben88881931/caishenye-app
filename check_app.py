@@ -273,6 +273,32 @@ def main():
                     else:
                         pass_("snapshots.js 含等级组合统计")
 
+                    weighted = snap_data.get("weightedRecords")
+                    if not isinstance(weighted, list) or not weighted:
+                        fail("snapshots.js 缺少 weightedRecords（下期预估快照）")
+                    else:
+                        ok_w = True
+                        for rec in weighted:
+                            if not all(f in rec for f in ["target", "settled", "picks", "actualTails"]):
+                                fail("snapshots.js weightedRecords 记录字段不完整")
+                                ok_w = False
+                                break
+                            for p in rec.get("picks", []):
+                                if "tail" not in p:
+                                    fail("snapshots.js weightedRecords pick 缺少 tail")
+                                    ok_w = False
+                                    break
+                            if not ok_w:
+                                break
+                        if ok_w:
+                            pass_("snapshots.js 含下期预估真实快照记录")
+
+                    weighted_summary = snap_data.get("weightedSummary")
+                    if not isinstance(weighted_summary, dict) or not all(f in weighted_summary for f in ["n", "hits", "miss"]):
+                        fail("snapshots.js 缺少 weightedSummary")
+                    else:
+                        pass_("snapshots.js 含下期预估快照汇总")
+
                     buckets = snap_data.get("scoreBuckets")
                     if not isinstance(buckets, dict) or not buckets:
                         fail("snapshots.js 缺少 scoreBuckets（分数细分统计）")

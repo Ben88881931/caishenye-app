@@ -1671,8 +1671,34 @@
     return out;
   }
 
+  function weightedSnapshotHistory() {
+    var stats = window.APP_SNAPSHOTS || {};
+    var records = Array.isArray(stats.weightedRecords) ? stats.weightedRecords : [];
+    return records.filter(function (r) { return r.settled; }).map(function (r) {
+      var picks = Array.isArray(r.picks) ? r.picks : [];
+      return {
+        N: r.basedOn,
+        period: r.target,
+        actual: r.actualTails || [],
+        top: picks.length ? picks[0].tail : undefined,
+        sec: picks.length >= 2 ? picks[1].tail : undefined,
+        status: !picks.length ? "跳过" : (r.hit ? "对" : "错"),
+        snapshot: true
+      };
+    });
+  }
+
   function renderPredict() {
     var N = latest;
+    var snapStats = window.APP_SNAPSHOTS || {};
+    var weightedSnapshots = Array.isArray(snapStats.weightedRecords) ? snapStats.weightedRecords : [];
+    var pendingSnapshot = null;
+    for (var psi = 0; psi < weightedSnapshots.length; psi++) {
+      if (!weightedSnapshots[psi].settled && weightedSnapshots[psi].target === N + 1) {
+        pendingSnapshot = weightedSnapshots[psi];
+        break;
+      }
+    }
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 回测 中23·错21·共44</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>遗漏/最大</th><th>反弹命中</th><th>样本</th><th>得分</th></tr></thead><tbody>';
     var cands = [];
@@ -1698,57 +1724,96 @@
     html += "</tbody></table></div></div>";
 
     cands.sort(function (a, b) { return b.score - a.score; });
+    var recItems = [];
+    if (pendingSnapshot && pendingSnapshot.picks && pendingSnapshot.picks.length) {
+      pendingSnapshot.picks.forEach(function (p) {
+        recItems.push({
+          d: p.tail,
+          miss: p.miss,
+          maxMiss: p.maxMiss,
+          ratio: p.ratio,
+          wbr: p.weightedBounceRate,
+          wbSample: p.sample,
+          wbHits: null,
+          wbTotal: null,
+          score: p.score,
+          snapshot: true
+        });
+      });
+    } else {
+      cands.slice(0, 2).forEach(function (p) {
+        recItems.push({
+          d: p.d,
+          miss: p.miss,
+          maxMiss: p.maxMiss,
+          ratio: p.ratio,
+          wbr: p.wbr,
+          wbSample: p.wbSample,
+          wbHits: p.wbHits,
+          wbTotal: p.wbTotal,
+          score: p.score,
+          snapshot: false
+        });
+      });
+    }
+    var recMeta = function (p) {
+      if (p.wbHits !== null && p.wbHits !== undefined && p.wbTotal !== null && p.wbTotal !== undefined) {
+        return "反弹 中" + p.wbHits + "·错" + (p.wbTotal - p.wbHits) + "·共" + p.wbTotal;
+      }
+      return "反弹率 " + (p.wbr * 100).toFixed(1) + "% · 样本 " + Number(p.wbSample).toFixed(1);
+    };
     html += '<div class="section"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">加权反弹率≥75% +5分 · ≥65% +3分 · 遗漏深度≥50% +1分</span></div>';
     html += '<div class="panel"><div class="panel__body">';
-    if (cands.length === 0) {
+    if (recItems.length === 0) {
       html += '<div class="empty">上期全中，无未出号，建议跳过</div>';
-    } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
-      var top1 = cands[0], top2 = cands[1];
-      html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">双推荐：尾 ' + top1.d + ' 、尾 ' + top2.d + '</div>';
-      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">分数并列，两个都值得关注</div>';
-      html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">尾' + top1.d + '：遗漏 ' + top1.miss + ' 期 | 反弹 中' + top1.wbHits + '·错' + (top1.wbTotal - top1.wbHits) + '·共' + top1.wbTotal + '</div>';
-      html += '<div style="font-size:12px;color:var(--muted)">尾' + top2.d + '：遗漏 ' + top2.miss + ' 期 | 反弹 中' + top2.wbHits + '·错' + (top2.wbTotal - top2.wbHits) + '·共' + top2.wbTotal + '</div>';
     } else {
-      var top = cands[0];
-      html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">首选：尾 ' + top.d + "</div>";
-      html += '<div style="margin-top:4px;font-size:12px;color:var(--muted)">遗漏 ' + top.miss + " 期 | 历史最大 " + top.maxMiss + " 期 | 反弹 中" + top.wbHits + "·错" + (top.wbTotal - top.wbHits) + "·共" + top.wbTotal + "</div>";
-      if (cands.length >= 2) {
-        var sec = cands[1];
-        html += '<div style="margin-top:10px;color:var(--muted)">备选：尾 ' + sec.d + "（遗漏 " + sec.miss + " 期 | 反弹 中" + sec.wbHits + "·错" + (sec.wbTotal - sec.wbHits) + "·共" + sec.wbTotal + "）</div>";
-      }
+      var recTitle = recItems.length >= 2
+        ? (recItems[0].snapshot ? "开奖前快照：双推荐" : "双推荐")
+        : (recItems[0].snapshot ? "开奖前快照：首选" : "首选");
+      html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">' + recTitle + '：尾 ' + recItems.map(function (p) { return p.d; }).join(" 、尾 ") + "</div>";
+      recItems.forEach(function (p) {
+        html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">尾' + p.d + "：遗漏 " + p.miss + " 期 | 历史最大 " + p.maxMiss + " 期 | " + recMeta(p) + "</div>";
+      });
     }
     html += "</div></div></div>";
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每日分析报告</h2><span class="section__hint">' + new Date().toLocaleDateString("zh-CN") + " · 第 " + N + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body report">';
-    if (cands.length === 0) {
+    if (recItems.length === 0) {
       html += '<p><b>结论：</b>上期尾数全部开出，没有未开尾数可供预测，建议本期跳过。</p>';
-    } else if (cands.length >= 2 && cands[0].score === cands[1].score) {
-      html += '<p><b>结论：</b>双推荐：尾 <b>' + cands[0].d + '</b> 和 尾 <b>' + cands[1].d + '</b>。</p>';
-      html += '<p><b>理由：</b>两个候选综合分并列，都值得跟踪。</p>';
-      html += '<p><b>数据：</b>尾' + cands[0].d + '（遗漏 ' + cands[0].miss + ' 期；反弹 中' + cands[0].wbHits + '·错' + (cands[0].wbTotal - cands[0].wbHits) + '·共' + cands[0].wbTotal + '）；尾' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；反弹 中' + cands[1].wbHits + '·错' + (cands[1].wbTotal - cands[1].wbHits) + '·共' + cands[1].wbTotal + '）。</p>';
     } else {
-      var top = cands[0];
-      var reasons = [];
-      if (top.wbr >= 0.75) reasons.push("反弹 中" + top.wbHits + "·错" + (top.wbTotal - top.wbHits) + "，达到高阈值");
-      else if (top.wbr >= 0.65) reasons.push("反弹 中" + top.wbHits + "·错" + (top.wbTotal - top.wbHits) + "，达到中阈值");
-      if (top.ratio >= 0.5) reasons.push("遗漏深度 " + top.miss + "/" + top.maxMiss + " 期，接近历史最大");
-      if (!reasons.length) reasons.push("综合评分最高");
-
-      html += '<p><b>结论：</b>首选尾数 <b>' + top.d + '</b>。</p>';
-      html += '<p><b>理由：</b>' + reasons.join("；") + '。</p>';
-      html += '<p><b>数据：</b>遗漏 ' + top.miss + ' 期；历史最大 ' + top.maxMiss + ' 期；反弹 中' + top.wbHits + '·错' + (top.wbTotal - top.wbHits) + '·共' + top.wbTotal + '。</p>';
-      if (cands.length >= 2) {
-        html += '<p><b>备选：</b>尾 ' + cands[1].d + '（遗漏 ' + cands[1].miss + ' 期；反弹 中' + cands[1].wbHits + '·错' + (cands[1].wbTotal - cands[1].wbHits) + '·共' + cands[1].wbTotal + '）。</p>';
-      }
+      var reportTitle = recItems[0].snapshot ? "开奖前快照推荐" : "本期推荐";
+      html += '<p><b>结论：</b>' + reportTitle + '：' + recItems.map(function (p, idx) {
+        return (idx === 0 ? "首选尾 " : "备选尾 ") + '<b>' + p.d + '</b>';
+      }).join("，") + "。</p>";
+      html += '<p><b>数据：</b>' + recItems.map(function (p) {
+        return '尾' + p.d + '（遗漏 ' + p.miss + ' 期；' + recMeta(p) + '）';
+      }).join("；") + "。</p>";
     }
     html += '<p><b>评分规则：</b>加权反弹率≥75% +5分；≥65% +3分；遗漏深度≥50% +1分。分数并列时给双推荐。</p>';
     html += '<p><b>模型原理：</b>恰好遗漏k期的加权近期反弹率，衰减因子1.75（越近权重越高），回测 中23·错21·共44。</p>';
     html += '<p><b>风险提示：</b>模型仅供参考，不应据此重注。</p>';
     html += "</div></div></div>";
 
+    var reviewSnapshot = null;
+    for (var rsi = 0; rsi < weightedSnapshots.length; rsi++) {
+      if (weightedSnapshots[rsi].settled && weightedSnapshots[rsi].target === latest) {
+        reviewSnapshot = weightedSnapshots[rsi];
+        break;
+      }
+    }
     var review = prevTailReview();
-    if (review) {
+    if (reviewSnapshot) {
+      var rpicks = reviewSnapshot.picks || [];
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">上期预测反馈</h2><span class="section__hint">开奖前真实快照 · 第 ' + reviewSnapshot.basedOn + ' 期数据回看第 ' + latest + " 期</span></div>";
+      html += '<div class="panel"><div class="panel__body report">';
+      html += '<p><b>当时推荐：</b>' + (rpicks.length ? rpicks.map(function (p, idx) {
+        return (idx === 0 ? "首选" : "备选") + "尾 " + p.tail;
+      }).join("、") : "跳过");
+      html += '</p><p><b>实际开出：</b>' + (reviewSnapshot.actualTails || []).join(" ");
+      html += '</p><p><b>结果：</b><span style="color:' + (reviewSnapshot.hit ? "#16a34a" : "#dc2626") + ';font-weight:700">' + (reviewSnapshot.hit ? "命中" : "未中") + "</span></p>";
+      html += "</div></div></div>";
+    } else if (review) {
       html += '<div class="section"><div class="section__head"><h2 class="section__title">上期预测反馈</h2><span class="section__hint">用第 ' + review.N + ' 期数据回看第 ' + latest + " 期</span></div>";
       html += '<div class="panel"><div class="panel__body report">';
       html += '<p><b>当时推荐：</b>';
@@ -1772,9 +1837,10 @@
       html += "</div></div></div>";
     }
 
-    var historyRows = tailReviewHistory().slice(-40);
+    var snapshotHistoryRows = weightedSnapshotHistory();
+    var historyRows = snapshotHistoryRows.length ? snapshotHistoryRows : tailReviewHistory().slice(-40);
     if (historyRows.length) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">最近 ' + historyRows.length + " 期回放</span></div>";
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">' + (snapshotHistoryRows.length ? "开奖前真实快照 · 共 " + historyRows.length + " 期" : "算法重算回放 · 最近 " + historyRows.length + " 期") + "</span></div>";
       html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>当时首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
       historyRows.slice().reverse().forEach(function (row) {
         var topText = row.top === undefined ? "-" : "尾" + row.top;

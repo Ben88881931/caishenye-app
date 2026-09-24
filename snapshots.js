@@ -1,5 +1,5 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-24T13:41:00.219Z",
+  "generatedAt": "2026-09-24T14:38:56.240Z",
   "settledCount": 6,
   "grades": {
     "S": {
@@ -295,6 +295,285 @@ window.APP_SNAPSHOTS = {
         }
       ]
     }
+  },
+  "weightedRecords": [
+    {
+      "target": 262,
+      "basedOn": 261,
+      "settled": true,
+      "picks": [
+        {
+          "tail": 1,
+          "score": 6,
+          "miss": 3,
+          "maxMiss": 5,
+          "ratio": 0.6,
+          "weightedBounceRate": 0.7777777777777778,
+          "sample": 9,
+          "hit": false
+        },
+        {
+          "tail": 0,
+          "score": 0,
+          "miss": 1,
+          "maxMiss": 9,
+          "ratio": 0.1111111111111111,
+          "weightedBounceRate": 0.5631067961165049,
+          "sample": 88.28571428571428,
+          "hit": true
+        }
+      ],
+      "actualTails": [
+        0,
+        2,
+        3,
+        6,
+        7,
+        8
+      ],
+      "hits": [
+        0
+      ],
+      "hit": true,
+      "settledAt": "2026-09-19T13:45:40.822Z"
+    },
+    {
+      "target": 263,
+      "basedOn": 262,
+      "settled": true,
+      "picks": [
+        {
+          "tail": 9,
+          "score": 3,
+          "miss": 1,
+          "maxMiss": 7,
+          "ratio": 0.14285714285714285,
+          "weightedBounceRate": 0.7485822306238186,
+          "sample": 75.57142857142857,
+          "hit": true
+        },
+        {
+          "tail": 1,
+          "score": 1,
+          "miss": 4,
+          "maxMiss": 5,
+          "ratio": 0.8,
+          "weightedBounceRate": 0,
+          "sample": 2,
+          "hit": false
+        }
+      ],
+      "actualTails": [
+        2,
+        3,
+        4,
+        8,
+        9
+      ],
+      "hits": [
+        9
+      ],
+      "hit": true,
+      "settledAt": "2026-09-20T14:27:28.378Z"
+    },
+    {
+      "target": 264,
+      "basedOn": 263,
+      "settled": true,
+      "picks": [
+        {
+          "tail": 1,
+          "score": 6,
+          "miss": 5,
+          "maxMiss": 5,
+          "ratio": 1,
+          "weightedBounceRate": 1,
+          "sample": 2,
+          "hit": true
+        },
+        {
+          "tail": 0,
+          "score": 0,
+          "miss": 1,
+          "maxMiss": 9,
+          "ratio": 0.1111111111111111,
+          "weightedBounceRate": 0.6080246913580247,
+          "sample": 92.57142857142857,
+          "hit": true
+        }
+      ],
+      "actualTails": [
+        0,
+        1,
+        2,
+        4,
+        6,
+        8
+      ],
+      "hits": [
+        1,
+        0
+      ],
+      "hit": true,
+      "settledAt": "2026-09-21T15:05:32.139Z"
+    },
+    {
+      "target": 265,
+      "basedOn": 264,
+      "settled": true,
+      "picks": [
+        {
+          "tail": 9,
+          "score": 5,
+          "miss": 1,
+          "maxMiss": 7,
+          "ratio": 0.14285714285714285,
+          "weightedBounceRate": 0.7654320987654321,
+          "sample": 81,
+          "hit": true
+        },
+        {
+          "tail": 3,
+          "score": 0,
+          "miss": 1,
+          "maxMiss": 7,
+          "ratio": 0.14285714285714285,
+          "weightedBounceRate": 0.5464285714285715,
+          "sample": 80,
+          "hit": true
+        }
+      ],
+      "actualTails": [
+        0,
+        3,
+        4,
+        5,
+        6,
+        9
+      ],
+      "hits": [
+        9,
+        3
+      ],
+      "hit": true,
+      "settledAt": "2026-09-22T14:12:26.982Z"
+    },
+    {
+      "target": 266,
+      "basedOn": 265,
+      "settled": true,
+      "picks": [
+        {
+          "tail": 7,
+          "score": 6,
+          "miss": 3,
+          "maxMiss": 5,
+          "ratio": 0.6,
+          "weightedBounceRate": 0.7851851851851852,
+          "sample": 19.285714285714285,
+          "hit": true
+        },
+        {
+          "tail": 1,
+          "score": 0,
+          "miss": 1,
+          "maxMiss": 5,
+          "ratio": 0.2,
+          "weightedBounceRate": 0.5567375886524824,
+          "sample": 80.57142857142857,
+          "hit": false
+        }
+      ],
+      "actualTails": [
+        2,
+        5,
+        7,
+        8,
+        9
+      ],
+      "hits": [
+        7
+      ],
+      "hit": true,
+      "settledAt": "2026-09-23T13:59:57.866Z"
+    },
+    {
+      "target": 267,
+      "basedOn": 266,
+      "settled": true,
+      "picks": [
+        {
+          "tail": 0,
+          "score": 0,
+          "miss": 1,
+          "maxMiss": 9,
+          "ratio": 0.1111111111111111,
+          "weightedBounceRate": 0.6466973886328725,
+          "sample": 93,
+          "hit": true
+        },
+        {
+          "tail": 1,
+          "score": 0,
+          "miss": 2,
+          "maxMiss": 5,
+          "ratio": 0.4,
+          "weightedBounceRate": 0.564,
+          "sample": 35.714285714285715,
+          "hit": true
+        }
+      ],
+      "actualTails": [
+        0,
+        1,
+        2,
+        5,
+        6,
+        9
+      ],
+      "hits": [
+        0,
+        1
+      ],
+      "hit": true,
+      "settledAt": "2026-09-24T13:41:00.211Z"
+    },
+    {
+      "target": 268,
+      "basedOn": 267,
+      "settled": false,
+      "picks": [
+        {
+          "tail": 3,
+          "score": 0,
+          "miss": 2,
+          "maxMiss": 7,
+          "ratio": 0.2857142857142857,
+          "weightedBounceRate": 0.5606694560669455,
+          "sample": 34.142857142857146,
+          "hit": null
+        },
+        {
+          "tail": 4,
+          "score": 0,
+          "miss": 2,
+          "maxMiss": 6,
+          "ratio": 0.3333333333333333,
+          "weightedBounceRate": 0.5599999999999999,
+          "sample": 35.714285714285715,
+          "hit": null
+        }
+      ],
+      "actualTails": [],
+      "hits": [],
+      "hit": null,
+      "settledAt": null
+    }
+  ],
+  "weightedSummary": {
+    "n": 6,
+    "hits": 6,
+    "miss": 0
   },
   "detail": [
     {

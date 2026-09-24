@@ -121,6 +121,50 @@ function generateSnapshotsJs(snapshots) {
     });
   }
 
+  const weightedRecords = records
+    .filter((rec) => rec.models && rec.models.weightedBounce && Array.isArray(rec.models.weightedBounce.picks))
+    .map((rec) => {
+      const picks = rec.models.weightedBounce.picks || [];
+      const actualTails = rec.actualTails || [];
+      const savedResult = rec.results && rec.results.weightedBounce;
+      const savedPerPick = savedResult && Array.isArray(savedResult.perPick) ? savedResult.perPick : [];
+      const perPick = picks.map((p) => {
+        const saved = savedPerPick.find((x) => x.tail === p.tail);
+        const resolvedHit = saved && typeof saved.hit === "boolean"
+          ? saved.hit
+          : actualTails.includes(p.tail);
+        return {
+          tail: p.tail,
+          score: p.score,
+          miss: p.miss,
+          maxMiss: p.maxMiss,
+          ratio: p.ratio,
+          weightedBounceRate: p.weightedBounceRate,
+          sample: p.sample,
+          hit: rec.settled ? resolvedHit : null
+        };
+      });
+      const hits = perPick.filter((p) => p.hit === true).map((p) => p.tail);
+      return {
+        target: rec.target,
+        basedOn: rec.basedOn,
+        settled: !!rec.settled,
+        picks: perPick,
+        actualTails: actualTails,
+        hits: hits,
+        hit: rec.settled ? hits.length > 0 : null,
+        settledAt: rec.settledAt || null
+      };
+    })
+    .sort((a, b) => a.target - b.target);
+
+  const weightedSettled = weightedRecords.filter((r) => r.settled);
+  const weightedSummary = {
+    n: weightedSettled.length,
+    hits: weightedSettled.filter((r) => r.hit).length,
+    miss: weightedSettled.filter((r) => !r.hit).length
+  };
+
   const payload = {
     generatedAt: new Date().toISOString(),
     settledCount: settled.length,
@@ -129,6 +173,8 @@ function generateSnapshotsJs(snapshots) {
     combos: combos,
     scoreBuckets: scoreBuckets,
     tags: tags,
+    weightedRecords: weightedRecords,
+    weightedSummary: weightedSummary,
     detail: detail
   };
 
