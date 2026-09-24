@@ -1652,19 +1652,19 @@
 
   function tailReviewHistory() {
     var out = [];
-    for (var N = 30; N <= latest - 1; N++) {
+    for (var N = 1; N <= latest - 1; N++) {
       var r = tailReviewAt(N);
       if (!r) continue;
-      var row = { N: N, period: N + 1, actual: r.actual };
+      var row = { N: N, period: N + 1, actual: r.actual, source: "回测", settledAt: null };
       if (r.cands.length === 0) {
-        row.status = "跳过";
-      } else if (r.cands.length >= 2 && r.cands[0].score === r.cands[1].score) {
         row.status = "跳过";
       } else {
         row.top = r.cands[0].d;
         row.sec = r.cands.length >= 2 ? r.cands[1].d : null;
-        row.hit = r.actual.indexOf(row.top) >= 0;
-        row.status = row.hit ? "对" : "错";
+        row.topHit = r.actual.indexOf(row.top) >= 0;
+        row.secHit = row.sec === null ? null : r.actual.indexOf(row.sec) >= 0;
+        row.atLeastOne = row.topHit || row.secHit === true;
+        row.status = row.atLeastOne ? "对" : "错";
       }
       out.push(row);
     }
@@ -1676,16 +1676,42 @@
     var records = Array.isArray(stats.weightedRecords) ? stats.weightedRecords : [];
     return records.filter(function (r) { return r.settled; }).map(function (r) {
       var picks = Array.isArray(r.picks) ? r.picks : [];
+      var top = picks.length ? picks[0].tail : undefined;
+      var sec = picks.length >= 2 ? picks[1].tail : undefined;
+      var topHit = top === undefined ? null : (r.actualTails || []).indexOf(top) >= 0;
+      var secHit = sec === undefined ? null : (r.actualTails || []).indexOf(sec) >= 0;
       return {
         N: r.basedOn,
         period: r.target,
         actual: r.actualTails || [],
-        top: picks.length ? picks[0].tail : undefined,
-        sec: picks.length >= 2 ? picks[1].tail : undefined,
-        status: !picks.length ? "跳过" : (r.hit ? "对" : "错"),
-        snapshot: true
+        top: top,
+        sec: sec,
+        topHit: topHit,
+        secHit: secHit,
+        atLeastOne: topHit === true || secHit === true,
+        status: !picks.length ? "跳过" : ((topHit === true || secHit === true) ? "对" : "错"),
+        snapshot: true,
+        source: "真实快照",
+        settledAt: r.settledAt || null
       };
     });
+  }
+
+  function combinedPredictHistory() {
+    var byPeriod = {};
+    byPeriod[periods[0]] = {
+      N: 0,
+      period: periods[0],
+      actual: tailsOf(periods[0]),
+      source: "回测",
+      status: "起点",
+      start: true,
+      settledAt: null
+    };
+    tailReviewHistory().forEach(function (row) { byPeriod[row.period] = row; });
+    weightedSnapshotHistory().forEach(function (row) { byPeriod[row.period] = row; });
+    return Object.keys(byPeriod).map(function (p) { return byPeriod[p]; })
+      .sort(function (a, b) { return a.period - b.period; });
   }
 
   function renderPredict() {
@@ -1837,18 +1863,34 @@
       html += "</div></div></div>";
     }
 
-    var snapshotHistoryRows = weightedSnapshotHistory();
-    var historyRows = snapshotHistoryRows.length ? snapshotHistoryRows : tailReviewHistory().slice(-40);
+    var historyRows = combinedPredictHistory();
     if (historyRows.length) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">' + (snapshotHistoryRows.length ? "开奖前真实快照 · 共 " + historyRows.length + " 期" : "算法重算回放 · 最近 " + historyRows.length + " 期") + "</span></div>";
-      html += '<div class="panel"><table class="table"><thead><tr><th>期数</th><th>当时首选</th><th>备选</th><th>实际开出</th><th>对错</th></tr></thead><tbody>';
+      var snapshotCount = historyRows.filter(function (r) { return r.snapshot; }).length;
+      var backtestCount = historyRows.length - snapshotCount;
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">第1期为起点，实际预测从第2期开始 · 262期起真实快照 · 快照' + snapshotCount + "期/回测" + backtestCount + "期</span></div>";
+      html += '<div class="panel"><div style="max-height:520px;overflow-y:auto;-webkit-overflow-scrolling:touch">';
+      html += '<div style="position:sticky;top:0;z-index:2;background:#f3f4f6;border-bottom:1px solid #e5e7eb;padding:6px 10px;font-size:11px;color:#6b7280;font-weight:700">期数 · 来源 · 首推/备选结果 · 组合结果</div>';
       historyRows.slice().reverse().forEach(function (row) {
         var topText = row.top === undefined ? "-" : "尾" + row.top;
         var secText = row.sec === undefined ? "-" : "尾" + row.sec;
-        var cls = row.status === "对" ? "cell--hot" : row.status === "错" ? "cell--cold" : "";
-        html += '<tr><td>' + row.period + "</td><td>" + topText + "</td><td>" + secText + '</td><td>' + row.actual.join(" ") + '</td><td class="' + cls + '">' + row.status + "</td></tr>";
+        var topRes = row.topHit === null || row.topHit === undefined ? "-" : (row.topHit ? "✅" : "❌");
+        var secRes = row.secHit === null || row.secHit === undefined ? "-" : (row.secHit ? "✅" : "❌");
+        var comboCls = row.status === "对" ? "#16a34a" : row.status === "错" ? "#dc2626" : "#6b7280";
+        var settled = row.settledAt ? row.settledAt.replace("T", " ").slice(0, 16) : "";
+        html += '<div style="padding:8px 10px;border-bottom:1px solid #f0f0f0">';
+        html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px">';
+        html += '<b>第' + row.period + '期</b>';
+        html += '<span class="chip">' + (row.snapshot ? "真实快照" : "回测") + "</span>";
+        html += '<span style="margin-left:auto;color:' + comboCls + ';font-weight:700">组合' + row.status + "</span>";
+        html += "</div>";
+        html += '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;font-size:12px">';
+        html += '<span>首推 <b>' + topText + "</b> " + topRes + "</span>";
+        html += '<span>备选 <b>' + secText + "</b> " + secRes + "</span>";
+        html += "</div>";
+        html += '<div style="margin-top:4px;font-size:11px;color:var(--muted)">实际开出：' + row.actual.join(" ") + (settled ? " · 结算 " + settled : "") + "</div>";
+        html += "</div>";
       });
-      html += "</tbody></table></div></div>";
+      html += "</div></div></div>";
     }
 
     html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，回测 中23·错21·共44。修复数据泄露后已退随机（理论基准约55.39%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
