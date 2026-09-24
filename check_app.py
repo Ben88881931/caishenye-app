@@ -153,14 +153,14 @@ def main():
             pass_("下期预估回测从第1期起点开始")
         else:
             fail("下期预估回测没有从第1期起点开始")
-        if "首推/备选结果" in app_text and "组合" in app_text and "真实快照" in app_text:
+        if "首推/备选结果" in app_text and "连错遗漏记录" in app_text and "真实快照" in app_text:
             pass_("下期预估历史使用双号推荐式滚动对错记录")
         else:
             fail("下期预估历史没有使用双号推荐式滚动对错记录")
-        if "最高连中" in app_text and "最高连错" in app_text and "当前连中" in app_text and "当前连错" in app_text:
-            pass_("下期预估含首推/备选/组合连中连错统计")
+        if "最高连错" in app_text and "当前连错" in app_text:
+            pass_("下期预估含首推/备选独立连错统计")
         else:
-            fail("下期预估缺少连中连错统计")
+            fail("下期预估缺少首推/备选连错统计")
 
         # 导航自定义排序检查
         if "function getVisibleTabs" in app_text:
