@@ -1757,37 +1757,25 @@
   function weightedHistoryPerformance(rows) {
     var perf = {
       actDays: 0,
-      tPicks: 0,
       tHits: 0,
-      d0: 0,
-      d1: 0,
-      d2: 0,
+      tMiss: 0,
       cum: 0,
       peak: 0,
       maxDD: 0
     };
     rows.forEach(function (row) {
       if (row.top === undefined || !row.actual || !row.actual.length) return;
-      var picks = [row.top];
-      if (row.sec !== null && row.sec !== undefined) picks.push(row.sec);
-      var hits = 0;
-      picks.forEach(function (tail) {
-        if (row.actual.indexOf(tail) >= 0) hits++;
-      });
+      var isHit = row.actual.indexOf(row.top) >= 0;
       perf.actDays++;
-      perf.tPicks += picks.length;
-      perf.tHits += hits;
-      if (hits === 0) perf.d0++;
-      else if (hits === 1) perf.d1++;
-      else perf.d2++;
-      var pnl = hits * 0.8 - (picks.length - hits) * 1;
+      if (isHit) perf.tHits++;
+      else perf.tMiss++;
+      var pnl = isHit ? 0.8 : -1;
       perf.cum = +(perf.cum + pnl).toFixed(2);
       if (perf.cum > perf.peak) perf.peak = perf.cum;
       var dd = +(perf.peak - perf.cum).toFixed(2);
       if (dd > perf.maxDD) perf.maxDD = dd;
     });
-    perf.singleRate = perf.tPicks ? perf.tHits / perf.tPicks * 100 : 0;
-    perf.atLeast1 = perf.actDays - perf.d0;
+    perf.singleRate = perf.actDays ? perf.tHits / perf.actDays * 100 : 0;
     return perf;
   }
 
@@ -1946,18 +1934,15 @@
       var backtestCount = historyRows.length - snapshotCount;
       var streakStats = weightedStreakStats(historyRows);
       var perf = weightedHistoryPerformance(historyRows);
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">第2~' + latest + '期 · 回测 + 262期起真实快照 · 每期推2号 · 赔率1.8</span></div></div>';
+      var snapshotPerf = weightedHistoryPerformance(historyRows.filter(function (r) { return r.snapshot; }));
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">第2~' + latest + '期 · 只计算第一推荐 · 赔率1.8</span></div></div>';
       html += '<div class="section"><div class="grid-2">';
-      html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + perf.singleRate.toFixed(2) + '%</div><div class="stat__label">单号命中率 中' + perf.tHits + '·错' + (perf.tPicks - perf.tHits) + '·共' + perf.tPicks + '</div></div>';
-      html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + perf.atLeast1 + '/' + perf.actDays + '</div><div class="stat__label">至少中1个（落空' + perf.d0 + '期）</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + perf.singleRate.toFixed(2) + '%</div><div class="stat__label">首推命中率 中' + perf.tHits + '·错' + perf.tMiss + '·共' + perf.actDays + '</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + perf.tHits + '/' + perf.actDays + '</div><div class="stat__label">首推命中 / 已结算</div></div>';
       html += '<div class="stat"><div class="stat__value" style="color:' + (perf.cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (perf.cum >= 0 ? '+' : '') + perf.cum.toFixed(2) + '</div><div class="stat__label">累计盈亏（元）</div></div>';
       html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + perf.maxDD.toFixed(2) + '</div><div class="stat__label">最大回撤（元）</div></div>';
       html += '</div></div>';
-      html += '<div class="section"><div class="grid-3">';
-      html += '<div class="stat"><div class="stat__value">' + perf.d0 + '</div><div class="stat__label">中0</div></div>';
-      html += '<div class="stat"><div class="stat__value">' + perf.d1 + '</div><div class="stat__label">中1</div></div>';
-      html += '<div class="stat"><div class="stat__value">' + perf.d2 + '</div><div class="stat__label">中2</div></div>';
-      html += '</div></div>';
+      html += '<p class="disclaimer">真实快照首推：' + snapshotPerf.tHits + '/' + snapshotPerf.actDays + ' · ' + snapshotPerf.singleRate.toFixed(1) + '% · 累计盈亏 ' + (snapshotPerf.cum >= 0 ? '+' : '') + snapshotPerf.cum.toFixed(2) + '。</p>';
       html += '<div class="section"><div class="section__head"><h2 class="section__title">连错遗漏记录</h2><span class="section__hint">①第一推荐 最高连错 ' + streakStats.defs.first.maxMiss + ' 期 · ②第二推荐 最高连错 ' + streakStats.defs.second.maxMiss + ' 期 · 当前连错 ①' + streakStats.defs.first.missRun + ' ②' + streakStats.defs.second.missRun + ' · 横向滑动 · 新→旧</span></div></div>';
       html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
       html += '<div style="display:flex;gap:5px;min-width:max-content">';
