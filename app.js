@@ -1714,6 +1714,58 @@
       .sort(function (a, b) { return a.period - b.period; });
   }
 
+  function weightedStreakStats(rows) {
+    var defs = {
+      first: { hitRun: 0, missRun: 0, maxHit: 0, maxMiss: 0 },
+      second: { hitRun: 0, missRun: 0, maxHit: 0, maxMiss: 0 },
+      combo: { hitRun: 0, missRun: 0, maxHit: 0, maxMiss: 0 }
+    };
+    var cells = [];
+
+    function update(st, isHit) {
+      if (isHit) {
+        st.hitRun++;
+        st.missRun = 0;
+        if (st.hitRun > st.maxHit) st.maxHit = st.hitRun;
+      } else {
+        st.missRun++;
+        st.hitRun = 0;
+        if (st.missRun > st.maxMiss) st.maxMiss = st.missRun;
+      }
+    }
+
+    function mark(st, isHit) {
+      if (isHit) {
+        return {
+          text: st.hitRun > 1 ? "连中" + st.hitRun : "中",
+          color: "#16a34a"
+        };
+      }
+      return {
+        text: st.missRun > 1 ? "连错" + st.missRun : "错",
+        color: "#dc2626"
+      };
+    }
+
+    rows.forEach(function (row) {
+      if (row.top === undefined || !row.actual || !row.actual.length) return;
+      var firstHit = row.topHit === true;
+      var secondHit = row.secHit === true;
+      var comboHit = row.atLeastOne === true;
+      update(defs.first, firstHit);
+      if (row.sec !== null && row.sec !== undefined) update(defs.second, secondHit);
+      update(defs.combo, comboHit);
+      cells.push({
+        period: row.period,
+        first: mark(defs.first, firstHit),
+        second: row.sec === null || row.sec === undefined ? { text: "空", color: "#9ca3af" } : mark(defs.second, secondHit),
+        combo: mark(defs.combo, comboHit)
+      });
+    });
+
+    return { defs: defs, cells: cells };
+  }
+
   function renderPredict() {
     var N = latest;
     var snapStats = window.APP_SNAPSHOTS || {};
@@ -1867,7 +1919,31 @@
     if (historyRows.length) {
       var snapshotCount = historyRows.filter(function (r) { return r.snapshot; }).length;
       var backtestCount = historyRows.length - snapshotCount;
+      var streakStats = weightedStreakStats(historyRows);
       html += '<div class="section"><div class="section__head"><h2 class="section__title">历史对错记录</h2><span class="section__hint">第1期为起点，实际预测从第2期开始 · 262期起真实快照 · 快照' + snapshotCount + "期/回测" + backtestCount + "期</span></div>";
+      html += '<div class="panel" style="padding:10px 12px;margin-bottom:10px">';
+      html += '<div style="font-size:12px;line-height:1.8">';
+      html += '<div>首推：最高连中 <b style="color:#16a34a">' + streakStats.defs.first.maxHit + '</b> · 最高连错 <b style="color:#dc2626">' + streakStats.defs.first.maxMiss + '</b> · 当前连中 <b style="color:#16a34a">' + streakStats.defs.first.hitRun + '</b> · 当前连错 <b style="color:#dc2626">' + streakStats.defs.first.missRun + "</b></div>";
+      html += '<div>备选：最高连中 <b style="color:#16a34a">' + streakStats.defs.second.maxHit + '</b> · 最高连错 <b style="color:#dc2626">' + streakStats.defs.second.maxMiss + '</b> · 当前连中 <b style="color:#16a34a">' + streakStats.defs.second.hitRun + '</b> · 当前连错 <b style="color:#dc2626">' + streakStats.defs.second.missRun + "</b></div>";
+      html += '<div>组合：最高连中 <b style="color:#16a34a">' + streakStats.defs.combo.maxHit + '</b> · 最高连错 <b style="color:#dc2626">' + streakStats.defs.combo.maxMiss + '</b> · 当前连中 <b style="color:#16a34a">' + streakStats.defs.combo.hitRun + '</b> · 当前连错 <b style="color:#dc2626">' + streakStats.defs.combo.missRun + "</b></div>";
+      html += '</div></div>';
+      html += '</div>';
+
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">连中/连错记录</h2><span class="section__hint">最新在左 · ①首推 ②备选 · 横向滑动</span></div></div>';
+      html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px">';
+      html += '<div style="display:flex;gap:5px;min-width:max-content">';
+      for (var sci = streakStats.cells.length - 1; sci >= 0; sci--) {
+        var sc = streakStats.cells[sci];
+        html += '<div style="min-width:58px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 4px;background:#fff">';
+        html += '<div style="font-size:12px;color:var(--muted);margin-bottom:3px">' + sc.period + "</div>";
+        html += '<div style="font-size:12px;font-weight:800;color:' + sc.first.color + '">①' + sc.first.text + "</div>";
+        html += '<div style="font-size:12px;font-weight:800;color:' + sc.second.color + '">②' + sc.second.text + "</div>";
+        html += '<div style="font-size:11px;font-weight:700;color:' + sc.combo.color + '">合' + sc.combo.text + "</div>";
+        html += "</div>";
+      }
+      html += "</div></div>";
+
+      html += '<div class="section">';
       html += '<div class="panel"><div style="max-height:520px;overflow-y:auto;-webkit-overflow-scrolling:touch">';
       html += '<div style="position:sticky;top:0;z-index:2;background:#f3f4f6;border-bottom:1px solid #e5e7eb;padding:6px 10px;font-size:11px;color:#6b7280;font-weight:700">期数 · 来源 · 首推/备选结果 · 组合结果</div>';
       historyRows.slice().reverse().forEach(function (row) {
