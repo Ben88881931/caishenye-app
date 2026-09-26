@@ -17,7 +17,8 @@
     wBounce2: 3,
     wDepth: 1,
     depthThresh: 0.5,
-    minSample: 2
+    minSample: 2,
+    minEvents: 5
   };
 
   // 双号推荐五级强度映射（唯一权威定义，页面/监督脚本/统计脚本统一引用，禁止各算一套）
@@ -159,7 +160,7 @@
         var md = missDepthRatio(d2, cur);
         var wb = weightedExactBounce(d2, cur, md.miss);
         var score = 0;
-        if (wb.sample >= NEW_MODEL.minSample) {
+        if (wb.sample >= NEW_MODEL.minSample && wb.total >= NEW_MODEL.minEvents) {
           if (wb.rate >= NEW_MODEL.bounceThresh) score += NEW_MODEL.wBounce;
           else if (wb.rate >= NEW_MODEL.bounceThresh2) score += NEW_MODEL.wBounce2;
         }
@@ -177,6 +178,8 @@
         });
       }
       cands.sort(function (a, b) { return b.score - a.score || a.d - b.d; });
+      if (!cands.length || cands[0].score <= 0) return [];
+      if (cands.length >= 2 && cands[0].score === cands[1].score) return [];
       return cands.slice(0, k);
     }
 
@@ -202,10 +205,12 @@
     }
 
     function buildPrediction(cur) {
+      var doublePicks = pickTopAt(cur, 2);
       return {
         basedOn: cur,
         target: cur + 1,
-        doubleRecommendation: pickTopAt(cur, 2).map(function (p) {
+        doubleAmbiguous: doublePicks.length >= 2 && doublePicks[0].sc === doublePicks[1].sc,
+        doubleRecommendation: doublePicks.map(function (p) {
           return { tail: p.d, score: p.sc, tag: p.tag, grade: gradeOf(p.sc) };
         }),
         weightedBounce: weightedPickAt(cur, 2).map(function (p) {

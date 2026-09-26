@@ -159,10 +159,17 @@ function generateSnapshotsJs(snapshots) {
     .sort((a, b) => a.target - b.target);
 
   const weightedSettled = weightedRecords.filter((r) => r.settled);
+  const weightedFirst = weightedSettled.filter((r) => r.picks.length && r.picks[0].hit === true).length;
+  const weightedSecond = weightedSettled.filter((r) => r.picks.length >= 2 && r.picks[1].hit === true).length;
+  const weightedBoth = weightedSettled.filter((r) => r.picks.length >= 2 && r.picks.every((p) => p.hit === true)).length;
   const weightedSummary = {
     n: weightedSettled.length,
     hits: weightedSettled.filter((r) => r.hit).length,
-    miss: weightedSettled.filter((r) => !r.hit).length
+    miss: weightedSettled.filter((r) => !r.hit).length,
+    firstPick: { n: weightedSettled.length, hits: weightedFirst, miss: weightedSettled.length - weightedFirst },
+    secondPick: { n: weightedSettled.length, hits: weightedSecond, miss: weightedSettled.length - weightedSecond },
+    atLeastOne: { n: weightedSettled.length, hits: weightedSettled.filter((r) => r.hit).length, miss: weightedSettled.filter((r) => !r.hit).length },
+    both: { n: weightedSettled.length, hits: weightedBoth, miss: weightedSettled.length - weightedBoth }
   };
 
   const payload = {
@@ -233,6 +240,7 @@ function sync() {
       models: {
         doubleRecommendation: {
           description: "连出惯性分层打分，推2个尾号",
+          ambiguous: !!pred.doubleAmbiguous,
           picks: pred.doubleRecommendation
         },
         weightedBounce: {
@@ -266,10 +274,22 @@ function report() {
   const d = summarize(records, "doubleRecommendation");
   const w = summarize(records, "weightedBounce");
   const pending = records.filter((r) => !r.settled);
+  const settled = records.filter((r) => r.settled);
+  const firstHit = (key, idx) => settled.filter((r) => {
+    const picks = r.models && r.models[key] && r.models[key].picks;
+    return picks && picks[idx] && (r.actualTails || []).includes(picks[idx].tail);
+  }).length;
+  const bothHit = (key) => settled.filter((r) => {
+    const picks = r.models && r.models[key] && r.models[key].picks;
+    return picks && picks.length >= 2 && picks.every((p) => (r.actualTails || []).includes(p.tail));
+  }).length;
 
   console.log("===== 真实预测快照报告 =====");
-  console.log(`双号推荐：${d.hits}/${d.settled} = ${(d.rate * 100).toFixed(1)}%`);
-  console.log(`加权反弹：${w.hits}/${w.settled} = ${(w.rate * 100).toFixed(1)}%`);
+  console.log(`双号至少中一：${d.hits}/${d.settled} = ${(d.rate * 100).toFixed(1)}%`);
+  console.log(`双号首推：${firstHit("doubleRecommendation", 0)}/${d.settled}`);
+  console.log(`加权至少中一：${w.hits}/${w.settled} = ${(w.rate * 100).toFixed(1)}%`);
+  console.log(`加权首推：${firstHit("weightedBounce", 0)}/${w.settled}`);
+  console.log(`加权两个全中：${bothHit("weightedBounce")}/${w.settled}`);
   console.log(`待开奖：${pending.length} 条`);
 
   const recent = records.filter((r) => r.settled).slice(-10);

@@ -1,5 +1,5 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-25T14:20:54.212Z",
+  "generatedAt": "2026-09-26T13:08:11.150Z",
   "settledCount": 7,
   "grades": {
     "S": {
@@ -641,7 +641,27 @@ window.APP_SNAPSHOTS = {
   "weightedSummary": {
     "n": 7,
     "hits": 7,
-    "miss": 0
+    "miss": 0,
+    "firstPick": {
+      "n": 7,
+      "hits": 5,
+      "miss": 2
+    },
+    "secondPick": {
+      "n": 7,
+      "hits": 5,
+      "miss": 2
+    },
+    "atLeastOne": {
+      "n": 7,
+      "hits": 7,
+      "miss": 0
+    },
+    "both": {
+      "n": 7,
+      "hits": 3,
+      "miss": 4
+    }
   },
   "detail": [
     {

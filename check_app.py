@@ -316,10 +316,12 @@ def main():
                             pass_("snapshots.js 含下期预估真实快照记录")
 
                     weighted_summary = snap_data.get("weightedSummary")
-                    if not isinstance(weighted_summary, dict) or not all(f in weighted_summary for f in ["n", "hits", "miss"]):
+                    if not isinstance(weighted_summary, dict) or not all(
+                        f in weighted_summary for f in ["n", "hits", "miss", "firstPick", "secondPick", "atLeastOne", "both"]
+                    ):
                         fail("snapshots.js 缺少 weightedSummary")
                     else:
-                        pass_("snapshots.js 含下期预估快照汇总")
+                        pass_("snapshots.js 含下期预估首推/备选/至少中一/全中汇总")
 
                     buckets = snap_data.get("scoreBuckets")
                     if not isinstance(buckets, dict) or not buckets:
@@ -361,6 +363,10 @@ def main():
                 pass_(f"model_core.js 含 {fn}")
             else:
                 fail(f"model_core.js 缺少 {fn}")
+        if "minEvents" in core_text and "cands[0].score <= 0" in core_text and "cands[0].score === cands[1].score" in core_text:
+            pass_("model_core.js 含无信号/并列跳过规则")
+        else:
+            fail("model_core.js 缺少无信号/并列跳过规则")
 
     # 逐期记录：结算结果必须含每个尾号命中详情（perPick）
     if supervisor_path.exists():

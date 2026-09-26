@@ -1658,6 +1658,10 @@
       var row = { N: N, period: N + 1, actual: r.actual, source: "回测", settledAt: null };
       if (r.cands.length === 0) {
         row.status = "跳过";
+      } else if (r.cands[0].score <= 0) {
+        row.status = "跳过";
+      } else if (r.cands.length >= 2 && r.cands[0].score === r.cands[1].score) {
+        row.status = "跳过";
       } else {
         row.top = r.cands[0].d;
         row.sec = r.cands.length >= 2 ? r.cands[1].d : null;
@@ -1933,16 +1937,22 @@
       var snapshotCount = historyRows.filter(function (r) { return r.snapshot; }).length;
       var backtestCount = historyRows.length - snapshotCount;
       var streakStats = weightedStreakStats(historyRows);
-      var perf = weightedHistoryPerformance(historyRows);
+      var backtestPerf = weightedHistoryPerformance(historyRows.filter(function (r) { return !r.snapshot && r.period >= 31; }));
       var snapshotPerf = weightedHistoryPerformance(historyRows.filter(function (r) { return r.snapshot; }));
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">第2~' + latest + '期 · 只计算第一推荐 · 赔率1.8</span></div></div>';
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">只计算第一推荐 · 赔率1.8 · 回测与真实快照分账</span></div></div>';
       html += '<div class="section"><div class="grid-2">';
-      html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + perf.singleRate.toFixed(2) + '%</div><div class="stat__label">首推命中率 中' + perf.tHits + '·错' + perf.tMiss + '·共' + perf.actDays + '</div></div>';
-      html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + perf.tHits + '/' + perf.actDays + '</div><div class="stat__label">首推命中 / 已结算</div></div>';
-      html += '<div class="stat"><div class="stat__value" style="color:' + (perf.cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (perf.cum >= 0 ? '+' : '') + perf.cum.toFixed(2) + '</div><div class="stat__label">累计盈亏（元）</div></div>';
-      html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + perf.maxDD.toFixed(2) + '</div><div class="stat__label">最大回撤（元）</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + backtestPerf.singleRate.toFixed(2) + '%</div><div class="stat__label">回测首推命中率 中' + backtestPerf.tHits + '·错' + backtestPerf.tMiss + '·共' + backtestPerf.actDays + '</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + backtestPerf.tHits + '/' + backtestPerf.actDays + '</div><div class="stat__label">回测首推命中 / 已结算</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:' + (backtestPerf.cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (backtestPerf.cum >= 0 ? '+' : '') + backtestPerf.cum.toFixed(2) + '</div><div class="stat__label">回测累计盈亏（元）</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + backtestPerf.maxDD.toFixed(2) + '</div><div class="stat__label">回测最大回撤（元）</div></div>';
       html += '</div></div>';
-      html += '<p class="disclaimer">真实快照首推：' + snapshotPerf.tHits + '/' + snapshotPerf.actDays + ' · ' + snapshotPerf.singleRate.toFixed(1) + '% · 累计盈亏 ' + (snapshotPerf.cum >= 0 ? '+' : '') + snapshotPerf.cum.toFixed(2) + '。</p>';
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">真实快照账</h2><span class="section__hint">262期起 · 只计算第一推荐</span></div></div>';
+      html += '<div class="section"><div class="grid-2">';
+      html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + snapshotPerf.singleRate.toFixed(2) + '%</div><div class="stat__label">快照首推命中率 中' + snapshotPerf.tHits + '·错' + snapshotPerf.tMiss + '·共' + snapshotPerf.actDays + '</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + snapshotPerf.tHits + '/' + snapshotPerf.actDays + '</div><div class="stat__label">快照首推命中 / 已结算</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:' + (snapshotPerf.cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (snapshotPerf.cum >= 0 ? '+' : '') + snapshotPerf.cum.toFixed(2) + '</div><div class="stat__label">快照累计盈亏（元）</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + snapshotPerf.maxDD.toFixed(2) + '</div><div class="stat__label">快照最大回撤（元）</div></div>';
+      html += '</div></div>';
       html += '<div class="section"><div class="section__head"><h2 class="section__title">连错遗漏记录</h2><span class="section__hint">①第一推荐 最高连错 ' + streakStats.defs.first.maxMiss + ' 期 · ②第二推荐 最高连错 ' + streakStats.defs.second.maxMiss + ' 期 · 当前连错 ①' + streakStats.defs.first.missRun + ' ②' + streakStats.defs.second.missRun + ' · 横向滑动 · 新→旧</span></div></div>';
       html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
       html += '<div style="display:flex;gap:5px;min-width:max-content">';
