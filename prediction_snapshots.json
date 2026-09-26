@@ -702,7 +702,7 @@
       "generatedAt": "2026-09-25T14:20:54.210Z",
       "basedOn": 268,
       "target": 269,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -744,9 +744,125 @@
             }
           ]
         }
+      },
+      "actualTails": [
+        0,
+        2,
+        5,
+        6,
+        8,
+        9
+      ],
+      "actualPeriod": 269,
+      "settledAt": "2026-09-26T13:39:12.825Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            9,
+            1
+          ],
+          "perPick": [
+            {
+              "tail": 9,
+              "score": 95.3,
+              "tag": "连出4",
+              "grade": "S",
+              "hit": true
+            },
+            {
+              "tail": 1,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C",
+              "hit": false
+            }
+          ],
+          "hits": [
+            9
+          ],
+          "count": 1,
+          "hit": true
+        },
+        "weightedBounce": {
+          "picks": [
+            2,
+            3
+          ],
+          "perPick": [
+            {
+              "tail": 2,
+              "score": 0,
+              "tag": null,
+              "grade": "D",
+              "hit": true
+            },
+            {
+              "tail": 3,
+              "score": 0,
+              "tag": null,
+              "grade": "D",
+              "hit": false
+            }
+          ],
+          "hits": [
+            2
+          ],
+          "count": 1,
+          "hit": true
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-09-26T13:39:12.834Z",
+      "basedOn": 269,
+      "target": 270,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "ambiguous": false,
+          "picks": [
+            {
+              "tail": 6,
+              "score": 93.9,
+              "tag": "连出3",
+              "grade": "A"
+            },
+            {
+              "tail": 2,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            }
+          ]
+        },
+        "weightedBounce": {
+          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
+          "picks": [
+            {
+              "tail": 7,
+              "score": 6,
+              "miss": 3,
+              "maxMiss": 5,
+              "ratio": 0.6,
+              "weightedBounceRate": 0.9113924050632911,
+              "sample": 22.571428571428573
+            },
+            {
+              "tail": 3,
+              "score": 1,
+              "miss": 4,
+              "maxMiss": 7,
+              "ratio": 0.5714285714285714,
+              "weightedBounceRate": 0.3333333333333333,
+              "sample": 9
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 268,
-  "updatedAt": "2026-09-26T13:08:11.138Z"
+  "latestPeriod": 269,
+  "updatedAt": "2026-09-26T13:39:12.834Z"
 }
