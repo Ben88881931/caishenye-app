@@ -2425,10 +2425,18 @@
     }
 
     function streamCard(state) {
-      var color = state.stream === "double" ? "#16a34a" : "#2563eb";
+      var color = state.stream.charAt(0) === "D" ? "#16a34a" : "#2563eb";
+      var confidence = state.confidence || { pCorrect: null, score: 0, band: "空推荐", action: "无信号", sample: 0 };
+      var confidenceColor = confidence.action === "优先" ? "#16a34a" : confidence.action === "观察" ? "#d97706" : confidence.action === "避让" ? "#dc2626" : "#6b7280";
       var h = '<div class="panel" style="padding:12px;min-width:0">';
       h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:' + color + '">' + state.label + '</b>';
       h += '<span class="chip">' + (state.current ? "尾" + state.current.tail : "空") + "</span></div>";
+      h += '<div style="margin-top:8px;padding:8px 10px;border-radius:7px;background:#f8fafc;border:1px solid #e5e7eb">';
+      h += '<div style="font-size:12px;color:var(--muted)">独立下一期正确概率</div>';
+      h += '<div style="font-size:22px;font-weight:900;color:' + confidenceColor + '">' + (confidence.pCorrect == null ? "无信号" : pctFmt(confidence.pCorrect)) + '</div>';
+      h += '<div style="font-size:11px;color:var(--muted)">置信度 ' + confidence.score.toFixed(1) + '分 · ' + confidence.band + ' · 建议 <b style="color:' + confidenceColor + '">' + confidence.action + '</b> · 状态' + (confidence.stateKey || "-") + ' · 样本' + confidence.sample + '</div>';
+      h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">基础正确率 ' + pctFmt(confidence.baseRate || 0) + (confidence.baseEligible ? "" : " · 基础偏弱") + '</div>';
+      h += "</div>";
       h += '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;margin-top:8px;font-size:12px;color:var(--muted)">';
       h += '<span>近20期 <b>' + pctFmt(state.recentHitRate) + '</b></span>';
       h += '<span>相位差 <b style="color:' + (state.edge >= 0 ? "#16a34a" : "#dc2626") + '">' + signedPct(state.edge) + '</b></span>';
@@ -2458,20 +2466,19 @@
     html += "</div>";
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">两条推荐流</h2><span class="section__hint">只看模型自己的推荐序列</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">四条推荐流</h2><span class="section__hint">D1、D2、W1、W2分别统计对错序列</span></div></div>';
     html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">';
-    html += streamCard(decision.double);
-    html += streamCard(decision.weighted);
+    ["D1", "D2", "W1", "W2"].forEach(function (key) { html += streamCard(decision.streams[key]); });
     html += "</div></div>";
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">优化后的调度规则</h2><span class="section__hint">当前版本以避开无效相位为主</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
-    html += '<div><b>P1 双号确认：</b>双号首推达到A级及以上，且加权反弹率≥65%，允许跟双号。</div>';
-    html += '<div><b>P2 加权反弹：</b>加权对错遗漏达到2期，或加权刚刚连续命中1期，允许跟加权。</div>';
-    html += '<div><b>P3 双号遗漏阻断：</b>双号推荐流连续错2期时，不跟双号。</div>';
-    html += '<div><b>P4 加权过热阻断：</b>加权连续命中2期后，不继续追加权。</div>';
+    html += '<div><b>P1 双号确认：</b>D1达到A级及以上，且W1反弹率≥65%，允许跟双号。</div>';
+    html += '<div><b>P2 双号备选校验：</b>D2连续命中3期后，暂停双号确认。</div>';
+    html += '<div><b>P3 加权反弹：</b>W1对错遗漏达到2期，或刚刚连续命中1期，允许跟加权。</div>';
+    html += '<div><b>P4 加权备选校验：</b>W2连续错2期时，不跟随加权。</div>';
     html += '<div><b>P5 双边哑火：</b>加权空推荐且双号未确认，直接观望。</div>';
-    html += '<div><b>P6 热号阻断：</b>推荐尾号实际连出≥5期，禁止追热。</div>';
+    html += '<div><b>P6 热号阻断：</b>D1推荐尾号实际连出≥5期，禁止追热。</div>';
     html += "</div></div></div>";
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">调度回测</h2><span class="section__hint">单期跟推荐 · 赔率1.8 · 不一致时按调度动作执行</span></div></div>';

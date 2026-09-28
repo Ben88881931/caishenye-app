@@ -100,13 +100,19 @@
   }
 
   function streamPick(row, stream) {
-    if (stream === "double") return row.D1;
-    if (stream === "weighted") return row.W1;
+    if (stream === "double" || stream === "D1") return row.D1;
+    if (stream === "D2") return row.D2;
+    if (stream === "weighted" || stream === "W1") return row.W1;
+    if (stream === "W2") return row.W2;
     return null;
   }
 
   function streamLabel(stream) {
-    return stream === "weighted" ? "加权追冷" : "双号追热";
+    if (stream === "D1" || stream === "double") return "双号首推";
+    if (stream === "D2") return "双号备选";
+    if (stream === "W1" || stream === "weighted") return "加权首推";
+    if (stream === "W2") return "加权备选";
+    return stream;
   }
 
   function historyBefore(rows, index, stream) {
@@ -205,18 +211,108 @@
     };
   }
 
+  function correctnessKey(state) {
+    if (state.currentMissStreak > 0) return "M" + Math.min(state.currentMissStreak, 3);
+    return "H" + Math.min(state.currentHitStreak, 2);
+  }
+
+  function conditionalTable(rows, endIndex, stream) {
+    var table = {};
+    var prior = { n: 0, h: 0 };
+    var runType = null;
+    var runLen = 0;
+    for (var i = 0; i < endIndex; i++) {
+      var pick = streamPick(rows[i], stream);
+      if (!pick) continue;
+      if (runType) {
+        var key = (runType === "hit" ? "H" : "M") + Math.min(runLen, runType === "hit" ? 2 : 3);
+        if (!table[key]) table[key] = { n: 0, h: 0 };
+        table[key].n++;
+        table[key].h += pick.hit ? 1 : 0;
+        prior.n++;
+        prior.h += pick.hit ? 1 : 0;
+      }
+      var nextType = pick.hit ? "hit" : "miss";
+      if (nextType === runType) runLen++;
+      else {
+        runType = nextType;
+        runLen = 1;
+      }
+    }
+    return { table: table, prior: prior };
+  }
+
+  function independentConfidence(rows, index, stream, state, raw, options) {
+    var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
+    var tableInfo = conditionalTable(rows, index, stream);
+    var priorP = tableInfo.prior.n ? tableInfo.prior.h / tableInfo.prior.n : BASE_RATE;
+    if (!state.current) {
+      return {
+        pCorrect: null,
+        score: 0,
+        band: "空推荐",
+        action: "无信号",
+        sample: 0,
+        stateKey: null,
+        baseRate: priorP,
+        baseEligible: priorP >= BASE_RATE
+      };
+    }
+    var key = correctnessKey(state);
+    var bucket = tableInfo.table[key] || { n: 0, h: 0 };
+    var alpha = 5;
+    var pState = (bucket.h + priorP * alpha) / (bucket.n + alpha);
+    var recentP = state.recentN ? state.recentHitRate : priorP;
+    var pCorrect = pState;
+    var baseEligible = priorP >= BASE_RATE;
+    if (state.tailStreak >= opts.hotStreakLimit) pCorrect = Math.min(pCorrect, 0.45);
+    var score = clamp((pCorrect - 0.5) / 0.15, 0, 1) * 100;
+    var band = pCorrect >= 0.65 ? "高" : pCorrect >= 0.58 ? "中" : pCorrect >= 0.5556 ? "低" : "避开";
+    var action = pCorrect >= 0.56 ? "优先" : pCorrect >= 0.54 ? "观察" : "避让";
+    if (state.tailStreak >= opts.hotStreakLimit) {
+      band = "避开";
+      action = "避让";
+    }
+    if (!baseEligible && pCorrect < 0.65) {
+      band = "避开";
+      action = "避让";
+    }
+    return {
+      pCorrect: pCorrect,
+      score: score,
+      band: band,
+      action: action,
+      sample: bucket.n,
+      stateKey: key,
+      pState: pState,
+      recentP: recentP,
+      baseRate: priorP,
+      baseEligible: baseEligible
+    };
+  }
+
   function decide(rows, index, raw, options) {
     var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
-    var d = streamState(rows, index, "double", raw, opts);
-    var w = streamState(rows, index, "weighted", raw, opts);
+    var d1 = streamState(rows, index, "D1", raw, opts);
+    var d2 = streamState(rows, index, "D2", raw, opts);
+    var w1 = streamState(rows, index, "W1", raw, opts);
+    var w2 = streamState(rows, index, "W2", raw, opts);
+    d1.confidence = independentConfidence(rows, index, "D1", d1, raw, opts);
+    d2.confidence = independentConfidence(rows, index, "D2", d2, raw, opts);
+    w1.confidence = independentConfidence(rows, index, "W1", w1, raw, opts);
+    w2.confidence = independentConfidence(rows, index, "W2", w2, raw, opts);
+    var d = d1;
+    var w = w1;
     var overheat = !!(d.current && d.tailStreak >= opts.hotStreakLimit);
     var coldRebound = !!(w.current && Number(w.current.miss) >= opts.coldOmission &&
       Number(w.current.weightedBounceRate) >= opts.minBounceRate &&
       Number(w.current.sample) >= opts.minBounceSample);
     var dConfirmed = !!(d.current && !overheat && d.currentMissStreak !== 2 &&
       d.current.score >= opts.minDoubleScore && w.current &&
-      Number(w.current.weightedBounceRate) >= opts.minWeightedConfirm);
-    var wConfirmed = !!(w.current && (w.currentMissStreak === 2 || w.currentHitStreak === 1));
+      Number(w.current.weightedBounceRate) >= opts.minWeightedConfirm &&
+      d2.currentHitStreak < 3);
+    var wConfirmed = !!(w.current && (w.currentMissStreak === 2 || w.currentHitStreak === 1) &&
+      w2.currentMissStreak !== 2);
 
     var source = null;
     var reason = "";
@@ -242,6 +338,7 @@
       reason: reason,
       double: d,
       weighted: w,
+      streams: { D1: d1, D2: d2, W1: w1, W2: w2 },
       overheat: overheat,
       coldRebound: coldRebound,
       dConfirmed: dConfirmed,
@@ -326,6 +423,42 @@
     };
   }
 
+  function runConfidenceBacktest(raw, model, stream, options) {
+    var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
+    var rows = buildSignals(raw, model, opts);
+    var equity = 0;
+    var peak = 0;
+    var maxDrawdown = 0;
+    var bets = 0;
+    var hits = 0;
+    var skipped = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var state = streamState(rows, i, stream, raw, opts);
+      var confidence = independentConfidence(rows, i, stream, state, raw, opts);
+      var pick = streamPick(rows[i], stream);
+      if (!pick || confidence.action !== "优先") {
+        skipped++;
+        continue;
+      }
+      bets++;
+      if (pick.hit) hits++;
+      var pnl = pick.hit ? 0.8 : -1;
+      equity += pnl;
+      peak = Math.max(peak, equity);
+      maxDrawdown = Math.max(maxDrawdown, peak - equity);
+    }
+    return {
+      stream: stream,
+      bets: bets,
+      hits: hits,
+      hitRate: bets ? hits / bets : 0,
+      net: Number(equity.toFixed(4)),
+      roi: bets ? equity / bets : 0,
+      maxDrawdown: Number(maxDrawdown.toFixed(4)),
+      skipped: skipped
+    };
+  }
+
   return {
     VERSION: VERSION,
     BASE_RATE: BASE_RATE,
@@ -334,6 +467,7 @@
     streamState: streamState,
     decide: decide,
     analyze: analyze,
-    runBacktest: runBacktest
+    runBacktest: runBacktest,
+    runConfidenceBacktest: runConfidenceBacktest
   };
 });

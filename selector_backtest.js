@@ -35,13 +35,17 @@ console.log("数据截至 " + analysis.latestPeriod + "，预测 " + analysis.ne
 console.log("当前动作：" + analysis.decision.action + " | " + analysis.decision.rule + " | " + analysis.decision.reason);
 
 console.log("");
-console.log("推荐流状态");
-["double", "weighted"].forEach((stream) => {
-  const state = stream === "double" ? analysis.decision.double : analysis.decision.weighted;
+console.log("四条推荐流状态");
+["D1", "D2", "W1", "W2"].forEach((stream) => {
+  const state = analysis.decision.streams[stream];
+  const confidence = state.confidence || {};
   console.log(
     [
       state.label,
       "当前=" + (state.current ? "尾" + state.current.tail : "空"),
+      "独立概率=" + (confidence.pCorrect == null ? "无信号" : pct(confidence.pCorrect)),
+      "置信度=" + (confidence.score == null ? "-" : confidence.score.toFixed(1)),
+      "建议=" + (confidence.action || "无信号"),
       "近20期=" + pct(state.recentHitRate),
       "相位差=" + pct(state.edge),
       "当前连中=" + state.currentHitStreak,
@@ -57,6 +61,12 @@ console.log("单期跟推荐回测");
 printResult("死磕双号", selector.runBacktest(raw, model, "double", baseOptions));
 printResult("死磕加权", selector.runBacktest(raw, model, "weighted", baseOptions));
 printResult("第四套调度", selector.runBacktest(raw, model, "selector", baseOptions));
+
+console.log("");
+console.log("四条推荐流独立置信回测");
+["D1", "D2", "W1", "W2"].forEach((stream) => {
+  printResult(stream, selector.runConfidenceBacktest(raw, model, stream, baseOptions));
+});
 
 console.log("");
 console.log("分段验证");
