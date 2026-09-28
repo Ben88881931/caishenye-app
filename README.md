@@ -221,6 +221,10 @@ node selector_backtest.js
 
 页面同时展示正确概率、置信度、状态样本、基础正确率和优先/观察/避让建议。独立置信属于辅助信息，最终调度动作仍以P1-P6规则为准。
 
+调度页面同时展示“三期内命中结构”：按调度选中的模型首推号，锁定追3期，统计第1期中、第2期中、第3期中、三期全错和双号/加权来源。该统计与单期调度回测分开。
+
+四条推荐流另有独立的“三期内必出”统计：D1、D2、W1、W2分别锁定各自首推号追3期。页面下方提供一条横向滚动记录，每一格显示起始期、锁定号码，以及第1/2/3期分别检查了哪一期、哪个号码、是中是错；支持全部、D1、D2、W1、W2筛选。
+
 第四套页面只做调度监控和影子记录，不自动下单，不自动资金分配。
 
 ## 双号推荐五级强度与命中率统计
@@ -248,7 +252,7 @@ node selector_backtest.js
 node score_calibration.js report
 ```
 
-前端缓存版本：`index.html` 里的 `data.js` / `model_core.js` / `model_selector.js` / `ultimate_model.js` / `snapshots.js` / `app.js` / `styles.css` 使用统一构建版本号（如 `?v=20260928-14`），以上文件内容变化时必须同步更新版本号，否则浏览器可能读到旧缓存。
+前端缓存版本：`index.html` 里的 `data.js` / `model_core.js` / `model_selector.js` / `ultimate_model.js` / `snapshots.js` / `app.js` / `styles.css` 使用统一构建版本号（如 `?v=20260928-16`），以上文件内容变化时必须同步更新版本号，否则浏览器可能读到旧缓存。
 
 ## 本地开发
 

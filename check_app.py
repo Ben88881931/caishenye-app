@@ -293,7 +293,7 @@ def main():
 
     if selector_path.exists():
         selector_text = selector_path.read_text(encoding="utf-8")
-        for token in ["buildSignals", "streamState", "independentConfidence", "conditionalTable", "decide", "streams: { D1", "analyze", "runBacktest", "runConfidenceBacktest", "minDoubleScore", "minWeightedConfirm"]:
+        for token in ["buildSignals", "streamState", "independentConfidence", "conditionalTable", "decide", "streams: { D1", "analyze", "runBacktest", "runConfidenceBacktest", "runThreePeriodBacktest", "runThreePeriodStreamBacktest", "minDoubleScore", "minWeightedConfirm"]:
             if token in selector_text:
                 pass_(f"model_selector.js 含 {token}")
             else:

@@ -62,6 +62,34 @@ printResult("死磕双号", selector.runBacktest(raw, model, "double", baseOptio
 printResult("死磕加权", selector.runBacktest(raw, model, "weighted", baseOptions));
 printResult("第四套调度", selector.runBacktest(raw, model, "selector", baseOptions));
 
+const threePeriod = selector.runThreePeriodBacktest(raw, model, baseOptions);
+console.log(
+  [
+    "调度锁定追3期",
+    "批次=" + threePeriod.n,
+    "3期中=" + threePeriod.hits,
+    "命中率=" + pct(threePeriod.hitRate),
+    "第1/2/3期=" + threePeriod.first + "/" + threePeriod.second + "/" + threePeriod.third,
+    "三期全错=" + threePeriod.miss,
+    "来源D/W=" + threePeriod.sources.double + "/" + threePeriod.sources.weighted
+  ].join(" | ")
+);
+
+console.log("四条推荐流独立追3期");
+["D1", "D2", "W1", "W2"].forEach((stream) => {
+  const result = selector.runThreePeriodStreamBacktest(raw, model, stream, baseOptions);
+  console.log(
+    [
+      result.label,
+      "批次=" + result.n,
+      "3期中=" + result.hits,
+      "命中率=" + pct(result.hitRate),
+      "第1/2/3期=" + result.first + "/" + result.second + "/" + result.third,
+      "三期全错=" + result.miss
+    ].join(" | ")
+  );
+});
+
 console.log("");
 console.log("四条推荐流独立置信回测");
 ["D1", "D2", "W1", "W2"].forEach((stream) => {

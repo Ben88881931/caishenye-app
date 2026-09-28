@@ -459,6 +459,134 @@
     };
   }
 
+  function runThreePeriodBacktest(raw, model, options) {
+    var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
+    var rows = buildSignals(raw, model, opts);
+    var batches = [];
+    var i = 0;
+    while (i < rows.length) {
+      var decision = decide(rows, i, raw, opts);
+      if (!decision.source) {
+        i++;
+        continue;
+      }
+      var pick = streamPick(rows[i], decision.source);
+      if (!pick) {
+        i++;
+        continue;
+      }
+      var hitIndex = 4;
+      for (var j = 0; j < 3; j++) {
+        if (i + j >= rows.length) {
+          hitIndex = 99;
+          break;
+        }
+        if (rows[i + j].actual.indexOf(pick.tail) >= 0) {
+          hitIndex = j + 1;
+          break;
+        }
+      }
+      if (hitIndex === 99) break;
+      batches.push({
+        period: rows[i].period,
+        source: decision.source,
+        tail: pick.tail,
+        hitIndex: hitIndex
+      });
+      i += hitIndex === 4 ? 3 : hitIndex;
+    }
+    var counts = { first: 0, second: 0, third: 0, miss: 0 };
+    var sources = { double: 0, weighted: 0 };
+    batches.forEach(function (batch) {
+      if (batch.hitIndex === 1) counts.first++;
+      else if (batch.hitIndex === 2) counts.second++;
+      else if (batch.hitIndex === 3) counts.third++;
+      else counts.miss++;
+      sources[batch.source]++;
+    });
+    var total = batches.length;
+    var hits = counts.first + counts.second + counts.third;
+    return {
+      batches: batches,
+      n: total,
+      hits: hits,
+      hitRate: total ? hits / total : 0,
+      first: counts.first,
+      second: counts.second,
+      third: counts.third,
+      miss: counts.miss,
+      firstRate: total ? counts.first / total : 0,
+      secondRate: total ? counts.second / total : 0,
+      thirdRate: total ? counts.third / total : 0,
+      missRate: total ? counts.miss / total : 0,
+      sources: sources
+    };
+  }
+
+  function runThreePeriodStreamBacktest(raw, model, stream, options) {
+    var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
+    var rows = buildSignals(raw, model, opts);
+    var batches = [];
+    var i = 0;
+    while (i < rows.length) {
+      var pick = streamPick(rows[i], stream);
+      if (!pick) {
+        i++;
+        continue;
+      }
+      var hitIndex = 4;
+      var attempts = [];
+      for (var j = 0; j < 3; j++) {
+        if (i + j >= rows.length) {
+          hitIndex = 99;
+          break;
+        }
+        var hit = rows[i + j].actual.indexOf(pick.tail) >= 0;
+        attempts.push({ period: rows[i + j].period, tail: pick.tail, hit: hit });
+        if (hit) {
+          hitIndex = j + 1;
+          break;
+        }
+      }
+      if (hitIndex === 99) break;
+      batches.push({
+        stream: stream,
+        label: streamLabel(stream),
+        startPeriod: rows[i].period,
+        tail: pick.tail,
+        hitIndex: hitIndex,
+        result: hitIndex === 1 ? "hit1" : hitIndex === 2 ? "hit2" : hitIndex === 3 ? "hit3" : "miss",
+        attempts: attempts
+      });
+      i += hitIndex === 4 ? 3 : hitIndex;
+    }
+    var counts = { first: 0, second: 0, third: 0, miss: 0 };
+    batches.forEach(function (batch) {
+      if (batch.hitIndex === 1) counts.first++;
+      else if (batch.hitIndex === 2) counts.second++;
+      else if (batch.hitIndex === 3) counts.third++;
+      else counts.miss++;
+    });
+    var total = batches.length;
+    var hits = counts.first + counts.second + counts.third;
+    return {
+      stream: stream,
+      label: streamLabel(stream),
+      batches: batches,
+      n: total,
+      hits: hits,
+      hitRate: total ? hits / total : 0,
+      first: counts.first,
+      second: counts.second,
+      third: counts.third,
+      miss: counts.miss,
+      firstRate: total ? counts.first / total : 0,
+      secondRate: total ? counts.second / total : 0,
+      thirdRate: total ? counts.third / total : 0,
+      missRate: total ? counts.miss / total : 0
+    };
+  }
+
   return {
     VERSION: VERSION,
     BASE_RATE: BASE_RATE,
@@ -468,6 +596,8 @@
     decide: decide,
     analyze: analyze,
     runBacktest: runBacktest,
-    runConfidenceBacktest: runConfidenceBacktest
+    runConfidenceBacktest: runConfidenceBacktest,
+    runThreePeriodBacktest: runThreePeriodBacktest,
+    runThreePeriodStreamBacktest: runThreePeriodStreamBacktest
   };
 });

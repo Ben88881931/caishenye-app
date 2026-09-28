@@ -2392,6 +2392,8 @@
     view.innerHTML = html;
   }
 
+  var selectorHistoryFilter = "ALL";
+
   function renderSelector() {
     var S = window.CAISHEN_SELECTOR;
     if (!S) {
@@ -2404,6 +2406,13 @@
     var dRes = S.runBacktest(RAW, MODEL, "double", options);
     var wRes = S.runBacktest(RAW, MODEL, "weighted", options);
     var sRes = S.runBacktest(RAW, MODEL, "selector", options);
+    var threeRes = S.runThreePeriodBacktest(RAW, MODEL, options);
+    var threeByStream = {
+      D1: S.runThreePeriodStreamBacktest(RAW, MODEL, "D1", options),
+      D2: S.runThreePeriodStreamBacktest(RAW, MODEL, "D2", options),
+      W1: S.runThreePeriodStreamBacktest(RAW, MODEL, "W1", options),
+      W2: S.runThreePeriodStreamBacktest(RAW, MODEL, "W2", options)
+    };
     var endPeriod = analysis.latestPeriod;
     var midPeriod = Math.floor((31 + endPeriod) / 2);
     var firstRes = S.runBacktest(RAW, MODEL, "selector", { startPeriod: 31, endPeriod: midPeriod });
@@ -2493,6 +2502,62 @@
       html += '</div>';
     });
     html += "</div></div></div>";
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内命中结构</h2><span class="section__hint">按调度选中的模型首推，锁定追3期</span></div></div>';
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + pctFmt(threeRes.hitRate) + '</div><div class="stat__label">3期内命中率 · ' + threeRes.hits + "/" + threeRes.n + "批</div></div>";
+    html += '<div class="stat"><div class="stat__value">' + pctFmt(threeRes.firstRate) + '</div><div class="stat__label">第1期中 · ' + threeRes.first + "批</div></div>";
+    html += '<div class="stat"><div class="stat__value">' + pctFmt(threeRes.secondRate) + '</div><div class="stat__label">第2期中 · ' + threeRes.second + "批</div></div>";
+    html += '<div class="stat"><div class="stat__value">' + pctFmt(threeRes.thirdRate) + '</div><div class="stat__label">第3期中 · ' + threeRes.third + "批</div></div>";
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + pctFmt(threeRes.missRate) + '</div><div class="stat__label">三期全错 · ' + threeRes.miss + "批</div></div>";
+    html += '<div class="stat"><div class="stat__value">' + threeRes.sources.double + " / " + threeRes.sources.weighted + '</div><div class="stat__label">来源：双号 / 加权</div></div>';
+    html += "</div></div>";
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">四条线独立追3期</h2><span class="section__hint">D1、D2、W1、W2分别锁定各自首推号追3期</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="min-width:620px">';
+    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>推荐流</span><span>批次</span><span>3期中</span><span>第1期中</span><span>第2期中</span><span>第3期中</span><span>三期全错</span></div>';
+    ["D1", "D2", "W1", "W2"].forEach(function (key) {
+      var r = threeByStream[key];
+      html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px">';
+      html += '<b style="color:' + (key.charAt(0) === "D" ? "#16a34a" : "#2563eb") + '">' + r.label + '</b>';
+      html += '<span>' + r.n + '</span><span>' + pctFmt(r.hitRate) + '</span><span>' + r.first + '</span><span>' + r.second + '</span><span>' + r.third + '</span><span>' + r.miss + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div></div>';
+
+    var allThreeBatches = [];
+    ["D1", "D2", "W1", "W2"].forEach(function (key) {
+      threeByStream[key].batches.forEach(function (b) { allThreeBatches.push(b); });
+    });
+    if (selectorHistoryFilter !== "ALL") {
+      allThreeBatches = allThreeBatches.filter(function (b) { return b.stream === selectorHistoryFilter; });
+    }
+    allThreeBatches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内必出滚动记录</h2><span class="section__hint">每一格列出实际检查的期数和号码 · 新→旧</span></div></div>';
+    html += '<div class="section"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+    ["ALL", "D1", "D2", "W1", "W2"].forEach(function (key) {
+      html += '<button class="chip' + (selectorHistoryFilter === key ? " is-active" : "") + '" data-selector-history-filter="' + key + '">' + (key === "ALL" ? "全部" : key) + '</button>';
+    });
+    html += '</div>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="display:flex;gap:6px;min-width:max-content">';
+    allThreeBatches.forEach(function (batch) {
+      var isHit = batch.hitIndex !== 4;
+      var color = isHit ? "#16a34a" : "#dc2626";
+      html += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
+      html += '<div style="display:flex;justify-content:space-between;gap:4px;font-size:11px"><b>' + batch.label + '</b><span>第' + batch.startPeriod + '期</span></div>';
+      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">尾' + batch.tail + '</div>';
+      batch.attempts.forEach(function (a) {
+        html += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
+      });
+      html += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + color + '">' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
+      html += '</div>';
+    });
+    if (!allThreeBatches.length) html += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
+    html += '</div></div></div>';
 
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value">' + pctFmt(firstRes.hitRate) + '</div><div class="stat__label">前半段调度命中率 · 出手' + firstRes.bets + '</div></div>';
@@ -3498,6 +3563,12 @@
   });
 
   view.addEventListener("click", function (e) {
+    var selectorHistoryBtn = e.target.closest("[data-selector-history-filter]");
+    if (selectorHistoryBtn) {
+      selectorHistoryFilter = selectorHistoryBtn.dataset.selectorHistoryFilter;
+      renderSelector();
+      return;
+    }
     var uoDel = e.target.closest("[data-uo-del]");
     if (uoDel) {
       var uoId = uoDel.dataset.uoDel;
