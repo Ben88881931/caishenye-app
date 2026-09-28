@@ -1638,6 +1638,26 @@
     lsSet(ULT_ORDER_KEY, rows);
   }
 
+  function autoSettleUltimateOrders() {
+    var UM = window.CAISHEN_ULTIMATE;
+    var rows = ultimateOrdersLoad();
+    if (!UM || !UM.settleOrder) return rows;
+    var changed = false;
+    rows.forEach(function (row) {
+      if (row.result !== "pending") return;
+      var settled = UM.settleOrder(row, RAW);
+      if (!settled) return;
+      row.result = settled.result;
+      row.hitIndex = settled.hitIndex;
+      row.settledPeriod = settled.settledPeriod;
+      row.autoSettled = settled.autoSettled;
+      row.settledAt = new Date().toISOString();
+      changed = true;
+    });
+    if (changed) ultimateOrdersSave(rows);
+    return rows;
+  }
+
   function ultimateOrderNet(row) {
     var UM = window.CAISHEN_ULTIMATE;
     if (!UM || !UM.PATTERNS[row.pattern]) return 0;
@@ -1686,11 +1706,11 @@
 
   function renderOrderLog() {
     var UM = window.CAISHEN_ULTIMATE;
-    var rows = ultimateOrdersLoad();
+    var rows = autoSettleUltimateOrders();
     var settled = rows.filter(function (r) { return r.result !== "pending"; });
     var wins = settled.filter(function (r) { return r.result !== "miss"; }).length;
     var net = settled.reduce(function (sum, r) { return sum + (ultimateOrderNet(r) || 0); }, 0);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">下单记录</h2><span class="section__hint">追号与追推荐分开记录 · 本机浏览器保存</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">下单记录</h2><span class="section__hint">追号与追推荐分开记录 · 开奖数据齐后自动结算 · 本机浏览器保存</span></div></div>';
 
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value">' + rows.length + '</div><div class="stat__label">全部记录</div></div>';
@@ -1726,15 +1746,15 @@
     html += '</div></div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="min-width:840px">';
-    html += '<div style="display:grid;grid-template-columns:1.25fr .75fr .65fr .65fr .55fr 1.15fr .65fr .7fr .65fr .55fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
-    html += '<span>时间</span><span>模式</span><span>位置</span><span>起始期</span><span>尾号</span><span>倍投</span><span>基础</span><span>结果</span><span>净收益</span><span>操作</span></div>';
+    html += '<div style="min-width:900px">';
+    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .6fr .6fr .5fr 1.05fr .6fr .8fr .65fr .65fr .5fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>时间</span><span>模式</span><span>位置</span><span>起始期</span><span>尾号</span><span>倍投</span><span>基础</span><span>结果</span><span>结算期</span><span>净收益</span><span>操作</span></div>';
     if (!rows.length) {
       html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无下单记录</div>';
     } else {
       rows.slice().sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).forEach(function (row) {
         var value = ultimateOrderNet(row);
-        html += '<div style="display:grid;grid-template-columns:1.25fr .75fr .65fr .65fr .55fr 1.15fr .65fr .7fr .65fr .55fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
+        html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .6fr .6fr .5fr 1.05fr .6fr .8fr .65fr .65fr .5fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
         html += '<span>' + (row.createdAt || "").replace("T", " ").slice(0, 16) + '</span>';
         html += '<span>' + (row.mode === "recommend" ? "追推荐" : "追号") + '</span>';
         html += '<span>' + row.position + '</span>';
@@ -1742,7 +1762,14 @@
         html += '<span>尾' + row.tail + '</span>';
         html += '<span>' + UM.PATTERNS[row.pattern].stakes.join("/") + '</span>';
         html += '<span>' + row.base + '</span>';
-        html += '<span><select data-uo-result="' + row.id + '" style="font-size:12px;padding:4px"><option value="pending"' + (row.result === "pending" ? " selected" : "") + '>待开奖</option><option value="hit1"' + (row.result === "hit1" ? " selected" : "") + '>第1期中</option><option value="hit2"' + (row.result === "hit2" ? " selected" : "") + '>第2期中</option><option value="hit3"' + (row.result === "hit3" ? " selected" : "") + '>第3期中</option><option value="miss"' + (row.result === "miss" ? " selected" : "") + '>三期全错</option></select></span>';
+        if (row.autoSettled) {
+          html += '<span style="font-weight:800;color:' + (row.result === "miss" ? "#dc2626" : "#16a34a") + '">' + ultimateResultLabel(row.result) + ' · 自动</span>';
+        } else {
+          html += '<span><select data-uo-result="' + row.id + '" style="font-size:12px;padding:4px"><option value="pending"' + (row.result === "pending" ? " selected" : "") + '>待开奖</option><option value="hit1"' + (row.result === "hit1" ? " selected" : "") + '>第1期中</option><option value="hit2"' + (row.result === "hit2" ? " selected" : "") + '>第2期中</option><option value="hit3"' + (row.result === "hit3" ? " selected" : "") + '>第3期中</option><option value="miss"' + (row.result === "miss" ? " selected" : "") + '>三期全错</option></select></span>';
+        }
+        var hitIndex = row.hitIndex || (row.result === "hit1" ? 1 : row.result === "hit2" ? 2 : row.result === "hit3" ? 3 : 0);
+        var settledPeriod = row.settledPeriod || (row.result === "pending" ? "" : Number(row.startPeriod) + Math.max(0, hitIndex - 1) + (row.result === "miss" ? 2 : 0));
+        html += '<span>' + (settledPeriod || "-") + '</span>';
         html += '<span style="color:' + (value == null ? "#6b7280" : value >= 0 ? "#16a34a" : "#dc2626") + '">' + (value == null ? "-" : (value >= 0 ? "+" : "") + value.toFixed(2)) + '</span>';
         html += '<button class="chip" data-uo-del="' + row.id + '">删</button>';
         html += '</div>';
@@ -2372,6 +2399,7 @@
     var isRecommendMode = mode === "recommend";
     var modeLabel = isRecommendMode ? "追推荐模型" : "追号模型";
     var modeHint = isRecommendMode ? "每期新推荐独立追3期 · 允许并行追号线" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
+    autoSettleUltimateOrders();
     var analysis = UM.analyze(RAW, MODEL, options);
     var strategyResult = isRecommendMode
       ? UM.runRecommendationBacktest(RAW, MODEL, options)
@@ -3688,6 +3716,7 @@
   state.group = currentGroup.id;
   lsSet(NAV_GROUP_KEY, state.group);
   lsSet("v2_current_tab", state.tab);
+  autoSettleUltimateOrders();
   renderHeader();
   render();
 })();

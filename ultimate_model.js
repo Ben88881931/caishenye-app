@@ -307,6 +307,32 @@
     };
   }
 
+  function settleOrder(order, raw) {
+    if (!order || order.result !== "pending") return null;
+    var start = Number(order.startPeriod);
+    var tail = Number(order.tail);
+    if (!Number.isFinite(start) || !Number.isFinite(tail) || tail < 0 || tail > 9) return null;
+    for (var j = 0; j < 3; j++) {
+      var period = start + j;
+      var bits = raw[String(period)];
+      if (!bits) return null;
+      if (bits[tail] === "1") {
+        return {
+          result: "hit" + (j + 1),
+          hitIndex: j + 1,
+          settledPeriod: period,
+          autoSettled: true
+        };
+      }
+    }
+    return {
+      result: "miss",
+      hitIndex: 0,
+      settledPeriod: start + 2,
+      autoSettled: true
+    };
+  }
+
   function netFor(t, pattern) {
     var stakes = PATTERNS[pattern].stakes;
     if (t === 1) return 0.8 * stakes[0];
@@ -609,6 +635,7 @@
     PATTERNS: PATTERNS,
     DEFAULT_OPTIONS: DEFAULT_OPTIONS,
     analyze: analyze,
+    settleOrder: settleOrder,
     buildSignals: buildSignals,
     monitorFromHistory: monitorFromHistory,
     windowStats: windowStats,

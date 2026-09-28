@@ -228,6 +228,10 @@ def main():
             pass_("下单记录与追中记录含本地存储、结算计算和命中期数")
         else:
             fail("下单记录缺少本地存储或结算计算")
+        if "function autoSettleUltimateOrders" in app_text and "自动结算" in app_text:
+            pass_("下单记录含自动结算")
+        else:
+            fail("下单记录缺少自动结算")
 
     index_path = REPO / "index.html"
     if not index_path.exists():
@@ -279,7 +283,7 @@ def main():
 
     if ultimate_model_path.exists():
         ultimate_text = ultimate_model_path.read_text(encoding="utf-8")
-        for token in ["monitorFromHistory", "windowStats", "runFixedBacktest", "runStrategyBacktest", "runOverlappingBacktest", "runRecommendationBacktest", "skipBelow", "aggressiveAt", "p8At"]:
+        for token in ["monitorFromHistory", "settleOrder", "windowStats", "runFixedBacktest", "runStrategyBacktest", "runOverlappingBacktest", "runRecommendationBacktest", "skipBelow", "aggressiveAt", "p8At"]:
             if token in ultimate_text:
                 pass_(f"ultimate_model.js 含 {token}")
             else:
