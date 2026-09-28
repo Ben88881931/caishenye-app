@@ -81,7 +81,7 @@ const ultimate = require("./ultimate_model.js").analyze(raw, model, { startPerio
 must(Number(ultimate.nextPeriod) === latest + 1, "追号/追推荐模型预测期正确");
 must(["分批启用", "观望"].includes(ultimate.decision.action), "追号模型总决策合法");
 
-must(appText.includes("function promoteSectionToTop") && appText.includes('promoteSectionToTop("三期内必出滚动记录"') && appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START") && appText.includes("card-followup"), "三期内记录紧接卡片下方展示");
+must(appText.includes("predictRecommendCard") && appText.includes("pick3RecommendCard") && appText.includes("function promoteSectionToTop") && appText.includes('promoteSectionToTop("三期内必出滚动记录"') && appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START") && appText.includes("card-followup"), "三期内记录紧接卡片下方展示");
 must(appText.includes("snapshotSkipped") && appText.includes("跳过，未参与结算"), "空快照不会回退成实时推荐");
 must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab") && appText.includes("nav-group-caret") && appText.includes("window.scrollTo"), "导航保持横向位置、当前项可见且切页回顶");
 const cssText = read("styles.css");

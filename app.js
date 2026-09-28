@@ -2164,7 +2164,7 @@
       }
       return "反弹率 " + (p.wbr * 100).toFixed(1) + "% · 样本 " + Number(p.wbSample).toFixed(1);
     };
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">加权反弹率≥75% +5分 · ≥65% +3分 · 遗漏深度≥50% +1分</span></div>';
+    html += '<div class="section" id="predictRecommendCard"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">加权反弹率≥75% +5分 · ≥65% +3分 · 遗漏深度≥50% +1分</span></div>';
     html += '<div class="panel"><div class="panel__body">';
     if (recItems.length === 0) {
       html += '<div class="empty">' + (snapshotSkipped ? "开奖前快照：跳过（加权最高分≤0或候选并列）" : "上期全中，无未出号，建议跳过") + '</div>';
@@ -2299,6 +2299,9 @@
     }
 
     html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，样本外201-255 中23·错21·共44。修复数据泄露后已退随机（理论基准约55.39%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
+    promoteSectionToTop("连错遗漏记录", ["predictRecommendCard"]);
+    promoteSectionToTop("历史业绩", ["predictRecommendCard"]);
+    promoteSectionToTop("上期预测反馈", ["predictRecommendCard"]);
     view.innerHTML = html;
   }
 
@@ -2775,7 +2778,7 @@
     var N = latest;
     var top2 = pickTopAt(N, 2);
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">双号推荐</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
+    var html = '<div class="section" id="pick3RecommendCard"><div class="section__head"><h2 class="section__title">双号推荐</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:18px 14px">';
     if (top2.length === 0) {
@@ -3091,6 +3094,8 @@
     html += '</div>';
 
     html += '<p class="disclaimer">双号推荐基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
+    promoteSectionToTop("连错遗漏记录", ["pick3RecommendCard"]);
+    promoteSectionToTop("五级强度 · 逐期对错", ["pick3RecommendCard"]);
     view.innerHTML = html;
   }
 
