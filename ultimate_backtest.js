@@ -57,11 +57,18 @@ ultimate.KEYS.forEach((key) => {
 });
 
 console.log("");
-console.log("固定倍投回测");
+console.log("追号模式回测（同一号码锁定追3期）");
 Object.keys(ultimate.PATTERNS).forEach((key) => {
   printBacktest(key + " " + ultimate.PATTERNS[key].label, ultimate.runFixedBacktest(raw, model, key, options));
 });
 
 console.log("");
-console.log("状态选择回测");
-printBacktest("终极状态模型", ultimate.runStrategyBacktest(raw, model, options));
+console.log("追号模式状态选择");
+printBacktest("追号状态模型", ultimate.runStrategyBacktest(raw, model, options));
+
+console.log("");
+console.log("追推荐模式回测（每期新推荐独立追3期）");
+["P6", "P7"].forEach((key) => {
+  printBacktest("追推荐 " + key + " " + ultimate.PATTERNS[key].label, ultimate.runOverlappingBacktest(raw, model, key, options));
+});
+printBacktest("追推荐状态模型", ultimate.runRecommendationBacktest(raw, model, options));

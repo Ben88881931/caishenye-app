@@ -338,6 +338,7 @@
 
   var state = {
     tab: lsGet("v2_current_tab", "segments"),
+    group: lsGet("v2_nav_group", "recommend"),
     window: 15,
     segWindow: 15,
     segTails: 7,
@@ -352,7 +353,8 @@
     { id: "overview", label: "总览" },
     { id: "predict", label: "下期预估" },
     { id: "pick3", label: "双号推荐" },
-    { id: "ultimate", label: "终极模型" },
+    { id: "chasenumber", label: "追号模型" },
+    { id: "chaserecommend", label: "追推荐模型" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -369,6 +371,16 @@
     { id: "backtest", label: "策略回测" },
     { id: "numtrend", label: "号码走势" },
     { id: "order", label: "下单追投" },
+    { id: "orderlog", label: "下单记录" },
+    { id: "hitlog", label: "追中记录" },
+  ];
+
+  var NAV_GROUPS = [
+    { id: "recommend", label: "推荐下单", tabs: ["predict", "pick3", "chasenumber", "chaserecommend", "order", "orderlog", "hitlog"] },
+    { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
+    { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
+    { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
+    { id: "tools", label: "分析工具", tabs: ["personality", "datarecord", "tails", "backtest"] },
   ];
 
   var view = document.getElementById("view");
@@ -386,10 +398,66 @@
 
   // ===== 导航自定义排序 =====
   var TAB_ORDER_KEY = "v2_tab_order";
+  var NAV_GROUP_KEY = "v2_nav_group";
+  var NAV_GROUP_ORDER_KEY = "v2_nav_group_order";
+  var NAV_PAGE_GROUPS_KEY = "v2_nav_page_groups";
+  var NAV_COLLAPSED_KEY = "v2_nav_collapsed";
   var tabSortMode = false;
 
+  function groupById(groupId) {
+    for (var i = 0; i < NAV_GROUPS.length; i++) {
+      if (NAV_GROUPS[i].id === groupId) return NAV_GROUPS[i];
+    }
+    return null;
+  }
+
+  function getConfiguredGroups() {
+    var saved = lsGet(NAV_GROUP_ORDER_KEY, null);
+    var defaultIds = NAV_GROUPS.map(function (g) { return g.id; });
+    if (!Array.isArray(saved) || !saved.length) return NAV_GROUPS.slice();
+    var seen = {};
+    var result = [];
+    saved.forEach(function (id) {
+      var g = groupById(id);
+      if (g && !seen[id]) {
+        result.push(g);
+        seen[id] = true;
+      }
+    });
+    NAV_GROUPS.forEach(function (g) {
+      if (!seen[g.id]) result.push(g);
+    });
+    return result;
+  }
+
+  function defaultPageGroupMap() {
+    var map = {};
+    NAV_GROUPS.forEach(function (g) {
+      g.tabs.forEach(function (id) { map[id] = g.id; });
+    });
+    return map;
+  }
+
+  function getPageGroupMap() {
+    var map = defaultPageGroupMap();
+    var saved = lsGet(NAV_PAGE_GROUPS_KEY, null);
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) return map;
+    Object.keys(saved).forEach(function (id) {
+      if (map[id] && groupById(saved[id])) map[id] = saved[id];
+    });
+    return map;
+  }
+
+  function savePageGroupMap(map) {
+    lsSet(NAV_PAGE_GROUPS_KEY, map);
+  }
+
+  function groupForTab(tabId) {
+    return groupById(getPageGroupMap()[tabId]);
+  }
+
   // 合并默认顺序与自定义顺序：已保存且仍存在→按保存顺序；新增→追加末尾；已删除→忽略
-  function getVisibleTabs() {
+  function getOrderedAllTabs() {
     var saved = lsGet(TAB_ORDER_KEY, null);
     if (!Array.isArray(saved) || !saved.length) return TABS.slice();
     var byId = {};
@@ -411,39 +479,151 @@
     return result;
   }
 
+  function getVisibleTabs(groupId) {
+    var group = groupById(groupId || state.group) || NAV_GROUPS[0];
+    var pageGroups = getPageGroupMap();
+    return getOrderedAllTabs().filter(function (t) { return pageGroups[t.id] === group.id; });
+  }
+
   function saveTabOrder(tabs) {
     lsSet(TAB_ORDER_KEY, tabs.map(function (t) { return t.id; }));
   }
 
+  function saveTabOrderIds(ids) {
+    lsSet(TAB_ORDER_KEY, ids);
+  }
+
   function resetTabOrder() {
-    try { localStorage.removeItem(TAB_ORDER_KEY); } catch (e) {}
+    try {
+      localStorage.removeItem(TAB_ORDER_KEY);
+      localStorage.removeItem(NAV_GROUP_ORDER_KEY);
+      localStorage.removeItem(NAV_PAGE_GROUPS_KEY);
+      localStorage.removeItem(NAV_COLLAPSED_KEY);
+    } catch (e) {}
+  }
+
+  function firstTabInGroup(groupId) {
+    var tabs = getVisibleTabs(groupId);
+    return tabs.length ? tabs[0].id : "overview";
+  }
+
+  function moveTabWithinGroup(tabId, dir) {
+    var tabs = getVisibleTabs(state.group);
+    var idx = tabs.map(function (t) { return t.id; }).indexOf(tabId);
+    if (idx < 0) return;
+    if (dir === "up" && idx > 0) {
+      var tmp = tabs[idx - 1]; tabs[idx - 1] = tabs[idx]; tabs[idx] = tmp;
+    } else if (dir === "down" && idx < tabs.length - 1) {
+      var tmp2 = tabs[idx + 1]; tabs[idx + 1] = tabs[idx]; tabs[idx] = tmp2;
+    } else {
+      return;
+    }
+    var globalIds = getOrderedAllTabs().map(function (t) { return t.id; });
+    var groupIds = tabs.map(function (t) { return t.id; });
+    var positions = [];
+    globalIds.forEach(function (id, pos) {
+      if (groupIds.indexOf(id) >= 0) positions.push(pos);
+    });
+    positions.forEach(function (pos, i) { globalIds[pos] = groupIds[i]; });
+    saveTabOrderIds(globalIds);
+  }
+
+  function moveTabToGroup(tabId, targetGroupId) {
+    var map = getPageGroupMap();
+    if (!map[tabId] || !groupById(targetGroupId) || map[tabId] === targetGroupId) return;
+    map[tabId] = targetGroupId;
+    savePageGroupMap(map);
+    var ids = getOrderedAllTabs().map(function (t) { return t.id; }).filter(function (id) { return id !== tabId; });
+    var insertAt = ids.length;
+    for (var i = 0; i < ids.length; i++) {
+      if (map[ids[i]] === targetGroupId) insertAt = i + 1;
+    }
+    ids.splice(insertAt, 0, tabId);
+    saveTabOrderIds(ids);
+    state.group = targetGroupId;
+    state.tab = tabId;
+    lsSet(NAV_GROUP_KEY, state.group);
+    lsSet("v2_current_tab", state.tab);
+    render();
+  }
+
+  function moveGroup(groupId, dir) {
+    var groups = getConfiguredGroups();
+    var ids = groups.map(function (g) { return g.id; });
+    var idx = ids.indexOf(groupId);
+    if (idx < 0) return;
+    if (dir === "up" && idx > 0) {
+      var tmp = ids[idx - 1]; ids[idx - 1] = ids[idx]; ids[idx] = tmp;
+    } else if (dir === "down" && idx < ids.length - 1) {
+      var tmp2 = ids[idx + 1]; ids[idx + 1] = ids[idx]; ids[idx] = tmp2;
+    } else {
+      return;
+    }
+    lsSet(NAV_GROUP_ORDER_KEY, ids);
+  }
+
+  function collapsedGroupIds() {
+    var arr = lsGet(NAV_COLLAPSED_KEY, []);
+    return Array.isArray(arr) ? arr : [];
+  }
+
+  function isGroupCollapsed(groupId) {
+    return collapsedGroupIds().indexOf(groupId) >= 0;
+  }
+
+  function toggleGroupCollapsed(groupId) {
+    var arr = collapsedGroupIds();
+    var idx = arr.indexOf(groupId);
+    if (idx >= 0) arr.splice(idx, 1);
+    else arr.push(groupId);
+    lsSet(NAV_COLLAPSED_KEY, arr);
   }
 
   function renderTabs() {
-    var tabs = getVisibleTabs();
-    var html = tabs.map(function (t) {
-      if (t.group) return '<span class="tab-group">' + t.group + "</span>";
+    var groups = getConfiguredGroups();
+    var group = groupById(state.group) || groups[0];
+    var groupHtml = groups.map(function (g) {
+      var collapsed = isGroupCollapsed(g.id);
+      var h = '<span class="nav-group-wrap">';
       if (tabSortMode) {
+        h += '<button class="nav-group-move" type="button" data-group-move="up" data-group-id="' + g.id + '" aria-label="' + g.label + ' 前移">↑</button>';
+      }
+      h += '<button class="nav-group' + (g.id === group.id ? " is-active" : "") + (collapsed ? " is-collapsed" : "") +
+        '" type="button" data-nav-group="' + g.id + '">' + g.label + "</button>";
+      h += '<button class="nav-collapse" type="button" data-collapse-group="' + g.id + '" aria-label="' + g.label + (collapsed ? " 展开" : " 折叠") + '">' + (collapsed ? "▶" : "▼") + "</button>";
+      if (tabSortMode) {
+        h += '<button class="nav-group-move" type="button" data-group-move="down" data-group-id="' + g.id + '" aria-label="' + g.label + ' 后移">↓</button>';
+      }
+      h += "</span>";
+      return h;
+    }).join("");
+    var tabs = isGroupCollapsed(group.id) ? [] : getVisibleTabs(group.id);
+    var tabsHtml = tabs.map(function (t) {
+      if (tabSortMode) {
+        var moveOptions = groups.filter(function (g) { return g.id !== state.group; }).map(function (g) {
+          return '<option value="' + g.id + '">移到' + g.label + "</option>";
+        }).join("");
         return '<span class="sort-item-wrap">' +
           '<button class="sort-btn" type="button" data-sort="up" data-tab="' + t.id + '" aria-label="' + t.label + ' 前移">↑</button>' +
           '<button class="tab sort-item' + (state.tab === t.id ? " is-active" : "") + '" type="button" data-tab="' + t.id + '">' + t.label + "</button>" +
           '<button class="sort-btn" type="button" data-sort="down" data-tab="' + t.id + '" aria-label="' + t.label + ' 后移">↓</button>' +
+          '<select class="tab-move-select" data-move-tab="' + t.id + '" aria-label="移动到其他分类"><option value="">移动</option>' + moveOptions + "</select>" +
           "</span>";
       }
       return '<button class="tab ' + (state.tab === t.id ? "is-active" : "") +
         '" type="button" data-tab="' + t.id + '">' + t.label + "</button>";
     }).join("");
 
-    html += '<div class="tab-sort-tail">';
-    html += '<button class="tab sort-toggle' + (tabSortMode ? " is-on" : "") + '" type="button" data-sort-toggle="1">' +
+    tabsHtml += '<div class="tab-sort-tail">';
+    tabsHtml += '<button class="tab sort-toggle' + (tabSortMode ? " is-on" : "") + '" type="button" data-sort-toggle="1">' +
       (tabSortMode ? "退出排序" : "导航排序") + "</button>";
     if (tabSortMode) {
-      html += '<button class="tab sort-reset" type="button" data-sort-reset="1">恢复默认</button>';
+      tabsHtml += '<button class="tab sort-reset" type="button" data-sort-reset="1">恢复默认</button>';
     }
-    html += "</div>";
+    tabsHtml += "</div>";
 
     tabsEl.classList.toggle("sorting", tabSortMode);
-    tabsEl.innerHTML = html;
+    tabsEl.innerHTML = '<div class="nav-groups">' + groupHtml + '</div><div class="nav-subtabs">' + tabsHtml + "</div>";
   }
 
   function renderHeader() {
@@ -452,7 +632,7 @@
   }
 
   function scrollToLatest() {
-    if (state.tab === "pick3" || state.tab === "ultimate") return;
+    if (state.tab === "pick3" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog" || state.tab === "hitlog") return;
     var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
     if (sc) {
       sc.scrollTop = sc.scrollHeight;
@@ -483,7 +663,10 @@
     else if (state.tab === "order") renderOrder();
     else if (state.tab === "predict") renderPredict();
     else if (state.tab === "pick3") renderPick3();
-    else if (state.tab === "ultimate") renderUltimate();
+    else if (state.tab === "chasenumber") renderChaseNumber();
+    else if (state.tab === "chaserecommend") renderChaseRecommendation();
+    else if (state.tab === "orderlog") renderOrderLog();
+    else if (state.tab === "hitlog") renderHitLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     scrollToLatest();
@@ -1447,6 +1630,199 @@
     return h;
   }
 
+  // ===== 双号模型下单记录表 =====
+  var ULT_ORDER_KEY = "v2_ultimate_order_log";
+
+  function ultimateOrdersLoad() {
+    var rows = lsGet(ULT_ORDER_KEY, []);
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  function ultimateOrdersSave(rows) {
+    lsSet(ULT_ORDER_KEY, rows);
+  }
+
+  function ultimateOrderNet(row) {
+    var UM = window.CAISHEN_ULTIMATE;
+    if (!UM || !UM.PATTERNS[row.pattern]) return 0;
+    var stakes = UM.PATTERNS[row.pattern].stakes;
+    var base = Number(row.base || 1);
+    if (row.result === "hit1") return +(base * 0.8 * stakes[0]).toFixed(2);
+    if (row.result === "hit2") return +(base * (1.8 * stakes[1] - stakes[0] - stakes[1])).toFixed(2);
+    if (row.result === "hit3") return +(base * (1.8 * stakes[2] - stakes[0] - stakes[1] - stakes[2])).toFixed(2);
+    if (row.result === "miss") return +(-base * (stakes[0] + stakes[1] + stakes[2])).toFixed(2);
+    return null;
+  }
+
+  function ultimateResultLabel(result) {
+    if (result === "hit1") return "第1期中";
+    if (result === "hit2") return "第2期中";
+    if (result === "hit3") return "第3期中";
+    if (result === "miss") return "三期全错";
+    return "待开奖";
+  }
+
+  function ultimateQuickAdd(mode) {
+    var UM = window.CAISHEN_ULTIMATE;
+    if (!UM) return;
+    var analysis = UM.analyze(RAW, MODEL, { startPeriod: 31 });
+    var rows = ultimateOrdersLoad();
+    var added = 0;
+    UM.KEYS.forEach(function (key) {
+      var item = analysis.items[key];
+      if (!item.currentPick || !item.monitor.pattern) return;
+      rows.push({
+        id: Date.now() + "-" + key + "-" + Math.random().toString(16).slice(2),
+        createdAt: new Date().toISOString(),
+        mode: mode,
+        position: key,
+        startPeriod: analysis.nextPeriod,
+        tail: item.currentPick.tail,
+        pattern: item.monitor.pattern,
+        base: 1,
+        result: "pending"
+      });
+      added++;
+    });
+    if (added) ultimateOrdersSave(rows);
+    renderOrderLog();
+  }
+
+  function renderOrderLog() {
+    var UM = window.CAISHEN_ULTIMATE;
+    var rows = ultimateOrdersLoad();
+    var settled = rows.filter(function (r) { return r.result !== "pending"; });
+    var wins = settled.filter(function (r) { return r.result !== "miss"; }).length;
+    var net = settled.reduce(function (sum, r) { return sum + (ultimateOrderNet(r) || 0); }, 0);
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">下单记录</h2><span class="section__hint">追号与追推荐分开记录 · 本机浏览器保存</span></div></div>';
+
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value">' + rows.length + '</div><div class="stat__label">全部记录</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + rows.filter(function (r) { return r.result === "pending"; }).length + '</div><div class="stat__label">待开奖</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + wins + "/" + settled.length + '</div><div class="stat__label">已结算命中 / 已结算</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (net >= 0 ? "#16a34a" : "#dc2626") + '">' + (net >= 0 ? "+" : "") + net.toFixed(2) + '</div><div class="stat__label">历史净收益（元）</div></div>';
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="panel"><div class="panel__body">';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
+    html += '<button class="btn-primary" data-uo-gen="number">生成当前追号单</button>';
+    html += '<button class="btn-primary" data-uo-gen="recommend">生成当前追推荐单</button>';
+    html += '</div>';
+    var current = UM ? UM.analyze(RAW, MODEL, { startPeriod: 31 }) : null;
+    html += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">';
+    if (current) {
+      html += "当前：" + UM.KEYS.map(function (key) {
+        var x = current.items[key];
+        return key + " " + (x.currentPick ? "尾" + x.currentPick.tail : "无") + " · " + x.monitor.stateLabel + " · " + (x.monitor.pattern || "观望");
+      }).join(" | ");
+    }
+    html += '</div>';
+    html += '<div class="ord-grid">';
+    html += '<div class="ord-item"><label>模式</label><select id="uoMode"><option value="number">追号</option><option value="recommend">追推荐</option></select></div>';
+    html += '<div class="ord-item"><label>位置</label><select id="uoPos"><option value="D1">D1首推</option><option value="D2">D2备选</option></select></div>';
+    html += '<div class="ord-item"><label>起始期数</label><input id="uoStart" type="number" min="1" value="' + (current ? current.nextPeriod : latest + 1) + '"></div>';
+    html += '<div class="ord-item"><label>尾号</label><input id="uoTail" type="number" min="0" max="9" value="' + (current && current.items.D1.currentPick ? current.items.D1.currentPick.tail : 0) + '"></div>';
+    html += '<div class="ord-item"><label>倍投</label><select id="uoPattern"><option value="P6">P6 保本</option><option value="P7">P7 收益型</option></select></div>';
+    html += '<div class="ord-item"><label>基础金额</label><input id="uoBase" type="number" min="1" step="1" value="1"></div>';
+    html += '<div class="ord-item"><label>结算结果</label><select id="uoResult"><option value="pending">待开奖</option><option value="hit1">第1期中</option><option value="hit2">第2期中</option><option value="hit3">第3期中</option><option value="miss">三期全错</option></select></div>';
+    html += '</div>';
+    html += '<button class="btn-primary" data-uo-add="1" style="margin-top:10px">新增记录</button>';
+    html += '</div></div></div>';
+
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="min-width:840px">';
+    html += '<div style="display:grid;grid-template-columns:1.25fr .75fr .65fr .65fr .55fr 1.15fr .65fr .7fr .65fr .55fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>时间</span><span>模式</span><span>位置</span><span>起始期</span><span>尾号</span><span>倍投</span><span>基础</span><span>结果</span><span>净收益</span><span>操作</span></div>';
+    if (!rows.length) {
+      html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无下单记录</div>';
+    } else {
+      rows.slice().sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).forEach(function (row) {
+        var value = ultimateOrderNet(row);
+        html += '<div style="display:grid;grid-template-columns:1.25fr .75fr .65fr .65fr .55fr 1.15fr .65fr .7fr .65fr .55fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
+        html += '<span>' + (row.createdAt || "").replace("T", " ").slice(0, 16) + '</span>';
+        html += '<span>' + (row.mode === "recommend" ? "追推荐" : "追号") + '</span>';
+        html += '<span>' + row.position + '</span>';
+        html += '<span>' + row.startPeriod + '</span>';
+        html += '<span>尾' + row.tail + '</span>';
+        html += '<span>' + UM.PATTERNS[row.pattern].stakes.join("/") + '</span>';
+        html += '<span>' + row.base + '</span>';
+        html += '<span><select data-uo-result="' + row.id + '" style="font-size:12px;padding:4px"><option value="pending"' + (row.result === "pending" ? " selected" : "") + '>待开奖</option><option value="hit1"' + (row.result === "hit1" ? " selected" : "") + '>第1期中</option><option value="hit2"' + (row.result === "hit2" ? " selected" : "") + '>第2期中</option><option value="hit3"' + (row.result === "hit3" ? " selected" : "") + '>第3期中</option><option value="miss"' + (row.result === "miss" ? " selected" : "") + '>三期全错</option></select></span>';
+        html += '<span style="color:' + (value == null ? "#6b7280" : value >= 0 ? "#16a34a" : "#dc2626") + '">' + (value == null ? "-" : (value >= 0 ? "+" : "") + value.toFixed(2)) + '</span>';
+        html += '<button class="chip" data-uo-del="' + row.id + '">删</button>';
+        html += '</div>';
+      });
+    }
+    html += '</div></div></div>';
+    html += '<p class="disclaimer">记录只保存在本机浏览器。追号模式表示锁定一个号码追3期；追推荐模式表示每期新推荐独立追3期并允许并行。</p>';
+    view.innerHTML = html;
+  }
+
+  var hitLogFilter = { mode: "all", position: "all" };
+
+  function renderHitLog() {
+    var UM = window.CAISHEN_ULTIMATE;
+    if (!UM) {
+      view.innerHTML = '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">追中记录模块未加载</div></div></div></div>';
+      return;
+    }
+    var all = ultimateOrdersLoad().filter(function (row) {
+      return row.result === "hit1" || row.result === "hit2" || row.result === "hit3";
+    });
+    var rows = all.filter(function (row) {
+      if (hitLogFilter.mode !== "all" && row.mode !== hitLogFilter.mode) return false;
+      if (hitLogFilter.position !== "all" && row.position !== hitLogFilter.position) return false;
+      return true;
+    });
+    var hit1 = rows.filter(function (r) { return r.result === "hit1"; }).length;
+    var hit2 = rows.filter(function (r) { return r.result === "hit2"; }).length;
+    var hit3 = rows.filter(function (r) { return r.result === "hit3"; }).length;
+    var net = rows.reduce(function (sum, r) { return sum + (ultimateOrderNet(r) || 0); }, 0);
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">追中记录</h2><span class="section__hint">只显示命中记录 · 明确标记第几期中</span></div></div>';
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + rows.length + '</div><div class="stat__label">追中总数</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + hit1 + '</div><div class="stat__label">第1期中</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + hit2 + '</div><div class="stat__label">第2期中</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + hit3 + '</div><div class="stat__label">第3期中</div></div>';
+    html += '</div></div>';
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (net >= 0 ? "#16a34a" : "#dc2626") + '">' + (net >= 0 ? "+" : "") + net.toFixed(2) + '</div><div class="stat__label">命中记录净收益（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + (rows.length ? ((hit1 / rows.length * 100).toFixed(1) + "%") : "-") + '</div><div class="stat__label">第1期直接命中占比</div></div>';
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">';
+    html += '<span style="font-size:12px;color:var(--muted)">筛选</span>';
+    html += '<select id="hitModeFilter" style="padding:6px"><option value="all"' + (hitLogFilter.mode === "all" ? " selected" : "") + '>全部模式</option><option value="number"' + (hitLogFilter.mode === "number" ? " selected" : "") + '>追号</option><option value="recommend"' + (hitLogFilter.mode === "recommend" ? " selected" : "") + '>追推荐</option></select>';
+    html += '<select id="hitPosFilter" style="padding:6px"><option value="all"' + (hitLogFilter.position === "all" ? " selected" : "") + '>全部位置</option><option value="D1"' + (hitLogFilter.position === "D1" ? " selected" : "") + '>D1首推</option><option value="D2"' + (hitLogFilter.position === "D2" ? " selected" : "") + '>D2备选</option></select>';
+    html += '</div>';
+    html += '<div style="min-width:790px">';
+    html += '<div style="display:grid;grid-template-columns:1.1fr .7fr .6fr .6fr .55fr 1.1fr 1fr .7fr .7fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>时间</span><span>模式</span><span>位置</span><span>起始期</span><span>尾号</span><span>倍投</span><span>中在第几期</span><span>结算期</span><span>净收益</span></div>';
+    if (!rows.length) {
+      html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无追中记录</div>';
+    } else {
+      rows.slice().sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).forEach(function (row) {
+        var hitIndex = row.result === "hit1" ? 1 : row.result === "hit2" ? 2 : 3;
+        var value = ultimateOrderNet(row);
+        html += '<div style="display:grid;grid-template-columns:1.1fr .7fr .6fr .6fr .55fr 1.1fr 1fr .7fr .7fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
+        html += '<span>' + (row.createdAt || "").replace("T", " ").slice(0, 16) + '</span>';
+        html += '<span>' + (row.mode === "recommend" ? "追推荐" : "追号") + '</span>';
+        html += '<span>' + row.position + '</span>';
+        html += '<span>' + row.startPeriod + '</span>';
+        html += '<span>尾' + row.tail + '</span>';
+        html += '<span>' + UM.PATTERNS[row.pattern].stakes.join("/") + '</span>';
+        html += '<span style="color:#16a34a;font-weight:800">第' + hitIndex + '期中</span>';
+        html += '<span>' + (Number(row.startPeriod) + hitIndex - 1) + '</span>';
+        html += '<span style="color:' + (value >= 0 ? "#16a34a" : "#dc2626") + '">' + (value >= 0 ? "+" : "") + value.toFixed(2) + '</span>';
+        html += '</div>';
+      });
+    }
+    html += '</div></div></div>';
+    html += '<p class="disclaimer">追中记录只读取“下单记录”中已标记为第1期、第2期或第3期命中的记录；未命中和待开奖记录不会显示在这里。</p>';
+    view.innerHTML = html;
+  }
+
   function renderOrder() {
     var next = latest + 1;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">下单追投</h2><span class="section__hint">数据保存在本机浏览器</span></div>';
@@ -2001,7 +2377,7 @@
     return MODEL.pickTopAt(cur, k);
   }
 
-  function renderUltimate() {
+  function renderUltimateMode(mode) {
     var UM = window.CAISHEN_ULTIMATE;
     if (!UM) {
       view.innerHTML = '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">终极模型模块未加载</div></div></div></div>';
@@ -2009,10 +2385,19 @@
     }
 
     var options = { startPeriod: 31 };
+    var isRecommendMode = mode === "recommend";
+    var modeLabel = isRecommendMode ? "追推荐模型" : "追号模型";
+    var modeHint = isRecommendMode ? "每期新推荐独立追3期 · 允许并行追号线" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
     var analysis = UM.analyze(RAW, MODEL, options);
-    var strategyResult = UM.runStrategyBacktest(RAW, MODEL, options);
-    var fixedP6 = UM.runFixedBacktest(RAW, MODEL, "P6", options);
-    var fixedP7 = UM.runFixedBacktest(RAW, MODEL, "P7", options);
+    var strategyResult = isRecommendMode
+      ? UM.runRecommendationBacktest(RAW, MODEL, options)
+      : UM.runStrategyBacktest(RAW, MODEL, options);
+    var fixedP6 = isRecommendMode
+      ? UM.runOverlappingBacktest(RAW, MODEL, "P6", options)
+      : UM.runFixedBacktest(RAW, MODEL, "P6", options);
+    var fixedP7 = isRecommendMode
+      ? UM.runOverlappingBacktest(RAW, MODEL, "P7", options)
+      : UM.runFixedBacktest(RAW, MODEL, "P7", options);
     var stateColor = { strong: "#16a34a", steady: "#2563eb", weak: "#dc2626", sample: "#6b7280" };
 
     function pctFmt(x) {
@@ -2031,8 +2416,8 @@
       return state.pattern + " " + UM.PATTERNS[state.pattern].label;
     }
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">双号终极模型</h2><span class="section__hint">' +
-      UM.VERSION + ' · 数据截至第' + analysis.endPeriod + '期 · 预测第' + analysis.nextPeriod + '期</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">' + modeLabel + '</h2><span class="section__hint">' +
+      modeHint + ' · ' + UM.VERSION + ' · 数据截至第' + analysis.endPeriod + '期 · 预测第' + analysis.nextPeriod + '期</span></div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:14px 12px">';
     html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
@@ -2085,15 +2470,18 @@
     });
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">状态选择回测</h2><span class="section__hint">只交易D1/D2 · 状态分数阈值 35/60 · 样本不足仍按P6观察</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">本模式状态回测</h2><span class="section__hint">只交易D1/D2 · 状态分数阈值 35/60 · 样本不足仍按P6观察</span></div></div>';
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value" style="color:' + (strategyResult.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (strategyResult.net >= 0 ? "+" : "") + numFmt(strategyResult.net) + '</div><div class="stat__label">状态模型净收益（基础单位）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + pctFmt(strategyResult.roi) + '</div><div class="stat__label">状态模型回报率</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + numFmt(strategyResult.maxDrawdown) + '</div><div class="stat__label">状态模型最大回撤</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + strategyResult.sequences + '</div><div class="stat__label">有效追投批数 · 跳过起点' + strategyResult.skipped + '</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + strategyResult.sequences + '</div><div class="stat__label">有效追投批数' + (isRecommendMode ? ' · 最多并行' + strategyResult.maxActive : ' · 跳过起点' + strategyResult.skipped) + '</div></div>';
+    if (isRecommendMode) {
+      html += '<div class="stat"><div class="stat__value">' + numFmt(strategyResult.maxExposure) + '</div><div class="stat__label">单期最大投入（基础单位）</div></div>';
+    }
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">固定方案对照</h2><span class="section__hint">基础单位 · 历史逐期回测</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">固定方案对照</h2><span class="section__hint">' + modeHint + ' · 基础单位 · 历史逐期回测</span></div></div>';
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="min-width:520px">';
     html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr;gap:6px;padding:6px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
@@ -2106,7 +2494,23 @@
     });
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近监控记录</h2><span class="section__hint">D1/D2分开显示 · 中=绿色 未中=红色 · 新→旧</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近追投记录</h2><span class="section__hint">本模式实际追投批次 · 新→旧</span></div></div>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="min-width:520px">';
+    html += '<div style="display:grid;grid-template-columns:.7fr .8fr .7fr .7fr 1.1fr .8fr .8fr;gap:6px;padding:6px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>起始期</span><span>模式</span><span>位置</span><span>尾号</span><span>倍投</span><span>结果</span><span>净收益</span></div>';
+    var modeEvents = strategyResult.events.slice(-20);
+    for (var mei = modeEvents.length - 1; mei >= 0; mei--) {
+      var me = modeEvents[mei];
+      var hitText = me.t === 1 ? "第1期中" : me.t === 2 ? "第2期中" : me.t === 3 ? "第3期中" : "三期全错";
+      html += '<div style="display:grid;grid-template-columns:.7fr .8fr .7fr .7fr 1.1fr .8fr .8fr;gap:6px;padding:7px 6px;border-bottom:1px solid #f0f0f0;font-size:12px">';
+      html += '<span>' + me.startPeriod + '</span><span>' + (isRecommendMode ? "追推荐" : "追号") + '</span><span>' + me.key + '</span><span>尾' + me.pick + '</span><span>' + UM.PATTERNS[me.pattern].stakes.join("/") + '</span><span>' + hitText + '</span><span style="color:' + (me.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (me.net >= 0 ? "+" : "") + numFmt(me.net) + '</span>';
+      html += '</div>';
+    }
+    if (!modeEvents.length) html += '<div style="padding:16px;text-align:center;color:#9ca3af;font-size:12px">暂无追投记录</div>';
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近推荐监控</h2><span class="section__hint">D1/D2分开显示 · 中=绿色 未中=红色 · 新→旧</span></div></div>';
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="display:flex;gap:5px;min-width:max-content">';
     var recent = analysis.signals.slice(-30);
@@ -2123,8 +2527,16 @@
       html += '</div>';
     }
     html += '</div></div>';
-    html += '<p class="disclaimer">终极模型只监控双号推荐D1/D2，不读取下期预估。状态分数由近期命中率、遗漏分位、连中和连错共同计算；第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
+    html += '<p class="disclaimer">' + modeLabel + '只监控双号推荐D1/D2，不读取下期预估。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
     view.innerHTML = html;
+  }
+
+  function renderChaseNumber() {
+    renderUltimateMode("number");
+  }
+
+  function renderChaseRecommendation() {
+    renderUltimateMode("recommend");
   }
 
   function renderPick3() {
@@ -3050,23 +3462,34 @@
   }
 
   tabsEl.addEventListener("click", function (e) {
-    // 箭头移动（↑前移 / ↓后移），立即保存，不重渲染页面内容
+    var groupMove = e.target.closest("[data-group-move]");
+    if (groupMove) {
+      moveGroup(groupMove.dataset.groupId, groupMove.dataset.groupMove);
+      renderTabs();
+      return;
+    }
+    var collapseBtn = e.target.closest("[data-collapse-group]");
+    if (collapseBtn) {
+      toggleGroupCollapsed(collapseBtn.dataset.collapseGroup);
+      renderTabs();
+      return;
+    }
+    var navGroup = e.target.closest("[data-nav-group]");
+    if (navGroup) {
+      state.group = navGroup.dataset.navGroup;
+      var collapsed = collapsedGroupIds().filter(function (id) { return id !== state.group; });
+      lsSet(NAV_COLLAPSED_KEY, collapsed);
+      state.tab = firstTabInGroup(state.group);
+      lsSet(NAV_GROUP_KEY, state.group);
+      lsSet("v2_current_tab", state.tab);
+      tabSortMode = false;
+      render();
+      return;
+    }
+    // 箭头移动（↑前移 / ↓后移），只在当前分类内调整，立即保存
     var sortBtn = e.target.closest(".sort-btn");
     if (sortBtn) {
-      var sid = sortBtn.dataset.tab;
-      var dir = sortBtn.dataset.sort;
-      var tabs = getVisibleTabs();
-      var idx = -1;
-      for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === sid) { idx = i; break; } }
-      if (idx < 0) return;
-      if (dir === "up" && idx > 0) {
-        var tmp = tabs[idx - 1]; tabs[idx - 1] = tabs[idx]; tabs[idx] = tmp;
-      } else if (dir === "down" && idx < tabs.length - 1) {
-        var tmp2 = tabs[idx + 1]; tabs[idx + 1] = tabs[idx]; tabs[idx] = tmp2;
-      } else {
-        return;
-      }
-      saveTabOrder(tabs);
+      moveTabWithinGroup(sortBtn.dataset.tab, sortBtn.dataset.sort);
       renderTabs();
       return;
     }
@@ -3079,7 +3502,12 @@
     // 恢复默认顺序
     if (e.target.closest(".sort-reset")) {
       resetTabOrder();
-      renderTabs();
+      var resetGroup = groupForTab(state.tab);
+      if (resetGroup) {
+        state.group = resetGroup.id;
+        lsSet(NAV_GROUP_KEY, state.group);
+      }
+      render();
       return;
     }
     var btn = e.target.closest(".tab");
@@ -3090,7 +3518,49 @@
     }
   });
 
+  tabsEl.addEventListener("change", function (e) {
+    var moveSelect = e.target.closest("[data-move-tab]");
+    if (!moveSelect || !moveSelect.value) return;
+    moveTabToGroup(moveSelect.dataset.moveTab, moveSelect.value);
+  });
+
   view.addEventListener("click", function (e) {
+    var uoDel = e.target.closest("[data-uo-del]");
+    if (uoDel) {
+      var uoId = uoDel.dataset.uoDel;
+      ultimateOrdersSave(ultimateOrdersLoad().filter(function (r) { return r.id !== uoId; }));
+      renderOrderLog();
+      return;
+    }
+    var uoGen = e.target.closest("[data-uo-gen]");
+    if (uoGen) { ultimateQuickAdd(uoGen.dataset.uoGen); return; }
+    if (e.target.closest("[data-uo-add]")) {
+      var mode = document.getElementById("uoMode").value;
+      var pos = document.getElementById("uoPos").value;
+      var startPeriod = Number(document.getElementById("uoStart").value);
+      var tail = Number(document.getElementById("uoTail").value);
+      var pattern = document.getElementById("uoPattern").value;
+      var base = Number(document.getElementById("uoBase").value);
+      var result = document.getElementById("uoResult").value;
+      if (!Number.isFinite(startPeriod) || startPeriod < 1) { alert("起始期数不正确"); return; }
+      if (!Number.isFinite(tail) || tail < 0 || tail > 9) { alert("尾号必须为0-9"); return; }
+      if (!Number.isFinite(base) || base <= 0) { alert("基础金额必须大于0"); return; }
+      var rows = ultimateOrdersLoad();
+      rows.push({
+        id: Date.now() + "-" + Math.random().toString(16).slice(2),
+        createdAt: new Date().toISOString(),
+        mode: mode,
+        position: pos,
+        startPeriod: startPeriod,
+        tail: tail,
+        pattern: pattern,
+        base: base,
+        result: result
+      });
+      ultimateOrdersSave(rows);
+      renderOrderLog();
+      return;
+    }
     var ordsn = e.target.closest("[data-ordsn]");
     if (ordsn) {
       var t = Number(ordsn.dataset.ordsn);
@@ -3190,6 +3660,34 @@
     }
   });
 
+  view.addEventListener("change", function (e) {
+    if (e.target.id === "hitModeFilter") {
+      hitLogFilter.mode = e.target.value;
+      renderHitLog();
+      return;
+    }
+    if (e.target.id === "hitPosFilter") {
+      hitLogFilter.position = e.target.value;
+      renderHitLog();
+      return;
+    }
+    var resultSelect = e.target.closest("[data-uo-result]");
+    if (!resultSelect) return;
+    var id = resultSelect.dataset.uoResult;
+    var rows = ultimateOrdersLoad();
+    var changed = false;
+    rows.forEach(function (row) {
+      if (row.id === id) {
+        row.result = resultSelect.value;
+        changed = true;
+      }
+    });
+    if (changed) {
+      ultimateOrdersSave(rows);
+      renderOrderLog();
+    }
+  });
+
   view.addEventListener("input", function (e) {
     var id = e.target.id;
     if (id === "ordBase" || id === "ordM1" || id === "ordM2" || id === "ordM3" || id === "ordRet") {
@@ -3204,8 +3702,14 @@
     }
   });
 
-  var validTabs = TABS.filter(function (t) { return !t.group; }).map(function (t) { return t.id; });
-  if (validTabs.indexOf(state.tab) === -1) state.tab = "overview";
+  var validTabs = TABS.map(function (t) { return t.id; });
+  var validGroups = NAV_GROUPS.map(function (g) { return g.id; });
+  if (validGroups.indexOf(state.group) === -1) state.group = NAV_GROUPS[0].id;
+  if (validTabs.indexOf(state.tab) === -1) state.tab = firstTabInGroup(state.group);
+  var currentGroup = groupForTab(state.tab) || groupById(state.group) || NAV_GROUPS[0];
+  state.group = currentGroup.id;
+  lsSet(NAV_GROUP_KEY, state.group);
+  lsSet("v2_current_tab", state.tab);
   renderHeader();
   render();
 })();

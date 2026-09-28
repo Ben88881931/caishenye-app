@@ -340,8 +340,10 @@
         var stake = stakes[j];
         var isHit = event.t !== 4 && j === event.t - 1;
         eventStake += stake;
-        if (!byPeriod[p]) byPeriod[p] = 0;
-        byPeriod[p] += isHit ? 0.8 * stake : -stake;
+        if (!byPeriod[p]) byPeriod[p] = { net: 0, staked: 0, active: 0 };
+        byPeriod[p].net += isHit ? 0.8 * stake : -stake;
+        byPeriod[p].staked += stake;
+        byPeriod[p].active++;
       }
       event.staked = eventStake;
       event.net = netFor(event.t, event.pattern);
@@ -364,8 +366,6 @@
     });
 
     var periods = signals.map(function (s) { return s.period; });
-    var cashflows = {};
-    periods.forEach(function (p) { if (byPeriod[p] != null) cashflows[p] = byPeriod[p]; });
     var cumulative = 0;
     var peak = 0;
     var peakPeriod = periods[0] || null;
@@ -378,8 +378,11 @@
     var flatPeriods = 0;
     var lossRun = 0;
     var maxLossRun = 0;
+    var maxActive = 0;
+    var maxExposure = 0;
     periods.forEach(function (p) {
-      var cash = byPeriod[p] || 0;
+      var bucket = byPeriod[p] || { net: 0, staked: 0, active: 0 };
+      var cash = bucket.net;
       cumulative += cash;
       if (cash > 0) positivePeriods++;
       else if (cash < 0) {
@@ -400,6 +403,8 @@
         maxDrawdownPeak = currentPeakPeriod;
         maxDrawdownTrough = p;
       }
+      if (bucket.active > maxActive) maxActive = bucket.active;
+      if (bucket.staked > maxExposure) maxExposure = bucket.staked;
     });
 
     var staked = events.reduce(function (acc, event) { return acc + event.staked; }, 0);
@@ -422,6 +427,8 @@
       maxDrawdown: Number(maxDrawdown.toFixed(4)),
       maxDrawdownPeak: maxDrawdownPeak,
       maxDrawdownTrough: maxDrawdownTrough,
+      maxActive: maxActive,
+      maxExposure: Number(maxExposure.toFixed(4)),
       positivePeriods: positivePeriods,
       negativePeriods: negativePeriods,
       flatPeriods: flatPeriods,
@@ -527,6 +534,69 @@
     return summary;
   }
 
+  function buildOverlappingEvents(signals, choosePattern, options) {
+    var events = [];
+    signals.forEach(function (row, index) {
+      KEYS.forEach(function (key) {
+        var item = row[key];
+        if (!item) return;
+        var chase = chaseAt(signals, index, key);
+        if (!chase) return;
+        var state = null;
+        var pattern = null;
+        if (choosePattern) {
+          state = choosePattern(key, index);
+          if (!state || !state.pattern) return;
+          pattern = state.pattern;
+        } else {
+          pattern = "P6";
+        }
+        events.push({
+          key: key,
+          startIndex: index,
+          startPeriod: row.period,
+          pick: item.tail,
+          score: item.score,
+          tag: item.tag,
+          t: chase.t,
+          duration: chase.duration,
+          pattern: pattern,
+          state: state
+        });
+      });
+    });
+    events.sort(function (a, b) {
+      return a.startPeriod - b.startPeriod || KEYS.indexOf(a.key) - KEYS.indexOf(b.key);
+    });
+    return events;
+  }
+
+  function runOverlappingBacktest(raw, model, patternKey, options) {
+    var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
+    if (!PATTERNS[patternKey]) throw new Error("unknown pattern: " + patternKey);
+    var signals = buildSignals(raw, model, opts);
+    var events = buildOverlappingEvents(signals, null, opts);
+    events.forEach(function (event) { event.pattern = patternKey; });
+    return summarizeEvents(events, signals, opts);
+  }
+
+  function runRecommendationBacktest(raw, model, options) {
+    var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
+    var signals = buildSignals(raw, model, opts);
+    var events = buildOverlappingEvents(signals, function (key, index) {
+      return monitorFromHistory(keyHistory(signals, key, index), opts);
+    }, opts);
+    var summary = summarizeEvents(events, signals, opts);
+    summary.skipped = signals.reduce(function (count, row, index) {
+      return count + KEYS.filter(function (key) {
+        if (!row[key]) return false;
+        var state = monitorFromHistory(keyHistory(signals, key, index), opts);
+        return !state.pattern;
+      }).length;
+    }, 0);
+    return summary;
+  }
+
   return {
     VERSION: VERSION,
     KEYS: KEYS,
@@ -538,6 +608,8 @@
     monitorFromHistory: monitorFromHistory,
     windowStats: windowStats,
     runFixedBacktest: runFixedBacktest,
-    runStrategyBacktest: runStrategyBacktest
+    runStrategyBacktest: runStrategyBacktest,
+    runOverlappingBacktest: runOverlappingBacktest,
+    runRecommendationBacktest: runRecommendationBacktest
   };
 });

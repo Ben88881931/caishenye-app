@@ -185,24 +185,50 @@ def main():
             pass_("app.js 存在 TABS 定义")
         else:
             fail("app.js 未找到 TABS 定义")
-        if "renderTabs" in app_text and "getVisibleTabs()" in app_text:
+        if "renderTabs" in app_text and "getVisibleTabs(" in app_text:
             pass_("renderTabs 通过 getVisibleTabs 生成导航")
         else:
             fail("renderTabs 未通过 getVisibleTabs 生成导航")
+        if "var NAV_GROUPS" in app_text and 'data-nav-group="' in app_text and "nav-subtabs" in app_text and "nav-groups" in app_text:
+            pass_("app.js 含两级导航分类")
+        else:
+            fail("app.js 缺少两级导航分类")
+        if (
+            "function moveTabToGroup" in app_text
+            and "function moveGroup" in app_text
+            and 'data-collapse-group="' in app_text
+            and 'data-move-tab="' in app_text
+            and "NAV_COLLAPSED_KEY" in app_text
+            and "NAV_PAGE_GROUPS_KEY" in app_text
+            and "NAV_GROUP_ORDER_KEY" in app_text
+        ):
+            pass_("app.js 支持分类折叠、分类排序和页面跨类移动")
+        else:
+            fail("app.js 缺少分类折叠、分类排序或页面跨类移动")
 
-        for func in ["renderUltimate"]:
+        for func in ["renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "renderHitLog"]:
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少终极模型函数 {func}")
         else:
-            pass_("终极模型页面函数存在")
-        if 'id: "ultimate"' in app_text and "window.CAISHEN_ULTIMATE" in app_text:
-            pass_("app.js 含终极模型导航与模块引用")
+            pass_("追号/追推荐/下单记录页面函数存在")
+        if (
+            'id: "chasenumber"' in app_text
+            and 'id: "chaserecommend"' in app_text
+            and 'id: "orderlog"' in app_text
+            and 'id: "hitlog"' in app_text
+            and "window.CAISHEN_ULTIMATE" in app_text
+        ):
+            pass_("app.js 含追号/追推荐/下单记录/追中记录导航")
         else:
-            fail("app.js 缺少终极模型导航或模块引用")
-        if "双号终极模型" in app_text and "状态选择回测" in app_text and "独立追三期命中结构" in app_text:
-            pass_("终极模型页面含状态、三期结构和回测区块")
+            fail("app.js 缺少追号/追推荐/下单记录导航")
+        if "追号模型" in app_text and "追推荐模型" in app_text and "下单记录" in app_text and "追中记录" in app_text and "本模式状态回测" in app_text:
+            pass_("追号/追推荐/下单记录页面区块完整")
         else:
-            fail("终极模型页面区块不完整")
+            fail("追号/追推荐/下单记录页面区块不完整")
+        if "v2_ultimate_order_log" in app_text and "ultimateOrderNet" in app_text and "第1期中" in app_text and "第2期中" in app_text and "第3期中" in app_text:
+            pass_("下单记录与追中记录含本地存储、结算计算和命中期数")
+        else:
+            fail("下单记录缺少本地存储或结算计算")
 
     index_path = REPO / "index.html"
     if not index_path.exists():
@@ -254,7 +280,7 @@ def main():
 
     if ultimate_model_path.exists():
         ultimate_text = ultimate_model_path.read_text(encoding="utf-8")
-        for token in ["monitorFromHistory", "windowStats", "runFixedBacktest", "runStrategyBacktest", "skipBelow", "aggressiveAt"]:
+        for token in ["monitorFromHistory", "windowStats", "runFixedBacktest", "runStrategyBacktest", "runOverlappingBacktest", "runRecommendationBacktest", "skipBelow", "aggressiveAt"]:
             if token in ultimate_text:
                 pass_(f"ultimate_model.js 含 {token}")
             else:
