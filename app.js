@@ -2465,7 +2465,7 @@
 
     html += '<div class="section"><div class="panel" style="padding:16px 14px">';
     html += '<div style="text-align:center">';
-    html += '<div style="font-size:12px;color:var(--muted);font-weight:700">预测第' + analysis.nextPeriod + '期动作</div>';
+    html += '<div style="font-size:12px;color:var(--muted);font-weight:700">本轮候选从第' + analysis.nextPeriod + '期开始</div>';
     html += '<div style="font-size:28px;font-weight:900;color:' + actionColor + ';margin:6px 0">' + decision.action + '</div>';
     html += '<div style="font-size:12px;color:var(--muted)">' + decision.rule + " · " + decision.reason + "</div>";
     html += '</div>';
@@ -2503,7 +2503,7 @@
     });
     html += "</div></div></div>";
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内命中结构</h2><span class="section__hint">按调度选中的模型首推，锁定追3期</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内命中结构</h2><span class="section__hint">第31期起统计 · 按调度选中的模型首推，锁定追3期</span></div></div>';
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + pctFmt(threeRes.hitRate) + '</div><div class="stat__label">3期内命中率 · ' + threeRes.hits + "/" + threeRes.n + "批</div></div>";
     html += '<div class="stat"><div class="stat__value">' + pctFmt(threeRes.firstRate) + '</div><div class="stat__label">第1期中 · ' + threeRes.first + "批</div></div>";
@@ -2513,7 +2513,7 @@
     html += '<div class="stat"><div class="stat__value">' + threeRes.sources.double + " / " + threeRes.sources.weighted + '</div><div class="stat__label">来源：双号 / 加权</div></div>';
     html += "</div></div>";
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">四条线独立追3期</h2><span class="section__hint">D1、D2、W1、W2分别锁定各自首推号追3期</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">四条线独立追3期</h2><span class="section__hint">统一从第31期开始 · D1、D2、W1、W2分别锁定各自首推号追3期</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="min-width:620px">';
     html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
@@ -2536,7 +2536,7 @@
     }
     allThreeBatches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内必出滚动记录</h2><span class="section__hint">每一格列出实际检查的期数和号码 · 新→旧</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内必出滚动记录</h2><span class="section__hint">每格标注起始期、锁定号码和结束期 · 新→旧</span></div></div>';
     html += '<div class="section"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
     ["ALL", "D1", "D2", "W1", "W2"].forEach(function (key) {
       html += '<button class="chip' + (selectorHistoryFilter === key ? " is-active" : "") + '" data-selector-history-filter="' + key + '">' + (key === "ALL" ? "全部" : key) + '</button>';
@@ -2547,13 +2547,15 @@
     allThreeBatches.forEach(function (batch) {
       var isHit = batch.hitIndex !== 4;
       var color = isHit ? "#16a34a" : "#dc2626";
+      var endPeriod = batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
       html += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
-      html += '<div style="display:flex;justify-content:space-between;gap:4px;font-size:11px"><b>' + batch.label + '</b><span>第' + batch.startPeriod + '期</span></div>';
-      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">尾' + batch.tail + '</div>';
+      html += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
+      html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期</div>';
+      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">锁定 尾' + batch.tail + '</div>';
       batch.attempts.forEach(function (a) {
         html += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
       });
-      html += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + color + '">' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
+      html += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + color + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
       html += '</div>';
     });
     if (!allThreeBatches.length) html += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
