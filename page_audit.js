@@ -81,7 +81,7 @@ const ultimate = require("./ultimate_model.js").analyze(raw, model, { startPerio
 must(Number(ultimate.nextPeriod) === latest + 1, "追号/追推荐模型预测期正确");
 must(["分批启用", "观望"].includes(ultimate.decision.action), "追号模型总决策合法");
 
-must(appText.includes("function promoteSectionToTop") && appText.includes('promoteSectionToTop("三期内追投滚动记录"') && appText.includes('promoteSectionToTop("三期内必出滚动记录"') && appText.includes('promoteSectionToTop("最近推荐监控"') && appText.includes('promoteSectionToTop("追中记录"') && appText.includes("function moveSectionIntoCardBefore") && appText.includes('moveSectionIntoCardBefore("当前决策"') && appText.includes("cardPanel.appendChild(sections[si])") && appText.includes("historyPanel.style.border = \"0\""), "三期内滚动记录均嵌入卡片底部");
+must(appText.includes("function promoteSectionToTop") && appText.includes('promoteSectionToTop("三期内追投滚动记录"') && appText.includes('promoteSectionToTop("三期内必出滚动记录"') && appText.includes('promoteSectionToTop("最近推荐监控"') && appText.includes('promoteSectionToTop("追中记录"') && appText.includes("cardPanel.appendChild(sections[si])") && appText.includes("historyPanel.style.border = \"0\""), "三期内滚动记录均嵌入卡片底部");
 must(appText.includes("snapshotSkipped") && appText.includes("跳过，未参与结算"), "空快照不会回退成实时推荐");
 must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab") && appText.includes("nav-group-caret") && appText.includes("window.scrollTo"), "导航保持横向位置、当前项可见且切页回顶");
 const cssText = read("styles.css");

@@ -684,38 +684,6 @@
     }
   }
 
-  function moveSectionIntoCardBefore(title, beforeTitle, anchorIds) {
-    var anchor = null;
-    for (var ai = 0; ai < anchorIds.length; ai++) {
-      anchor = view.querySelector("#" + anchorIds[ai]);
-      if (anchor) break;
-    }
-    if (!anchor) return;
-    var cardPanel = anchor.querySelector(".panel");
-    if (!cardPanel) return;
-    var target = null;
-    var before = null;
-    var sections = view.querySelectorAll(".section");
-    for (var si = 0; si < sections.length; si++) {
-      var heading = sections[si].querySelector(".section__title");
-      if (!heading) continue;
-      if (heading.textContent.indexOf(title) >= 0) target = sections[si];
-      if (heading.textContent.indexOf(beforeTitle) >= 0) before = sections[si];
-    }
-    if (!target || !before || before.parentNode !== cardPanel) return;
-    cardPanel.insertBefore(target, before);
-    target.style.marginTop = "14px";
-    target.style.paddingTop = "12px";
-    target.style.borderTop = "1px solid #bbf7d0";
-    var targetPanel = target.querySelector(".panel");
-    if (targetPanel) {
-      targetPanel.style.background = "transparent";
-      targetPanel.style.border = "0";
-      targetPanel.style.boxShadow = "none";
-      targetPanel.style.padding = "0";
-    }
-  }
-
   function renderHeader() {
     document.getElementById("latestPeriod").textContent = latest;
     document.getElementById("latestTails").textContent = "尾 " + tailsOf(latest).join(" ");
@@ -2618,7 +2586,6 @@
     promoteSectionToTop("三期内追投滚动记录", ["ultimateLockCard", "ultimatePageHeader"]);
     promoteSectionToTop("最近推荐监控", ["ultimateLockCard", "ultimatePageHeader"]);
     promoteSectionToTop("追中记录", ["ultimateLockCard", "ultimatePageHeader"]);
-    moveSectionIntoCardBefore("当前决策", "三期内追投滚动记录", ["ultimateLockCard", "ultimatePageHeader"]);
   }
 
   var selectorHistoryFilter = "ALL";
