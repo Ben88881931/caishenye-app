@@ -251,17 +251,17 @@ def main():
             fail("下期预估空快照仍会错误回退显示")
         if (
             "function promoteSectionToTop" in app_text
-            and 'promoteSectionToTop("三期内追投滚动记录"' in app_text
             and 'promoteSectionToTop("三期内必出滚动记录"' in app_text
             and 'id="ultimateLockCard"' in app_text
             and 'id="selectorActionCard"' in app_text
             and "cardPanel.appendChild(sections[si])" in app_text
-            and 'promoteSectionToTop("最近推荐监控"' in app_text
-            and 'promoteSectionToTop("追中记录"' in app_text
+            and "ULT_CARD_HISTORY" in app_text
+            and "ULT_RECORDS_START" in app_text
+            and "embedded-card-history" in app_text
         ):
-            pass_("三期内滚动记录已置顶展示")
+            pass_("三期内记录与调度记录均已嵌入卡片")
         else:
-            fail("三期内滚动记录未置顶")
+            fail("三期内记录未直接嵌入卡片")
         if "v2_ultimate_order_log" in app_text and "ultimateOrderNet" in app_text and "第1期中" in app_text and "第2期中" in app_text and "第3期中" in app_text:
             pass_("下单记录与追中记录含本地存储、结算计算和命中期数")
         else:

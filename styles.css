@@ -344,6 +344,27 @@ body {
   padding: 12px;
 }
 
+.embedded-card-history {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #bbf7d0;
+}
+
+.embedded-card-history > .section {
+  margin-bottom: 10px;
+}
+
+.embedded-card-history > .section > .panel {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 !important;
+}
+
+.embedded-card-history > .section > .panel .panel__body {
+  padding: 0;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

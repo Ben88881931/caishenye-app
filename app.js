@@ -2450,6 +2450,7 @@
       });
       html += '</div></div>';
       html += '<div style="margin-top:10px;font-size:12px;color:' + (gateBlocked ? gateTone.text : lockTone.text) + '">' + (gateBlocked ? "最终执行：调度观望，锁定号降级为观察，不产生订单。" : "最终执行：调度允许，仍需按总览流程确认本金和实际下单。") + '</div>';
+      html += '<!--ULT_CARD_HISTORY-->';
       html += '</div></div>';
     } else {
       html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #d97706;background:#fffbeb">';
@@ -2457,6 +2458,7 @@
       html += '<div style="font-size:30px;line-height:1.1;font-weight:900;color:#92400e;margin:6px 0">本期不建议锁定</div>';
       html += '<div style="font-size:13px;color:#92400e">D1、D2 当前均为弱状态或空推荐；等待状态转强后再锁定尾号。</div>';
       html += '<div style="margin-top:8px;font-size:12px;color:#92400e">最终是否下单仍以总览流程和调度模型动作为准。</div>';
+      html += '<!--ULT_CARD_HISTORY-->';
       html += '</div></div>';
     }
 
@@ -2535,6 +2537,7 @@
     });
     html += '</div></div>';
 
+    html += '<!--ULT_RECORDS_START-->';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内追投滚动记录</h2><span class="section__hint">置顶显示 · 第31期起 · 每批标注起始期、锁定号码和结束期 · 新→旧</span></div></div>';
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="display:flex;gap:6px;min-width:max-content">';
@@ -2581,11 +2584,18 @@
     }
     html += '</div></div>';
     html += hitLogSectionHTML(mode);
+    html += '<!--ULT_RECORDS_END-->';
     html += '<p class="disclaimer">' + modeLabel + '只监控双号推荐D1/D2，不读取下期预估。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
+    var ultStartMarker = '<!--ULT_RECORDS_START-->';
+    var ultEndMarker = '<!--ULT_RECORDS_END-->';
+    var ultStart = html.indexOf(ultStartMarker);
+    var ultEnd = html.indexOf(ultEndMarker);
+    if (ultStart >= 0 && ultEnd > ultStart) {
+      var embeddedRecords = html.slice(ultStart + ultStartMarker.length, ultEnd);
+      html = html.slice(0, ultStart) + html.slice(ultEnd + ultEndMarker.length);
+      html = html.replace('<!--ULT_CARD_HISTORY-->', function () { return '<div class="embedded-card-history">' + embeddedRecords + '</div>'; });
+    }
     view.innerHTML = html;
-    promoteSectionToTop("三期内追投滚动记录", ["ultimateLockCard", "ultimatePageHeader"]);
-    promoteSectionToTop("最近推荐监控", ["ultimateLockCard", "ultimatePageHeader"]);
-    promoteSectionToTop("追中记录", ["ultimateLockCard", "ultimatePageHeader"]);
   }
 
   var selectorHistoryFilter = "ALL";
