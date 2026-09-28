@@ -2584,6 +2584,8 @@
     html += '<p class="disclaimer">' + modeLabel + '只监控双号推荐D1/D2，不读取下期预估。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
     view.innerHTML = html;
     promoteSectionToTop("三期内追投滚动记录", ["ultimateLockCard", "ultimatePageHeader"]);
+    promoteSectionToTop("最近推荐监控", ["ultimateLockCard", "ultimatePageHeader"]);
+    promoteSectionToTop("追中记录", ["ultimateLockCard", "ultimatePageHeader"]);
   }
 
   var selectorHistoryFilter = "ALL";

@@ -256,6 +256,8 @@ def main():
             and 'id="ultimateLockCard"' in app_text
             and 'id="selectorActionCard"' in app_text
             and "cardPanel.appendChild(sections[si])" in app_text
+            and 'promoteSectionToTop("最近推荐监控"' in app_text
+            and 'promoteSectionToTop("追中记录"' in app_text
         ):
             pass_("三期内滚动记录已置顶展示")
         else:
