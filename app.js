@@ -402,6 +402,7 @@
   var NAV_PAGE_GROUPS_KEY = "v2_nav_page_groups";
   var NAV_COLLAPSED_KEY = "v2_nav_collapsed";
   var tabSortMode = false;
+  var renderedTab = null;
 
   function groupById(groupId) {
     for (var i = 0; i < NAV_GROUPS.length; i++) {
@@ -578,9 +579,25 @@
     lsSet(NAV_COLLAPSED_KEY, arr);
   }
 
+  function nudgeNavItem(container, item) {
+    if (!container || !item) return;
+    var pad = 12;
+    var left = item.offsetLeft;
+    var right = left + item.offsetWidth;
+    if (left < container.scrollLeft + pad) {
+      container.scrollLeft = Math.max(0, left - pad);
+    } else if (right > container.scrollLeft + container.clientWidth - pad) {
+      container.scrollLeft = right - container.clientWidth + pad;
+    }
+  }
+
   function renderTabs() {
     var groups = getConfiguredGroups();
     var group = groupById(state.group) || groups[0];
+    var oldGroups = tabsEl.querySelector(".nav-groups");
+    var oldSubtabs = tabsEl.querySelector(".nav-subtabs");
+    var groupScroll = oldGroups ? oldGroups.scrollLeft : 0;
+    var tabScroll = oldSubtabs ? oldSubtabs.scrollLeft : 0;
     var groupHtml = groups.map(function (g) {
       var collapsed = isGroupCollapsed(g.id);
       var h = '<span class="nav-group-wrap">';
@@ -588,8 +605,8 @@
         h += '<button class="nav-group-move" type="button" data-group-move="up" data-group-id="' + g.id + '" aria-label="' + g.label + ' 前移">↑</button>';
       }
       h += '<button class="nav-group' + (g.id === group.id ? " is-active" : "") + (collapsed ? " is-collapsed" : "") +
-        '" type="button" data-nav-group="' + g.id + '">' + g.label + "</button>";
-      h += '<button class="nav-collapse" type="button" data-collapse-group="' + g.id + '" aria-label="' + g.label + (collapsed ? " 展开" : " 折叠") + '">' + (collapsed ? "▶" : "▼") + "</button>";
+        '" type="button" data-nav-group="' + g.id + '" aria-expanded="' + (!collapsed) + '">' + g.label +
+        '<span class="nav-group-caret" aria-hidden="true">' + (collapsed ? "▸" : "▾") + '</span></button>';
       if (tabSortMode) {
         h += '<button class="nav-group-move" type="button" data-group-move="down" data-group-id="' + g.id + '" aria-label="' + g.label + ' 后移">↓</button>';
       }
@@ -623,6 +640,14 @@
 
     tabsEl.classList.toggle("sorting", tabSortMode);
     tabsEl.innerHTML = '<div class="nav-groups">' + groupHtml + '</div><div class="nav-subtabs">' + tabsHtml + "</div>";
+    var nextGroups = tabsEl.querySelector(".nav-groups");
+    var nextSubtabs = tabsEl.querySelector(".nav-subtabs");
+    if (nextGroups) nextGroups.scrollLeft = groupScroll;
+    if (nextSubtabs) nextSubtabs.scrollLeft = tabScroll;
+    requestAnimationFrame(function () {
+      nudgeNavItem(nextGroups, nextGroups && nextGroups.querySelector(".nav-group.is-active"));
+      nudgeNavItem(nextSubtabs, nextSubtabs && nextSubtabs.querySelector(".tab.is-active"));
+    });
   }
 
   function promoteSectionToTop(title, anchorIds) {
@@ -661,6 +686,7 @@
   }
 
   function render() {
+    var tabChanged = state.tab !== renderedTab;
     renderTabs();
     if (state.tab === "overview") renderOverview();
     else if (state.tab === "tails") renderTails();
@@ -687,6 +713,10 @@
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     scrollToLatest();
+    if (tabChanged) {
+      renderedTab = state.tab;
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
   }
 
   function renderOverview() {
@@ -3667,7 +3697,13 @@
     }
     var navGroup = e.target.closest("[data-nav-group]");
     if (navGroup) {
-      state.group = navGroup.dataset.navGroup;
+      var nextGroup = navGroup.dataset.navGroup;
+      if (state.group === nextGroup && !tabSortMode) {
+        toggleGroupCollapsed(nextGroup);
+        renderTabs();
+        return;
+      }
+      state.group = nextGroup;
       var collapsed = collapsedGroupIds().filter(function (id) { return id !== state.group; });
       lsSet(NAV_COLLAPSED_KEY, collapsed);
       state.tab = firstTabInGroup(state.group);

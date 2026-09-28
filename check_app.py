@@ -240,6 +240,10 @@ def main():
             pass_("追号/追推荐页面含显眼本期锁定号与逐条候选状态")
         else:
             fail("追号/追推荐页面缺少显眼本期锁定号或候选状态")
+        if "function nudgeNavItem" in app_text and "renderedTab" in app_text and "nav-group-caret" in app_text and "window.scrollTo" in app_text:
+            pass_("顶部导航支持粘性定位、位置保持和当前项可见")
+        else:
+            fail("顶部导航缺少粘性定位、位置保持或当前项可见逻辑")
         if "snapshotSkipped" in app_text and "开奖前快照：跳过" in app_text and "跳过，未参与结算" in app_text:
             pass_("下期预估空快照不再回退显示实时排序")
         else:

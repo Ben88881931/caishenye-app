@@ -83,6 +83,9 @@ must(["分批启用", "观望"].includes(ultimate.decision.action), "追号模�
 
 must(appText.includes("function promoteSectionToTop") && appText.includes('promoteSectionToTop("三期内追投滚动记录"') && appText.includes('promoteSectionToTop("三期内必出滚动记录"'), "三期内滚动记录均置顶");
 must(appText.includes("snapshotSkipped") && appText.includes("跳过，未参与结算"), "空快照不会回退成实时推荐");
+must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab") && appText.includes("nav-group-caret") && appText.includes("window.scrollTo"), "导航保持横向位置、当前项可见且切页回顶");
+const cssText = read("styles.css");
+must(cssText.includes("position: sticky") && cssText.includes("grid-template-columns: repeat(5") && cssText.includes("min-height: 42px"), "导航为粘性五项分段布局且触控高度合格");
 must(appText.includes("gateBlocked") && appText.includes("本期观察锁定") && appText.includes("总调度：观望"), "锁定号受调度总闸门约束");
 must(!appText.includes('id: "orderfollow"') && !appText.includes("下单追投"), "不存在已废弃的下单追投入口");
 
