@@ -1557,75 +1557,6 @@
     try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
   }
 
-  var orderData = {
-    orders: lsGet("v2_orders", []),
-    history: lsGet("v2_order_hist", []),
-    sel: {},
-    base: 1000,
-    m1: 1,
-    m2: 2.25,
-    m3: 30,
-    ret: 1.8
-  };
-
-  function saveOrders() {
-    lsSet("v2_orders", orderData.orders);
-    lsSet("v2_order_hist", orderData.history);
-  }
-
-  function orderListHTML() {
-    if (orderData.orders.length === 0) return '<div class="panel"><div class="panel__body"><div class="empty">暂无下单</div></div></div>';
-    var h = "";
-    orderData.orders.forEach(function (o) {
-      var totalBet = o.periods.reduce(function (s, p) { return s + p.bet; }, 0);
-      h += '<div class="panel" style="margin-bottom:10px"><div class="panel__body">';
-      h += '<div class="record__top"><span class="record__period">尾 ' + o.nums.join(" ") + '</span><span class="record__meta">起始第 ' + o.startP + " 期 · 总投 " + totalBet + " 元</span></div>";
-      h += '<table class="table"><thead><tr><th>期数</th><th>下注</th><th>状态</th><th>操作</th></tr></thead><tbody>';
-      o.periods.forEach(function (p, i) {
-        var cls = p.status === "pending" ? "ord-pending" : p.status === "hit" ? "ord-hit" : "ord-miss";
-        var txt = p.status === "pending" ? "待开奖" : p.status === "hit" ? "中奖" : "未中";
-        h += '<tr><td>' + p.p + "</td><td>" + p.bet + ' 元</td><td class="' + cls + '">' + txt + "</td>";
-        if (p.status === "pending") {
-          h += '<td><button class="chip" data-ordhit="' + o.id + "," + i + '">中</button> <button class="chip" data-ordmiss="' + o.id + "," + i + '">未中</button></td>';
-        } else {
-          h += "<td>-</td>";
-        }
-        h += "</tr>";
-      });
-      h += '</tbody></table><div style="margin-top:8px;text-align:right"><button class="chip" data-orddel="' + o.id + '">删除</button></div>';
-      h += "</div></div>";
-    });
-    return h;
-  }
-
-  function orderStatsHTML() {
-    var totalOrders = orderData.history.length;
-    var hitOrders = orderData.history.filter(function (h) { return h.periods.some(function (p) { return p.status === "hit"; }); }).length;
-    var totalBet = orderData.history.reduce(function (s, h) { return s + h.periods.reduce(function (ss, p) { return ss + p.bet; }, 0); }, 0);
-    var totalReturn = orderData.history.reduce(function (s, h) {
-      return s + h.periods.reduce(function (ss, p) { if (p.status === "hit") return ss + p.bet * h.ret; return ss; }, 0);
-    }, 0);
-    var profit = totalReturn - totalBet;
-    var h = '<div class="grid-2">';
-    h += '<div class="stat"><div class="stat__value">' + totalOrders + '</div><div class="stat__label">完成订单</div></div>';
-    h += '<div class="stat"><div class="stat__value">' + hitOrders + '</div><div class="stat__label">中奖订单</div></div>';
-    h += '<div class="stat"><div class="stat__value">' + totalBet + '</div><div class="stat__label">总投入</div></div>';
-    h += '<div class="stat"><div class="stat__value ' + (profit >= 0 ? "ord-hit" : "ord-miss") + '">' + (profit >= 0 ? "+" : "") + profit + '</div><div class="stat__label">净利润</div></div>';
-    h += "</div>";
-    if (orderData.history.length === 0) {
-      h += '<div class="panel"><div class="panel__body"><div class="empty">暂无历史</div></div></div>';
-    } else {
-      h += '<div class="panel"><table class="table"><thead><tr><th>号码</th><th>期数</th><th>结果</th><th>操作</th></tr></thead><tbody>';
-      orderData.history.slice().reverse().forEach(function (o) {
-        var hitCount = o.periods.filter(function (p) { return p.status === "hit"; }).length;
-        var result = hitCount > 0 ? '<span class="ord-hit">中 ' + hitCount + "</span>" : '<span class="ord-miss">全未中</span>';
-        h += '<tr><td>尾 ' + o.nums.join(" ") + "</td><td>" + o.startP + "-" + (o.startP + 2) + "</td><td>" + result + '</td><td><button class="chip" data-orddelhist="' + o.id + '">删</button></td></tr>';
-      });
-      h += "</tbody></table></div>";
-    }
-    return h;
-  }
-
   // ===== 双号模型下单记录表 =====
   var ULT_ORDER_KEY = "v2_ultimate_order_log";
 
@@ -1832,94 +1763,6 @@
     html += '</div></div></div></div>';
     html += '<p class="disclaimer">追中记录只读取“下单记录”中已标记为第1期、第2期或第3期命中的记录；未命中和待开奖记录不会显示在这里。</p>';
     return html;
-  }
-
-  function renderOrder() {
-    var next = latest + 1;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">下单追投</h2><span class="section__hint">数据保存在本机浏览器</span></div>';
-    html += '<div class="panel"><div class="panel__body">';
-    html += '<div class="ord-grid">';
-    html += '<div class="ord-item"><label>基础金额</label><input id="ordBase" type="number" min="1" value="' + orderData.base + '"> 元</div>';
-    html += '<div class="ord-item"><label>第1期</label><input id="ordM1" type="number" min="0.1" step="0.1" value="' + orderData.m1 + '"> 倍</div>';
-    html += '<div class="ord-item"><label>第2期</label><input id="ordM2" type="number" min="0.1" step="0.1" value="' + orderData.m2 + '"> 倍</div>';
-    html += '<div class="ord-item"><label>第3期</label><input id="ordM3" type="number" min="0.1" step="0.1" value="' + orderData.m3 + '"> 倍</div>';
-    html += '<div class="ord-item"><label>回报率</label><input id="ordRet" type="number" min="1" step="0.1" value="' + orderData.ret + '"> 倍</div>';
-    html += "</div>";
-    html += '<div class="ord-formula" id="ordFormula"></div>';
-    html += "</div></div></div>";
-
-    html += '<div class="section"><div class="panel"><div class="panel__body">';
-    html += '<div class="section__head" style="margin:0 0 8px"><h2 class="section__title">选择号码</h2><span class="section__hint">最新第 ' + latest + " 期开出尾数：" + tailsOf(latest).join(" ") + "</span></div>";
-    html += '<div class="chips">';
-    for (var t = 0; t < 10; t++) {
-      html += '<button class="chip ' + (orderData.sel[t] ? "is-active" : "") + '" data-ordsn="' + t + '">尾 ' + t + "</button>";
-    }
-    html += "</div>";
-    html += '<div class="ord-item" style="margin-top:8px"><label>起始期数</label><input id="ordStart" type="number" min="1" value="' + next + '"></div>';
-    html += '<button class="btn-primary" data-ordcreate="1">创建下单</button>';
-    html += "</div></div></div>";
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前下单</h2></div>' + orderListHTML() + "</div>";
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史统计</h2></div>' + orderStatsHTML() + "</div>";
-    html += '<p class="disclaimer">下单金额 = 基础金额 × 倍数 × 所选号码个数。中奖回报 = 该期下注 × 回报率。数据仅保存在本机浏览器。</p>';
-    view.innerHTML = html;
-    updateOrderFormula();
-  }
-
-  function updateOrderFormula() {
-    var el = document.getElementById("ordFormula");
-    if (!el) return;
-    el.textContent = "第1期 " + (orderData.base * orderData.m1) + " 元 | 第2期 " + (orderData.base * orderData.m2) + " 元 | 第3期 " + (orderData.base * orderData.m3) + " 元 | 回报率 " + orderData.ret + " 倍";
-  }
-
-  function orderCreate() {
-    var nums = Object.keys(orderData.sel).filter(function (k) { return orderData.sel[k]; }).map(Number).sort(function (a, b) { return a - b; });
-    if (nums.length === 0) { alert("请选择号码"); return; }
-    var startEl = document.getElementById("ordStart");
-    var startP = parseInt(startEl.value, 10);
-    if (!startP) { alert("请输入起始期数"); return; }
-    var cnt = nums.length;
-    var order = {
-      id: Date.now(),
-      nums: nums,
-      startP: startP,
-      ret: orderData.ret,
-      periods: [
-        { p: startP, bet: Math.round(orderData.base * orderData.m1 * cnt), status: "pending" },
-        { p: startP + 1, bet: Math.round(orderData.base * orderData.m2 * cnt), status: "pending" },
-        { p: startP + 2, bet: Math.round(orderData.base * orderData.m3 * cnt), status: "pending" }
-      ],
-      created: new Date().toISOString()
-    };
-    orderData.orders.push(order);
-    saveOrders();
-    orderData.sel = {};
-    renderOrder();
-  }
-
-  function orderMark(id, idx, status) {
-    var o = orderData.orders.find(function (x) { return x.id === id; });
-    if (!o) return;
-    o.periods[idx].status = status;
-    if (o.periods.every(function (p) { return p.status !== "pending"; })) {
-      o.completed = new Date().toISOString();
-      orderData.history.push(o);
-      orderData.orders = orderData.orders.filter(function (x) { return x.id !== id; });
-    }
-    saveOrders();
-    renderOrder();
-  }
-
-  function orderDelete(id) {
-    orderData.orders = orderData.orders.filter(function (x) { return x.id !== id; });
-    saveOrders();
-    renderOrder();
-  }
-
-  function orderDeleteHist(id) {
-    orderData.history = orderData.history.filter(function (x) { return x.id !== id; });
-    saveOrders();
-    renderOrder();
   }
 
   // ===== 预估三层框架 + 下期推荐 =====
@@ -3577,23 +3420,6 @@
       renderOrderLog();
       return;
     }
-    var ordsn = e.target.closest("[data-ordsn]");
-    if (ordsn) {
-      var t = Number(ordsn.dataset.ordsn);
-      if (orderData.sel[t]) delete orderData.sel[t]; else orderData.sel[t] = true;
-      renderOrder();
-      return;
-    }
-    if (e.target.closest("[data-ordcreate]")) { orderCreate(); return; }
-    var ordhit = e.target.closest("[data-ordhit]");
-    if (ordhit) { var hp = ordhit.dataset.ordhit.split(","); orderMark(Number(hp[0]), Number(hp[1]), "hit"); return; }
-    var ordmiss = e.target.closest("[data-ordmiss]");
-    if (ordmiss) { var mp = ordmiss.dataset.ordmiss.split(","); orderMark(Number(mp[0]), Number(mp[1]), "miss"); return; }
-    var orddel = e.target.closest("[data-orddel]");
-    if (orddel) { orderDelete(Number(orddel.dataset.orddel)); return; }
-    var orddelhist = e.target.closest("[data-orddelhist]");
-    if (orddelhist) { orderDeleteHist(Number(orddelhist.dataset.orddelhist)); return; }
-
     var chip = e.target.closest("[data-window]");
     if (chip) {
       state.window = Number(chip.dataset.window);
@@ -3691,20 +3517,6 @@
     if (changed) {
       ultimateOrdersSave(rows);
       renderOrderLog();
-    }
-  });
-
-  view.addEventListener("input", function (e) {
-    var id = e.target.id;
-    if (id === "ordBase" || id === "ordM1" || id === "ordM2" || id === "ordM3" || id === "ordRet") {
-      var v = parseFloat(e.target.value);
-      if (isNaN(v)) return;
-      if (id === "ordBase") orderData.base = v;
-      else if (id === "ordM1") orderData.m1 = v;
-      else if (id === "ordM2") orderData.m2 = v;
-      else if (id === "ordM3") orderData.m3 = v;
-      else orderData.ret = v;
-      updateOrderFormula();
     }
   });
 

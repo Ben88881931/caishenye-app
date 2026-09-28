@@ -72,3 +72,26 @@ console.log("追推荐模式回测（每期新推荐独立追3期）");
   printBacktest("追推荐 " + key + " " + ultimate.PATTERNS[key].label, ultimate.runOverlappingBacktest(raw, model, key, options));
 });
 printBacktest("追推荐状态模型", ultimate.runRecommendationBacktest(raw, model, options));
+
+const settlementCases = [
+  { order: { startPeriod: 262, tail: 3, result: "pending" }, result: "hit1", settledPeriod: 262 },
+  { order: { startPeriod: 262, tail: 9, result: "pending" }, result: "hit2", settledPeriod: 263 },
+  { order: { startPeriod: 267, tail: 7, result: "pending" }, result: "miss", settledPeriod: 269 },
+  { order: { startPeriod: 271, tail: 6, result: "pending" }, result: null, settledPeriod: null }
+];
+const settlementFailures = [];
+settlementCases.forEach((item, index) => {
+  const actual = ultimate.settleOrder(item.order, raw);
+  const result = actual ? actual.result : null;
+  const settledPeriod = actual ? actual.settledPeriod : null;
+  if (result !== item.result || settledPeriod !== item.settledPeriod) {
+    settlementFailures.push({ index, expected: item, actual });
+  }
+});
+console.log("");
+if (settlementFailures.length) {
+  console.log("自动结算自检 FAIL");
+  settlementFailures.forEach((failure) => console.log(JSON.stringify(failure)));
+  process.exit(1);
+}
+console.log("自动结算自检 PASS");

@@ -115,6 +115,7 @@ node model_supervisor.js report
 - 六个资源版本一致。
 - 五级明细包含期数、尾号、分数、等级、实际尾数、对错。
 - `ultimate_backtest.js` 能完成D1/D2状态回测，且不读取下期预估。
+- `ultimate_backtest.js` 的自动结算自检必须 PASS（第1期中、第2期中、三期全错、数据未齐）。
 - 历史预测、分数和对错没有被修改。
 
 ### 第 7 步：检查 Git 改动
