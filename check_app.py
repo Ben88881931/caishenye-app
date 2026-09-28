@@ -258,6 +258,8 @@ def main():
             and "cardPanel.appendChild(sections[si])" in app_text
             and 'promoteSectionToTop("最近推荐监控"' in app_text
             and 'promoteSectionToTop("追中记录"' in app_text
+            and "function moveSectionIntoCardBefore" in app_text
+            and 'moveSectionIntoCardBefore("当前决策"' in app_text
         ):
             pass_("三期内滚动记录已置顶展示")
         else:
