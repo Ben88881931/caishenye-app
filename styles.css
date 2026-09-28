@@ -344,25 +344,12 @@ body {
   padding: 12px;
 }
 
-.embedded-card-history {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #bbf7d0;
+.card-followup {
+  margin-top: -6px;
 }
 
-.embedded-card-history > .section {
+.card-followup > .section {
   margin-bottom: 10px;
-}
-
-.embedded-card-history > .section > .panel {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  padding: 0 !important;
-}
-
-.embedded-card-history > .section > .panel .panel__body {
-  padding: 0;
 }
 
 .grid-2 {

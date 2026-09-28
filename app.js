@@ -661,24 +661,9 @@
     for (var si = 0; si < sections.length; si++) {
       var heading = sections[si].querySelector(".section__title");
       if (heading && heading.textContent.indexOf(title) >= 0) {
-        var historyPanel = sections[si].querySelector(".panel");
-        var cardPanel = anchor.querySelector(".panel");
-        if (cardPanel) {
-          cardPanel.appendChild(sections[si]);
-          sections[si].style.marginTop = "14px";
-          sections[si].style.paddingTop = "12px";
-          sections[si].style.borderTop = "1px solid " + (anchor.id === "ultimateLockCard" ? "#bbf7d0" : "#e5e7eb");
-          if (historyPanel) {
-            historyPanel.style.background = "transparent";
-            historyPanel.style.border = "0";
-            historyPanel.style.boxShadow = "none";
-            historyPanel.style.padding = "0";
-          }
-        } else {
-          view.insertBefore(sections[si], anchor.nextSibling);
-          sections[si].style.borderTop = "3px solid #2563eb";
-          sections[si].style.paddingTop = "8px";
-        }
+        view.insertBefore(sections[si], anchor.nextSibling);
+        sections[si].style.borderTop = "3px solid #2563eb";
+        sections[si].style.paddingTop = "8px";
         break;
       }
     }
@@ -2450,16 +2435,16 @@
       });
       html += '</div></div>';
       html += '<div style="margin-top:10px;font-size:12px;color:' + (gateBlocked ? gateTone.text : lockTone.text) + '">' + (gateBlocked ? "最终执行：调度观望，锁定号降级为观察，不产生订单。" : "最终执行：调度允许，仍需按总览流程确认本金和实际下单。") + '</div>';
-      html += '<!--ULT_CARD_HISTORY-->';
       html += '</div></div>';
+      html += '<!--ULT_CARD_HISTORY-->';
     } else {
       html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #d97706;background:#fffbeb">';
       html += '<div style="font-size:12px;font-weight:900;color:#92400e;letter-spacing:.08em">' + modeLabel + ' · 本期锁定号</div>';
       html += '<div style="font-size:30px;line-height:1.1;font-weight:900;color:#92400e;margin:6px 0">本期不建议锁定</div>';
       html += '<div style="font-size:13px;color:#92400e">D1、D2 当前均为弱状态或空推荐；等待状态转强后再锁定尾号。</div>';
       html += '<div style="margin-top:8px;font-size:12px;color:#92400e">最终是否下单仍以总览流程和调度模型动作为准。</div>';
-      html += '<!--ULT_CARD_HISTORY-->';
       html += '</div></div>';
+      html += '<!--ULT_CARD_HISTORY-->';
     }
 
     html += '<div class="section"><div class="panel" style="padding:14px 12px">';
@@ -2593,7 +2578,7 @@
     if (ultStart >= 0 && ultEnd > ultStart) {
       var embeddedRecords = html.slice(ultStart + ultStartMarker.length, ultEnd);
       html = html.slice(0, ultStart) + html.slice(ultEnd + ultEndMarker.length);
-      html = html.replace('<!--ULT_CARD_HISTORY-->', function () { return '<div class="embedded-card-history">' + embeddedRecords + '</div>'; });
+      html = html.replace('<!--ULT_CARD_HISTORY-->', function () { return '<div class="card-followup">' + embeddedRecords + '</div>'; });
     }
     view.innerHTML = html;
   }
