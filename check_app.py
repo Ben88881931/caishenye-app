@@ -206,7 +206,7 @@ def main():
         else:
             fail("app.js 缺少分类折叠、分类排序或页面跨类移动")
 
-        for func in ["renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "renderHitLog"]:
+        for func in ["renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "hitLogSectionHTML"]:
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少终极模型函数 {func}")
         else:
@@ -215,14 +215,13 @@ def main():
             'id: "chasenumber"' in app_text
             and 'id: "chaserecommend"' in app_text
             and 'id: "orderlog"' in app_text
-            and 'id: "hitlog"' in app_text
             and "window.CAISHEN_ULTIMATE" in app_text
         ):
-            pass_("app.js 含追号/追推荐/下单记录/追中记录导航")
+            pass_("app.js 含追号/追推荐/下单记录导航")
         else:
             fail("app.js 缺少追号/追推荐/下单记录导航")
         if "追号模型" in app_text and "追推荐模型" in app_text and "下单记录" in app_text and "追中记录" in app_text and "本模式状态回测" in app_text:
-            pass_("追号/追推荐/下单记录页面区块完整")
+            pass_("追号/追推荐/下单记录及模型内追中记录区块完整")
         else:
             fail("追号/追推荐/下单记录页面区块不完整")
         if "v2_ultimate_order_log" in app_text and "ultimateOrderNet" in app_text and "第1期中" in app_text and "第2期中" in app_text and "第3期中" in app_text:

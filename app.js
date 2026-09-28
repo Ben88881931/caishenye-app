@@ -370,13 +370,11 @@
     { id: "zodrecords", label: "生肖开奖" },
     { id: "backtest", label: "策略回测" },
     { id: "numtrend", label: "号码走势" },
-    { id: "order", label: "下单追投" },
     { id: "orderlog", label: "下单记录" },
-    { id: "hitlog", label: "追中记录" },
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "推荐下单", tabs: ["predict", "pick3", "chasenumber", "chaserecommend", "order", "orderlog", "hitlog"] },
+    { id: "recommend", label: "推荐下单", tabs: ["predict", "pick3", "chasenumber", "chaserecommend", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -632,7 +630,7 @@
   }
 
   function scrollToLatest() {
-    if (state.tab === "pick3" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog" || state.tab === "hitlog") return;
+    if (state.tab === "pick3" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog") return;
     var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
     if (sc) {
       sc.scrollTop = sc.scrollHeight;
@@ -660,13 +658,11 @@
     else if (state.tab === "records") renderRecords();
     else if (state.tab === "history") renderHistory();
     else if (state.tab === "backtest") renderBacktest();
-    else if (state.tab === "order") renderOrder();
     else if (state.tab === "predict") renderPredict();
     else if (state.tab === "pick3") renderPick3();
     else if (state.tab === "chasenumber") renderChaseNumber();
     else if (state.tab === "chaserecommend") renderChaseRecommendation();
     else if (state.tab === "orderlog") renderOrderLog();
-    else if (state.tab === "hitlog") renderHitLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     scrollToLatest();
@@ -1757,28 +1753,20 @@
     view.innerHTML = html;
   }
 
-  var hitLogFilter = { mode: "all", position: "all" };
-
-  function renderHitLog() {
+  function hitLogSectionHTML(mode) {
     var UM = window.CAISHEN_ULTIMATE;
     if (!UM) {
-      view.innerHTML = '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">追中记录模块未加载</div></div></div></div>';
-      return;
+      return '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">追中记录模块未加载</div></div></div></div>';
     }
-    var all = ultimateOrdersLoad().filter(function (row) {
-      return row.result === "hit1" || row.result === "hit2" || row.result === "hit3";
-    });
-    var rows = all.filter(function (row) {
-      if (hitLogFilter.mode !== "all" && row.mode !== hitLogFilter.mode) return false;
-      if (hitLogFilter.position !== "all" && row.position !== hitLogFilter.position) return false;
-      return true;
+    var rows = ultimateOrdersLoad().filter(function (row) {
+      return row.mode === mode && (row.result === "hit1" || row.result === "hit2" || row.result === "hit3");
     });
     var hit1 = rows.filter(function (r) { return r.result === "hit1"; }).length;
     var hit2 = rows.filter(function (r) { return r.result === "hit2"; }).length;
     var hit3 = rows.filter(function (r) { return r.result === "hit3"; }).length;
     var net = rows.reduce(function (sum, r) { return sum + (ultimateOrderNet(r) || 0); }, 0);
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">追中记录</h2><span class="section__hint">只显示命中记录 · 明确标记第几期中</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">追中记录</h2><span class="section__hint">' + (mode === "recommend" ? "追推荐模式" : "追号模式") + ' · 只显示命中记录 · 明确标记第几期中</span></div></div>';
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + rows.length + '</div><div class="stat__label">追中总数</div></div>';
     html += '<div class="stat"><div class="stat__value">' + hit1 + '</div><div class="stat__label">第1期中</div></div>';
@@ -1791,11 +1779,7 @@
     html += '</div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">';
-    html += '<span style="font-size:12px;color:var(--muted)">筛选</span>';
-    html += '<select id="hitModeFilter" style="padding:6px"><option value="all"' + (hitLogFilter.mode === "all" ? " selected" : "") + '>全部模式</option><option value="number"' + (hitLogFilter.mode === "number" ? " selected" : "") + '>追号</option><option value="recommend"' + (hitLogFilter.mode === "recommend" ? " selected" : "") + '>追推荐</option></select>';
-    html += '<select id="hitPosFilter" style="padding:6px"><option value="all"' + (hitLogFilter.position === "all" ? " selected" : "") + '>全部位置</option><option value="D1"' + (hitLogFilter.position === "D1" ? " selected" : "") + '>D1首推</option><option value="D2"' + (hitLogFilter.position === "D2" ? " selected" : "") + '>D2备选</option></select>';
-    html += '</div>';
+    html += '<div style="max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="min-width:790px">';
     html += '<div style="display:grid;grid-template-columns:1.1fr .7fr .6fr .6fr .55fr 1.1fr 1fr .7fr .7fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
     html += '<span>时间</span><span>模式</span><span>位置</span><span>起始期</span><span>尾号</span><span>倍投</span><span>中在第几期</span><span>结算期</span><span>净收益</span></div>';
@@ -1818,9 +1802,9 @@
         html += '</div>';
       });
     }
-    html += '</div></div></div>';
+    html += '</div></div></div></div>';
     html += '<p class="disclaimer">追中记录只读取“下单记录”中已标记为第1期、第2期或第3期命中的记录；未命中和待开奖记录不会显示在这里。</p>';
-    view.innerHTML = html;
+    return html;
   }
 
   function renderOrder() {
@@ -2527,6 +2511,7 @@
       html += '</div>';
     }
     html += '</div></div>';
+    html += hitLogSectionHTML(mode);
     html += '<p class="disclaimer">' + modeLabel + '只监控双号推荐D1/D2，不读取下期预估。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
     view.innerHTML = html;
   }
@@ -3661,16 +3646,6 @@
   });
 
   view.addEventListener("change", function (e) {
-    if (e.target.id === "hitModeFilter") {
-      hitLogFilter.mode = e.target.value;
-      renderHitLog();
-      return;
-    }
-    if (e.target.id === "hitPosFilter") {
-      hitLogFilter.position = e.target.value;
-      renderHitLog();
-      return;
-    }
     var resultSelect = e.target.closest("[data-uo-result]");
     if (!resultSelect) return;
     var id = resultSelect.dataset.uoResult;
