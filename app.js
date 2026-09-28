@@ -1718,7 +1718,7 @@
     html += '<div class="ord-item"><label>位置</label><select id="uoPos"><option value="D1">D1首推</option><option value="D2">D2备选</option></select></div>';
     html += '<div class="ord-item"><label>起始期数</label><input id="uoStart" type="number" min="1" value="' + (current ? current.nextPeriod : latest + 1) + '"></div>';
     html += '<div class="ord-item"><label>尾号</label><input id="uoTail" type="number" min="0" max="9" value="' + (current && current.items.D1.currentPick ? current.items.D1.currentPick.tail : 0) + '"></div>';
-    html += '<div class="ord-item"><label>倍投</label><select id="uoPattern"><option value="P6">P6 保本</option><option value="P7">P7 收益型</option></select></div>';
+    html += '<div class="ord-item"><label>倍投</label><select id="uoPattern"><option value="P6">P6 保本</option><option value="P7">P7 收益型</option><option value="P8">P8 激进</option></select></div>';
     html += '<div class="ord-item"><label>基础金额</label><input id="uoBase" type="number" min="1" step="1" value="1"></div>';
     html += '<div class="ord-item"><label>结算结果</label><select id="uoResult"><option value="pending">待开奖</option><option value="hit1">第1期中</option><option value="hit2">第2期中</option><option value="hit3">第3期中</option><option value="miss">三期全错</option></select></div>';
     html += '</div>';
@@ -2382,7 +2382,10 @@
     var fixedP7 = isRecommendMode
       ? UM.runOverlappingBacktest(RAW, MODEL, "P7", options)
       : UM.runFixedBacktest(RAW, MODEL, "P7", options);
-    var stateColor = { strong: "#16a34a", steady: "#2563eb", weak: "#dc2626", sample: "#6b7280" };
+    var fixedP8 = isRecommendMode
+      ? UM.runOverlappingBacktest(RAW, MODEL, "P8", options)
+      : UM.runFixedBacktest(RAW, MODEL, "P8", options);
+    var stateColor = { veryStrong: "#b91c1c", strong: "#16a34a", steady: "#2563eb", weak: "#dc2626", sample: "#6b7280" };
 
     function pctFmt(x) {
       if (x == null) return "-";
@@ -2454,7 +2457,7 @@
     });
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">本模式状态回测</h2><span class="section__hint">只交易D1/D2 · 状态分数阈值 35/60 · 样本不足仍按P6观察</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">本模式状态回测</h2><span class="section__hint">只交易D1/D2 · 状态分数阈值 35/60/80 · 样本不足仍按P6观察</span></div></div>';
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value" style="color:' + (strategyResult.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (strategyResult.net >= 0 ? "+" : "") + numFmt(strategyResult.net) + '</div><div class="stat__label">状态模型净收益（基础单位）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + pctFmt(strategyResult.roi) + '</div><div class="stat__label">状态模型回报率</div></div>';
@@ -2470,7 +2473,7 @@
     html += '<div style="min-width:520px">';
     html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr;gap:6px;padding:6px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
     html += '<span>方案</span><span>批数</span><span>投入</span><span>净收益</span><span>回报率</span><span>最大回撤</span></div>';
-    [["P6 " + UM.PATTERNS.P6.label, fixedP6], ["P7 " + UM.PATTERNS.P7.label, fixedP7], ["状态选择", strategyResult]].forEach(function (row) {
+    [["P6 " + UM.PATTERNS.P6.label, fixedP6], ["P7 " + UM.PATTERNS.P7.label, fixedP7], ["P8 " + UM.PATTERNS.P8.label, fixedP8], ["状态选择", strategyResult]].forEach(function (row) {
       var r = row[1];
       html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr;gap:6px;padding:8px 6px;border-bottom:1px solid #f0f0f0;font-size:12px">';
       html += '<b>' + row[0] + '</b><span>' + r.sequences + '</span><span>' + numFmt(r.staked) + '</span><span style="color:' + (r.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (r.net >= 0 ? "+" : "") + numFmt(r.net) + '</span><span>' + pctFmt(r.roi) + '</span><span>' + numFmt(r.maxDrawdown) + '</span>';

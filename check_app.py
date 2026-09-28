@@ -279,7 +279,7 @@ def main():
 
     if ultimate_model_path.exists():
         ultimate_text = ultimate_model_path.read_text(encoding="utf-8")
-        for token in ["monitorFromHistory", "windowStats", "runFixedBacktest", "runStrategyBacktest", "runOverlappingBacktest", "runRecommendationBacktest", "skipBelow", "aggressiveAt"]:
+        for token in ["monitorFromHistory", "windowStats", "runFixedBacktest", "runStrategyBacktest", "runOverlappingBacktest", "runRecommendationBacktest", "skipBelow", "aggressiveAt", "p8At"]:
             if token in ultimate_text:
                 pass_(f"ultimate_model.js 含 {token}")
             else:

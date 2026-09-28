@@ -28,9 +28,11 @@
     sampleMin: 20,
     skipBelow: 35,
     aggressiveAt: 60,
+    p8At: 80,
     samplePattern: "P6",
     steadyPattern: "P6",
-    strongPattern: "P7"
+    strongPattern: "P7",
+    extremePattern: "P8"
   };
 
   function periodList(raw) {
@@ -62,18 +64,21 @@
   }
 
   function patternForScore(score, options) {
+    if (score >= options.p8At) return options.extremePattern;
     if (score >= options.aggressiveAt) return options.strongPattern;
     if (score >= options.skipBelow) return options.steadyPattern;
     return null;
   }
 
   function stateKeyForScore(score, options) {
+    if (score >= options.p8At) return "veryStrong";
     if (score >= options.aggressiveAt) return "strong";
     if (score >= options.skipBelow) return "steady";
     return "weak";
   }
 
   function stateLabel(stateKey) {
+    if (stateKey === "veryStrong") return "极强";
     if (stateKey === "strong") return "强";
     if (stateKey === "steady") return "稳";
     if (stateKey === "sample") return "样本期";
