@@ -227,6 +227,28 @@ def main():
             pass_("追号/追推荐/下单记录及模型内追中记录区块完整")
         else:
             fail("追号/追推荐/下单记录页面区块不完整")
+        if (
+            "本期锁定号" in app_text
+            and "本期候选逐条判断" in app_text
+            and "MODEL.buildPrediction(analysis.endPeriod)" in app_text
+            and "本期新增追推荐" in app_text
+            and "本期新开追号线" in app_text
+            and "未结束前不换号" in app_text
+            and "本期不建议锁定" in app_text
+        ):
+            pass_("追号/追推荐页面含显眼本期锁定号与逐条候选状态")
+        else:
+            fail("追号/追推荐页面缺少显眼本期锁定号或候选状态")
+        if (
+            "function promoteSectionToTop" in app_text
+            and 'promoteSectionToTop("三期内追投滚动记录"' in app_text
+            and 'promoteSectionToTop("三期内必出滚动记录"' in app_text
+            and 'id="ultimateLockCard"' in app_text
+            and 'id="selectorActionCard"' in app_text
+        ):
+            pass_("三期内滚动记录已置顶展示")
+        else:
+            fail("三期内滚动记录未置顶")
         if "v2_ultimate_order_log" in app_text and "ultimateOrderNet" in app_text and "第1期中" in app_text and "第2期中" in app_text and "第3期中" in app_text:
             pass_("下单记录与追中记录含本地存储、结算计算和命中期数")
         else:

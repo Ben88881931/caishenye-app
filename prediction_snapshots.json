@@ -932,7 +932,7 @@
       "generatedAt": "2026-09-27T15:32:45.972Z",
       "basedOn": 270,
       "target": 271,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -956,9 +956,103 @@
           "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
           "picks": []
         }
+      },
+      "actualTails": [
+        0,
+        1,
+        2,
+        5
+      ],
+      "actualPeriod": 271,
+      "settledAt": "2026-09-28T13:55:57.506Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            6,
+            2
+          ],
+          "perPick": [
+            {
+              "tail": 6,
+              "score": 95.3,
+              "tag": "连出4",
+              "grade": "S",
+              "hit": false
+            },
+            {
+              "tail": 2,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C",
+              "hit": true
+            }
+          ],
+          "hits": [
+            2
+          ],
+          "count": 1,
+          "hit": true
+        },
+        "weightedBounce": {
+          "picks": [],
+          "perPick": [],
+          "hits": [],
+          "count": 0,
+          "hit": false
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-09-28T13:55:57.509Z",
+      "basedOn": 271,
+      "target": 272,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "ambiguous": true,
+          "picks": [
+            {
+              "tail": 1,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            },
+            {
+              "tail": 2,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            }
+          ]
+        },
+        "weightedBounce": {
+          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
+          "picks": [
+            {
+              "tail": 9,
+              "score": 3,
+              "miss": 1,
+              "maxMiss": 7,
+              "ratio": 0.14285714285714285,
+              "weightedBounceRate": 0.7417475728155339,
+              "sample": 73.57142857142857
+            },
+            {
+              "tail": 3,
+              "score": 1,
+              "miss": 6,
+              "maxMiss": 7,
+              "ratio": 0.8571428571428571,
+              "weightedBounceRate": 0.5,
+              "sample": 4
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 270,
-  "updatedAt": "2026-09-27T15:32:45.972Z"
+  "latestPeriod": 271,
+  "updatedAt": "2026-09-28T13:55:57.509Z"
 }

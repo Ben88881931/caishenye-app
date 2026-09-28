@@ -625,6 +625,25 @@
     tabsEl.innerHTML = '<div class="nav-groups">' + groupHtml + '</div><div class="nav-subtabs">' + tabsHtml + "</div>";
   }
 
+  function promoteSectionToTop(title, anchorIds) {
+    var anchor = null;
+    for (var ai = 0; ai < anchorIds.length; ai++) {
+      anchor = view.querySelector("#" + anchorIds[ai]);
+      if (anchor) break;
+    }
+    if (!anchor || anchor.parentNode !== view) return;
+    var sections = view.querySelectorAll(".section");
+    for (var si = 0; si < sections.length; si++) {
+      var heading = sections[si].querySelector(".section__title");
+      if (heading && heading.textContent.indexOf(title) >= 0) {
+        view.insertBefore(sections[si], anchor.nextSibling);
+        sections[si].style.borderTop = "3px solid #2563eb";
+        sections[si].style.paddingTop = "8px";
+        break;
+      }
+    }
+  }
+
   function renderHeader() {
     document.getElementById("latestPeriod").textContent = latest;
     document.getElementById("latestTails").textContent = "尾 " + tailsOf(latest).join(" ");
@@ -2295,8 +2314,90 @@
       return state.pattern + " " + UM.PATTERNS[state.pattern].label;
     }
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">' + modeLabel + '</h2><span class="section__hint">' +
+    function nextCandidates() {
+      var out = [];
+      if (analysis.endPeriod == null) return out;
+      var prediction = MODEL.buildPrediction(analysis.endPeriod);
+      var picks = prediction.doubleRecommendation || [];
+      UM.KEYS.forEach(function (key, index) {
+        var item = analysis.items[key];
+        var pick = picks[index];
+        if (!item || !pick) return;
+        out.push({
+          key: key,
+          label: item.label,
+          pick: pick,
+          monitor: item.monitor
+        });
+      });
+      return out;
+    }
+
+    function rankedCandidates(candidates) {
+      return candidates.slice().sort(function (a, b) {
+        var aActive = a.monitor.pattern ? 1 : 0;
+        var bActive = b.monitor.pattern ? 1 : 0;
+        if (aActive !== bActive) return bActive - aActive;
+        if (b.monitor.score !== a.monitor.score) return b.monitor.score - a.monitor.score;
+        return UM.KEYS.indexOf(a.key) - UM.KEYS.indexOf(b.key);
+      });
+    }
+
+    var lockCandidates = nextCandidates();
+    var rankedLocks = rankedCandidates(lockCandidates);
+    var primaryLock = null;
+    for (var lockIndex = 0; lockIndex < rankedLocks.length; lockIndex++) {
+      if (rankedLocks[lockIndex].monitor.pattern) {
+        primaryLock = rankedLocks[lockIndex];
+        break;
+      }
+    }
+
+    var html = '<div class="section" id="ultimatePageHeader"><div class="section__head"><h2 class="section__title">' + modeLabel + '</h2><span class="section__hint">' +
       modeHint + ' · ' + UM.VERSION + ' · 数据截至第' + analysis.endPeriod + '期 · 预测第' + analysis.nextPeriod + '期</span></div></div>';
+
+    if (primaryLock) {
+      var lockState = primaryLock.monitor;
+      var lockEndPeriod = analysis.nextPeriod + 2;
+      html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #16a34a;background:#f0fdf4">';
+      html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">';
+      html += '<div>';
+      html += '<div style="font-size:12px;font-weight:900;color:#166534;letter-spacing:.08em">' + modeLabel + ' · 本期锁定号</div>';
+      html += '<div style="font-size:44px;line-height:1.05;font-weight:900;color:#15803d;margin:6px 0">锁定尾' + primaryLock.pick.tail + '</div>';
+      html += '<div style="font-size:14px;font-weight:900;color:#166534">' + primaryLock.label + ' ' + primaryLock.key + ' · ' + primaryLock.pick.grade + '级 ' + primaryLock.pick.score.toFixed(1) + '分 · ' + primaryLock.pick.tag + '</div>';
+      html += '<div style="font-size:13px;color:#166534;margin-top:5px">状态 <b>' + lockState.stateLabel + ' ' + lockState.score.toFixed(1) + '分</b> · 建议 <b>' + UM.PATTERNS[lockState.pattern].label + ' ' + UM.PATTERNS[lockState.pattern].stakes.join(" / ") + '</b></div>';
+      html += '</div>';
+      html += '<div style="min-width:220px;flex:1;background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px">';
+      html += '<div style="font-size:12px;color:#166534;font-weight:900">' + (isRecommendMode ? "本期新增追推荐" : "本期新开追号线") + '</div>';
+      html += '<div style="font-size:18px;font-weight:900;margin:4px 0">第' + analysis.nextPeriod + '期 → 第' + lockEndPeriod + '期</div>';
+      html += '<div style="font-size:12px;color:#166534;line-height:1.7">' + (isRecommendMode ? "第" + analysis.nextPeriod + "期新增一条独立追推荐线，锁定尾" + primaryLock.pick.tail + "追3期；之后每期新推荐再另开线，允许并行。" : "从第" + analysis.nextPeriod + "期起固定锁定尾" + primaryLock.pick.tail + "追3期：第" + analysis.nextPeriod + "、第" + (analysis.nextPeriod + 1) + "、第" + lockEndPeriod + "期；未结束前不换号。") + '</div>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #bbf7d0">';
+      html += '<div style="font-size:12px;font-weight:900;color:#166534;margin-bottom:6px">本期候选逐条判断</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
+      lockCandidates.forEach(function (candidate) {
+        var active = !!candidate.monitor.pattern;
+        var isPrimary = primaryLock && candidate.key === primaryLock.key;
+        var cardColor = active ? "#166534" : "#6b7280";
+        var cardBg = active ? "#ffffff" : "#f8fafc";
+        var cardBorder = isPrimary ? "#16a34a" : "#d1d5db";
+        html += '<div style="border:2px solid ' + cardBorder + ';border-radius:8px;padding:9px 10px;background:' + cardBg + '">';
+        html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b style="color:' + cardColor + '">' + candidate.key + ' ' + candidate.label + '</b><span class="chip">尾' + candidate.pick.tail + '</span><b style="color:' + cardColor + '">' + (active ? "锁定" : "不锁") + '</b></div>';
+        html += '<div style="font-size:12px;color:var(--muted);margin-top:5px">' + candidate.pick.grade + '级 ' + candidate.pick.score.toFixed(1) + '分 · ' + candidate.pick.tag + ' · ' + candidate.monitor.stateLabel + ' ' + candidate.monitor.score.toFixed(1) + '分' + (active ? " · " + UM.PATTERNS[candidate.monitor.pattern].label : " · 观望") + '</div>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+      html += '<div style="margin-top:10px;font-size:12px;color:#166534">最终是否真实下单仍按总览流程执行；若调度模型为“观望”，即使此处有锁定号也不下单。</div>';
+      html += '</div></div>';
+    } else {
+      html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #d97706;background:#fffbeb">';
+      html += '<div style="font-size:12px;font-weight:900;color:#92400e;letter-spacing:.08em">' + modeLabel + ' · 本期锁定号</div>';
+      html += '<div style="font-size:30px;line-height:1.1;font-weight:900;color:#92400e;margin:6px 0">本期不建议锁定</div>';
+      html += '<div style="font-size:13px;color:#92400e">D1、D2 当前均为弱状态或空推荐；等待状态转强后再锁定尾号。</div>';
+      html += '<div style="margin-top:8px;font-size:12px;color:#92400e">最终是否下单仍以总览流程和调度模型动作为准。</div>';
+      html += '</div></div>';
+    }
 
     html += '<div class="section"><div class="panel" style="padding:14px 12px">';
     html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
@@ -2373,7 +2474,7 @@
     });
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内追投滚动记录</h2><span class="section__hint">第31期起统计 · 每批标注起始期、锁定号码和结束期 · 新→旧</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内追投滚动记录</h2><span class="section__hint">置顶显示 · 第31期起 · 每批标注起始期、锁定号码和结束期 · 新→旧</span></div></div>';
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="display:flex;gap:6px;min-width:max-content">';
     var modeEvents = strategyResult.events.slice(-50);
@@ -2421,6 +2522,7 @@
     html += hitLogSectionHTML(mode);
     html += '<p class="disclaimer">' + modeLabel + '只监控双号推荐D1/D2，不读取下期预估。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
     view.innerHTML = html;
+    promoteSectionToTop("三期内追投滚动记录", ["ultimateLockCard", "ultimatePageHeader"]);
   }
 
   var selectorHistoryFilter = "ALL";
@@ -2491,10 +2593,10 @@
       return h;
     }
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">调度模型</h2><span class="section__hint">' +
+    var html = '<div class="section" id="selectorPageHeader"><div class="section__head"><h2 class="section__title">调度模型</h2><span class="section__hint">' +
       S.VERSION + ' · 不预测号码 · 监控双号追热与加权追冷的相位</span></div></div>';
 
-    html += '<div class="section"><div class="panel" style="padding:16px 14px">';
+    html += '<div class="section" id="selectorActionCard"><div class="panel" style="padding:16px 14px">';
     html += '<div style="text-align:center">';
     html += '<div style="font-size:12px;color:var(--muted);font-weight:700">本轮候选从第' + analysis.nextPeriod + '期开始</div>';
     html += '<div style="font-size:28px;font-weight:900;color:' + actionColor + ';margin:6px 0">' + decision.action + '</div>';
@@ -2567,7 +2669,7 @@
     }
     allThreeBatches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内必出滚动记录</h2><span class="section__hint">每格标注起始期、锁定号码和结束期 · 新→旧</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内必出滚动记录</h2><span class="section__hint">置顶显示 · 每格标注起始期、锁定号码和结束期 · 新→旧</span></div></div>';
     html += '<div class="section"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
     ["ALL", "D1", "D2", "W1", "W2"].forEach(function (key) {
       html += '<button class="chip' + (selectorHistoryFilter === key ? " is-active" : "") + '" data-selector-history-filter="' + key + '">' + (key === "ALL" ? "全部" : key) + '</button>';
@@ -2600,6 +2702,7 @@
     html += "</div></div>";
     html += '<p class="disclaimer">第四套模型只调度“跟双号、跟加权、观望”，不预测号码。历史命中率高于基准不代表未来稳定；真实快照样本不足时只能作为决策辅助。</p>';
     view.innerHTML = html;
+    promoteSectionToTop("三期内必出滚动记录", ["selectorActionCard", "selectorPageHeader"]);
   }
 
   function renderChaseNumber() {
