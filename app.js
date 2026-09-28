@@ -352,6 +352,7 @@
     { id: "overview", label: "总览" },
     { id: "predict", label: "下期预估" },
     { id: "pick3", label: "双号推荐" },
+    { id: "ultimate", label: "终极模型" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -451,7 +452,7 @@
   }
 
   function scrollToLatest() {
-    if (state.tab === "pick3") return;
+    if (state.tab === "pick3" || state.tab === "ultimate") return;
     var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
     if (sc) {
       sc.scrollTop = sc.scrollHeight;
@@ -482,6 +483,7 @@
     else if (state.tab === "order") renderOrder();
     else if (state.tab === "predict") renderPredict();
     else if (state.tab === "pick3") renderPick3();
+    else if (state.tab === "ultimate") renderUltimate();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     scrollToLatest();
@@ -1997,6 +1999,132 @@
   // ===== 双号推荐页面（连出惯性分层打分，每期推2个号，避尾0）=====
   function pickTopAt(cur, k) {
     return MODEL.pickTopAt(cur, k);
+  }
+
+  function renderUltimate() {
+    var UM = window.CAISHEN_ULTIMATE;
+    if (!UM) {
+      view.innerHTML = '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">终极模型模块未加载</div></div></div></div>';
+      return;
+    }
+
+    var options = { startPeriod: 31 };
+    var analysis = UM.analyze(RAW, MODEL, options);
+    var strategyResult = UM.runStrategyBacktest(RAW, MODEL, options);
+    var fixedP6 = UM.runFixedBacktest(RAW, MODEL, "P6", options);
+    var fixedP7 = UM.runFixedBacktest(RAW, MODEL, "P7", options);
+    var stateColor = { strong: "#16a34a", steady: "#2563eb", weak: "#dc2626", sample: "#6b7280" };
+
+    function pctFmt(x) {
+      if (x == null) return "-";
+      return (x * 100).toFixed(1) + "%";
+    }
+
+    function numFmt(x) {
+      return Number(x || 0).toFixed(2);
+    }
+
+    function actionText(item) {
+      var state = item.monitor;
+      if (!item.currentPick) return "无信号";
+      if (!state.pattern) return "观望";
+      return state.pattern + " " + UM.PATTERNS[state.pattern].label;
+    }
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">双号终极模型</h2><span class="section__hint">' +
+      UM.VERSION + ' · 数据截至第' + analysis.endPeriod + '期 · 预测第' + analysis.nextPeriod + '期</span></div></div>';
+
+    html += '<div class="section"><div class="panel" style="padding:14px 12px">';
+    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
+    html += '<b style="font-size:14px">当前决策</b>';
+    html += '<span class="chip">' + analysis.decision.action + '</span>';
+    html += '<span style="font-size:12px;color:var(--muted)">' + analysis.decision.reason + '</span>';
+    html += '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px">';
+    UM.KEYS.forEach(function (key) {
+      var item = analysis.items[key];
+      var state = item.monitor;
+      var color = stateColor[state.stateKey] || "#6b7280";
+      html += '<div style="border:1px solid #e0e3e8;border-radius:8px;padding:12px;background:#fff;min-width:0">';
+      html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+      html += '<b style="font-size:14px">' + item.label + ' ' + key + '</b>';
+      html += '<span class="chip">' + (item.currentPick ? '尾' + item.currentPick.tail : "空") + '</span>';
+      html += '<span style="margin-left:auto;color:' + color + ';font-weight:800">' + state.stateLabel + ' ' + state.score.toFixed(1) + '分</span>';
+      html += '</div>';
+      html += '<div style="margin-top:8px;font-size:13px;color:var(--muted)">建议 <b style="color:' + color + '">' + actionText(item) + '</b>';
+      if (state.pattern) html += ' · ' + UM.PATTERNS[state.pattern].stakes.join(" / ");
+      html += '</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;margin-top:8px;font-size:12px;color:var(--muted)">';
+      html += '<span>近10期 <b>' + pctFmt(state.recent10) + '</b></span>';
+      html += '<span>近20期 <b>' + pctFmt(state.recent20) + '</b></span>';
+      html += '<span>近50期 <b>' + pctFmt(state.recent50) + '</b></span>';
+      html += '<span>3期内命中 <b>' + pctFmt(item.window.hit3Rate) + '</b></span>';
+      html += '<span>当前遗漏 <b>' + state.currentOmission + '</b></span>';
+      html += '<span>最高遗漏 <b>' + state.maxOmission + '</b></span>';
+      html += '<span>当前连中 <b>' + state.currentHitStreak + '</b></span>';
+      html += '<span>最高连中 <b>' + state.maxHitStreak + '</b></span>';
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div></div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">独立追三期命中结构</h2><span class="section__hint">D1/D2分开统计 · 每批同一号码固定追3期</span></div></div>';
+    html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">';
+    UM.KEYS.forEach(function (key) {
+      var item = analysis.items[key];
+      var w = item.window;
+      html += '<div class="panel" style="padding:12px">';
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b>' + item.label + '</b><span class="chip">共' + w.n + '批</span></div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;font-size:12px">';
+      html += '<span>第1期中 <b>' + w.first + '</b> · ' + pctFmt(w.firstRate) + '</span>';
+      html += '<span>第2期中 <b>' + w.second + '</b> · ' + pctFmt(w.secondRate) + '</span>';
+      html += '<span>第3期中 <b>' + w.third + '</b> · ' + pctFmt(w.thirdRate) + '</span>';
+      html += '<span>三期全错 <b>' + w.miss + '</b> · ' + pctFmt(w.missRate) + '</span>';
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">状态选择回测</h2><span class="section__hint">只交易D1/D2 · 状态分数阈值 35/60 · 样本不足仍按P6观察</span></div></div>';
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (strategyResult.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (strategyResult.net >= 0 ? "+" : "") + numFmt(strategyResult.net) + '</div><div class="stat__label">状态模型净收益（基础单位）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + pctFmt(strategyResult.roi) + '</div><div class="stat__label">状态模型回报率</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + numFmt(strategyResult.maxDrawdown) + '</div><div class="stat__label">状态模型最大回撤</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + strategyResult.sequences + '</div><div class="stat__label">有效追投批数 · 跳过起点' + strategyResult.skipped + '</div></div>';
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">固定方案对照</h2><span class="section__hint">基础单位 · 历史逐期回测</span></div></div>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="min-width:520px">';
+    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr;gap:6px;padding:6px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>方案</span><span>批数</span><span>投入</span><span>净收益</span><span>回报率</span><span>最大回撤</span></div>';
+    [["P6 " + UM.PATTERNS.P6.label, fixedP6], ["P7 " + UM.PATTERNS.P7.label, fixedP7], ["状态选择", strategyResult]].forEach(function (row) {
+      var r = row[1];
+      html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr;gap:6px;padding:8px 6px;border-bottom:1px solid #f0f0f0;font-size:12px">';
+      html += '<b>' + row[0] + '</b><span>' + r.sequences + '</span><span>' + numFmt(r.staked) + '</span><span style="color:' + (r.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (r.net >= 0 ? "+" : "") + numFmt(r.net) + '</span><span>' + pctFmt(r.roi) + '</span><span>' + numFmt(r.maxDrawdown) + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近监控记录</h2><span class="section__hint">D1/D2分开显示 · 中=绿色 未中=红色 · 新→旧</span></div></div>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="display:flex;gap:5px;min-width:max-content">';
+    var recent = analysis.signals.slice(-30);
+    for (var ri = recent.length - 1; ri >= 0; ri--) {
+      var rec = recent[ri];
+      html += '<div style="min-width:54px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 3px;background:#fff">';
+      html += '<div style="font-size:11px;color:var(--muted);margin-bottom:3px">' + rec.period + '</div>';
+      UM.KEYS.forEach(function (key) {
+        var pick = rec[key];
+        var txt = pick ? "尾" + pick.tail : "空";
+        var color = pick ? (pick.hit ? "#16a34a" : "#dc2626") : "#9ca3af";
+        html += '<div style="font-size:13px;font-weight:800;color:' + color + '">' + txt + '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div></div>';
+    html += '<p class="disclaimer">终极模型只监控双号推荐D1/D2，不读取下期预估。状态分数由近期命中率、遗漏分位、连中和连错共同计算；第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
+    view.innerHTML = html;
   }
 
   function renderPick3() {
