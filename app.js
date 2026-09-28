@@ -661,9 +661,24 @@
     for (var si = 0; si < sections.length; si++) {
       var heading = sections[si].querySelector(".section__title");
       if (heading && heading.textContent.indexOf(title) >= 0) {
-        view.insertBefore(sections[si], anchor.nextSibling);
-        sections[si].style.borderTop = "3px solid #2563eb";
-        sections[si].style.paddingTop = "8px";
+        var historyPanel = sections[si].querySelector(".panel");
+        var cardPanel = anchor.querySelector(".panel");
+        if (cardPanel) {
+          cardPanel.appendChild(sections[si]);
+          sections[si].style.marginTop = "14px";
+          sections[si].style.paddingTop = "12px";
+          sections[si].style.borderTop = "1px solid " + (anchor.id === "ultimateLockCard" ? "#bbf7d0" : "#e5e7eb");
+          if (historyPanel) {
+            historyPanel.style.background = "transparent";
+            historyPanel.style.border = "0";
+            historyPanel.style.boxShadow = "none";
+            historyPanel.style.padding = "0";
+          }
+        } else {
+          view.insertBefore(sections[si], anchor.nextSibling);
+          sections[si].style.borderTop = "3px solid #2563eb";
+          sections[si].style.paddingTop = "8px";
+        }
         break;
       }
     }

@@ -255,6 +255,7 @@ def main():
             and 'promoteSectionToTop("三期内必出滚动记录"' in app_text
             and 'id="ultimateLockCard"' in app_text
             and 'id="selectorActionCard"' in app_text
+            and "cardPanel.appendChild(sections[si])" in app_text
         ):
             pass_("三期内滚动记录已置顶展示")
         else:
