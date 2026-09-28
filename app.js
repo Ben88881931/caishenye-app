@@ -353,6 +353,7 @@
     { id: "overview", label: "总览" },
     { id: "predict", label: "下期预估" },
     { id: "pick3", label: "双号推荐" },
+    { id: "selector", label: "调度模型" },
     { id: "chasenumber", label: "追号模型" },
     { id: "chaserecommend", label: "追推荐模型" },
     { id: "segments", label: "分段对比" },
@@ -374,7 +375,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "推荐下单", tabs: ["predict", "pick3", "chasenumber", "chaserecommend", "orderlog"] },
+    { id: "recommend", label: "推荐下单", tabs: ["predict", "pick3", "selector", "chasenumber", "chaserecommend", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -630,7 +631,7 @@
   }
 
   function scrollToLatest() {
-    if (state.tab === "pick3" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog") return;
+    if (state.tab === "pick3" || state.tab === "selector" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog") return;
     var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
     if (sc) {
       sc.scrollTop = sc.scrollHeight;
@@ -660,6 +661,7 @@
     else if (state.tab === "backtest") renderBacktest();
     else if (state.tab === "predict") renderPredict();
     else if (state.tab === "pick3") renderPick3();
+    else if (state.tab === "selector") renderSelector();
     else if (state.tab === "chasenumber") renderChaseNumber();
     else if (state.tab === "chaserecommend") renderChaseRecommendation();
     else if (state.tab === "orderlog") renderOrderLog();
@@ -2387,6 +2389,111 @@
     html += '</div></div>';
     html += hitLogSectionHTML(mode);
     html += '<p class="disclaimer">' + modeLabel + '只监控双号推荐D1/D2，不读取下期预估。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
+    view.innerHTML = html;
+  }
+
+  function renderSelector() {
+    var S = window.CAISHEN_SELECTOR;
+    if (!S) {
+      view.innerHTML = '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">调度模型模块未加载</div></div></div></div>';
+      return;
+    }
+    var options = { startPeriod: 31 };
+    var analysis = S.analyze(RAW, MODEL, options);
+    var decision = analysis.decision;
+    var dRes = S.runBacktest(RAW, MODEL, "double", options);
+    var wRes = S.runBacktest(RAW, MODEL, "weighted", options);
+    var sRes = S.runBacktest(RAW, MODEL, "selector", options);
+    var endPeriod = analysis.latestPeriod;
+    var midPeriod = Math.floor((31 + endPeriod) / 2);
+    var firstRes = S.runBacktest(RAW, MODEL, "selector", { startPeriod: 31, endPeriod: midPeriod });
+    var secondRes = S.runBacktest(RAW, MODEL, "selector", { startPeriod: midPeriod + 1, endPeriod: endPeriod });
+    var actionColor = decision.source === "double" ? "#16a34a" : decision.source === "weighted" ? "#2563eb" : "#6b7280";
+
+    function pctFmt(x) {
+      return (x * 100).toFixed(1) + "%";
+    }
+
+    function signedPct(x) {
+      return (x >= 0 ? "+" : "") + (x * 100).toFixed(1) + "%";
+    }
+
+    function pickHtml(label, pick) {
+      if (!pick) return '<span class="chip" style="color:#6b7280">' + label + ' 空推荐</span>';
+      var meta = pick.tag || pick.grade || "";
+      return '<span class="chip">' + label + ' 尾' + pick.tail + (meta ? " · " + meta : "") + "</span>";
+    }
+
+    function streamCard(state) {
+      var color = state.stream === "double" ? "#16a34a" : "#2563eb";
+      var h = '<div class="panel" style="padding:12px;min-width:0">';
+      h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:' + color + '">' + state.label + '</b>';
+      h += '<span class="chip">' + (state.current ? "尾" + state.current.tail : "空") + "</span></div>";
+      h += '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;margin-top:8px;font-size:12px;color:var(--muted)">';
+      h += '<span>近20期 <b>' + pctFmt(state.recentHitRate) + '</b></span>';
+      h += '<span>相位差 <b style="color:' + (state.edge >= 0 ? "#16a34a" : "#dc2626") + '">' + signedPct(state.edge) + '</b></span>';
+      h += '<span>当前连中 <b>' + state.currentHitStreak + '</b></span>';
+      h += '<span>当前连错 <b>' + state.currentMissStreak + '</b></span>';
+      h += '<span>最高连错 <b>' + state.maxMissStreak + '</b></span>';
+      h += '<span>空推荐率 <b>' + pctFmt(state.emptyRate) + '</b></span>';
+      h += '<span>3期内命中 <b>' + pctFmt(state.threePeriod.hitRate) + '</b></span>';
+      h += '<span>尾号当前连出 <b>' + state.tailStreak + '</b></span>';
+      h += "</div>";
+      h += "</div>";
+      return h;
+    }
+
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">调度模型</h2><span class="section__hint">' +
+      S.VERSION + ' · 不预测号码 · 监控双号追热与加权追冷的相位</span></div></div>';
+
+    html += '<div class="section"><div class="panel" style="padding:16px 14px">';
+    html += '<div style="text-align:center">';
+    html += '<div style="font-size:12px;color:var(--muted);font-weight:700">预测第' + analysis.nextPeriod + '期动作</div>';
+    html += '<div style="font-size:28px;font-weight:900;color:' + actionColor + ';margin:6px 0">' + decision.action + '</div>';
+    html += '<div style="font-size:12px;color:var(--muted)">' + decision.rule + " · " + decision.reason + "</div>";
+    html += '</div>';
+    html += '<div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:12px">';
+    html += pickHtml("双号", decision.double.current);
+    html += pickHtml("加权", decision.weighted.current);
+    html += "</div>";
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">两条推荐流</h2><span class="section__hint">只看模型自己的推荐序列</span></div></div>';
+    html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">';
+    html += streamCard(decision.double);
+    html += streamCard(decision.weighted);
+    html += "</div></div>";
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">优化后的调度规则</h2><span class="section__hint">当前版本以避开无效相位为主</span></div></div>';
+    html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
+    html += '<div><b>P1 双号确认：</b>双号首推达到A级及以上，且加权反弹率≥65%，允许跟双号。</div>';
+    html += '<div><b>P2 加权反弹：</b>加权对错遗漏达到2期，或加权刚刚连续命中1期，允许跟加权。</div>';
+    html += '<div><b>P3 双号遗漏阻断：</b>双号推荐流连续错2期时，不跟双号。</div>';
+    html += '<div><b>P4 加权过热阻断：</b>加权连续命中2期后，不继续追加权。</div>';
+    html += '<div><b>P5 双边哑火：</b>加权空推荐且双号未确认，直接观望。</div>';
+    html += '<div><b>P6 热号阻断：</b>推荐尾号实际连出≥5期，禁止追热。</div>';
+    html += "</div></div></div>";
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">调度回测</h2><span class="section__hint">单期跟推荐 · 赔率1.8 · 不一致时按调度动作执行</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="min-width:620px">';
+    html += '<div style="display:grid;grid-template-columns:1.15fr .65fr .75fr .75fr .75fr .75fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>方案</span><span>出手</span><span>命中率</span><span>净收益</span><span>回报率</span><span>最大回撤</span></div>';
+    [["死磕双号", dRes], ["死磕加权", wRes], ["第四套调度", sRes]].forEach(function (row) {
+      var r = row[1];
+      html += '<div style="display:grid;grid-template-columns:1.15fr .65fr .75fr .75fr .75fr .75fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px">';
+      html += '<b>' + row[0] + '</b><span>' + r.bets + '</span><span>' + pctFmt(r.hitRate) + '</span><span style="color:' + (r.net >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.net >= 0 ? "+" : "") + r.net.toFixed(2) + '</span><span>' + pctFmt(r.roi) + '</span><span>' + r.maxDrawdown.toFixed(2) + '</span>';
+      html += '</div>';
+    });
+    html += "</div></div></div>";
+
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value">' + pctFmt(firstRes.hitRate) + '</div><div class="stat__label">前半段调度命中率 · 出手' + firstRes.bets + '</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + pctFmt(secondRes.hitRate) + '</div><div class="stat__label">后半段调度命中率 · 出手' + secondRes.bets + '</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + pctFmt(sRes.hitRate) + '</div><div class="stat__label">全历史调度命中率</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + sRes.observed + '</div><div class="stat__label">主动观望期数</div></div>';
+    html += "</div></div>";
+    html += '<p class="disclaimer">第四套模型只调度“跟双号、跟加权、观望”，不预测号码。历史命中率高于基准不代表未来稳定；真实快照样本不足时只能作为决策辅助。</p>';
     view.innerHTML = html;
   }
 

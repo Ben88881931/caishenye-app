@@ -36,6 +36,8 @@ def main():
     data_path = REPO / "data.js"
     app_path = REPO / "app.js"
     model_core_path = REPO / "model_core.js"
+    selector_path = REPO / "model_selector.js"
+    selector_backtest_path = REPO / "selector_backtest.js"
     ultimate_model_path = REPO / "ultimate_model.js"
     ultimate_backtest_path = REPO / "ultimate_backtest.js"
     supervisor_path = REPO / "model_supervisor.js"
@@ -206,7 +208,7 @@ def main():
         else:
             fail("app.js 缺少分类折叠、分类排序或页面跨类移动")
 
-        for func in ["renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "hitLogSectionHTML"]:
+        for func in ["renderSelector", "renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "hitLogSectionHTML"]:
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少终极模型函数 {func}")
         else:
@@ -214,12 +216,13 @@ def main():
         if (
             'id: "chasenumber"' in app_text
             and 'id: "chaserecommend"' in app_text
+            and 'id: "selector"' in app_text
             and 'id: "orderlog"' in app_text
             and "window.CAISHEN_ULTIMATE" in app_text
         ):
-            pass_("app.js 含追号/追推荐/下单记录导航")
+            pass_("app.js 含调度/追号/追推荐/下单记录导航")
         else:
-            fail("app.js 缺少追号/追推荐/下单记录导航")
+            fail("app.js 缺少调度/追号/追推荐/下单记录导航")
         if "追号模型" in app_text and "追推荐模型" in app_text and "下单记录" in app_text and "追中记录" in app_text and "本模式状态回测" in app_text:
             pass_("追号/追推荐/下单记录及模型内追中记录区块完整")
         else:
@@ -232,6 +235,10 @@ def main():
             pass_("下单记录含自动结算")
         else:
             fail("下单记录缺少自动结算")
+        if "function renderSelector" in app_text and "window.CAISHEN_SELECTOR" in app_text and "第四套调度" in app_text:
+            pass_("调度模型页面存在")
+        else:
+            fail("调度模型页面不完整")
 
     index_path = REPO / "index.html"
     if not index_path.exists():
@@ -239,27 +246,30 @@ def main():
     else:
         index_text = index_path.read_text(encoding="utf-8")
         core_pos = index_text.find("model_core.js")
+        selector_pos = index_text.find("model_selector.js")
         ultimate_pos = index_text.find("ultimate_model.js")
         snap_pos = index_text.find("snapshots.js")
         app_pos = index_text.find("app.js")
         if core_pos < 0:
             fail("index.html 未加载 model_core.js")
+        elif selector_pos < 0:
+            fail("index.html 未加载 model_selector.js")
         elif ultimate_pos < 0:
             fail("index.html 未加载 ultimate_model.js")
         elif snap_pos < 0:
             fail("index.html 未加载 snapshots.js")
         elif app_pos < 0:
             fail("index.html 未加载 app.js")
-        elif not (core_pos < ultimate_pos < snap_pos < app_pos):
-            fail("index.html 加载顺序必须为 model_core.js → ultimate_model.js → snapshots.js → app.js")
+        elif not (core_pos < selector_pos < ultimate_pos < snap_pos < app_pos):
+            fail("index.html 加载顺序必须为 model_core.js → model_selector.js → ultimate_model.js → snapshots.js → app.js")
         else:
-            pass_("model_core.js → ultimate_model.js → snapshots.js → app.js 加载顺序正确")
+            pass_("model_core.js → model_selector.js → ultimate_model.js → snapshots.js → app.js 加载顺序正确")
         if "88d2a63" in index_text:
             fail("index.html 仍使用旧缓存版本 88d2a63，请更新为最新构建版本")
         else:
             pass_("index.html 无旧缓存版本 88d2a63")
         # 所有资源版本号必须一致
-        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
+        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|model_selector\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
         if not m_versions:
             fail("index.html 未找到带版本号的资源引用")
         else:
@@ -269,7 +279,7 @@ def main():
             else:
                 pass_(f"index.html 资源版本一致：{m_versions[0]}")
 
-    for js_path in [model_core_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
+    for js_path in [model_core_path, selector_path, selector_backtest_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
         if not js_path.exists():
             fail(f"缺少 {js_path.name}")
             continue
@@ -280,6 +290,16 @@ def main():
             print(f"WARN: 未找到 node，跳过 {js_path.name} 语法检查")
         except subprocess.CalledProcessError as e:
             fail(f"{js_path.name} 语法错误：" + (e.stderr or "").strip())
+
+    if selector_path.exists():
+        selector_text = selector_path.read_text(encoding="utf-8")
+        for token in ["buildSignals", "streamState", "decide", "analyze", "runBacktest", "minDoubleScore", "minWeightedConfirm"]:
+            if token in selector_text:
+                pass_(f"model_selector.js 含 {token}")
+            else:
+                fail(f"model_selector.js 缺少 {token}")
+    else:
+        fail("缺少 model_selector.js")
 
     if ultimate_model_path.exists():
         ultimate_text = ultimate_model_path.read_text(encoding="utf-8")
