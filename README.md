@@ -56,6 +56,7 @@ GitHub Actions（`.github/workflows/sync-v2.yml`）会在 push、每日定时和
 - 追推荐模型：每期新推荐独立追3期，允许不同推荐并行运行。
 - 下单记录：统一记录追号和追推荐的下单、结算状态和净收益，不再保留重复的下单追投页面。本金、号码、模式和倍投由用户手动决定，开奖数据齐全后自动判断第1/2/3期中或三期全错。
 - 追中记录：不单独占一级页面，直接显示在追号模型和追推荐模型底部，只展示对应模式的命中记录，并标记在第1期、第2期还是第3期中。
+- 总览：顶部固定展示“每日选号下单顺序”，按“调度模型 → 首推置信率 → 追号/追推荐 → P档 → 下单记录 → 自动结算”的流程操作。
 
 ## 号码和生肖规则
 
@@ -254,7 +255,7 @@ node selector_backtest.js
 node score_calibration.js report
 ```
 
-前端缓存版本：`index.html` 里的 `data.js` / `model_core.js` / `model_selector.js` / `ultimate_model.js` / `snapshots.js` / `app.js` / `styles.css` 使用统一构建版本号（如 `?v=20260928-18`），以上文件内容变化时必须同步更新版本号，否则浏览器可能读到旧缓存。
+前端缓存版本：`index.html` 里的 `data.js` / `model_core.js` / `model_selector.js` / `ultimate_model.js` / `snapshots.js` / `app.js` / `styles.css` 使用统一构建版本号（如 `?v=20260928-19`），以上文件内容变化时必须同步更新版本号，否则浏览器可能读到旧缓存。
 
 ## 本地开发
 

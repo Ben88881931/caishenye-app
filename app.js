@@ -700,6 +700,25 @@
     refs.sort(function (a, b) { return b.edge - a.edge; });
 
     var html = "";
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">每日选号下单顺序</h2><span class="section__hint">按顺序看，不做反向操作</span></div></div>';
+    html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
+    html += '<div><b>第1步 看调度：</b>先打开“调度模型”，只看顶部最终动作：跟双号、跟加权或观望。</div>';
+    html += '<div><b>第2步 先排除：</b>最终动作是“观望”就不下单；加权空推荐时，不自行改追双号。</div>';
+    html += '<div><b>第3步 选号码：</b>跟双号时优先看D1，D1不是“优先”再看D2；跟加权时只看W1，W2只作校验，不单独下注。</div>';
+    html += '<div><b>第4步 看置信率：</b>调度页四条推荐流分别给出正确概率和“优先/观察/避让”。优先才正常下单，观察只小注，避让或无信号不下。</div>';
+    html += '<div><b>第5步 选执行方式：</b>想锁定一个首推号追3期，选“追号”；想每期新推荐分别追3期，选“追推荐”。</div>';
+    html += '<div><b>第6步 选倍投：</b>按追号/追推荐页面的当前P档执行。P8只在高分状态使用，风险最高。</div>';
+    html += '<div><b>第7步 记录下单：</b>到“下单记录”填写来源、执行方式、位置、起始期、尾号、倍投和本金。</div>';
+    html += '<div><b>第8步 等自动结算：</b>开奖数据齐全后系统自动判断第1期中、第2期中、第3期中或三期全错。</div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">';
+    html += '<button class="chip" data-overview-tab="selector">先看调度模型</button>';
+    html += '<button class="chip" data-overview-tab="chasenumber">看追号模型</button>';
+    html += '<button class="chip" data-overview-tab="chaserecommend">看追推荐模型</button>';
+    html += '<button class="chip" data-overview-tab="orderlog">去下单记录</button>';
+    html += '</div>';
+    html += '<div style="margin-top:8px;font-size:12px;color:var(--muted)">当前直接执行口径：先看调度；只有调度给出跟双号或跟加权，且对应首推为“优先”时，才进入下单记录。本金和实际下注仍由你确认。</div>';
+    html += '</div></div></div>';
+
     html += '<div class="section">';
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + latest + "</div><div class=\"stat__label\">最新期数</div></div>";
@@ -3577,6 +3596,17 @@
   });
 
   view.addEventListener("click", function (e) {
+    var overviewTab = e.target.closest("[data-overview-tab]");
+    if (overviewTab) {
+      var targetTab = overviewTab.dataset.overviewTab;
+      state.tab = targetTab;
+      var targetGroup = groupForTab(targetTab);
+      if (targetGroup) state.group = targetGroup.id;
+      lsSet("v2_current_tab", state.tab);
+      lsSet(NAV_GROUP_KEY, state.group);
+      render();
+      return;
+    }
     var selectorHistoryBtn = e.target.closest("[data-selector-history-filter]");
     if (selectorHistoryBtn) {
       selectorHistoryFilter = selectorHistoryBtn.dataset.selectorHistoryFilter;
