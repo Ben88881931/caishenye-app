@@ -1806,7 +1806,7 @@
   }
 
   // ===== 预估三层框架 + 下期推荐 =====
-  // 新模型：加权恰好遗漏k期反弹率（回测 中23·错21·共44）
+  // 新模型：加权恰好遗漏k期反弹率（样本外201-255 中23·错21·共44）
   var BOUNCE = { 0: 2, 1: 3, 2: 1, 3: 1, 4: 2, 5: 1, 6: 2, 7: 2, 8: 2, 9: 4 };
   var NEW_MODEL = { decayRate: 1.75, bounceThresh: 0.75, bounceThresh2: 0.65, wBounce: 5, wBounce2: 3, wDepth: 1, depthThresh: 0.5, minSample: 2 };
 
@@ -2066,7 +2066,7 @@
         break;
       }
     }
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 回测 中23·错21·共44</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 样本外201-255 中23·错21·共44</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>遗漏/最大</th><th>反弹命中</th><th>样本</th><th>得分</th></tr></thead><tbody>';
     var cands = [];
     var lastBin = bin(N);
@@ -2092,7 +2092,9 @@
 
     cands.sort(function (a, b) { return b.score - a.score; });
     var recItems = [];
-    if (pendingSnapshot && pendingSnapshot.picks && pendingSnapshot.picks.length) {
+    var snapshotSkipped = false;
+    if (pendingSnapshot) {
+      if (pendingSnapshot.picks && pendingSnapshot.picks.length) {
       pendingSnapshot.picks.forEach(function (p) {
         recItems.push({
           d: p.tail,
@@ -2106,7 +2108,10 @@
           score: p.score,
           snapshot: true
         });
-      });
+        });
+      } else {
+        snapshotSkipped = true;
+      }
     } else {
       cands.slice(0, 2).forEach(function (p) {
         recItems.push({
@@ -2132,7 +2137,7 @@
     html += '<div class="section"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">加权反弹率≥75% +5分 · ≥65% +3分 · 遗漏深度≥50% +1分</span></div>';
     html += '<div class="panel"><div class="panel__body">';
     if (recItems.length === 0) {
-      html += '<div class="empty">上期全中，无未出号，建议跳过</div>';
+      html += '<div class="empty">' + (snapshotSkipped ? "开奖前快照：跳过（加权最高分≤0或候选并列）" : "上期全中，无未出号，建议跳过") + '</div>';
     } else {
       var recTitle = recItems.length >= 2
         ? (recItems[0].snapshot ? "开奖前快照：双推荐" : "双推荐")
@@ -2147,7 +2152,7 @@
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每日分析报告</h2><span class="section__hint">' + new Date().toLocaleDateString("zh-CN") + " · 第 " + N + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body report">';
     if (recItems.length === 0) {
-      html += '<p><b>结论：</b>上期尾数全部开出，没有未开尾数可供预测，建议本期跳过。</p>';
+      html += '<p><b>结论：</b>' + (snapshotSkipped ? "开奖前快照为空推荐，本期不加权下单。" : "上期尾数全部开出，没有未开尾数可供预测，建议本期跳过。") + '</p>';
     } else {
       var reportTitle = recItems[0].snapshot ? "开奖前快照推荐" : "本期推荐";
       html += '<p><b>结论：</b>' + reportTitle + '：' + recItems.map(function (p, idx) {
@@ -2158,7 +2163,7 @@
       }).join("；") + "。</p>";
     }
     html += '<p><b>评分规则：</b>加权反弹率≥75% +5分；≥65% +3分；遗漏深度≥50% +1分。分数并列时给双推荐。</p>';
-    html += '<p><b>模型原理：</b>恰好遗漏k期的加权近期反弹率，衰减因子1.75（越近权重越高），回测 中23·错21·共44。</p>';
+    html += '<p><b>模型原理：</b>恰好遗漏k期的加权近期反弹率，衰减因子1.75（越近权重越高），样本外201-255 中23·错21·共44。</p>';
     html += '<p><b>风险提示：</b>模型仅供参考，不应据此重注。</p>';
     html += "</div></div></div>";
 
@@ -2178,7 +2183,8 @@
         return (idx === 0 ? "首选" : "备选") + "尾 " + p.tail;
       }).join("、") : "跳过");
       html += '</p><p><b>实际开出：</b>' + (reviewSnapshot.actualTails || []).join(" ");
-      html += '</p><p><b>结果：</b><span style="color:' + (reviewSnapshot.hit ? "#16a34a" : "#dc2626") + ';font-weight:700">' + (reviewSnapshot.hit ? "命中" : "未中") + "</span></p>";
+      if (!rpicks.length) html += '<p><b>结果：</b><span style="color:#6b7280;font-weight:700">跳过，未参与结算</span></p>';
+      else html += '</p><p><b>结果：</b><span style="color:' + (reviewSnapshot.hit ? "#16a34a" : "#dc2626") + ';font-weight:700">' + (reviewSnapshot.hit ? "命中" : "未中") + "</span></p>";
       html += "</div></div></div>";
     } else if (review) {
       html += '<div class="section"><div class="section__head"><h2 class="section__title">上期预测反馈</h2><span class="section__hint">用第 ' + review.N + ' 期数据回看第 ' + latest + " 期</span></div>";
@@ -2262,7 +2268,7 @@
       html += "</div></div></div>";
     }
 
-    html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，回测 中23·错21·共44。修复数据泄露后已退随机（理论基准约55.39%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
+    html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，样本外201-255 中23·错21·共44。修复数据泄露后已退随机（理论基准约55.39%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
     view.innerHTML = html;
   }
 
@@ -2356,39 +2362,50 @@
     var html = '<div class="section" id="ultimatePageHeader"><div class="section__head"><h2 class="section__title">' + modeLabel + '</h2><span class="section__hint">' +
       modeHint + ' · ' + UM.VERSION + ' · 数据截至第' + analysis.endPeriod + '期 · 预测第' + analysis.nextPeriod + '期</span></div></div>';
 
+    var gateAction = "未加载";
+    var gateBlocked = true;
+    if (window.CAISHEN_SELECTOR && window.CAISHEN_SELECTOR.analyze) {
+      var gateAnalysis = window.CAISHEN_SELECTOR.analyze(RAW, MODEL, options);
+      gateAction = gateAnalysis.decision.action;
+      gateBlocked = gateAction === "观望";
+    }
+    var lockTone = gateBlocked
+      ? { border: "#d97706", bg: "#fffbeb", text: "#92400e", soft: "#fef3c7" }
+      : { border: "#16a34a", bg: "#f0fdf4", text: "#166534", soft: "#bbf7d0" };
     if (primaryLock) {
       var lockState = primaryLock.monitor;
       var lockEndPeriod = analysis.nextPeriod + 2;
-      html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #16a34a;background:#f0fdf4">';
+      html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
       html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">';
       html += '<div>';
-      html += '<div style="font-size:12px;font-weight:900;color:#166534;letter-spacing:.08em">' + modeLabel + ' · 本期锁定号</div>';
-      html += '<div style="font-size:44px;line-height:1.05;font-weight:900;color:#15803d;margin:6px 0">锁定尾' + primaryLock.pick.tail + '</div>';
-      html += '<div style="font-size:14px;font-weight:900;color:#166534">' + primaryLock.label + ' ' + primaryLock.key + ' · ' + primaryLock.pick.grade + '级 ' + primaryLock.pick.score.toFixed(1) + '分 · ' + primaryLock.pick.tag + '</div>';
-      html += '<div style="font-size:13px;color:#166534;margin-top:5px">状态 <b>' + lockState.stateLabel + ' ' + lockState.score.toFixed(1) + '分</b> · 建议 <b>' + UM.PATTERNS[lockState.pattern].label + ' ' + UM.PATTERNS[lockState.pattern].stakes.join(" / ") + '</b></div>';
+      html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + (gateBlocked ? "本期观察锁定" : "本期可执行锁定") + '</div>';
+      html += '<div style="font-size:44px;line-height:1.05;font-weight:900;color:' + lockTone.text + ';margin:6px 0">' + (gateBlocked ? "观察尾" : "锁定尾") + primaryLock.pick.tail + '</div>';
+      html += '<div style="font-size:14px;font-weight:900;color:' + lockTone.text + '">' + primaryLock.label + ' ' + primaryLock.key + ' · ' + primaryLock.pick.grade + '级 ' + primaryLock.pick.score.toFixed(1) + '分 · ' + primaryLock.pick.tag + '</div>';
+      html += '<div style="font-size:13px;color:' + lockTone.text + ';margin-top:5px">状态 <b>' + lockState.stateLabel + ' ' + lockState.score.toFixed(1) + '分</b> · 建议 <b>' + UM.PATTERNS[lockState.pattern].label + ' ' + UM.PATTERNS[lockState.pattern].stakes.join(" / ") + '</b></div>';
+      if (gateBlocked) html += '<div style="margin-top:7px;padding:6px 8px;border-radius:6px;background:' + lockTone.soft + ';font-size:12px;font-weight:900;color:' + lockTone.text + '">总调度：观望 · 本页只作观察，不产生订单</div>';
       html += '</div>';
-      html += '<div style="min-width:220px;flex:1;background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px">';
-      html += '<div style="font-size:12px;color:#166534;font-weight:900">' + (isRecommendMode ? "本期新增追推荐" : "本期新开追号线") + '</div>';
+      html += '<div style="min-width:220px;flex:1;background:#fff;border:1px solid ' + lockTone.soft + ';border-radius:8px;padding:10px 12px">';
+      html += '<div style="font-size:12px;color:' + lockTone.text + ';font-weight:900">' + (gateBlocked ? "观察窗口" : (isRecommendMode ? "本期新增追推荐" : "本期新开追号线")) + '</div>';
       html += '<div style="font-size:18px;font-weight:900;margin:4px 0">第' + analysis.nextPeriod + '期 → 第' + lockEndPeriod + '期</div>';
-      html += '<div style="font-size:12px;color:#166534;line-height:1.7">' + (isRecommendMode ? "第" + analysis.nextPeriod + "期新增一条独立追推荐线，锁定尾" + primaryLock.pick.tail + "追3期；之后每期新推荐再另开线，允许并行。" : "从第" + analysis.nextPeriod + "期起固定锁定尾" + primaryLock.pick.tail + "追3期：第" + analysis.nextPeriod + "、第" + (analysis.nextPeriod + 1) + "、第" + lockEndPeriod + "期；未结束前不换号。") + '</div>';
+      html += '<div style="font-size:12px;color:' + lockTone.text + ';line-height:1.7">' + (isRecommendMode ? "第" + analysis.nextPeriod + "期候选独立追3期；若调度允许，之后每期新推荐再另开线并允许并行。" : "从第" + analysis.nextPeriod + "期起候选固定追3期：第" + analysis.nextPeriod + "、第" + (analysis.nextPeriod + 1) + "、第" + lockEndPeriod + "期；未结束前不换号。") + '</div>';
       html += '</div>';
       html += '</div>';
-      html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #bbf7d0">';
-      html += '<div style="font-size:12px;font-weight:900;color:#166534;margin-bottom:6px">本期候选逐条判断</div>';
+      html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid ' + lockTone.soft + '">';
+      html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';margin-bottom:6px">本期候选逐条判断</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
       lockCandidates.forEach(function (candidate) {
         var active = !!candidate.monitor.pattern;
         var isPrimary = primaryLock && candidate.key === primaryLock.key;
-        var cardColor = active ? "#166534" : "#6b7280";
+        var cardColor = active ? lockTone.text : "#6b7280";
         var cardBg = active ? "#ffffff" : "#f8fafc";
-        var cardBorder = isPrimary ? "#16a34a" : "#d1d5db";
+        var cardBorder = isPrimary ? lockTone.border : "#d1d5db";
         html += '<div style="border:2px solid ' + cardBorder + ';border-radius:8px;padding:9px 10px;background:' + cardBg + '">';
-        html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b style="color:' + cardColor + '">' + candidate.key + ' ' + candidate.label + '</b><span class="chip">尾' + candidate.pick.tail + '</span><b style="color:' + cardColor + '">' + (active ? "锁定" : "不锁") + '</b></div>';
+        html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b style="color:' + cardColor + '">' + candidate.key + ' ' + candidate.label + '</b><span class="chip">尾' + candidate.pick.tail + '</span><b style="color:' + cardColor + '">' + (active ? (gateBlocked ? "观察" : "锁定") : "不锁") + '</b></div>';
         html += '<div style="font-size:12px;color:var(--muted);margin-top:5px">' + candidate.pick.grade + '级 ' + candidate.pick.score.toFixed(1) + '分 · ' + candidate.pick.tag + ' · ' + candidate.monitor.stateLabel + ' ' + candidate.monitor.score.toFixed(1) + '分' + (active ? " · " + UM.PATTERNS[candidate.monitor.pattern].label : " · 观望") + '</div>';
         html += '</div>';
       });
       html += '</div></div>';
-      html += '<div style="margin-top:10px;font-size:12px;color:#166534">最终是否真实下单仍按总览流程执行；若调度模型为“观望”，即使此处有锁定号也不下单。</div>';
+      html += '<div style="margin-top:10px;font-size:12px;color:' + lockTone.text + '">' + (gateBlocked ? "最终执行：调度观望，锁定号降级为观察，不产生订单。" : "最终执行：调度允许，仍需按总览流程确认本金和实际下单。") + '</div>';
       html += '</div></div>';
     } else {
       html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #d97706;background:#fffbeb">';

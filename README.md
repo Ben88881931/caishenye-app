@@ -108,6 +108,7 @@ git push origin main
 每天更新后，除了确认最新数据，还要运行：
 
 ```bash
+node page_audit.js
 python check_app.py
 node --check app.js
 ```
@@ -259,7 +260,7 @@ node selector_backtest.js
 node score_calibration.js report
 ```
 
-前端缓存版本：`index.html` 里的 `data.js` / `model_core.js` / `model_selector.js` / `ultimate_model.js` / `snapshots.js` / `app.js` / `styles.css` 使用统一构建版本号（如 `?v=20260928-22`），以上文件内容变化时必须同步更新版本号，否则浏览器可能读到旧缓存。
+前端缓存版本：`index.html` 里的 `data.js` / `model_core.js` / `model_selector.js` / `ultimate_model.js` / `snapshots.js` / `app.js` / `styles.css` 使用统一构建版本号（如 `?v=20260928-23`），以上文件内容变化时必须同步更新版本号，否则浏览器可能读到旧缓存。
 
 ## 本地开发
 

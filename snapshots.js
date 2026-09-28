@@ -460,7 +460,8 @@ window.APP_SNAPSHOTS = {
         0
       ],
       "hit": true,
-      "settledAt": "2026-09-19T13:45:40.822Z"
+      "settledAt": "2026-09-19T13:45:40.822Z",
+      "skipped": false
     },
     {
       "target": 263,
@@ -499,7 +500,8 @@ window.APP_SNAPSHOTS = {
         9
       ],
       "hit": true,
-      "settledAt": "2026-09-20T14:27:28.378Z"
+      "settledAt": "2026-09-20T14:27:28.378Z",
+      "skipped": false
     },
     {
       "target": 264,
@@ -540,7 +542,8 @@ window.APP_SNAPSHOTS = {
         0
       ],
       "hit": true,
-      "settledAt": "2026-09-21T15:05:32.139Z"
+      "settledAt": "2026-09-21T15:05:32.139Z",
+      "skipped": false
     },
     {
       "target": 265,
@@ -581,7 +584,8 @@ window.APP_SNAPSHOTS = {
         3
       ],
       "hit": true,
-      "settledAt": "2026-09-22T14:12:26.982Z"
+      "settledAt": "2026-09-22T14:12:26.982Z",
+      "skipped": false
     },
     {
       "target": 266,
@@ -620,7 +624,8 @@ window.APP_SNAPSHOTS = {
         7
       ],
       "hit": true,
-      "settledAt": "2026-09-23T13:59:57.866Z"
+      "settledAt": "2026-09-23T13:59:57.866Z",
+      "skipped": false
     },
     {
       "target": 267,
@@ -661,7 +666,8 @@ window.APP_SNAPSHOTS = {
         1
       ],
       "hit": true,
-      "settledAt": "2026-09-24T13:41:00.211Z"
+      "settledAt": "2026-09-24T13:41:00.211Z",
+      "skipped": false
     },
     {
       "target": 268,
@@ -701,7 +707,8 @@ window.APP_SNAPSHOTS = {
         4
       ],
       "hit": true,
-      "settledAt": "2026-09-25T14:20:54.202Z"
+      "settledAt": "2026-09-25T14:20:54.202Z",
+      "skipped": false
     },
     {
       "target": 269,
@@ -741,7 +748,8 @@ window.APP_SNAPSHOTS = {
         2
       ],
       "hit": true,
-      "settledAt": "2026-09-26T13:39:12.825Z"
+      "settledAt": "2026-09-26T13:39:12.825Z",
+      "skipped": false
     },
     {
       "target": 270,
@@ -780,7 +788,8 @@ window.APP_SNAPSHOTS = {
         7
       ],
       "hit": true,
-      "settledAt": "2026-09-27T15:32:45.913Z"
+      "settledAt": "2026-09-27T15:32:45.913Z",
+      "skipped": false
     },
     {
       "target": 271,
@@ -795,7 +804,8 @@ window.APP_SNAPSHOTS = {
       ],
       "hits": [],
       "hit": false,
-      "settledAt": "2026-09-28T13:55:57.506Z"
+      "settledAt": "2026-09-28T13:55:57.506Z",
+      "skipped": true
     },
     {
       "target": 272,
@@ -826,32 +836,35 @@ window.APP_SNAPSHOTS = {
       "actualTails": [],
       "hits": [],
       "hit": null,
-      "settledAt": null
+      "settledAt": null,
+      "skipped": false
     }
   ],
   "weightedSummary": {
-    "n": 10,
+    "n": 9,
+    "settled": 10,
+    "skipped": 1,
     "hits": 9,
-    "miss": 1,
+    "miss": 0,
     "firstPick": {
-      "n": 10,
+      "n": 9,
       "hits": 7,
-      "miss": 3
+      "miss": 2
     },
     "secondPick": {
-      "n": 10,
+      "n": 9,
       "hits": 5,
-      "miss": 5
+      "miss": 4
     },
     "atLeastOne": {
-      "n": 10,
+      "n": 9,
       "hits": 9,
-      "miss": 1
+      "miss": 0
     },
     "both": {
-      "n": 10,
+      "n": 9,
       "hits": 3,
-      "miss": 7
+      "miss": 6
     }
   },
   "detail": [

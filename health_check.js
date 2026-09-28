@@ -70,12 +70,13 @@ if (fs.existsSync(snapshotPath)) {
 
 function snapshotSummary(key) {
   const settled = snapshotRecords.filter(r => r.settled && r.results && r.results[key]);
-  const hits = settled.filter(r => r.results[key].hit === true).length;
-  return { n: settled.length, hits, rate: settled.length ? hits / settled.length : 0 };
+  const acted = settled.filter(r => r.models && r.models[key] && Array.isArray(r.models[key].picks) && r.models[key].picks.length > 0);
+  const hits = acted.filter(r => r.results[key].hit === true).length;
+  return { n: acted.length, settled: settled.length, skipped: settled.length - acted.length, hits, rate: acted.length ? hits / acted.length : 0 };
 }
 
 function snapshotPickSummary(key, index) {
-  const settled = snapshotRecords.filter(r => r.settled && r.models && r.models[key] && r.models[key].picks);
+  const settled = snapshotRecords.filter(r => r.settled && r.models && r.models[key] && r.models[key].picks && r.models[key].picks.length > 0);
   const hits = settled.filter(r => {
     const p = r.models[key].picks[index];
     return p && (r.actualTails || []).includes(p.tail);
@@ -84,7 +85,7 @@ function snapshotPickSummary(key, index) {
 }
 
 function snapshotBothSummary(key) {
-  const settled = snapshotRecords.filter(r => r.settled && r.models && r.models[key] && r.models[key].picks);
+  const settled = snapshotRecords.filter(r => r.settled && r.models && r.models[key] && r.models[key].picks && r.models[key].picks.length > 0);
   const hits = settled.filter(r => {
     const picks = r.models[key].picks;
     return picks.length >= 2 && picks.every(p => (r.actualTails || []).includes(p.tail));
@@ -113,7 +114,7 @@ console.log('当前连续未中 ' + missStreak + ' 期');
 
 console.log('\n--- 真实快照账（开奖前保存，开奖后结算）---');
 console.log('双号至少中一: ' + snapDouble.hits + '/' + snapDouble.n + ' = ' + pct(snapDouble.rate));
-console.log('加权至少中一: ' + snapWeighted.hits + '/' + snapWeighted.n + ' = ' + pct(snapWeighted.rate));
+console.log('加权至少中一: ' + snapWeighted.hits + '/' + snapWeighted.n + ' = ' + pct(snapWeighted.rate) + '，跳过 ' + snapWeighted.skipped + ' 期');
 console.log('加权首推: ' + snapWeightedFirst.hits + '/' + snapWeightedFirst.n + ' = ' + pct(snapWeightedFirst.rate));
 console.log('加权两个全中: ' + snapWeightedBoth.hits + '/' + snapWeightedBoth.n + ' = ' + pct(snapWeightedBoth.rate));
 console.log('待开奖: ' + snapPending + ' 期');

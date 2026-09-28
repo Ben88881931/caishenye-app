@@ -38,6 +38,7 @@ def main():
     model_core_path = REPO / "model_core.js"
     selector_path = REPO / "model_selector.js"
     selector_backtest_path = REPO / "selector_backtest.js"
+    page_audit_path = REPO / "page_audit.js"
     ultimate_model_path = REPO / "ultimate_model.js"
     ultimate_backtest_path = REPO / "ultimate_backtest.js"
     supervisor_path = REPO / "model_supervisor.js"
@@ -239,6 +240,10 @@ def main():
             pass_("追号/追推荐页面含显眼本期锁定号与逐条候选状态")
         else:
             fail("追号/追推荐页面缺少显眼本期锁定号或候选状态")
+        if "snapshotSkipped" in app_text and "开奖前快照：跳过" in app_text and "跳过，未参与结算" in app_text:
+            pass_("下期预估空快照不再回退显示实时排序")
+        else:
+            fail("下期预估空快照仍会错误回退显示")
         if (
             "function promoteSectionToTop" in app_text
             and 'promoteSectionToTop("三期内追投滚动记录"' in app_text
@@ -301,7 +306,7 @@ def main():
             else:
                 pass_(f"index.html 资源版本一致：{m_versions[0]}")
 
-    for js_path in [model_core_path, selector_path, selector_backtest_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
+    for js_path in [model_core_path, selector_path, selector_backtest_path, page_audit_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
         if not js_path.exists():
             fail(f"缺少 {js_path.name}")
             continue
@@ -323,6 +328,15 @@ def main():
     else:
         fail("缺少 model_selector.js")
 
+    if page_audit_path.exists():
+        page_audit_text = page_audit_path.read_text(encoding="utf-8")
+        for token in ["PAGE AUDIT PASSED", "gateBlocked", "snapshotSkipped", "promoteSectionToTop", "weightedSummary"]:
+            if token in page_audit_text:
+                pass_(f"page_audit.js 含 {token}")
+            else:
+                fail(f"page_audit.js 缺少 {token}")
+    else:
+        fail("缺少 page_audit.js")
     if ultimate_model_path.exists():
         ultimate_text = ultimate_model_path.read_text(encoding="utf-8")
         for token in ["monitorFromHistory", "settleOrder", "windowStats", "runFixedBacktest", "runStrategyBacktest", "runOverlappingBacktest", "runRecommendationBacktest", "skipBelow", "aggressiveAt", "p8At"]:
@@ -417,7 +431,7 @@ def main():
 
                     weighted_summary = snap_data.get("weightedSummary")
                     if not isinstance(weighted_summary, dict) or not all(
-                        f in weighted_summary for f in ["n", "hits", "miss", "firstPick", "secondPick", "atLeastOne", "both"]
+                        f in weighted_summary for f in ["n", "settled", "skipped", "hits", "miss", "firstPick", "secondPick", "atLeastOne", "both"]
                     ):
                         fail("snapshots.js 缺少 weightedSummary")
                     else:

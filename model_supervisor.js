@@ -149,6 +149,7 @@ function generateSnapshotsJs(snapshots) {
         target: rec.target,
         basedOn: rec.basedOn,
         settled: !!rec.settled,
+        skipped: perPick.length === 0,
         picks: perPick,
         actualTails: actualTails,
         hits: hits,
@@ -159,17 +160,21 @@ function generateSnapshotsJs(snapshots) {
     .sort((a, b) => a.target - b.target);
 
   const weightedSettled = weightedRecords.filter((r) => r.settled);
-  const weightedFirst = weightedSettled.filter((r) => r.picks.length && r.picks[0].hit === true).length;
-  const weightedSecond = weightedSettled.filter((r) => r.picks.length >= 2 && r.picks[1].hit === true).length;
-  const weightedBoth = weightedSettled.filter((r) => r.picks.length >= 2 && r.picks.every((p) => p.hit === true)).length;
+  const weightedActed = weightedSettled.filter((r) => r.picks.length > 0);
+  const weightedSkipped = weightedSettled.filter((r) => r.picks.length === 0).length;
+  const weightedFirst = weightedActed.filter((r) => r.picks[0].hit === true).length;
+  const weightedSecond = weightedActed.filter((r) => r.picks.length >= 2 && r.picks[1].hit === true).length;
+  const weightedBoth = weightedActed.filter((r) => r.picks.length >= 2 && r.picks.every((p) => p.hit === true)).length;
   const weightedSummary = {
-    n: weightedSettled.length,
-    hits: weightedSettled.filter((r) => r.hit).length,
-    miss: weightedSettled.filter((r) => !r.hit).length,
-    firstPick: { n: weightedSettled.length, hits: weightedFirst, miss: weightedSettled.length - weightedFirst },
-    secondPick: { n: weightedSettled.length, hits: weightedSecond, miss: weightedSettled.length - weightedSecond },
-    atLeastOne: { n: weightedSettled.length, hits: weightedSettled.filter((r) => r.hit).length, miss: weightedSettled.filter((r) => !r.hit).length },
-    both: { n: weightedSettled.length, hits: weightedBoth, miss: weightedSettled.length - weightedBoth }
+    n: weightedActed.length,
+    settled: weightedSettled.length,
+    skipped: weightedSkipped,
+    hits: weightedActed.filter((r) => r.hit).length,
+    miss: weightedActed.filter((r) => !r.hit).length,
+    firstPick: { n: weightedActed.length, hits: weightedFirst, miss: weightedActed.length - weightedFirst },
+    secondPick: { n: weightedActed.length, hits: weightedSecond, miss: weightedActed.length - weightedSecond },
+    atLeastOne: { n: weightedActed.length, hits: weightedActed.filter((r) => r.hit).length, miss: weightedActed.filter((r) => !r.hit).length },
+    both: { n: weightedActed.length, hits: weightedBoth, miss: weightedActed.length - weightedBoth }
   };
 
   const payload = {
@@ -260,11 +265,14 @@ function sync() {
 
 function summarize(records, key) {
   const settled = records.filter((r) => r.settled && r.results && r.results[key]);
-  const hits = settled.filter((r) => r.results[key].hit).length;
+  const acted = settled.filter((r) => r.models && r.models[key] && Array.isArray(r.models[key].picks) && r.models[key].picks.length > 0);
+  const hits = acted.filter((r) => r.results[key].hit).length;
   return {
     settled: settled.length,
+    acted: acted.length,
+    skipped: settled.length - acted.length,
     hits,
-    rate: settled.length ? hits / settled.length : 0
+    rate: acted.length ? hits / acted.length : 0
   };
 }
 
@@ -287,9 +295,9 @@ function report() {
   console.log("===== 真实预测快照报告 =====");
   console.log(`双号至少中一：${d.hits}/${d.settled} = ${(d.rate * 100).toFixed(1)}%`);
   console.log(`双号首推：${firstHit("doubleRecommendation", 0)}/${d.settled}`);
-  console.log(`加权至少中一：${w.hits}/${w.settled} = ${(w.rate * 100).toFixed(1)}%`);
-  console.log(`加权首推：${firstHit("weightedBounce", 0)}/${w.settled}`);
-  console.log(`加权两个全中：${bothHit("weightedBounce")}/${w.settled}`);
+  console.log(`加权至少中一：${w.hits}/${w.acted} = ${(w.rate * 100).toFixed(1)}% · 跳过${w.skipped}期`);
+  console.log(`加权首推：${firstHit("weightedBounce", 0)}/${w.acted}`);
+  console.log(`加权两个全中：${bothHit("weightedBounce")}/${w.acted}`);
   console.log(`待开奖：${pending.length} 条`);
 
   const recent = records.filter((r) => r.settled).slice(-10);

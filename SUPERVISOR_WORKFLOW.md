@@ -101,6 +101,7 @@ node model_supervisor.js sync
 node score_calibration.js report
 node ultimate_backtest.js
 node selector_backtest.js
+node page_audit.js
 python check_app.py
 node health_check.js
 node model_supervisor.js report
@@ -108,13 +109,14 @@ node model_supervisor.js report
 
 必须满足：
 
+- `page_audit.js` 必须全部 PASS，确认所有页面入口、数据源、快照、缓存版本和关键显示口径一致。
 - `check_app.py` 全部 PASS。
 - 最新期数正确。
 - `data.js` 与 `lottery_data.json`、`号码走势图.html` 一致。
 - `prediction_snapshots.json` 已有本期结算。
 - 下一期预测快照已生成。
 - `snapshots.js` 已更新。
-- 六个资源版本一致。
+- 七个资源版本一致。
 - 五级明细包含期数、尾号、分数、等级、实际尾数、对错。
 - `ultimate_backtest.js` 能完成D1/D2状态回测，且不读取下期预估。
 - `ultimate_backtest.js` 的自动结算自检必须 PASS（第1期中、第2期中、三期全错、数据未齐）。
@@ -175,8 +177,9 @@ $env:GIT_SSH_COMMAND = 'ssh -i "$HOME\.ssh\id_ed25519" -o StrictHostKeyChecking=
 6. 五级累计样本、命中、未中、命中率。
 7. 双号整体至少中一结果。
 8. 等级组合命中结果。
-9. 三项检查（check_app.py / health_check.js / model_supervisor.js report）及 score_calibration.js 的结果。
-10. 是否存在异常或样本不足。
+9. 七项检查结果：score_calibration.js、ultimate_backtest.js、selector_backtest.js、page_audit.js、check_app.py、health_check.js、model_supervisor.js report。
+10. page_audit.js 对所有页面的审计结论，包括数据源、快照、缓存版本、锁定号闸门、空快照跳过和页面渲染入口。
+11. 是否存在异常或样本不足。
 
 ---
 
@@ -194,7 +197,7 @@ $env:GIT_SSH_COMMAND = 'ssh -i "$HOME\.ssh\id_ed25519" -o StrictHostKeyChecking=
 - “生肖遗漏监控”必须展示当前遗漏、当年历史最大遗漏、最近15次已完成遗漏，并按旧到新排列。
 - “策略回测”必须展示样本数、命中/未中、命中率、理论基准、差值、Wilson 95%区间和结论；样本少于 30 期统一显示“样本不足”。
 - “下期预估”必须使用 `prediction_snapshots.json` 的开奖前加权反弹快照；历史对错、上期反馈和当前推荐都读取 `snapshots.js` 的 `weightedRecords`，不得在遇到并列时把真实推荐改显示为“跳过”。历史记录从第1期起点开始，第2期起展示回测，262期起用真实快照覆盖对应期数；首推和备选像双号推荐一样各自独立记录，只统计各自的最高连错、当前连错和逐期命中/未中，不增加组合统计。历史业绩只计算第一推荐单号，按赔率1.8统计首推命中率、累计盈亏、最大回撤，并单独显示真实快照首推小计。
-- 加权模型最高分低于等于0或顶部候选并列时，必须返回空推荐并显示“跳过/样本不足”，不得按尾号大小强行选号。
+- 加权模型最高分低于等于0或顶部候选并列时，必须返回空推荐并显示“跳过/样本不足”，不得按尾号大小强行选号。下期预估遇到开奖前空快照时必须直接显示“跳过”，禁止回退到实时排序前二；上期反馈显示“跳过，未参与结算”；空快照不计入加权命中率分母，只在 `weightedSummary.skipped` 单独计数。
 - “追号模型”和“追推荐模型”只读取双号推荐 `D1/D2`，不得把下期预估 `W1/W2` 混入追投统计。两者必须独立页面、独立回测口径：追号模式锁定起始号码追3期；追推荐模式给每期新推荐独立开3期线并允许并行。
 - “追号模型/追推荐模型”页面顶部必须显示大号“本期锁定号”卡片，并用 `MODEL.buildPrediction(analysis.endPeriod)` 计算下一期 D1/D2 候选，不得复用最后一期历史推荐。卡片必须分别标注 D1/D2 的尾号、等级分数、信号标签、当前强弱、锁定或不锁、建议P档和第1/2/3期范围；追号模式写明“未结束前不换号”，追推荐模式写明“本期新增、每个新推荐独立3期、允许并行”。若两条都弱或空推荐，必须显示“本期不建议锁定”。最终是否下单仍服从总览的调度层，调度为“观望”时不得越层下单。
 - “追号模型/追推荐模型”的“三期内追投滚动记录”和“调度模型”的“三期内必出滚动记录”必须置顶显示：追号/追推荐页放在锁定卡下方，调度页放在最终动作卡下方。使用 `promoteSectionToTop` 调整 DOM 顺序，页面下方不得重复出现同一滚动记录。
