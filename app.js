@@ -2399,9 +2399,8 @@
       gateAction = gateAnalysis.decision.action;
       gateBlocked = gateAction === "观望";
     }
-    var lockTone = gateBlocked
-      ? { border: "#d97706", bg: "#fffbeb", text: "#92400e", soft: "#fef3c7" }
-      : { border: "#16a34a", bg: "#f0fdf4", text: "#166534", soft: "#bbf7d0" };
+    var lockTone = { border: "#16a34a", bg: "#f0fdf4", text: "#166534", soft: "#bbf7d0" };
+    var gateTone = { border: "#d97706", bg: "#fffbeb", text: "#92400e", soft: "#fef3c7" };
     if (primaryLock) {
       var lockState = primaryLock.monitor;
       var lockEndPeriod = analysis.nextPeriod + 2;
@@ -2412,7 +2411,7 @@
       html += '<div style="font-size:44px;line-height:1.05;font-weight:900;color:' + lockTone.text + ';margin:6px 0">' + (gateBlocked ? "观察尾" : "锁定尾") + primaryLock.pick.tail + '</div>';
       html += '<div style="font-size:14px;font-weight:900;color:' + lockTone.text + '">' + primaryLock.label + ' ' + primaryLock.key + ' · ' + primaryLock.pick.grade + '级 ' + primaryLock.pick.score.toFixed(1) + '分 · ' + primaryLock.pick.tag + '</div>';
       html += '<div style="font-size:13px;color:' + lockTone.text + ';margin-top:5px">状态 <b>' + lockState.stateLabel + ' ' + lockState.score.toFixed(1) + '分</b> · 建议 <b>' + UM.PATTERNS[lockState.pattern].label + ' ' + UM.PATTERNS[lockState.pattern].stakes.join(" / ") + '</b></div>';
-      if (gateBlocked) html += '<div style="margin-top:7px;padding:6px 8px;border-radius:6px;background:' + lockTone.soft + ';font-size:12px;font-weight:900;color:' + lockTone.text + '">总调度：观望 · 本页只作观察，不产生订单</div>';
+      if (gateBlocked) html += '<div style="margin-top:7px;padding:6px 8px;border:1px solid ' + gateTone.border + ';border-radius:6px;background:' + gateTone.bg + ';font-size:12px;font-weight:900;color:' + gateTone.text + '">总调度：观望 · 本页只作观察，不产生订单</div>';
       html += '</div>';
       html += '<div style="min-width:220px;flex:1;background:#fff;border:1px solid ' + lockTone.soft + ';border-radius:8px;padding:10px 12px">';
       html += '<div style="font-size:12px;color:' + lockTone.text + ';font-weight:900">' + (gateBlocked ? "观察窗口" : (isRecommendMode ? "本期新增追推荐" : "本期新开追号线")) + '</div>';
@@ -2435,7 +2434,7 @@
         html += '</div>';
       });
       html += '</div></div>';
-      html += '<div style="margin-top:10px;font-size:12px;color:' + lockTone.text + '">' + (gateBlocked ? "最终执行：调度观望，锁定号降级为观察，不产生订单。" : "最终执行：调度允许，仍需按总览流程确认本金和实际下单。") + '</div>';
+      html += '<div style="margin-top:10px;font-size:12px;color:' + (gateBlocked ? gateTone.text : lockTone.text) + '">' + (gateBlocked ? "最终执行：调度观望，锁定号降级为观察，不产生订单。" : "最终执行：调度允许，仍需按总览流程确认本金和实际下单。") + '</div>';
       html += '</div></div>';
     } else {
       html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #d97706;background:#fffbeb">';

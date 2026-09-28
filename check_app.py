@@ -236,6 +236,7 @@ def main():
             and "本期新开追号线" in app_text
             and "未结束前不换号" in app_text
             and "本期不建议锁定" in app_text
+            and "var gateTone" in app_text
         ):
             pass_("追号/追推荐页面含显眼本期锁定号与逐条候选状态")
         else:
