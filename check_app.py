@@ -255,7 +255,9 @@ def main():
         else:
             fail("加权反弹空快照仍会错误回退显示")
         if (
-            'id="predictRecommendCard"' in app_text
+            'id="weightedPageHeader"' in app_text
+            and 'promoteSectionToTop("本期选号"' in app_text
+            and 'id="predictRecommendCard"' in app_text
             and 'id="pick3RecommendCard"' in app_text
             and "function promoteSectionToTop" in app_text
             and 'promoteSectionToTop("三期内必出滚动记录"' in app_text

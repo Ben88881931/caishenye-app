@@ -2093,7 +2093,7 @@
         break;
       }
     }
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 样本外201-255 中23·错21·共44</span></div>';
+    var html = '<div class="section" id="weightedPageHeader"><div class="section__head"><h2 class="section__title">加权反弹</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 样本外201-255 中23·错21·共44</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>遗漏/最大</th><th>反弹命中</th><th>样本</th><th>得分</th></tr></thead><tbody>';
     var cands = [];
     var lastBin = bin(N);
@@ -2166,13 +2166,18 @@
     if (recItems.length === 0) {
       html += '<div class="empty">' + (snapshotSkipped ? "开奖前快照：跳过（加权最高分≤0或候选并列）" : "上期全中，无未出号，建议跳过") + '</div>';
     } else {
-      var recTitle = recItems.length >= 2
-        ? (recItems[0].snapshot ? "开奖前快照：双推荐" : "双推荐")
-        : (recItems[0].snapshot ? "开奖前快照：首选" : "首选");
-      html += '<div style="font-size:16px;font-weight:700;color:var(--accent)">' + recTitle + '：尾 ' + recItems.map(function (p) { return p.d; }).join(" 、尾 ") + "</div>";
-      recItems.forEach(function (p) {
-        html += '<div style="margin-top:6px;font-size:12px;color:var(--muted)">尾' + p.d + "：遗漏 " + p.miss + " 期 | 历史最大 " + p.maxMiss + " 期 | " + recMeta(p) + "</div>";
+      html += '<div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap">';
+      recItems.forEach(function (p, idx) {
+        html += '<div style="text-align:center;min-width:110px">';
+        html += '<div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">' + (idx === 0 ? "第一推荐" : "第二推荐") + '</div>';
+        html += '<div class="num" style="width:60px;height:60px;font-size:26px;font-weight:800;margin:0 auto">尾' + p.d + '</div>';
+        html += '<div style="margin-top:8px"><span class="chip">' + (p.tag || "加权反弹") + '</span></div>';
+        html += '<div style="font-size:14px;color:#2563eb;font-weight:700;margin-top:6px">' + p.score.toFixed(1) + ' 分 · ' + (p.grade || "-") + '级</div>';
+        html += '<div style="margin-top:5px;font-size:11px;color:var(--muted)">遗漏 ' + p.miss + ' · ' + recMeta(p) + '</div>';
+        html += '</div>';
       });
+      html += '</div>';
+      html += '<div style="margin-top:8px;text-align:center;font-size:11px;color:var(--muted)">' + (recItems[0].snapshot ? "开奖前真实快照" : "实时计算") + '</div>';
     }
     html += "</div></div></div>";
 
@@ -2299,6 +2304,7 @@
     promoteSectionToTop("连错遗漏记录", ["predictRecommendCard"]);
     promoteSectionToTop("历史业绩", ["predictRecommendCard"]);
     promoteSectionToTop("上期预测反馈", ["predictRecommendCard"]);
+    promoteSectionToTop("本期选号", ["weightedPageHeader"]);
     view.innerHTML = html;
   }
 
