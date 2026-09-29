@@ -75,6 +75,10 @@ const detailTargets = (snapshotJs.detail || []).map((r) => Number(r.target)).sor
 must(JSON.stringify(settledDoubleTargets) === JSON.stringify(detailTargets), "双号五级明细与已结算快照一致");
 must(Array.isArray(snapshotJs.threePeriodRecords), "snapshots.js 含三期内必出真实快照");
 must(Array.isArray(snapshotJs.sourceWindows), "snapshots.js 含四条原始号源真实窗口");
+const sourceWindowRecords = Array.isArray(snapshotJs.sourceWindows) ? snapshotJs.sourceWindows : [];
+const pendingByStream = {};
+sourceWindowRecords.forEach((r) => { if (r.status === "pending") pendingByStream[r.stream] = (pendingByStream[r.stream] || 0) + 1; });
+must(["D1", "D2", "W1", "W2"].every((k) => (pendingByStream[k] || 0) <= 1), "每条号源最多只有一个进行中的三期窗口");
 const sourceSummary = snapshotJs.sourceWindowSummary || {};
 must(["D1", "D2", "W1", "W2"].every((k) => sourceSummary.byStream && sourceSummary.byStream[k]), "snapshots.js 含四条原始号源窗口汇总");
 const threeSummary = snapshotJs.threePeriodSummary || {};

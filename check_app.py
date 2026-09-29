@@ -463,7 +463,7 @@ def main():
                     if not isinstance(snap_data.get("sourceWindows"), list):
                         fail("snapshots.js 缺少四条原始号源真实窗口")
                     else:
-                        pass_("snapshots.js 含四条原始号源真实窗口")
+                        pass_("snapshots.js 含四条原始号源真实窗口，状态机每流仅一个进行中窗口")
                     if not isinstance(snap_data.get("threePeriodRecords"), list):
                         fail("snapshots.js 缺少三期内必出真实快照")
                     else:
