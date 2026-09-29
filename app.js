@@ -354,8 +354,6 @@
     { id: "pick3", label: "双号追热" },
     { id: "predict", label: "加权反弹" },
     { id: "selector", label: "三期内必出" },
-    { id: "chasenumber", label: "固定追三期" },
-    { id: "chaserecommend", label: "每期追三期" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -376,7 +374,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "predict", "selector", "chasenumber", "chaserecommend", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "predict", "selector", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -756,14 +754,12 @@
     html += '<div><b>第2步 先排除：</b>最终动作是“观望”就不下单；加权空推荐时，不自行改追双号。</div>';
     html += '<div><b>第3步 选号码：</b>跟双号时优先看D1，D1不是“优先”再看D2；跟加权时只看W1，W2只作校验，不单独下注。</div>';
     html += '<div><b>第4步 看置信率：</b>调度页四条推荐流分别给出正确概率和“优先/观察/避让”。优先才正常下单，观察只小注，避让或无信号不下。</div>';
-    html += '<div><b>第5步 选执行方式：</b>想锁定一个首推号追3期，选“追号”；想每期新推荐分别追3期，选“追推荐”。</div>';
+    html += '<div><b>第5步 选执行方式：</b>进入“追三期下单”，在固定追号和每期追推荐中选择一种。</div>';
     html += '<div><b>第6步 选倍投：</b>按追号/追推荐页面的当前P档执行。P8只在高分状态使用，风险最高。</div>';
     html += '<div><b>第7步 记录下单：</b>到“追三期下单”填写来源、执行方式、位置、起始期、尾号、倍投和本金。</div>';
     html += '<div><b>第8步 等自动结算：</b>开奖数据齐全后系统自动判断第1期中、第2期中、第3期中或三期全错。</div>';
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">';
     html += '<button class="chip" data-overview-tab="selector">先看三期内必出</button>';
-    html += '<button class="chip" data-overview-tab="chasenumber">看固定追三期</button>';
-    html += '<button class="chip" data-overview-tab="chaserecommend">看每期追三期</button>';
     html += '<button class="chip" data-overview-tab="orderlog">去追三期下单</button>';
     html += '</div>';
     html += '<div style="margin-top:8px;font-size:12px;color:var(--muted)">当前直接执行口径：先看调度；只有调度给出跟双号或跟加权，且对应首推为“优先”时，才进入追三期下单。本金和实际下注仍由你确认。</div>';
