@@ -668,6 +668,19 @@
     }
   }
 
+  function moveSectionBeforeAnchor(title, anchorId) {
+    var anchor = view.querySelector("#" + anchorId);
+    if (!anchor || anchor.parentNode !== view) return;
+    var sections = view.querySelectorAll(".section");
+    for (var i = 0; i < sections.length; i++) {
+      var heading = sections[i].querySelector(".section__title");
+      if (heading && heading.textContent.indexOf(title) >= 0) {
+        view.insertBefore(sections[i], anchor);
+        break;
+      }
+    }
+  }
+
   function renderHeader() {
     document.getElementById("latestPeriod").textContent = latest;
     document.getElementById("latestTails").textContent = "尾 " + tailsOf(latest).join(" ");
@@ -2304,7 +2317,7 @@
     promoteSectionToTop("连错遗漏记录", ["predictRecommendCard"]);
     promoteSectionToTop("历史业绩", ["predictRecommendCard"]);
     promoteSectionToTop("上期预测反馈", ["predictRecommendCard"]);
-    promoteSectionToTop("本期选号", ["weightedPageHeader"]);
+    moveSectionBeforeAnchor("本期选号", "weightedPageHeader");
     view.innerHTML = html;
   }
 
@@ -2533,6 +2546,26 @@
       W1: S.runThreePeriodStreamBacktest(RAW, MODEL, "W1", options),
       W2: S.runThreePeriodStreamBacktest(RAW, MODEL, "W2", options)
     };
+    var sourceStripHtml = '';
+    ["D1", "D2", "W1", "W2"].forEach(function (key) {
+      var r = threeByStream[key];
+      sourceStripHtml += '<div class="section"><div class="section__head"><h2 class="section__title">' + r.label + '</h2><span class="section__hint">独立滚动条 · 原始推荐号 · 新→旧</span></div>';
+      sourceStripHtml += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
+      r.batches.slice(-40).reverse().forEach(function (batch) {
+        var isHit = batch.hitIndex !== 4;
+        var endPeriod = batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
+        sourceStripHtml += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
+        sourceStripHtml += '<div style="font-size:11px;color:var(--muted)">起始 第' + batch.startPeriod + '期</div>';
+        sourceStripHtml += '<div style="font-size:16px;font-weight:900;margin:4px 0">原始号 尾' + batch.tail + '</div>';
+        batch.attempts.forEach(function (a) {
+          sourceStripHtml += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
+        });
+        sourceStripHtml += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
+        sourceStripHtml += '</div>';
+      });
+      if (!r.batches.length) sourceStripHtml += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
+      sourceStripHtml += '</div></div></div>';
+    });
     var endPeriod = analysis.latestPeriod;
     var midPeriod = Math.floor((31 + endPeriod) / 2);
     var firstRes = S.runBacktest(RAW, MODEL, "selector", { startPeriod: 31, endPeriod: midPeriod });
@@ -2583,6 +2616,7 @@
     var html = '<div class="section" id="selectorPageHeader"><div class="section__head"><h2 class="section__title">三期内必出</h2><span class="section__hint">' +
       S.VERSION + ' · 不预测号码 · 监控双号追热与加权追冷的相位</span></div></div>';
 
+    html += sourceStripHtml;
     html += '<div class="section" id="selectorActionCard"><div class="panel" style="padding:16px 14px">';
     html += '<div style="text-align:center">';
     html += '<div style="font-size:12px;color:var(--muted);font-weight:700">本轮候选从第' + analysis.nextPeriod + '期开始</div>';
@@ -2647,40 +2681,6 @@
     });
     html += '</div></div></div>';
 
-    var allThreeBatches = [];
-    ["D1", "D2", "W1", "W2"].forEach(function (key) {
-      threeByStream[key].batches.forEach(function (b) { allThreeBatches.push(b); });
-    });
-    if (selectorHistoryFilter !== "ALL") {
-      allThreeBatches = allThreeBatches.filter(function (b) { return b.stream === selectorHistoryFilter; });
-    }
-    allThreeBatches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内必出滚动记录</h2><span class="section__hint">置顶显示 · 每格标注起始期、锁定号码和结束期 · 新→旧</span></div></div>';
-    html += '<div class="section"><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
-    ["ALL", "D1", "D2", "W1", "W2"].forEach(function (key) {
-      html += '<button class="chip' + (selectorHistoryFilter === key ? " is-active" : "") + '" data-selector-history-filter="' + key + '">' + (key === "ALL" ? "全部" : key) + '</button>';
-    });
-    html += '</div>';
-    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="display:flex;gap:6px;min-width:max-content">';
-    allThreeBatches.forEach(function (batch) {
-      var isHit = batch.hitIndex !== 4;
-      var color = isHit ? "#16a34a" : "#dc2626";
-      var endPeriod = batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
-      html += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
-      html += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
-      html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期</div>';
-      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">锁定 尾' + batch.tail + '</div>';
-      batch.attempts.forEach(function (a) {
-        html += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
-      });
-      html += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + color + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
-      html += '</div>';
-    });
-    if (!allThreeBatches.length) html += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
-    html += '</div></div></div>';
-
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value">' + pctFmt(firstRes.hitRate) + '</div><div class="stat__label">前半段调度命中率 · 出手' + firstRes.bets + '</div></div>';
     html += '<div class="stat"><div class="stat__value">' + pctFmt(secondRes.hitRate) + '</div><div class="stat__label">后半段调度命中率 · 出手' + secondRes.bets + '</div></div>';
@@ -2689,7 +2689,6 @@
     html += "</div></div>";
     html += '<p class="disclaimer">第四套模型只调度“跟双号、跟加权、观望”，不预测号码。历史命中率高于基准不代表未来稳定；真实快照样本不足时只能作为决策辅助。</p>';
     view.innerHTML = html;
-    promoteSectionToTop("三期内必出滚动记录", ["selectorActionCard", "selectorPageHeader"]);
   }
 
   function renderChaseNumber() {

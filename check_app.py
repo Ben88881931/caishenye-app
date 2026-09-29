@@ -260,7 +260,9 @@ def main():
             and 'id="predictRecommendCard"' in app_text
             and 'id="pick3RecommendCard"' in app_text
             and "function promoteSectionToTop" in app_text
-            and 'promoteSectionToTop("三期内必出滚动记录"' in app_text
+            and 'moveSectionBeforeAnchor("本期选号", "weightedPageHeader")' in app_text
+            and "sourceStripHtml" in app_text
+            and "原始推荐号" in app_text
             and 'id="ultimateLockCard"' in app_text
             and 'id="selectorActionCard"' in app_text
             and "ULT_CARD_HISTORY" in app_text
