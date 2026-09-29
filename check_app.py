@@ -267,6 +267,11 @@ def main():
             and "当前状态：" in app_text
             and "真实快照" in app_text
             and "历史回测" in app_text
+            and "历史顺序回测" in app_text
+            and "settleManualOrder" in app_text
+            and "ORDER_PATTERNS" in app_text
+            and "ultimateQuickAdd" not in app_text
+            and "data-uo-gen" not in app_text
             and "rowMap" in app_text
             and "模型建议：" in app_text
             and 'id="ultimateLockCard"' in app_text

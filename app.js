@@ -1639,6 +1639,11 @@
 
   // ===== 双号模型追三期下单表 =====
   var ULT_ORDER_KEY = "v2_ultimate_order_log";
+  var ORDER_PATTERNS = {
+    P6: [1, 1.25, 2.8125],
+    P7: [1, 1.5, 3.375],
+    P8: [1, 3, 9]
+  };
 
   function ultimateOrdersLoad() {
     var rows = lsGet(ULT_ORDER_KEY, []);
@@ -1649,14 +1654,28 @@
     lsSet(ULT_ORDER_KEY, rows);
   }
 
+  function settleManualOrder(row) {
+    if (!row || row.result !== "pending") return null;
+    var start = Number(row.startPeriod);
+    var tail = Number(row.tail);
+    if (!Number.isFinite(start) || !Number.isFinite(tail) || tail < 0 || tail > 9) return null;
+    for (var j = 0; j < 3; j++) {
+      var period = start + j;
+      var bits = RAW[String(period)];
+      if (!bits) return null;
+      if (bits[tail] === "1") {
+        return { result: "hit" + (j + 1), hitIndex: j + 1, settledPeriod: period, autoSettled: true };
+      }
+    }
+    return { result: "miss", hitIndex: 0, settledPeriod: start + 2, autoSettled: true };
+  }
+
   function autoSettleUltimateOrders() {
-    var UM = window.CAISHEN_ULTIMATE;
     var rows = ultimateOrdersLoad();
-    if (!UM || !UM.settleOrder) return rows;
     var changed = false;
     rows.forEach(function (row) {
       if (row.result !== "pending") return;
-      var settled = UM.settleOrder(row, RAW);
+      var settled = settleManualOrder(row);
       if (!settled) return;
       row.result = settled.result;
       row.hitIndex = settled.hitIndex;
@@ -1670,9 +1689,8 @@
   }
 
   function ultimateOrderNet(row) {
-    var UM = window.CAISHEN_ULTIMATE;
-    if (!UM || !UM.PATTERNS[row.pattern]) return 0;
-    var stakes = UM.PATTERNS[row.pattern].stakes;
+    var stakes = ORDER_PATTERNS[row.pattern];
+    if (!stakes) return 0;
     var base = Number(row.base || 1);
     if (row.result === "hit1") return +(base * 0.8 * stakes[0]).toFixed(2);
     if (row.result === "hit2") return +(base * (1.8 * stakes[1] - stakes[0] - stakes[1])).toFixed(2);
@@ -1689,34 +1707,7 @@
     return "待开奖";
   }
 
-  function ultimateQuickAdd(mode) {
-    var UM = window.CAISHEN_ULTIMATE;
-    if (!UM) return;
-    var analysis = UM.analyze(RAW, MODEL, { startPeriod: 31 });
-    var rows = ultimateOrdersLoad();
-    var added = 0;
-    UM.KEYS.forEach(function (key) {
-      var item = analysis.items[key];
-      if (!item.currentPick || !item.monitor.pattern) return;
-      rows.push({
-        id: Date.now() + "-" + key + "-" + Math.random().toString(16).slice(2),
-        createdAt: new Date().toISOString(),
-        mode: mode,
-        position: key,
-        startPeriod: analysis.nextPeriod,
-        tail: item.currentPick.tail,
-        pattern: item.monitor.pattern,
-        base: 1,
-        result: "pending"
-      });
-      added++;
-    });
-    if (added) ultimateOrdersSave(rows);
-    renderOrderLog();
-  }
-
   function renderOrderLog() {
-    var UM = window.CAISHEN_ULTIMATE;
     var rows = autoSettleUltimateOrders();
     var settled = rows.filter(function (r) { return r.result !== "pending"; });
     var wins = settled.filter(function (r) { return r.result !== "miss"; }).length;
@@ -1731,24 +1722,11 @@
     html += '</div></div>';
 
     html += '<div class="section"><div class="panel"><div class="panel__body">';
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
-    html += '<button class="btn-primary" data-uo-gen="number">生成当前追号单</button>';
-    html += '<button class="btn-primary" data-uo-gen="recommend">生成当前追推荐单</button>';
-    html += '</div>';
-    var current = UM ? UM.analyze(RAW, MODEL, { startPeriod: 31 }) : null;
-    html += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">';
-    if (current) {
-      html += "当前：" + UM.KEYS.map(function (key) {
-        var x = current.items[key];
-        return key + " " + (x.currentPick ? "尾" + x.currentPick.tail : "无") + " · " + x.monitor.stateLabel + " · " + (x.monitor.pattern || "观望");
-      }).join(" | ");
-    }
-    html += '</div>';
     html += '<div class="ord-grid">';
     html += '<div class="ord-item"><label>模式</label><select id="uoMode"><option value="number">追号</option><option value="recommend">追推荐</option></select></div>';
-    html += '<div class="ord-item"><label>位置</label><select id="uoPos"><option value="D1">D1首推</option><option value="D2">D2备选</option></select></div>';
-    html += '<div class="ord-item"><label>起始期数</label><input id="uoStart" type="number" min="1" value="' + (current ? current.nextPeriod : latest + 1) + '"></div>';
-    html += '<div class="ord-item"><label>尾号</label><input id="uoTail" type="number" min="0" max="9" value="' + (current && current.items.D1.currentPick ? current.items.D1.currentPick.tail : 0) + '"></div>';
+    html += '<div class="ord-item"><label>位置</label><select id="uoPos"><option value="D1">D1双号首推</option><option value="D2">D2双号备选</option><option value="W1">W1加权首推</option><option value="W2">W2加权备选</option></select></div>';
+    html += '<div class="ord-item"><label>起始期数</label><input id="uoStart" type="number" min="1" value="' + (latest + 1) + '"></div>';
+    html += '<div class="ord-item"><label>尾号</label><input id="uoTail" type="number" min="0" max="9" value="0"></div>';
     html += '<div class="ord-item"><label>倍投</label><select id="uoPattern"><option value="P6">P6 保本</option><option value="P7">P7 收益型</option><option value="P8">P8 激进</option></select></div>';
     html += '<div class="ord-item"><label>基础金额</label><input id="uoBase" type="number" min="1" step="1" value="1"></div>';
     html += '<div class="ord-item"><label>结算结果</label><select id="uoResult"><option value="pending">待开奖</option><option value="hit1">第1期中</option><option value="hit2">第2期中</option><option value="hit3">第3期中</option><option value="miss">三期全错</option></select></div>';
@@ -1771,7 +1749,7 @@
         html += '<span>' + row.position + '</span>';
         html += '<span>' + row.startPeriod + '</span>';
         html += '<span>尾' + row.tail + '</span>';
-        html += '<span>' + UM.PATTERNS[row.pattern].stakes.join("/") + '</span>';
+        html += '<span>' + (ORDER_PATTERNS[row.pattern] || []).join("/") + '</span>';
         html += '<span>' + row.base + '</span>';
         if (row.autoSettled) {
           html += '<span style="font-weight:800;color:' + (row.result === "miss" ? "#dc2626" : "#16a34a") + '">' + ultimateResultLabel(row.result) + ' · 自动</span>';
@@ -1787,15 +1765,11 @@
       });
     }
     html += '</div></div></div>';
-    html += '<p class="disclaimer">记录只保存在本机浏览器。追号模式表示锁定一个号码追3期；追推荐模式表示每期新推荐独立追3期并允许并行。</p>';
+    html += '<p class="disclaimer">本页只做手动下单记录和按实际开奖结算，不读取任何模型推荐、不自动生成订单、不参与选号。记录只保存在本机浏览器。</p>';
     view.innerHTML = html;
   }
 
   function hitLogSectionHTML(mode) {
-    var UM = window.CAISHEN_ULTIMATE;
-    if (!UM) {
-      return '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">追中记录模块未加载</div></div></div></div>';
-    }
     var rows = ultimateOrdersLoad().filter(function (row) {
       return row.mode === mode && (row.result === "hit1" || row.result === "hit2" || row.result === "hit3");
     });
@@ -1833,7 +1807,7 @@
         html += '<span>' + row.position + '</span>';
         html += '<span>' + row.startPeriod + '</span>';
         html += '<span>尾' + row.tail + '</span>';
-        html += '<span>' + UM.PATTERNS[row.pattern].stakes.join("/") + '</span>';
+        html += '<span>' + (ORDER_PATTERNS[row.pattern] || []).join("/") + '</span>';
         html += '<span style="color:#16a34a;font-weight:800">第' + hitIndex + '期中</span>';
         html += '<span>' + (Number(row.startPeriod) + hitIndex - 1) + '</span>';
         html += '<span style="color:' + (value >= 0 ? "#16a34a" : "#dc2626") + '">' + (value >= 0 ? "+" : "") + value.toFixed(2) + '</span>';
@@ -2575,6 +2549,7 @@
       if (currentPick) sourceStripHtml += '<div><b>当前状态：</b>连中' + (streamState.currentHitStreak || 0) + '期 · 连错' + (streamState.currentMissStreak || 0) + '期 · 尾号连出' + (streamState.tailStreak || 0) + '期</div>';
       else sourceStripHtml += '<div><b>当前状态：</b>没有有效推荐号</div>';
       sourceStripHtml += '<div><b>模型建议：</b>' + (conf.action || "无信号") + '</div>';
+      sourceStripHtml += '<div><b>历史顺序回测：</b>3期中 ' + r.hits + '/' + r.n + ' = ' + pctFmt(r.hitRate) + ' · 第1期' + r.first + ' · 第2期' + r.second + ' · 第3期' + r.third + ' · 全错' + r.miss + '</div>';
       sourceStripHtml += '</div>';
       sourceStripHtml += '<div style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
       var realRows = realWindows.map(function (w) { return { startPeriod: w.target, tail: w.tail, attempts: w.attempts || [], hitIndex: w.hitIndex, status: w.status || "pending", source: "真实快照" }; });
@@ -3779,8 +3754,6 @@
       renderOrderLog();
       return;
     }
-    var uoGen = e.target.closest("[data-uo-gen]");
-    if (uoGen) { ultimateQuickAdd(uoGen.dataset.uoGen); return; }
     if (e.target.closest("[data-uo-add]")) {
       var mode = document.getElementById("uoMode").value;
       var pos = document.getElementById("uoPos").value;
