@@ -337,7 +337,7 @@
   }
 
   var state = {
-    tab: lsGet("v2_current_tab", "segments"),
+    tab: lsGet("v2_current_tab", "pick3"),
     group: lsGet("v2_nav_group", "recommend"),
     window: 15,
     segWindow: 15,
@@ -351,11 +351,12 @@
 
   var TABS = [
     { id: "overview", label: "总览" },
-    { id: "predict", label: "加权反弹" },
     { id: "pick3", label: "双号追热" },
+    { id: "predict", label: "加权反弹" },
     { id: "selector", label: "三期内必出" },
     { id: "chasenumber", label: "固定追三期" },
     { id: "chaserecommend", label: "每期追三期" },
+    { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -375,7 +376,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "选号与追三期", tabs: ["predict", "pick3", "selector", "chasenumber", "chaserecommend", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "predict", "selector", "chasenumber", "chaserecommend", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },

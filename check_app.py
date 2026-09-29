@@ -246,6 +246,12 @@ def main():
             pass_("顶部导航支持粘性定位、位置保持和当前项可见")
         else:
             fail("顶部导航缺少粘性定位、位置保持或当前项可见逻辑")
+        flow_ids = ["pick3", "predict", "selector", "chasenumber", "chaserecommend", "orderlog"]
+        flow_pos = [app_text.find(chr(34) + fid + chr(34)) for fid in flow_ids]
+        if all(pos >= 0 for pos in flow_pos) and flow_pos == sorted(flow_pos):
+            pass_("导航按模型流程排序")
+        else:
+            fail("导航未按模型流程排序")
         if "snapshotSkipped" in app_text and "开奖前快照：跳过" in app_text and "跳过，未参与结算" in app_text:
             pass_("加权反弹空快照不再回退显示实时排序")
         else:

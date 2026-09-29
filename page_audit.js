@@ -93,6 +93,9 @@ const tabsBlock = (appText.match(/var TABS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || 
 const tabIds = [...tabsBlock.matchAll(/id:\s*"([^"]+)"/g)].map((m) => m[1]);
 const missingTabs = tabIds.filter((id) => !appText.includes('state.tab === "' + id + '"') && !appText.includes("renderUltimateMode"));
 must(tabIds.length > 0 && missingTabs.length === 0, "所有导航页面都有渲染入口");
+const modelFlow = ["pick3", "predict", "selector", "chasenumber", "chaserecommend", "orderlog"];
+const flowPositions = modelFlow.map((id) => tabIds.indexOf(id));
+must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions[i - 1])), "导航按模型流程排序");
 
 const versions = [...indexText.matchAll(/(?:styles\.css|data\.js|model_core\.js|model_selector\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)/g)].map((m) => m[1]);
 must(versions.length === 7 && new Set(versions).size === 1, "7处资源版本一致");
