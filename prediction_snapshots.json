@@ -1169,5 +1169,25 @@
     }
   ],
   "latestPeriod": 272,
-  "updatedAt": "2026-09-29T13:41:18.468Z"
+  "updatedAt": "2026-09-29T15:14:51.661Z",
+  "threePeriodRecords": [
+    {
+      "target": 273,
+      "basedOn": 272,
+      "generatedAt": "2026-09-29T15:14:51.660Z",
+      "action": "观望",
+      "source": null,
+      "rule": "P5/P6",
+      "reason": "双号未确认且加权未达到强切换门槛，空仓观望",
+      "stream": null,
+      "tail": null,
+      "score": null,
+      "grade": null,
+      "status": "skip",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": 273,
+      "settledAt": "2026-09-29T15:14:51.661Z"
+    }
+  ]
 }

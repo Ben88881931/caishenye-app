@@ -1,5 +1,5 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-29T13:41:18.471Z",
+  "generatedAt": "2026-09-29T15:14:51.662Z",
   "settledCount": 11,
   "grades": {
     "S": {
@@ -1271,5 +1271,38 @@ window.APP_SNAPSHOTS = {
       "atLeastOne": true,
       "settledAt": "2026-09-29T13:41:18.448Z"
     }
-  ]
+  ],
+  "threePeriodRecords": [
+    {
+      "target": 273,
+      "basedOn": 272,
+      "generatedAt": "2026-09-29T15:14:51.660Z",
+      "action": "观望",
+      "source": null,
+      "rule": "P5/P6",
+      "reason": "双号未确认且加权未达到强切换门槛，空仓观望",
+      "stream": null,
+      "tail": null,
+      "score": null,
+      "grade": null,
+      "status": "skip",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": 273,
+      "settledAt": "2026-09-29T15:14:51.661Z"
+    }
+  ],
+  "threePeriodSummary": {
+    "n": 1,
+    "acted": 0,
+    "settled": 0,
+    "pending": 0,
+    "skipped": 1,
+    "hits": 0,
+    "miss": 0,
+    "first": 0,
+    "second": 0,
+    "third": 0,
+    "hit3Rate": 0
+  }
 };
