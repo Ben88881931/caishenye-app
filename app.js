@@ -2314,11 +2314,11 @@
     }
 
     html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，样本外201-255 中23·错21·共44。修复数据泄露后已退随机（理论基准约55.39%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
+    view.innerHTML = html;
     promoteSectionToTop("连错遗漏记录", ["predictRecommendCard"]);
     promoteSectionToTop("历史业绩", ["predictRecommendCard"]);
     promoteSectionToTop("上期预测反馈", ["predictRecommendCard"]);
     moveSectionBeforeAnchor("本期选号", "weightedPageHeader");
-    view.innerHTML = html;
   }
 
   // ===== 双号追热页面（连出惯性分层打分，每期推2个号，避尾0）=====
