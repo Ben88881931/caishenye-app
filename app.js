@@ -351,11 +351,11 @@
 
   var TABS = [
     { id: "overview", label: "总览" },
-    { id: "predict", label: "下期预估" },
-    { id: "pick3", label: "双号推荐" },
-    { id: "selector", label: "调度模型" },
-    { id: "chasenumber", label: "追号模型" },
-    { id: "chaserecommend", label: "追推荐模型" },
+    { id: "predict", label: "加权反弹" },
+    { id: "pick3", label: "双号追热" },
+    { id: "selector", label: "三期内必出" },
+    { id: "chasenumber", label: "固定追三期" },
+    { id: "chaserecommend", label: "每期追三期" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "parity", label: "单双热图" },
@@ -371,11 +371,11 @@
     { id: "zodrecords", label: "生肖开奖" },
     { id: "backtest", label: "策略回测" },
     { id: "numtrend", label: "号码走势" },
-    { id: "orderlog", label: "下单记录" },
+    { id: "orderlog", label: "追三期下单" },
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "推荐下单", tabs: ["predict", "pick3", "selector", "chasenumber", "chaserecommend", "orderlog"] },
+    { id: "recommend", label: "选号与追三期", tabs: ["predict", "pick3", "selector", "chasenumber", "chaserecommend", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -751,21 +751,21 @@
     var html = "";
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每日选号下单顺序</h2><span class="section__hint">按顺序看，不做反向操作</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
-    html += '<div><b>第1步 看调度：</b>先打开“调度模型”，只看顶部最终动作：跟双号、跟加权或观望。</div>';
+    html += '<div><b>第1步 看调度：</b>先打开“三期内必出”，只看顶部最终动作：跟双号、跟加权或观望。</div>';
     html += '<div><b>第2步 先排除：</b>最终动作是“观望”就不下单；加权空推荐时，不自行改追双号。</div>';
     html += '<div><b>第3步 选号码：</b>跟双号时优先看D1，D1不是“优先”再看D2；跟加权时只看W1，W2只作校验，不单独下注。</div>';
     html += '<div><b>第4步 看置信率：</b>调度页四条推荐流分别给出正确概率和“优先/观察/避让”。优先才正常下单，观察只小注，避让或无信号不下。</div>';
     html += '<div><b>第5步 选执行方式：</b>想锁定一个首推号追3期，选“追号”；想每期新推荐分别追3期，选“追推荐”。</div>';
     html += '<div><b>第6步 选倍投：</b>按追号/追推荐页面的当前P档执行。P8只在高分状态使用，风险最高。</div>';
-    html += '<div><b>第7步 记录下单：</b>到“下单记录”填写来源、执行方式、位置、起始期、尾号、倍投和本金。</div>';
+    html += '<div><b>第7步 记录下单：</b>到“追三期下单”填写来源、执行方式、位置、起始期、尾号、倍投和本金。</div>';
     html += '<div><b>第8步 等自动结算：</b>开奖数据齐全后系统自动判断第1期中、第2期中、第3期中或三期全错。</div>';
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">';
-    html += '<button class="chip" data-overview-tab="selector">先看调度模型</button>';
-    html += '<button class="chip" data-overview-tab="chasenumber">看追号模型</button>';
-    html += '<button class="chip" data-overview-tab="chaserecommend">看追推荐模型</button>';
-    html += '<button class="chip" data-overview-tab="orderlog">去下单记录</button>';
+    html += '<button class="chip" data-overview-tab="selector">先看三期内必出</button>';
+    html += '<button class="chip" data-overview-tab="chasenumber">看固定追三期</button>';
+    html += '<button class="chip" data-overview-tab="chaserecommend">看每期追三期</button>';
+    html += '<button class="chip" data-overview-tab="orderlog">去追三期下单</button>';
     html += '</div>';
-    html += '<div style="margin-top:8px;font-size:12px;color:var(--muted)">当前直接执行口径：先看调度；只有调度给出跟双号或跟加权，且对应首推为“优先”时，才进入下单记录。本金和实际下注仍由你确认。</div>';
+    html += '<div style="margin-top:8px;font-size:12px;color:var(--muted)">当前直接执行口径：先看调度；只有调度给出跟双号或跟加权，且对应首推为“优先”时，才进入追三期下单。本金和实际下注仍由你确认。</div>';
     html += '</div></div></div>';
 
     html += '<div class="section">';
@@ -1627,7 +1627,7 @@
     try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
   }
 
-  // ===== 双号模型下单记录表 =====
+  // ===== 双号模型追三期下单表 =====
   var ULT_ORDER_KEY = "v2_ultimate_order_log";
 
   function ultimateOrdersLoad() {
@@ -1711,7 +1711,7 @@
     var settled = rows.filter(function (r) { return r.result !== "pending"; });
     var wins = settled.filter(function (r) { return r.result !== "miss"; }).length;
     var net = settled.reduce(function (sum, r) { return sum + (ultimateOrderNet(r) || 0); }, 0);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">下单记录</h2><span class="section__hint">追号与追推荐分开记录 · 开奖数据齐后自动结算 · 本机浏览器保存</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">追三期下单</h2><span class="section__hint">追号与追推荐分开记录 · 开奖数据齐后自动结算 · 本机浏览器保存</span></div></div>';
 
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value">' + rows.length + '</div><div class="stat__label">全部记录</div></div>';
@@ -1751,7 +1751,7 @@
     html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .6fr .6fr .5fr 1.05fr .6fr .8fr .65fr .65fr .5fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
     html += '<span>时间</span><span>模式</span><span>位置</span><span>起始期</span><span>尾号</span><span>倍投</span><span>基础</span><span>结果</span><span>结算期</span><span>净收益</span><span>操作</span></div>';
     if (!rows.length) {
-      html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无下单记录</div>';
+      html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无追三期下单</div>';
     } else {
       rows.slice().sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).forEach(function (row) {
         var value = ultimateOrderNet(row);
@@ -1831,7 +1831,7 @@
       });
     }
     html += '</div></div></div></div>';
-    html += '<p class="disclaimer">追中记录只读取“下单记录”中已标记为第1期、第2期或第3期命中的记录；未命中和待开奖记录不会显示在这里。</p>';
+    html += '<p class="disclaimer">追中记录只读取“追三期下单”中已标记为第1期、第2期或第3期命中的记录；未命中和待开奖记录不会显示在这里。</p>';
     return html;
   }
 
@@ -2096,7 +2096,7 @@
         break;
       }
     }
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹率分析</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 样本外201-255 中23·错21·共44</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">加权反弹</h2><span class="section__hint">恰好遗漏k期 · 加权近期反弹率 · 样本外201-255 中23·错21·共44</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>遗漏/最大</th><th>反弹命中</th><th>样本</th><th>得分</th></tr></thead><tbody>';
     var cands = [];
     var lastBin = bin(N);
@@ -2164,7 +2164,7 @@
       }
       return "反弹率 " + (p.wbr * 100).toFixed(1) + "% · 样本 " + Number(p.wbSample).toFixed(1);
     };
-    html += '<div class="section" id="predictRecommendCard"><div class="section__head"><h2 class="section__title">下期推荐</h2><span class="section__hint">加权反弹率≥75% +5分 · ≥65% +3分 · 遗漏深度≥50% +1分</span></div>';
+    html += '<div class="section" id="predictRecommendCard"><div class="section__head"><h2 class="section__title">本期选号</h2><span class="section__hint">加权反弹率≥75% +5分 · ≥65% +3分 · 遗漏深度≥50% +1分</span></div>';
     html += '<div class="panel"><div class="panel__body">';
     if (recItems.length === 0) {
       html += '<div class="empty">' + (snapshotSkipped ? "开奖前快照：跳过（加权最高分≤0或候选并列）" : "上期全中，无未出号，建议跳过") + '</div>';
@@ -2305,7 +2305,7 @@
     view.innerHTML = html;
   }
 
-  // ===== 双号推荐页面（连出惯性分层打分，每期推2个号，避尾0）=====
+  // ===== 双号追热页面（连出惯性分层打分，每期推2个号，避尾0）=====
   function pickTopAt(cur, k) {
     return MODEL.pickTopAt(cur, k);
   }
@@ -2319,7 +2319,7 @@
 
     var options = { startPeriod: 31 };
     var isRecommendMode = mode === "recommend";
-    var modeLabel = isRecommendMode ? "追推荐模型" : "追号模型";
+    var modeLabel = isRecommendMode ? "每期追三期" : "固定追三期";
     var modeHint = isRecommendMode ? "每期新推荐独立追3期 · 允许并行追号线" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
     autoSettleUltimateOrders();
     var analysis = UM.analyze(RAW, MODEL, options);
@@ -2562,7 +2562,7 @@
     html += '</div></div>';
     html += hitLogSectionHTML(mode);
     html += '<!--ULT_RECORDS_END-->';
-    html += '<p class="disclaimer">' + modeLabel + '只监控双号推荐D1/D2，不读取下期预估。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
+    html += '<p class="disclaimer">' + modeLabel + '只监控双号追热D1/D2，不读取加权反弹。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
     var ultStartMarker = '<!--ULT_RECORDS_START-->';
     var ultEndMarker = '<!--ULT_RECORDS_END-->';
     var ultStart = html.indexOf(ultStartMarker);
@@ -2580,7 +2580,7 @@
   function renderSelector() {
     var S = window.CAISHEN_SELECTOR;
     if (!S) {
-      view.innerHTML = '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">调度模型模块未加载</div></div></div></div>';
+      view.innerHTML = '<div class="section"><div class="panel"><div class="panel__body"><div class="empty">三期内必出模块未加载</div></div></div></div>';
       return;
     }
     var options = { startPeriod: 31 };
@@ -2643,7 +2643,7 @@
       return h;
     }
 
-    var html = '<div class="section" id="selectorPageHeader"><div class="section__head"><h2 class="section__title">调度模型</h2><span class="section__hint">' +
+    var html = '<div class="section" id="selectorPageHeader"><div class="section__head"><h2 class="section__title">三期内必出</h2><span class="section__hint">' +
       S.VERSION + ' · 不预测号码 · 监控双号追热与加权追冷的相位</span></div></div>';
 
     html += '<div class="section" id="selectorActionCard"><div class="panel" style="padding:16px 14px">';
@@ -2767,7 +2767,7 @@
     var N = latest;
     var top2 = pickTopAt(N, 2);
 
-    var html = '<div class="section" id="pick3RecommendCard"><div class="section__head"><h2 class="section__title">双号推荐</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
+    var html = '<div class="section" id="pick3RecommendCard"><div class="section__head"><h2 class="section__title">双号追热</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:18px 14px">';
     if (top2.length === 0) {
@@ -3082,7 +3082,7 @@
     }
     html += '</div>';
 
-    html += '<p class="disclaimer">双号推荐基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
+    html += '<p class="disclaimer">双号追热基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     promoteSectionToTop("连错遗漏记录", ["pick3RecommendCard"]);
     promoteSectionToTop("五级强度 · 逐期对错", ["pick3RecommendCard"]);
     view.innerHTML = html;

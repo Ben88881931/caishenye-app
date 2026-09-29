@@ -75,11 +75,11 @@ const detailTargets = (snapshotJs.detail || []).map((r) => Number(r.target)).sor
 must(JSON.stringify(settledDoubleTargets) === JSON.stringify(detailTargets), "双号五级明细与已结算快照一致");
 
 const selector = require("./model_selector.js").analyze(raw, model, { startPeriod: 31 });
-must(Number(selector.nextPeriod) === latest + 1, "调度模型预测期正确");
-must(["跟双号", "跟加权", "观望"].includes(selector.decision.action), "调度模型动作合法");
+must(Number(selector.nextPeriod) === latest + 1, "三期内必出预测期正确");
+must(["跟双号", "跟加权", "观望"].includes(selector.decision.action), "三期内必出动作合法");
 const ultimate = require("./ultimate_model.js").analyze(raw, model, { startPeriod: 31 });
-must(Number(ultimate.nextPeriod) === latest + 1, "追号/追推荐模型预测期正确");
-must(["分批启用", "观望"].includes(ultimate.decision.action), "追号模型总决策合法");
+must(Number(ultimate.nextPeriod) === latest + 1, "追号/每期追三期预测期正确");
+must(["分批启用", "观望"].includes(ultimate.decision.action), "固定追三期总决策合法");
 
 must(appText.includes("predictRecommendCard") && appText.includes("pick3RecommendCard") && appText.includes("function promoteSectionToTop") && appText.includes('promoteSectionToTop("三期内必出滚动记录"') && appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START") && appText.includes("card-followup"), "三期内记录紧接卡片下方展示");
 must(appText.includes("snapshotSkipped") && appText.includes("跳过，未参与结算"), "空快照不会回退成实时推荐");

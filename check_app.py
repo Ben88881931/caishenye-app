@@ -151,25 +151,25 @@ def main():
 
         for func in ["combinedPredictHistory", "weightedSnapshotHistory"]:
             if f"function {func}" not in app_text:
-                fail(f"app.js 缺少下期预估历史函数 {func}")
+                fail(f"app.js 缺少加权反弹历史函数 {func}")
         else:
-            pass_("下期预估真实快照与全历史合并函数存在")
+            pass_("加权反弹真实快照与全历史合并函数存在")
         if "for (var N = 1; N <= latest - 1; N++)" in app_text:
-            pass_("下期预估回测从第1期起点开始")
+            pass_("加权反弹回测从第1期起点开始")
         else:
-            fail("下期预估回测没有从第1期起点开始")
+            fail("加权反弹回测没有从第1期起点开始")
         if "首推/备选结果" in app_text and "连错遗漏记录" in app_text and "真实快照" in app_text:
-            pass_("下期预估历史使用双号推荐式滚动对错记录")
+            pass_("加权反弹历史使用双号追热式滚动对错记录")
         else:
-            fail("下期预估历史没有使用双号推荐式滚动对错记录")
+            fail("加权反弹历史没有使用双号追热式滚动对错记录")
         if "最高连错" in app_text and "当前连错" in app_text:
-            pass_("下期预估含首推/备选独立连错统计")
+            pass_("加权反弹含首推/备选独立连错统计")
         else:
-            fail("下期预估缺少首推/备选连错统计")
+            fail("加权反弹缺少首推/备选连错统计")
         if "function weightedHistoryPerformance" in app_text and "首推命中率" in app_text and "累计盈亏" in app_text and "最大回撤" in app_text:
-            pass_("下期预估含首推单号历史业绩统计")
+            pass_("加权反弹含首推单号历史业绩统计")
         else:
-            fail("下期预估缺少首推单号历史业绩统计")
+            fail("加权反弹缺少首推单号历史业绩统计")
 
         # 导航自定义排序检查
         if "function getVisibleTabs" in app_text:
@@ -214,7 +214,7 @@ def main():
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少终极模型函数 {func}")
         else:
-            pass_("追号/追推荐/下单记录页面函数存在")
+            pass_("追号/追推荐/追三期下单页面函数存在")
         if (
             'id: "chasenumber"' in app_text
             and 'id: "chaserecommend"' in app_text
@@ -222,13 +222,13 @@ def main():
             and 'id: "orderlog"' in app_text
             and "window.CAISHEN_ULTIMATE" in app_text
         ):
-            pass_("app.js 含调度/追号/追推荐/下单记录导航")
+            pass_("app.js 含调度/追号/追推荐/追三期下单导航")
         else:
-            fail("app.js 缺少调度/追号/追推荐/下单记录导航")
-        if "追号模型" in app_text and "追推荐模型" in app_text and "下单记录" in app_text and "追中记录" in app_text and "本模式状态回测" in app_text:
-            pass_("追号/追推荐/下单记录及模型内追中记录区块完整")
+            fail("app.js 缺少调度/追号/追推荐/追三期下单导航")
+        if "固定追三期" in app_text and "每期追三期" in app_text and "追三期下单" in app_text and "追中记录" in app_text and "本模式状态回测" in app_text:
+            pass_("追号/追推荐/追三期下单及模型内追中记录区块完整")
         else:
-            fail("追号/追推荐/下单记录页面区块不完整")
+            fail("追号/追推荐/追三期下单页面区块不完整")
         if (
             "观望 · 不追" in app_text
             and "今日执行" in app_text
@@ -247,9 +247,9 @@ def main():
         else:
             fail("顶部导航缺少粘性定位、位置保持或当前项可见逻辑")
         if "snapshotSkipped" in app_text and "开奖前快照：跳过" in app_text and "跳过，未参与结算" in app_text:
-            pass_("下期预估空快照不再回退显示实时排序")
+            pass_("加权反弹空快照不再回退显示实时排序")
         else:
-            fail("下期预估空快照仍会错误回退显示")
+            fail("加权反弹空快照仍会错误回退显示")
         if (
             'id="predictRecommendCard"' in app_text
             and 'id="pick3RecommendCard"' in app_text
@@ -265,17 +265,17 @@ def main():
         else:
             fail("三期内记录未紧接卡片下方展示")
         if "v2_ultimate_order_log" in app_text and "ultimateOrderNet" in app_text and "第1期中" in app_text and "第2期中" in app_text and "第3期中" in app_text:
-            pass_("下单记录与追中记录含本地存储、结算计算和命中期数")
+            pass_("追三期下单与追中记录含本地存储、结算计算和命中期数")
         else:
-            fail("下单记录缺少本地存储或结算计算")
+            fail("追三期下单缺少本地存储或结算计算")
         if "function autoSettleUltimateOrders" in app_text and "自动结算" in app_text:
-            pass_("下单记录含自动结算")
+            pass_("追三期下单含自动结算")
         else:
-            fail("下单记录缺少自动结算")
+            fail("追三期下单缺少自动结算")
         if "function renderSelector" in app_text and "window.CAISHEN_SELECTOR" in app_text and "第四套调度" in app_text:
-            pass_("调度模型页面存在")
+            pass_("三期内必出页面存在")
         else:
-            fail("调度模型页面不完整")
+            fail("三期内必出页面不完整")
 
     index_path = REPO / "index.html"
     if not index_path.exists():
@@ -421,7 +421,7 @@ def main():
 
                     weighted = snap_data.get("weightedRecords")
                     if not isinstance(weighted, list) or not weighted:
-                        fail("snapshots.js 缺少 weightedRecords（下期预估快照）")
+                        fail("snapshots.js 缺少 weightedRecords（加权反弹快照）")
                     else:
                         ok_w = True
                         for rec in weighted:
@@ -437,7 +437,7 @@ def main():
                             if not ok_w:
                                 break
                         if ok_w:
-                            pass_("snapshots.js 含下期预估真实快照记录")
+                            pass_("snapshots.js 含加权反弹真实快照记录")
 
                     weighted_summary = snap_data.get("weightedSummary")
                     if not isinstance(weighted_summary, dict) or not all(
@@ -445,7 +445,7 @@ def main():
                     ):
                         fail("snapshots.js 缺少 weightedSummary")
                     else:
-                        pass_("snapshots.js 含下期预估首推/备选/至少中一/全中汇总")
+                        pass_("snapshots.js 含加权反弹首推/备选/至少中一/全中汇总")
 
                     buckets = snap_data.get("scoreBuckets")
                     if not isinstance(buckets, dict) or not buckets:
@@ -475,7 +475,7 @@ def main():
     else:
         fail("缺少 snapshots.js，请运行 node model_supervisor.js sync")
 
-    # 双号推荐五级强度等级必须统一定义在 model_core.js（禁止页面/监督脚本各算一套）
+    # 双号追热五级强度等级必须统一定义在 model_core.js（禁止页面/监督脚本各算一套）
     if model_core_path.exists():
         core_text = model_core_path.read_text(encoding="utf-8")
         if "function gradeOf" in core_text and "GRADE_TIERS" in core_text:
