@@ -230,18 +230,21 @@ def main():
         else:
             fail("追号/追推荐/下单记录页面区块不完整")
         if (
-            "本期锁定号" in app_text
-            and "本期候选逐条判断" in app_text
+            "今日动作" in app_text
+            and "观望 · 不追" in app_text
+            and "今日执行" in app_text
+            and "追尾" in app_text
+            and "观察锁定" not in app_text
+            and "仅观察候选" not in app_text
             and "MODEL.buildPrediction(analysis.endPeriod)" in app_text
             and "本期新增追推荐" in app_text
             and "本期新开追号线" in app_text
             and "未结束前不换号" in app_text
-            and "本期不建议锁定" in app_text
             and "var gateTone" in app_text
         ):
-            pass_("追号/追推荐页面含显眼本期锁定号与逐条候选状态")
+            pass_("追号/追推荐页面观望与锁定文案分层正确")
         else:
-            fail("追号/追推荐页面缺少显眼本期锁定号或候选状态")
+            fail("追号/追推荐页面观望与锁定文案不清晰")
         if "function nudgeNavItem" in app_text and "renderedTab" in app_text and "nav-group-caret" in app_text and "window.scrollTo" in app_text:
             pass_("顶部导航支持粘性定位、位置保持和当前项可见")
         else:

@@ -2404,26 +2404,32 @@
     }
     var lockTone = { border: "#16a34a", bg: "#f0fdf4", text: "#166534", soft: "#bbf7d0" };
     var gateTone = { border: "#d97706", bg: "#fffbeb", text: "#92400e", soft: "#fef3c7" };
-    if (primaryLock) {
+    if (gateBlocked) {
+      html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #d97706;background:#fffbeb">';
+      html += '<div style="font-size:12px;font-weight:900;color:#92400e;letter-spacing:.08em">' + modeLabel + ' · 今日动作</div>';
+      html += '<div style="font-size:40px;line-height:1.05;font-weight:900;color:#92400e;margin:6px 0">观望 · 不追</div>';
+      html += '<div style="font-size:13px;color:#92400e">本页不产生订单。子模型如有状态变化，只在下方记录，不作为下注依据。</div>';
+      html += '</div></div>';
+      html += '<!--ULT_CARD_HISTORY-->';
+    } else if (primaryLock) {
       var lockState = primaryLock.monitor;
       var lockEndPeriod = analysis.nextPeriod + 2;
       html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
       html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">';
       html += '<div>';
-      html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + (gateBlocked ? "本期观察锁定" : "本期可执行锁定") + '</div>';
-      html += '<div style="font-size:44px;line-height:1.05;font-weight:900;color:' + lockTone.text + ';margin:6px 0">' + (gateBlocked ? "观察尾" : "锁定尾") + primaryLock.pick.tail + '</div>';
+      html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · 今日执行</div>';
+      html += '<div style="font-size:44px;line-height:1.05;font-weight:900;color:' + lockTone.text + ';margin:6px 0">追尾' + primaryLock.pick.tail + '</div>';
       html += '<div style="font-size:14px;font-weight:900;color:' + lockTone.text + '">' + primaryLock.label + ' ' + primaryLock.key + ' · ' + primaryLock.pick.grade + '级 ' + primaryLock.pick.score.toFixed(1) + '分 · ' + primaryLock.pick.tag + '</div>';
-      html += '<div style="font-size:13px;color:' + lockTone.text + ';margin-top:5px">状态 <b>' + lockState.stateLabel + ' ' + lockState.score.toFixed(1) + '分</b> · 建议 <b>' + UM.PATTERNS[lockState.pattern].label + ' ' + UM.PATTERNS[lockState.pattern].stakes.join(" / ") + '</b></div>';
-      if (gateBlocked) html += '<div style="margin-top:7px;padding:6px 8px;border:1px solid ' + gateTone.border + ';border-radius:6px;background:' + gateTone.bg + ';font-size:12px;font-weight:900;color:' + gateTone.text + '">总调度：观望 · 本页只作观察，不产生订单</div>';
+      html += '<div style="font-size:13px;color:' + lockTone.text + ';margin-top:5px">状态 <b>' + lockState.stateLabel + ' ' + lockState.score.toFixed(1) + '分</b> · 执行档 <b>' + UM.PATTERNS[lockState.pattern].label + ' ' + UM.PATTERNS[lockState.pattern].stakes.join(" / ") + '</b></div>';
       html += '</div>';
       html += '<div style="min-width:220px;flex:1;background:#fff;border:1px solid ' + lockTone.soft + ';border-radius:8px;padding:10px 12px">';
-      html += '<div style="font-size:12px;color:' + lockTone.text + ';font-weight:900">' + (gateBlocked ? "观察窗口" : (isRecommendMode ? "本期新增追推荐" : "本期新开追号线")) + '</div>';
+      html += '<div style="font-size:12px;color:' + lockTone.text + ';font-weight:900">' + (isRecommendMode ? "本期新增追推荐" : "本期新开追号线") + '</div>';
       html += '<div style="font-size:18px;font-weight:900;margin:4px 0">第' + analysis.nextPeriod + '期 → 第' + lockEndPeriod + '期</div>';
-      html += '<div style="font-size:12px;color:' + lockTone.text + ';line-height:1.7">' + (isRecommendMode ? "第" + analysis.nextPeriod + "期候选独立追3期；若调度允许，之后每期新推荐再另开线并允许并行。" : "从第" + analysis.nextPeriod + "期起候选固定追3期：第" + analysis.nextPeriod + "、第" + (analysis.nextPeriod + 1) + "、第" + lockEndPeriod + "期；未结束前不换号。") + '</div>';
+      html += '<div style="font-size:12px;color:' + lockTone.text + ';line-height:1.7">' + (isRecommendMode ? "第" + analysis.nextPeriod + "期新增一条独立追推荐线，追尾" + primaryLock.pick.tail + "三期；之后每期新推荐再另开线并允许并行。" : "从第" + analysis.nextPeriod + "期起固定追尾" + primaryLock.pick.tail + "三期：第" + analysis.nextPeriod + "、第" + (analysis.nextPeriod + 1) + "、第" + lockEndPeriod + "期；未结束前不换号。") + '</div>';
       html += '</div>';
       html += '</div>';
       html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid ' + lockTone.soft + '">';
-      html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';margin-bottom:6px">本期候选逐条判断</div>';
+      html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';margin-bottom:6px">本期执行明细</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
       lockCandidates.forEach(function (candidate) {
         var active = !!candidate.monitor.pattern;
@@ -2432,27 +2438,26 @@
         var cardBg = active ? "#ffffff" : "#f8fafc";
         var cardBorder = isPrimary ? lockTone.border : "#d1d5db";
         html += '<div style="border:2px solid ' + cardBorder + ';border-radius:8px;padding:9px 10px;background:' + cardBg + '">';
-        html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b style="color:' + cardColor + '">' + candidate.key + ' ' + candidate.label + '</b><span class="chip">尾' + candidate.pick.tail + '</span><b style="color:' + cardColor + '">' + (active ? (gateBlocked ? "观察" : "锁定") : "不锁") + '</b></div>';
+        html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b style="color:' + cardColor + '">' + candidate.key + ' ' + candidate.label + '</b><span class="chip">尾' + candidate.pick.tail + '</span><b style="color:' + cardColor + '">' + (active ? "追" : "不追") + '</b></div>';
         html += '<div style="font-size:12px;color:var(--muted);margin-top:5px">' + candidate.pick.grade + '级 ' + candidate.pick.score.toFixed(1) + '分 · ' + candidate.pick.tag + ' · ' + candidate.monitor.stateLabel + ' ' + candidate.monitor.score.toFixed(1) + '分' + (active ? " · " + UM.PATTERNS[candidate.monitor.pattern].label : " · 观望") + '</div>';
         html += '</div>';
       });
       html += '</div></div>';
-      html += '<div style="margin-top:10px;font-size:12px;color:' + (gateBlocked ? gateTone.text : lockTone.text) + '">' + (gateBlocked ? "最终执行：调度观望，锁定号降级为观察，不产生订单。" : "最终执行：调度允许，仍需按总览流程确认本金和实际下单。") + '</div>';
+      html += '<div style="margin-top:10px;font-size:12px;color:' + lockTone.text + '">执行：调度允许，仍需按总览流程确认本金和实际下单。</div>';
       html += '</div></div>';
       html += '<!--ULT_CARD_HISTORY-->';
     } else {
       html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid #d97706;background:#fffbeb">';
-      html += '<div style="font-size:12px;font-weight:900;color:#92400e;letter-spacing:.08em">' + modeLabel + ' · 本期锁定号</div>';
-      html += '<div style="font-size:30px;line-height:1.1;font-weight:900;color:#92400e;margin:6px 0">本期不建议锁定</div>';
-      html += '<div style="font-size:13px;color:#92400e">D1、D2 当前均为弱状态或空推荐；等待状态转强后再锁定尾号。</div>';
-      html += '<div style="margin-top:8px;font-size:12px;color:#92400e">最终是否下单仍以总览流程和调度模型动作为准。</div>';
+      html += '<div style="font-size:12px;font-weight:900;color:#92400e;letter-spacing:.08em">' + modeLabel + ' · 今日动作</div>';
+      html += '<div style="font-size:40px;line-height:1.05;font-weight:900;color:#92400e;margin:6px 0">观望 · 不追</div>';
+      html += '<div style="font-size:13px;color:#92400e">没有满足执行条件的候选，本页不下单。</div>';
       html += '</div></div>';
       html += '<!--ULT_CARD_HISTORY-->';
     }
 
     html += '<div class="section"><div class="panel" style="padding:14px 12px">';
     html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
-    html += '<b style="font-size:14px">当前决策</b>';
+    html += '<b style="font-size:14px">本页子模型状态</b><span style="font-size:11px;color:var(--muted)">子模型单独判断，不代表最终下单</span>';
     html += '<span class="chip">' + analysis.decision.action + '</span>';
     html += '<span style="font-size:12px;color:var(--muted)">' + analysis.decision.reason + '</span>';
     html += '</div>';
