@@ -1,5 +1,5 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-29T15:14:51.662Z",
+  "generatedAt": "2026-09-29T16:48:39.194Z",
   "settledCount": 11,
   "grades": {
     "S": {
@@ -1304,5 +1304,116 @@ window.APP_SNAPSHOTS = {
     "second": 0,
     "third": 0,
     "hit3Rate": 0
+  },
+  "sourceWindows": [
+    {
+      "target": 273,
+      "basedOn": 272,
+      "generatedAt": "2026-09-29T16:48:39.192Z",
+      "stream": "D1",
+      "model": "双号追热",
+      "tail": 2,
+      "score": 92.5,
+      "grade": "C",
+      "tag": "5期3次",
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    },
+    {
+      "target": 273,
+      "basedOn": 272,
+      "generatedAt": "2026-09-29T16:48:39.192Z",
+      "stream": "D2",
+      "model": "双号追热",
+      "tail": 4,
+      "score": 92.5,
+      "grade": "C",
+      "tag": "5期3次",
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    },
+    {
+      "target": 273,
+      "basedOn": 272,
+      "generatedAt": "2026-09-29T16:48:39.192Z",
+      "stream": "W1",
+      "model": "加权反弹",
+      "tail": 0,
+      "score": 3,
+      "grade": "D",
+      "tag": null,
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    },
+    {
+      "target": 273,
+      "basedOn": 272,
+      "generatedAt": "2026-09-29T16:48:39.192Z",
+      "stream": "W2",
+      "model": "加权反弹",
+      "tail": 8,
+      "score": 1,
+      "grade": "D",
+      "tag": null,
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    }
+  ],
+  "sourceWindowSummary": {
+    "total": 4,
+    "byStream": {
+      "D1": {
+        "total": 1,
+        "acted": 1,
+        "pending": 1,
+        "skipped": 0,
+        "settled": 0,
+        "hits": 0,
+        "miss": 0,
+        "hit3Rate": 0
+      },
+      "D2": {
+        "total": 1,
+        "acted": 1,
+        "pending": 1,
+        "skipped": 0,
+        "settled": 0,
+        "hits": 0,
+        "miss": 0,
+        "hit3Rate": 0
+      },
+      "W1": {
+        "total": 1,
+        "acted": 1,
+        "pending": 1,
+        "skipped": 0,
+        "settled": 0,
+        "hits": 0,
+        "miss": 0,
+        "hit3Rate": 0
+      },
+      "W2": {
+        "total": 1,
+        "acted": 1,
+        "pending": 1,
+        "skipped": 0,
+        "settled": 0,
+        "hits": 0,
+        "miss": 0,
+        "hit3Rate": 0
+      }
+    }
   }
 };

@@ -457,6 +457,10 @@ def main():
                         fail("snapshots.js 缺少 weightedSummary")
                     else:
                         pass_("snapshots.js 含加权反弹首推/备选/至少中一/全中汇总")
+                    if not isinstance(snap_data.get("sourceWindows"), list):
+                        fail("snapshots.js 缺少四条原始号源真实窗口")
+                    else:
+                        pass_("snapshots.js 含四条原始号源真实窗口")
                     if not isinstance(snap_data.get("threePeriodRecords"), list):
                         fail("snapshots.js 缺少三期内必出真实快照")
                     else:

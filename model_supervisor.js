@@ -196,6 +196,25 @@ function generateSnapshotsJs(snapshots) {
     hit3Rate: threeSettled.length ? threeHits / threeSettled.length : 0
   };
 
+  const sourceWindows = (Array.isArray(snapshots.sourceWindows) ? snapshots.sourceWindows : []).map((r) => Object.assign({}, r));
+  const sourceWindowSummary = { total: sourceWindows.length, byStream: {} };
+  ["D1", "D2", "W1", "W2"].forEach((key) => {
+    const rows = sourceWindows.filter((r) => r.stream === key);
+    const acted = rows.filter((r) => r.tail != null);
+    const settled = acted.filter((r) => r.status === "hit" || r.status === "miss");
+    const hits = settled.filter((r) => r.status === "hit").length;
+    sourceWindowSummary.byStream[key] = {
+      total: rows.length,
+      acted: acted.length,
+      pending: acted.filter((r) => r.status === "pending").length,
+      skipped: rows.filter((r) => r.status === "skip").length,
+      settled: settled.length,
+      hits,
+      miss: settled.length - hits,
+      hit3Rate: settled.length ? hits / settled.length : 0
+    };
+  });
+
   const payload = {
     generatedAt: new Date().toISOString(),
     settledCount: settled.length,
@@ -208,7 +227,9 @@ function generateSnapshotsJs(snapshots) {
     weightedSummary: weightedSummary,
     detail: detail,
     threePeriodRecords: threePeriodRecords,
-    threePeriodSummary: threeSummary
+    threePeriodSummary: threeSummary,
+    sourceWindows: sourceWindows,
+    sourceWindowSummary: sourceWindowSummary
   };
 
   const outPath = path.join(ROOT, "snapshots.js");
@@ -263,14 +284,44 @@ function settleThreePeriodRecords(snapshots, raw, model) {
   }
 }
 
+function settleSourceWindows(snapshots, raw, model) {
+  if (!Array.isArray(snapshots.sourceWindows)) snapshots.sourceWindows = [];
+  for (const rec of snapshots.sourceWindows) {
+    if (rec.status !== "pending" || rec.tail == null) continue;
+    if (!Array.isArray(rec.attempts)) rec.attempts = [];
+    while (rec.attempts.length < 3) {
+      const period = Number(rec.target) + rec.attempts.length;
+      if (!raw[String(period)]) break;
+      const actualTails = model.tailsOf(period);
+      const hit = actualTails.includes(Number(rec.tail));
+      rec.attempts.push({ period, tail: Number(rec.tail), actualTails, hit });
+      if (hit) {
+        rec.status = "hit";
+        rec.hitIndex = rec.attempts.length;
+        rec.settledPeriod = period;
+        rec.settledAt = new Date().toISOString();
+        break;
+      }
+      if (rec.attempts.length === 3) {
+        rec.status = "miss";
+        rec.hitIndex = 0;
+        rec.settledPeriod = period;
+        rec.settledAt = new Date().toISOString();
+      }
+    }
+  }
+}
+
 function sync() {
   const raw = loadRaw();
   const model = createModel(raw);
   const snapshots = loadSnapshots();
   const periods = model.periods;
   const latest = periods[periods.length - 1];
+  const prediction = model.buildPrediction(latest);
 
   settleThreePeriodRecords(snapshots, raw, model);
+  settleSourceWindows(snapshots, raw, model);
 
   for (const rec of snapshots.records) {
     if (rec.settled || !raw[String(rec.target)]) continue;
@@ -286,7 +337,6 @@ function sync() {
 
   const target = latest + 1;
   if (!snapshots.records.some((r) => r.target === target)) {
-    const pred = model.buildPrediction(latest);
     snapshots.records.push({
       modelVersion: MODEL_VERSION,
       generatedAt: new Date().toISOString(),
@@ -296,14 +346,42 @@ function sync() {
       models: {
         doubleRecommendation: {
           description: "连出惯性分层打分，推2个尾号",
-          ambiguous: !!pred.doubleAmbiguous,
-          picks: pred.doubleRecommendation
+          ambiguous: !!prediction.doubleAmbiguous,
+          picks: prediction.doubleRecommendation
         },
         weightedBounce: {
           description: "恰好遗漏k期加权近期反弹率，推2个尾号",
-          picks: pred.weightedBounce
+          picks: prediction.weightedBounce
         }
       }
+    });
+  }
+
+  if (!Array.isArray(snapshots.sourceWindows)) snapshots.sourceWindows = [];
+  const sourcePicks = [
+    { stream: "D1", model: "双号追热", pick: prediction.doubleRecommendation[0] || null },
+    { stream: "D2", model: "双号追热", pick: prediction.doubleRecommendation[1] || null },
+    { stream: "W1", model: "加权反弹", pick: prediction.weightedBounce[0] || null },
+    { stream: "W2", model: "加权反弹", pick: prediction.weightedBounce[1] || null }
+  ];
+  for (const item of sourcePicks) {
+    if (snapshots.sourceWindows.some((r) => Number(r.target) === target && r.stream === item.stream)) continue;
+    const pending = !!(item.pick && item.pick.tail != null);
+    snapshots.sourceWindows.push({
+      target,
+      basedOn: latest,
+      generatedAt: new Date().toISOString(),
+      stream: item.stream,
+      model: item.model,
+      tail: pending ? item.pick.tail : null,
+      score: pending ? item.pick.score : null,
+      grade: pending ? (item.pick.grade || gradeOf(item.pick.score)) : null,
+      tag: pending ? (item.pick.tag || null) : null,
+      status: pending ? "pending" : "skip",
+      attempts: [],
+      hitIndex: null,
+      settledPeriod: pending ? null : target,
+      settledAt: pending ? null : new Date().toISOString()
     });
   }
 

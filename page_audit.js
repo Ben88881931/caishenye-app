@@ -74,6 +74,9 @@ const settledDoubleTargets = records.filter((r) => r.settled && r.results && r.r
 const detailTargets = (snapshotJs.detail || []).map((r) => Number(r.target)).sort((a, b) => a - b);
 must(JSON.stringify(settledDoubleTargets) === JSON.stringify(detailTargets), "双号五级明细与已结算快照一致");
 must(Array.isArray(snapshotJs.threePeriodRecords), "snapshots.js 含三期内必出真实快照");
+must(Array.isArray(snapshotJs.sourceWindows), "snapshots.js 含四条原始号源真实窗口");
+const sourceSummary = snapshotJs.sourceWindowSummary || {};
+must(["D1", "D2", "W1", "W2"].every((k) => sourceSummary.byStream && sourceSummary.byStream[k]), "snapshots.js 含四条原始号源窗口汇总");
 const threeSummary = snapshotJs.threePeriodSummary || {};
 must(["n", "acted", "settled", "pending", "skipped", "hits", "miss", "first", "second", "third", "hit3Rate"].every((k) => k in threeSummary), "snapshots.js 含三期内必出汇总");
 

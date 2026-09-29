@@ -2561,33 +2561,45 @@
     ["D1", "D2", "W1", "W2"].forEach(function (key) {
       var r = threeByStream[key];
       var streamState = decision.streams && decision.streams[key] ? decision.streams[key] : null;
-      var currentPick = streamState ? streamState.current : null;
+      var realWindows = (window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows) ? window.APP_SNAPSHOTS.sourceWindows : []).filter(function (w) { return w.stream === key; });
+      var nextSnap = null;
+      for (var wi = 0; wi < realWindows.length; wi++) { if (Number(realWindows[wi].target) === analysis.nextPeriod) { nextSnap = realWindows[wi]; break; } }
+      var currentPick = nextSnap && nextSnap.tail != null
+        ? { tail: nextSnap.tail, score: nextSnap.score, grade: nextSnap.grade || MODEL.gradeOf(nextSnap.score), tag: nextSnap.tag || "" }
+        : (streamState ? streamState.current : null);
       var conf = streamState && streamState.confidence ? streamState.confidence : { action: "无信号" };
       var currentStatus = currentPick ? ("尾" + currentPick.tail + " · " + currentPick.grade + "级 " + currentPick.score.toFixed(1) + "分 · " + (currentPick.tag || "-")) : "空推荐 · 无信号";
-      sourceStripHtml += '<div class="section"><div class="section__head"><h2 class="section__title">' + r.label + '</h2><span class="section__hint">目标第' + analysis.nextPeriod + '期 · 历史新→旧</span></div>';
+      sourceStripHtml += '<div class="section"><div class="section__head"><h2 class="section__title">' + r.label + '</h2><span class="section__hint">下一轮第' + analysis.nextPeriod + '期 → 第' + (analysis.nextPeriod + 2) + '期 · 快照记录</span></div>';
       sourceStripHtml += '<div class="panel"><div style="padding:9px 10px;background:#f8fafc;border-bottom:1px solid #e5e7eb;font-size:12px;line-height:1.7">';
-      sourceStripHtml += '<div><b>当前号：</b>' + currentStatus + '</div>';
+      sourceStripHtml += '<div><b>下一轮窗口号：</b>' + currentStatus + '</div>';
       if (currentPick) sourceStripHtml += '<div><b>当前状态：</b>连中' + (streamState.currentHitStreak || 0) + '期 · 连错' + (streamState.currentMissStreak || 0) + '期 · 尾号连出' + (streamState.tailStreak || 0) + '期</div>';
       else sourceStripHtml += '<div><b>当前状态：</b>没有有效推荐号</div>';
       sourceStripHtml += '<div><b>模型建议：</b>' + (conf.action || "无信号") + '</div>';
       sourceStripHtml += '</div>';
       sourceStripHtml += '<div style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
-      r.batches.slice(-40).reverse().forEach(function (batch) {
-        var isHit = batch.hitIndex !== 4;
-        var endPeriod = batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
+      var displayRows = realWindows.length
+        ? realWindows.slice().sort(function (a, b) { return b.target - a.target; }).map(function (w) { return { startPeriod: w.target, tail: w.tail, attempts: w.attempts || [], hitIndex: w.hitIndex, status: w.status }; })
+        : r.batches.slice(-40).reverse().map(function (b) { return { startPeriod: b.startPeriod, tail: b.tail, attempts: b.attempts || [], hitIndex: b.hitIndex, status: b.hitIndex === 4 ? "miss" : "hit" }; });
+      displayRows.forEach(function (batch) {
+        var status = batch.status || (batch.hitIndex === 4 ? "miss" : "hit");
+        var isHit = status === "hit";
+        var statusColor = status === "hit" ? "#16a34a" : status === "miss" ? "#dc2626" : status === "pending" ? "#2563eb" : "#6b7280";
+        var statusText = status === "hit" ? "第" + batch.hitIndex + "期中" : status === "miss" ? "三期全错" : status === "pending" ? "结算中" : "空推荐";
+        var endPeriod = batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod + 2;
         sourceStripHtml += '<div style="width:176px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
-        sourceStripHtml += '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px"><b style="font-size:11px">第' + batch.startPeriod + '期批次</b><span style="font-size:10px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</span></div>';
+        sourceStripHtml += '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px"><b style="font-size:11px">第' + batch.startPeriod + '期批次</b><span style="font-size:10px;font-weight:800;color:' + statusColor + '">' + statusText + '</span></div>';
         sourceStripHtml += '<div style="font-size:11px;color:var(--muted);margin-top:2px">窗口 第' + batch.startPeriod + '期 → 第' + endPeriod + '期</div>';
-        sourceStripHtml += '<div style="font-size:16px;font-weight:900;margin:4px 0">原始号 尾' + batch.tail + '</div>';
+        sourceStripHtml += '<div style="font-size:16px;font-weight:900;margin:4px 0">原始号 ' + (batch.tail != null ? "尾" + batch.tail : "空") + '</div>';
         batch.attempts.forEach(function (a) {
           sourceStripHtml += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
         });
-        sourceStripHtml += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
+        sourceStripHtml += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + statusColor + '">' + (status === "pending" ? "待开奖结算" : status === "skip" ? "本流无号" : "结束 第" + endPeriod + "期 · " + statusText) + '</div>';
         sourceStripHtml += '</div>';
       });
-      if (!r.batches.length) sourceStripHtml += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
+      if (!displayRows.length) sourceStripHtml += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
       sourceStripHtml += '</div></div></div>';
     });
+
     var endPeriod = analysis.latestPeriod;
     var midPeriod = Math.floor((31 + endPeriod) / 2);
     var firstRes = S.runBacktest(RAW, MODEL, "selector", { startPeriod: 31, endPeriod: midPeriod });
