@@ -2577,9 +2577,12 @@
       sourceStripHtml += '<div><b>模型建议：</b>' + (conf.action || "无信号") + '</div>';
       sourceStripHtml += '</div>';
       sourceStripHtml += '<div style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
-      var displayRows = realWindows.length
-        ? realWindows.slice().sort(function (a, b) { return b.target - a.target; }).map(function (w) { return { startPeriod: w.target, tail: w.tail, attempts: w.attempts || [], hitIndex: w.hitIndex, status: w.status }; })
-        : r.batches.slice(-40).reverse().map(function (b) { return { startPeriod: b.startPeriod, tail: b.tail, attempts: b.attempts || [], hitIndex: b.hitIndex, status: b.hitIndex === 4 ? "miss" : "hit" }; });
+      var realRows = realWindows.map(function (w) { return { startPeriod: w.target, tail: w.tail, attempts: w.attempts || [], hitIndex: w.hitIndex, status: w.status || "pending", source: "真实快照" }; });
+      var backtestRows = r.batches.slice(-40).reverse().map(function (b) { return { startPeriod: b.startPeriod, tail: b.tail, attempts: b.attempts || [], hitIndex: b.hitIndex, status: b.hitIndex === 4 ? "miss" : "hit", source: "历史回测" }; });
+      var rowMap = {};
+      backtestRows.forEach(function (row) { rowMap[row.startPeriod] = row; });
+      realRows.forEach(function (row) { rowMap[row.startPeriod] = row; });
+      var displayRows = Object.keys(rowMap).map(function (k) { return rowMap[k]; }).sort(function (a, b) { return b.startPeriod - a.startPeriod; });
       displayRows.forEach(function (batch) {
         var status = batch.status || (batch.hitIndex === 4 ? "miss" : "hit");
         var isHit = status === "hit";

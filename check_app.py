@@ -265,6 +265,9 @@ def main():
             and "sourceStripHtml" in app_text
             and "当前号：" in app_text
             and "当前状态：" in app_text
+            and "真实快照" in app_text
+            and "历史回测" in app_text
+            and "rowMap" in app_text
             and "模型建议：" in app_text
             and 'id="ultimateLockCard"' in app_text
             and 'id="selectorActionCard"' in app_text
