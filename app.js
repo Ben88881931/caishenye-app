@@ -2440,127 +2440,61 @@
     html += '</div></div>';
     html += '<!--ULT_CARD_HISTORY-->';
 
-    html += '<div class="section"><div class="panel" style="padding:14px 12px">';
-    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">';
-    html += '<b style="font-size:14px">本页子模型状态</b><span style="font-size:11px;color:var(--muted)">子模型单独判断，不代表最终下单</span>';
-    html += '<span class="chip">' + analysis.decision.action + '</span>';
-    html += '<span style="font-size:12px;color:var(--muted)">' + analysis.decision.reason + '</span>';
-    html += '</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px">';
-    UM.KEYS.forEach(function (key) {
-      var item = analysis.items[key];
-      var state = item.monitor;
-      var color = stateColor[state.stateKey] || "#6b7280";
-      html += '<div style="border:1px solid #e0e3e8;border-radius:8px;padding:12px;background:#fff;min-width:0">';
-      html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
-      html += '<b style="font-size:14px">' + item.label + ' ' + key + '</b>';
-      html += '<span class="chip">' + (item.currentPick ? '尾' + item.currentPick.tail : "空") + '</span>';
-      html += '<span style="margin-left:auto;color:' + color + ';font-weight:800">' + state.stateLabel + ' ' + state.score.toFixed(1) + '分</span>';
-      html += '</div>';
-      html += '<div style="margin-top:8px;font-size:13px;color:var(--muted)">建议 <b style="color:' + color + '">' + actionText(item) + '</b>';
-      if (state.pattern) html += ' · ' + UM.PATTERNS[state.pattern].stakes.join(" / ");
-      html += '</div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;margin-top:8px;font-size:12px;color:var(--muted)">';
-      html += '<span>近10期 <b>' + pctFmt(state.recent10) + '</b></span>';
-      html += '<span>近20期 <b>' + pctFmt(state.recent20) + '</b></span>';
-      html += '<span>近50期 <b>' + pctFmt(state.recent50) + '</b></span>';
-      html += '<span>3期内命中 <b>' + pctFmt(item.window.hit3Rate) + '</b></span>';
-      html += '<span>当前遗漏 <b>' + state.currentOmission + '</b></span>';
-      html += '<span>最高遗漏 <b>' + state.maxOmission + '</b></span>';
-      html += '<span>当前连中 <b>' + state.currentHitStreak + '</b></span>';
-      html += '<span>最高连中 <b>' + state.maxHitStreak + '</b></span>';
-      html += '</div>';
+    var streamThree = {};
+    var allStreamBatches = [];
+    if (window.CAISHEN_SELECTOR && window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest) {
+      ["D1", "D2", "W1", "W2"].forEach(function (key) {
+        streamThree[key] = window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest(RAW, MODEL, key, options);
+        streamThree[key].batches.forEach(function (batch) { allStreamBatches.push(batch); });
+      });
+    }
+    allStreamBatches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
+
+    html += '<!--ULT_RECORDS_START-->';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
+    html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
+    if (isRecommendMode) {
+      html += '<div><b>每期追三期：</b>每期拿到的新推荐都独立开始一条3期线，允许并行。原始推荐号不改变。</div>';
+      html += '<div><b>本页作用：</b>记录每一条新推荐在第1期、第2期还是第3期中，或三期全错。</div>';
+    } else {
+      html += '<div><b>固定追三期：</b>拿到原始推荐号后固定追3期，未结束前不换号。</div>';
+      html += '<div><b>本页作用：</b>记录固定号码在3期窗口内的结果，不进行P档或强弱二次筛选。</div>';
+    }
+    html += '</div></div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">四流三期内命中结构</h2><span class="section__hint">D1、D2、W1、W2独立统计 · 原始推荐号</span></div></div>';
+    html += '<div class="section"><div class="panel" style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="min-width:620px">';
+    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>推荐流</span><span>批次</span><span>3期中</span><span>第1期中</span><span>第2期中</span><span>第3期中</span><span>三期全错</span></div>';
+    ["D1", "D2", "W1", "W2"].forEach(function (key) {
+      var r = streamThree[key];
+      html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px">';
+      html += '<b style="color:' + (key.charAt(0) === "D" ? "#16a34a" : "#2563eb") + '">' + r.label + '</b>';
+      html += '<span>' + r.n + '</span><span>' + pctFmt(r.hitRate) + '</span><span>' + r.first + '</span><span>' + r.second + '</span><span>' + r.third + '</span><span>' + r.miss + '</span>';
       html += '</div>';
     });
     html += '</div></div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">独立追三期命中结构</h2><span class="section__hint">第31期起 · D1/D2分开统计 · 每批锁定同一首推号追3期</span></div></div>';
-    html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">';
-    UM.KEYS.forEach(function (key) {
-      var item = analysis.items[key];
-      var w = item.window;
-      html += '<div class="panel" style="padding:12px">';
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b>' + item.label + '</b><span class="chip">共' + w.n + '批</span></div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;font-size:12px">';
-      html += '<span>第1期中 <b>' + w.first + '</b> · ' + pctFmt(w.firstRate) + '</span>';
-      html += '<span>第2期中 <b>' + w.second + '</b> · ' + pctFmt(w.secondRate) + '</span>';
-      html += '<span>第3期中 <b>' + w.third + '</b> · ' + pctFmt(w.thirdRate) + '</span>';
-      html += '<span>三期全错 <b>' + w.miss + '</b> · ' + pctFmt(w.missRate) + '</span>';
-      html += '</div>';
-      html += '</div>';
-    });
-    html += '</div></div>';
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">本模式状态回测</h2><span class="section__hint">第31期起 · 只交易D1/D2 · 状态分数阈值 35/60/80 · 样本不足仍按P6观察</span></div></div>';
-    html += '<div class="section"><div class="grid-2">';
-    html += '<div class="stat"><div class="stat__value" style="color:' + (strategyResult.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (strategyResult.net >= 0 ? "+" : "") + numFmt(strategyResult.net) + '</div><div class="stat__label">状态模型净收益（基础单位）</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + pctFmt(strategyResult.roi) + '</div><div class="stat__label">状态模型回报率</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + numFmt(strategyResult.maxDrawdown) + '</div><div class="stat__label">状态模型最大回撤</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + strategyResult.sequences + '</div><div class="stat__label">有效追投批数' + (isRecommendMode ? ' · 最多并行' + strategyResult.maxActive : ' · 跳过起点' + strategyResult.skipped) + '</div></div>';
-    if (isRecommendMode) {
-      html += '<div class="stat"><div class="stat__value">' + numFmt(strategyResult.maxExposure) + '</div><div class="stat__label">单期最大投入（基础单位）</div></div>';
-    }
-    html += '</div></div>';
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">固定方案对照</h2><span class="section__hint">' + modeHint + ' · 基础单位 · 历史逐期回测</span></div></div>';
-    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="min-width:520px">';
-    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr;gap:6px;padding:6px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
-    html += '<span>方案</span><span>批数</span><span>投入</span><span>净收益</span><span>回报率</span><span>最大回撤</span></div>';
-    [["P6 " + UM.PATTERNS.P6.label, fixedP6], ["P7 " + UM.PATTERNS.P7.label, fixedP7], ["P8 " + UM.PATTERNS.P8.label, fixedP8], ["状态选择", strategyResult]].forEach(function (row) {
-      var r = row[1];
-      html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr;gap:6px;padding:8px 6px;border-bottom:1px solid #f0f0f0;font-size:12px">';
-      html += '<b>' + row[0] + '</b><span>' + r.sequences + '</span><span>' + numFmt(r.staked) + '</span><span style="color:' + (r.net >= 0 ? '#16a34a' : '#dc2626') + '">' + (r.net >= 0 ? "+" : "") + numFmt(r.net) + '</span><span>' + pctFmt(r.roi) + '</span><span>' + numFmt(r.maxDrawdown) + '</span>';
-      html += '</div>';
-    });
-    html += '</div></div>';
-
-    html += '<!--ULT_RECORDS_START-->';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内追投滚动记录</h2><span class="section__hint">置顶显示 · 第31期起 · 每批标注起始期、锁定号码和结束期 · 新→旧</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">四流三期内滚动记录</h2><span class="section__hint">每格标注来源、起始期、原始号和结束期 · 新→旧</span></div></div>';
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="display:flex;gap:6px;min-width:max-content">';
-    var modeEvents = strategyResult.events.slice(-50);
-    for (var mei = modeEvents.length - 1; mei >= 0; mei--) {
-      var me = modeEvents[mei];
-      var attempts = [];
-      var steps = me.t === 4 ? 3 : me.t;
-      for (var mj = 0; mj < steps; mj++) {
-        var attemptPeriod = me.startPeriod + mj;
-        attempts.push({ period: attemptPeriod, tail: me.pick, hit: tailsOf(attemptPeriod).indexOf(me.pick) >= 0 });
-      }
-      var endPeriod = attempts.length ? attempts[attempts.length - 1].period : me.startPeriod;
-      var hitText = me.t === 1 ? "第1期中" : me.t === 2 ? "第2期中" : me.t === 3 ? "第3期中" : "三期全错";
-      html += '<div style="width:160px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
-      html += '<div style="font-size:11px;font-weight:800">' + (isRecommendMode ? "追推荐" : "追号") + " · " + me.key + '</div>';
-      html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + me.startPeriod + '期</div>';
-      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">锁定 尾' + me.pick + '</div>';
-      attempts.forEach(function (a) {
+    allStreamBatches.forEach(function (batch) {
+      var isHit = batch.hitIndex !== 4;
+      var endPeriod = batch.attempts && batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
+      html += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
+      html += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
+      html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期</div>';
+      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">原始号 尾' + batch.tail + '</div>';
+      (batch.attempts || []).forEach(function (a) {
         html += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
       });
-      html += '<div style="margin-top:4px;font-size:11px;font-weight:800">结束 第' + endPeriod + '期 · ' + hitText + '</div>';
-      html += '<div style="font-size:11px;color:' + (me.net >= 0 ? "#16a34a" : "#dc2626") + '">盈亏 ' + (me.net >= 0 ? "+" : "") + numFmt(me.net) + '</div>';
+      html += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
       html += '</div>';
-    }
-    if (!modeEvents.length) html += '<div style="color:#9ca3af;font-size:12px">暂无追投记录</div>';
+    });
+    if (!allStreamBatches.length) html += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">最近推荐监控</h2><span class="section__hint">D1/D2分开显示 · 中=绿色 未中=红色 · 新→旧</span></div></div>';
-    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="display:flex;gap:5px;min-width:max-content">';
-    var recent = analysis.signals.slice(-30);
-    for (var ri = recent.length - 1; ri >= 0; ri--) {
-      var rec = recent[ri];
-      html += '<div style="min-width:54px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 3px;background:#fff">';
-      html += '<div style="font-size:11px;color:var(--muted);margin-bottom:3px">' + rec.period + '</div>';
-      UM.KEYS.forEach(function (key) {
-        var pick = rec[key];
-        var txt = pick ? "尾" + pick.tail : "空";
-        var color = pick ? (pick.hit ? "#16a34a" : "#dc2626") : "#9ca3af";
-        html += '<div style="font-size:13px;font-weight:800;color:' + color + '">' + txt + '</div>';
-      });
-      html += '</div>';
-    }
-    html += '</div></div>';
     html += hitLogSectionHTML(mode);
     html += '<!--ULT_RECORDS_END-->';
     html += '<p class="disclaimer">' + modeLabel + '只监控双号追热D1/D2，不读取加权反弹。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
