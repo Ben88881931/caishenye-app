@@ -263,7 +263,7 @@ def main():
             and 'WEIGHTED_CARD_START' in app_text
             and 'WEIGHTED_CARD_END' in app_text
             and "sourceStripHtml" in app_text
-            and "当前号：" in app_text
+            and "下一轮窗口号：" in app_text
             and "当前状态：" in app_text
             and "真实快照" in app_text
             and "历史回测" in app_text
