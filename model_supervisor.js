@@ -17,6 +17,7 @@
 const fs = require("fs");
 const path = require("path");
 const { createModel, gradeOf, GRADE_TIERS, scoreBucketOf, SCORE_BUCKETS } = require("./model_core.js");
+const selector = require("./model_selector.js");
 
 const ROOT = __dirname;
 const DATA_PATH = path.join(ROOT, "data.js");
@@ -177,6 +178,24 @@ function generateSnapshotsJs(snapshots) {
     both: { n: weightedActed.length, hits: weightedBoth, miss: weightedActed.length - weightedBoth }
   };
 
+  const threePeriodRecords = (Array.isArray(snapshots.threePeriodRecords) ? snapshots.threePeriodRecords : []).map((r) => Object.assign({}, r));
+  const threeActed = threePeriodRecords.filter((r) => r.tail != null && r.action !== "观望");
+  const threeSettled = threeActed.filter((r) => r.status === "hit" || r.status === "miss");
+  const threeHits = threeSettled.filter((r) => r.status === "hit").length;
+  const threeSummary = {
+    n: threePeriodRecords.length,
+    acted: threeActed.length,
+    settled: threeSettled.length,
+    pending: threeActed.filter((r) => r.status === "pending").length,
+    skipped: threePeriodRecords.filter((r) => r.status === "skip").length,
+    hits: threeHits,
+    miss: threeSettled.length - threeHits,
+    first: threeSettled.filter((r) => r.hitIndex === 1).length,
+    second: threeSettled.filter((r) => r.hitIndex === 2).length,
+    third: threeSettled.filter((r) => r.hitIndex === 3).length,
+    hit3Rate: threeSettled.length ? threeHits / threeSettled.length : 0
+  };
+
   const payload = {
     generatedAt: new Date().toISOString(),
     settledCount: settled.length,
@@ -187,7 +206,9 @@ function generateSnapshotsJs(snapshots) {
     tags: tags,
     weightedRecords: weightedRecords,
     weightedSummary: weightedSummary,
-    detail: detail
+    detail: detail,
+    threePeriodRecords: threePeriodRecords,
+    threePeriodSummary: threeSummary
   };
 
   const outPath = path.join(ROOT, "snapshots.js");
@@ -214,12 +235,42 @@ function modelHit(model, actualTails) {
   };
 }
 
+function settleThreePeriodRecords(snapshots, raw, model) {
+  if (!Array.isArray(snapshots.threePeriodRecords)) snapshots.threePeriodRecords = [];
+  for (const rec of snapshots.threePeriodRecords) {
+    if (rec.status !== "pending" || rec.tail == null) continue;
+    if (!Array.isArray(rec.attempts)) rec.attempts = [];
+    while (rec.attempts.length < 3) {
+      const period = Number(rec.startPeriod) + rec.attempts.length;
+      if (!raw[String(period)]) break;
+      const actualTails = model.tailsOf(period);
+      const hit = actualTails.includes(Number(rec.tail));
+      rec.attempts.push({ period, tail: Number(rec.tail), actualTails, hit });
+      if (hit) {
+        rec.status = "hit";
+        rec.hitIndex = rec.attempts.length;
+        rec.settledPeriod = period;
+        rec.settledAt = new Date().toISOString();
+        break;
+      }
+      if (rec.attempts.length === 3) {
+        rec.status = "miss";
+        rec.hitIndex = 0;
+        rec.settledPeriod = period;
+        rec.settledAt = new Date().toISOString();
+      }
+    }
+  }
+}
+
 function sync() {
   const raw = loadRaw();
   const model = createModel(raw);
   const snapshots = loadSnapshots();
   const periods = model.periods;
   const latest = periods[periods.length - 1];
+
+  settleThreePeriodRecords(snapshots, raw, model);
 
   for (const rec of snapshots.records) {
     if (rec.settled || !raw[String(rec.target)]) continue;
@@ -253,6 +304,40 @@ function sync() {
           picks: pred.weightedBounce
         }
       }
+    });
+  }
+
+  if (!Array.isArray(snapshots.threePeriodRecords)) snapshots.threePeriodRecords = [];
+  if (!snapshots.threePeriodRecords.some((r) => Number(r.target) === target)) {
+    const selectorAnalysis = selector.analyze(raw, model, { startPeriod: 31 });
+    const decision = selectorAnalysis && selectorAnalysis.decision ? selectorAnalysis.decision : null;
+    let streamKey = null;
+    let pick = null;
+    if (decision && decision.source === "double" && decision.streams && decision.streams.D1.current) {
+      streamKey = "D1";
+      pick = decision.streams.D1.current;
+    } else if (decision && decision.source === "weighted" && decision.streams && decision.streams.W1.current) {
+      streamKey = "W1";
+      pick = decision.streams.W1.current;
+    }
+    const pending = !!(pick && pick.tail != null);
+    snapshots.threePeriodRecords.push({
+      target,
+      basedOn: latest,
+      generatedAt: new Date().toISOString(),
+      action: decision ? decision.action : "观望",
+      source: decision ? decision.source : null,
+      rule: decision ? decision.rule : "P5/P6",
+      reason: decision ? decision.reason : "三期内必出模块未加载",
+      stream: streamKey,
+      tail: pending ? pick.tail : null,
+      score: pending ? pick.score : null,
+      grade: pending ? (pick.grade || gradeOf(pick.score)) : null,
+      status: pending ? "pending" : "skip",
+      attempts: [],
+      hitIndex: null,
+      settledPeriod: pending ? null : target,
+      settledAt: pending ? null : new Date().toISOString()
     });
   }
 
@@ -298,6 +383,11 @@ function report() {
   console.log(`加权至少中一：${w.hits}/${w.acted} = ${(w.rate * 100).toFixed(1)}% · 跳过${w.skipped}期`);
   console.log(`加权首推：${firstHit("weightedBounce", 0)}/${w.acted}`);
   console.log(`加权两个全中：${bothHit("weightedBounce")}/${w.acted}`);
+  const threeRecords = Array.isArray(snapshots.threePeriodRecords) ? snapshots.threePeriodRecords : [];
+  const threeActed = threeRecords.filter((r) => r.tail != null && r.action !== "观望");
+  const threeSettled = threeActed.filter((r) => r.status === "hit" || r.status === "miss");
+  const threeHits = threeSettled.filter((r) => r.status === "hit").length;
+  console.log(`三期内必出：${threeHits}/${threeSettled.length} = ${(threeSettled.length ? threeHits / threeSettled.length * 100 : 0).toFixed(1)}% · 待结算${threeActed.filter((r) => r.status === "pending").length}期 · 观望${threeRecords.filter((r) => r.status === "skip").length}期`);
   console.log(`待开奖：${pending.length} 条`);
 
   const recent = records.filter((r) => r.settled).slice(-10);

@@ -454,6 +454,15 @@ def main():
                         fail("snapshots.js 缺少 weightedSummary")
                     else:
                         pass_("snapshots.js 含加权反弹首推/备选/至少中一/全中汇总")
+                    if not isinstance(snap_data.get("threePeriodRecords"), list):
+                        fail("snapshots.js 缺少三期内必出真实快照")
+                    else:
+                        pass_("snapshots.js 含三期内必出真实快照")
+                    three_summary = snap_data.get("threePeriodSummary")
+                    if not isinstance(three_summary, dict) or not all(f in three_summary for f in ["n", "acted", "settled", "pending", "skipped", "hits", "miss", "hit3Rate"]):
+                        fail("snapshots.js 缺少三期内必出汇总")
+                    else:
+                        pass_("snapshots.js 含三期内必出汇总")
 
                     buckets = snap_data.get("scoreBuckets")
                     if not isinstance(buckets, dict) or not buckets:

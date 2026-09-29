@@ -73,6 +73,9 @@ must(summary.hits === weightedHits && summary.miss === actedWeighted.length - we
 const settledDoubleTargets = records.filter((r) => r.settled && r.results && r.results.doubleRecommendation).map((r) => Number(r.target)).sort((a, b) => a - b);
 const detailTargets = (snapshotJs.detail || []).map((r) => Number(r.target)).sort((a, b) => a - b);
 must(JSON.stringify(settledDoubleTargets) === JSON.stringify(detailTargets), "双号五级明细与已结算快照一致");
+must(Array.isArray(snapshotJs.threePeriodRecords), "snapshots.js 含三期内必出真实快照");
+const threeSummary = snapshotJs.threePeriodSummary || {};
+must(["n", "acted", "settled", "pending", "skipped", "hits", "miss", "first", "second", "third", "hit3Rate"].every((k) => k in threeSummary), "snapshots.js 含三期内必出汇总");
 
 const selector = require("./model_selector.js").analyze(raw, model, { startPeriod: 31 });
 must(Number(selector.nextPeriod) === latest + 1, "三期内必出预测期正确");

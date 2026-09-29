@@ -2629,6 +2629,31 @@
     html += "</div>";
     html += '</div></div>';
 
+    var threeSnap = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.threePeriodRecords) ? window.APP_SNAPSHOTS.threePeriodRecords : [];
+    var threeSnapSummary = window.APP_SNAPSHOTS && window.APP_SNAPSHOTS.threePeriodSummary ? window.APP_SNAPSHOTS.threePeriodSummary : { acted: 0, settled: 0, pending: 0, skipped: 0, hits: 0, miss: 0, hit3Rate: 0 };
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内必出真实快照</h2><span class="section__hint">开奖前保存 · 3期内结算 · 新→旧</span></div></div>';
+    html += '<div class="section"><div class="grid-2">';
+    html += '<div class="stat"><div class="stat__value">' + threeSnapSummary.acted + '</div><div class="stat__label">已出手 · 观望' + threeSnapSummary.skipped + '期</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + (threeSnapSummary.settled ? pctFmt(threeSnapSummary.hit3Rate) : "-") + '</div><div class="stat__label">3期内命中 · ' + threeSnapSummary.hits + "/" + threeSnapSummary.settled + '</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + threeSnapSummary.pending + '</div><div class="stat__label">待结算</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + threeSnapSummary.miss + '</div><div class="stat__label">三期全错</div></div>';
+    html += '</div></div>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
+    threeSnap.slice().reverse().forEach(function (r) {
+      var color = r.status === "hit" ? "#16a34a" : r.status === "miss" ? "#dc2626" : r.status === "pending" ? "#2563eb" : "#6b7280";
+      html += '<div style="width:176px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
+      html += '<div style="font-size:11px;color:var(--muted)">第' + r.target + '期快照</div>';
+      html += '<div style="font-size:15px;font-weight:900;color:' + color + ';margin:3px 0">' + (r.action || "观望") + (r.tail != null ? " · 尾" + r.tail : "") + '</div>';
+      html += '<div style="font-size:11px;color:var(--muted)">' + (r.stream || "-") + ' · ' + (r.rule || "-") + '</div>';
+      (r.attempts || []).forEach(function (a) {
+        html += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
+      });
+      html += '<div style="font-size:11px;font-weight:800;color:' + color + ';margin-top:3px">' + (r.status === "hit" ? "第" + r.hitIndex + "期中" : r.status === "miss" ? "三期全错" : r.status === "pending" ? "追三期结算中" : "观望跳过") + '</div>';
+      html += '</div>';
+    });
+    if (!threeSnap.length) html += '<div style="color:#9ca3af;font-size:12px">暂无真实快照，下一次 sync 开始记录</div>';
+    html += '</div></div>';
+
     html += '<div class="section"><div class="section__head"><h2 class="section__title">四条推荐流</h2><span class="section__hint">D1、D2、W1、W2分别统计对错序列</span></div></div>';
     html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">';
     ["D1", "D2", "W1", "W2"].forEach(function (key) { html += streamCard(decision.streams[key]); });
