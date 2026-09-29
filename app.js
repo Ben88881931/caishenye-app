@@ -2174,6 +2174,7 @@
       }
       return "反弹率 " + (p.wbr * 100).toFixed(1) + "% · 样本 " + Number(p.wbSample).toFixed(1);
     };
+    html += '<!--WEIGHTED_CARD_START-->';
     html += '<div class="section" id="predictRecommendCard"><div class="section__head"><h2 class="section__title">本期选号</h2><span class="section__hint">加权反弹率≥75% +5分 · ≥65% +3分 · 遗漏深度≥50% +1分</span></div>';
     html += '<div class="panel"><div class="panel__body">';
     if (recItems.length === 0) {
@@ -2193,6 +2194,7 @@
       html += '<div style="margin-top:8px;text-align:center;font-size:11px;color:var(--muted)">' + (recItems[0].snapshot ? "开奖前真实快照" : "实时计算") + '</div>';
     }
     html += "</div></div></div>";
+    html += '<!--WEIGHTED_CARD_END-->';
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每日分析报告</h2><span class="section__hint">' + new Date().toLocaleDateString("zh-CN") + " · 第 " + N + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body report">';
@@ -2314,11 +2316,20 @@
     }
 
     html += '<p class="disclaimer">模型基于恰好遗漏k期的加权近期反弹率，样本外201-255 中23·错21·共44。修复数据泄露后已退随机（理论基准约55.39%），无预测价值，仅供历史回看。仅供参考，不应据此重注。</p>';
+    var weightedCardStartMarker = '<!--WEIGHTED_CARD_START-->';
+    var weightedCardEndMarker = '<!--WEIGHTED_CARD_END-->';
+    var weightedCardStart = html.indexOf(weightedCardStartMarker);
+    var weightedCardEnd = html.indexOf(weightedCardEndMarker);
+    if (weightedCardStart >= 0 && weightedCardEnd > weightedCardStart) {
+      var weightedCardHtml = html.slice(weightedCardStart, weightedCardEnd + weightedCardEndMarker.length);
+      html = html.slice(0, weightedCardStart) + html.slice(weightedCardEnd + weightedCardEndMarker.length);
+      var weightedHeaderPos = html.indexOf('<div class="section" id="weightedPageHeader">');
+      if (weightedHeaderPos >= 0) html = html.slice(0, weightedHeaderPos) + weightedCardHtml + html.slice(weightedHeaderPos);
+    }
     view.innerHTML = html;
     promoteSectionToTop("连错遗漏记录", ["predictRecommendCard"]);
     promoteSectionToTop("历史业绩", ["predictRecommendCard"]);
     promoteSectionToTop("上期预测反馈", ["predictRecommendCard"]);
-    moveSectionBeforeAnchor("本期选号", "weightedPageHeader");
   }
 
   // ===== 双号追热页面（连出惯性分层打分，每期推2个号，避尾0）=====

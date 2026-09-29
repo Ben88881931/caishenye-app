@@ -84,7 +84,7 @@ const ultimate = require("./ultimate_model.js").analyze(raw, model, { startPerio
 must(Number(ultimate.nextPeriod) === latest + 1, "追号/每期追三期预测期正确");
 must(["分批启用", "观望"].includes(ultimate.decision.action), "固定追三期总决策合法");
 
-must(appText.indexOf('view.innerHTML = html;\n    promoteSectionToTop("连错遗漏记录"') >= 0 && appText.indexOf('moveSectionBeforeAnchor("本期选号"') > appText.indexOf('view.innerHTML = html;\n    promoteSectionToTop("连错遗漏记录"') && appText.includes("weightedPageHeader") && appText.includes('moveSectionBeforeAnchor("本期选号", "weightedPageHeader")') && appText.includes("sourceStripHtml") && appText.includes("原始推荐号") && appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START") && appText.includes("card-followup"), "本期选号置顶且三期内四流记录紧接卡片下方");
+must(appText.includes("WEIGHTED_CARD_START") && appText.includes("WEIGHTED_CARD_END") && appText.indexOf('var weightedHeaderPos = html.indexOf(\'<div class="section" id="weightedPageHeader">\')') > appText.indexOf("var weightedCardStart = html.indexOf") && appText.includes("sourceStripHtml") && appText.includes("原始推荐号") && appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START") && appText.includes("card-followup"), "本期选号通过HTML顺序直接置顶且三期内四流记录紧接卡片下方");
 must(appText.includes("snapshotSkipped") && appText.includes("跳过，未参与结算"), "空快照不会回退成实时推荐");
 must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab") && appText.includes("nav-group-caret") && appText.includes("window.scrollTo"), "导航保持横向位置、当前项可见且切页回顶");
 const cssText = read("styles.css");
