@@ -230,16 +230,13 @@ def main():
         else:
             fail("追号/追推荐/下单记录页面区块不完整")
         if (
-            "今日动作" in app_text
-            and "观望 · 不追" in app_text
+            "观望 · 不追" in app_text
             and "今日执行" in app_text
             and "追尾" in app_text
-            and "观察锁定" not in app_text
-            and "仅观察候选" not in app_text
+            and "四个原始号源" in app_text
+            and "自动进入追三期记录" in app_text
+            and "不再二次筛选" in app_text
             and "MODEL.buildPrediction(analysis.endPeriod)" in app_text
-            and "本期新增追推荐" in app_text
-            and "本期新开追号线" in app_text
-            and "未结束前不换号" in app_text
             and "var gateTone" in app_text
         ):
             pass_("追号/追推荐页面观望与锁定文案分层正确")

@@ -86,7 +86,7 @@ must(appText.includes("snapshotSkipped") && appText.includes("跳过，未参与
 must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab") && appText.includes("nav-group-caret") && appText.includes("window.scrollTo"), "导航保持横向位置、当前项可见且切页回顶");
 const cssText = read("styles.css");
 must(cssText.includes("position: sticky") && cssText.includes("grid-template-columns: repeat(5") && cssText.includes("min-height: 42px"), "导航为粘性五项分段布局且触控高度合格");
-must(appText.includes("gateBlocked") && appText.includes("观望 · 不追") && appText.includes("今日执行") && appText.includes("追尾") && !appText.includes("观察锁定") && !appText.includes("仅观察候选"), "今日动作严格二元化");
+must(appText.includes("观望 · 不追") && appText.includes("今日执行") && appText.includes("追尾") && appText.includes("四个原始号源") && appText.includes("自动进入追三期记录") && appText.includes("不再二次筛选") && !appText.includes("仅观察候选"), "追三期使用四原始号源且不二次筛选");
 must(!appText.includes('id: "orderfollow"') && !appText.includes("下单追投"), "不存在已废弃的下单追投入口");
 
 const tabsBlock = (appText.match(/var TABS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || "";
