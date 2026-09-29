@@ -199,7 +199,8 @@ def main():
         if (
             "function moveTabToGroup" in app_text
             and "function moveGroup" in app_text
-            and 'data-collapse-group="' in app_text
+            and 'data-nav-group="' in app_text
+            and 'aria-expanded="' in app_text
             and 'data-move-tab="' in app_text
             and "NAV_COLLAPSED_KEY" in app_text
             and "NAV_PAGE_GROUPS_KEY" in app_text
