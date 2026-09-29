@@ -1,6 +1,6 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-09-28T13:55:57.511Z",
-  "settledCount": 10,
+  "generatedAt": "2026-09-29T13:41:18.471Z",
+  "settledCount": 11,
   "grades": {
     "S": {
       "single": {
@@ -25,9 +25,9 @@ window.APP_SNAPSHOTS = {
     },
     "C": {
       "single": {
-        "n": 10,
-        "hits": 5,
-        "miss": 5
+        "n": 12,
+        "hits": 6,
+        "miss": 6
       }
     },
     "D": {
@@ -39,8 +39,8 @@ window.APP_SNAPSHOTS = {
     }
   },
   "overallAtLeastOne": {
-    "n": 10,
-    "hits": 8,
+    "n": 11,
+    "hits": 9,
     "miss": 2
   },
   "combos": {
@@ -50,8 +50,8 @@ window.APP_SNAPSHOTS = {
       "miss": 0
     },
     "C+C": {
-      "n": 2,
-      "hits": 1,
+      "n": 3,
+      "hits": 2,
       "miss": 1
     },
     "A+C": {
@@ -155,9 +155,9 @@ window.APP_SNAPSHOTS = {
       ]
     },
     "92.x": {
-      "n": 11,
-      "hits": 6,
-      "miss": 5,
+      "n": 13,
+      "hits": 7,
+      "miss": 6,
       "rolls": [
         {
           "target": 262,
@@ -235,6 +235,20 @@ window.APP_SNAPSHOTS = {
           "score": 92.5,
           "tag": "5期3次",
           "hit": true
+        },
+        {
+          "target": 272,
+          "tail": 1,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": false
+        },
+        {
+          "target": 272,
+          "tail": 2,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": true
         }
       ]
     },
@@ -253,9 +267,9 @@ window.APP_SNAPSHOTS = {
   },
   "tags": {
     "5期3次": {
-      "n": 10,
-      "hits": 5,
-      "miss": 5,
+      "n": 12,
+      "hits": 6,
+      "miss": 6,
       "rolls": [
         {
           "target": 262,
@@ -322,6 +336,20 @@ window.APP_SNAPSHOTS = {
         },
         {
           "target": 271,
+          "tail": 2,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": true
+        },
+        {
+          "target": 272,
+          "tail": 1,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": false
+        },
+        {
+          "target": 272,
           "tail": 2,
           "score": 92.5,
           "bucket": "92.x",
@@ -426,6 +454,7 @@ window.APP_SNAPSHOTS = {
       "target": 262,
       "basedOn": 261,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 1,
@@ -460,13 +489,13 @@ window.APP_SNAPSHOTS = {
         0
       ],
       "hit": true,
-      "settledAt": "2026-09-19T13:45:40.822Z",
-      "skipped": false
+      "settledAt": "2026-09-19T13:45:40.822Z"
     },
     {
       "target": 263,
       "basedOn": 262,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 9,
@@ -500,13 +529,13 @@ window.APP_SNAPSHOTS = {
         9
       ],
       "hit": true,
-      "settledAt": "2026-09-20T14:27:28.378Z",
-      "skipped": false
+      "settledAt": "2026-09-20T14:27:28.378Z"
     },
     {
       "target": 264,
       "basedOn": 263,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 1,
@@ -542,13 +571,13 @@ window.APP_SNAPSHOTS = {
         0
       ],
       "hit": true,
-      "settledAt": "2026-09-21T15:05:32.139Z",
-      "skipped": false
+      "settledAt": "2026-09-21T15:05:32.139Z"
     },
     {
       "target": 265,
       "basedOn": 264,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 9,
@@ -584,13 +613,13 @@ window.APP_SNAPSHOTS = {
         3
       ],
       "hit": true,
-      "settledAt": "2026-09-22T14:12:26.982Z",
-      "skipped": false
+      "settledAt": "2026-09-22T14:12:26.982Z"
     },
     {
       "target": 266,
       "basedOn": 265,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 7,
@@ -624,13 +653,13 @@ window.APP_SNAPSHOTS = {
         7
       ],
       "hit": true,
-      "settledAt": "2026-09-23T13:59:57.866Z",
-      "skipped": false
+      "settledAt": "2026-09-23T13:59:57.866Z"
     },
     {
       "target": 267,
       "basedOn": 266,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 0,
@@ -666,13 +695,13 @@ window.APP_SNAPSHOTS = {
         1
       ],
       "hit": true,
-      "settledAt": "2026-09-24T13:41:00.211Z",
-      "skipped": false
+      "settledAt": "2026-09-24T13:41:00.211Z"
     },
     {
       "target": 268,
       "basedOn": 267,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 3,
@@ -707,13 +736,13 @@ window.APP_SNAPSHOTS = {
         4
       ],
       "hit": true,
-      "settledAt": "2026-09-25T14:20:54.202Z",
-      "skipped": false
+      "settledAt": "2026-09-25T14:20:54.202Z"
     },
     {
       "target": 269,
       "basedOn": 268,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 2,
@@ -748,13 +777,13 @@ window.APP_SNAPSHOTS = {
         2
       ],
       "hit": true,
-      "settledAt": "2026-09-26T13:39:12.825Z",
-      "skipped": false
+      "settledAt": "2026-09-26T13:39:12.825Z"
     },
     {
       "target": 270,
       "basedOn": 269,
       "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 7,
@@ -788,13 +817,13 @@ window.APP_SNAPSHOTS = {
         7
       ],
       "hit": true,
-      "settledAt": "2026-09-27T15:32:45.913Z",
-      "skipped": false
+      "settledAt": "2026-09-27T15:32:45.913Z"
     },
     {
       "target": 271,
       "basedOn": 270,
       "settled": true,
+      "skipped": true,
       "picks": [],
       "actualTails": [
         0,
@@ -804,13 +833,13 @@ window.APP_SNAPSHOTS = {
       ],
       "hits": [],
       "hit": false,
-      "settledAt": "2026-09-28T13:55:57.506Z",
-      "skipped": true
+      "settledAt": "2026-09-28T13:55:57.506Z"
     },
     {
       "target": 272,
       "basedOn": 271,
-      "settled": false,
+      "settled": true,
+      "skipped": false,
       "picks": [
         {
           "tail": 9,
@@ -820,7 +849,7 @@ window.APP_SNAPSHOTS = {
           "ratio": 0.14285714285714285,
           "weightedBounceRate": 0.7417475728155339,
           "sample": 73.57142857142857,
-          "hit": null
+          "hit": false
         },
         {
           "tail": 3,
@@ -830,41 +859,80 @@ window.APP_SNAPSHOTS = {
           "ratio": 0.8571428571428571,
           "weightedBounceRate": 0.5,
           "sample": 4,
+          "hit": true
+        }
+      ],
+      "actualTails": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "hits": [
+        3
+      ],
+      "hit": true,
+      "settledAt": "2026-09-29T13:41:18.448Z"
+    },
+    {
+      "target": 273,
+      "basedOn": 272,
+      "settled": false,
+      "skipped": false,
+      "picks": [
+        {
+          "tail": 0,
+          "score": 3,
+          "miss": 1,
+          "maxMiss": 9,
+          "ratio": 0.1111111111111111,
+          "weightedBounceRate": 0.667779632721202,
+          "sample": 85.57142857142857,
+          "hit": null
+        },
+        {
+          "tail": 8,
+          "score": 1,
+          "miss": 3,
+          "maxMiss": 6,
+          "ratio": 0.5,
+          "weightedBounceRate": 0.3333333333333333,
+          "sample": 15,
           "hit": null
         }
       ],
       "actualTails": [],
       "hits": [],
       "hit": null,
-      "settledAt": null,
-      "skipped": false
+      "settledAt": null
     }
   ],
   "weightedSummary": {
-    "n": 9,
-    "settled": 10,
+    "n": 10,
+    "settled": 11,
     "skipped": 1,
-    "hits": 9,
+    "hits": 10,
     "miss": 0,
     "firstPick": {
-      "n": 9,
+      "n": 10,
       "hits": 7,
-      "miss": 2
+      "miss": 3
     },
     "secondPick": {
-      "n": 9,
-      "hits": 5,
+      "n": 10,
+      "hits": 6,
       "miss": 4
     },
     "atLeastOne": {
-      "n": 9,
-      "hits": 9,
+      "n": 10,
+      "hits": 10,
       "miss": 0
     },
     "both": {
-      "n": 9,
+      "n": 10,
       "hits": 3,
-      "miss": 6
+      "miss": 7
     }
   },
   "detail": [
@@ -1172,6 +1240,36 @@ window.APP_SNAPSHOTS = {
       ],
       "atLeastOne": true,
       "settledAt": "2026-09-28T13:55:57.506Z"
+    },
+    {
+      "target": 272,
+      "picks": [
+        {
+          "tail": 1,
+          "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
+          "grade": "C",
+          "hit": false
+        },
+        {
+          "tail": 2,
+          "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
+          "grade": "C",
+          "hit": true
+        }
+      ],
+      "actualTails": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "atLeastOne": true,
+      "settledAt": "2026-09-29T13:41:18.448Z"
     }
   ]
 };
