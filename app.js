@@ -2560,13 +2560,24 @@
     var sourceStripHtml = '';
     ["D1", "D2", "W1", "W2"].forEach(function (key) {
       var r = threeByStream[key];
-      sourceStripHtml += '<div class="section"><div class="section__head"><h2 class="section__title">' + r.label + '</h2><span class="section__hint">独立滚动条 · 原始推荐号 · 新→旧</span></div>';
-      sourceStripHtml += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
+      var streamState = decision.streams && decision.streams[key] ? decision.streams[key] : null;
+      var currentPick = streamState ? streamState.current : null;
+      var conf = streamState && streamState.confidence ? streamState.confidence : { action: "无信号" };
+      var currentStatus = currentPick ? ("尾" + currentPick.tail + " · " + currentPick.grade + "级 " + currentPick.score.toFixed(1) + "分 · " + (currentPick.tag || "-")) : "空推荐 · 无信号";
+      sourceStripHtml += '<div class="section"><div class="section__head"><h2 class="section__title">' + r.label + '</h2><span class="section__hint">目标第' + analysis.nextPeriod + '期 · 历史新→旧</span></div>';
+      sourceStripHtml += '<div class="panel"><div style="padding:9px 10px;background:#f8fafc;border-bottom:1px solid #e5e7eb;font-size:12px;line-height:1.7">';
+      sourceStripHtml += '<div><b>当前号：</b>' + currentStatus + '</div>';
+      if (currentPick) sourceStripHtml += '<div><b>当前状态：</b>连中' + (streamState.currentHitStreak || 0) + '期 · 连错' + (streamState.currentMissStreak || 0) + '期 · 尾号连出' + (streamState.tailStreak || 0) + '期</div>';
+      else sourceStripHtml += '<div><b>当前状态：</b>没有有效推荐号</div>';
+      sourceStripHtml += '<div><b>模型建议：</b>' + (conf.action || "无信号") + '</div>';
+      sourceStripHtml += '</div>';
+      sourceStripHtml += '<div style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
       r.batches.slice(-40).reverse().forEach(function (batch) {
         var isHit = batch.hitIndex !== 4;
         var endPeriod = batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
-        sourceStripHtml += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
-        sourceStripHtml += '<div style="font-size:11px;color:var(--muted)">起始 第' + batch.startPeriod + '期</div>';
+        sourceStripHtml += '<div style="width:176px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
+        sourceStripHtml += '<div style="display:flex;align-items:center;justify-content:space-between;gap:4px"><b style="font-size:11px">第' + batch.startPeriod + '期批次</b><span style="font-size:10px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</span></div>';
+        sourceStripHtml += '<div style="font-size:11px;color:var(--muted);margin-top:2px">窗口 第' + batch.startPeriod + '期 → 第' + endPeriod + '期</div>';
         sourceStripHtml += '<div style="font-size:16px;font-weight:900;margin:4px 0">原始号 尾' + batch.tail + '</div>';
         batch.attempts.forEach(function (a) {
           sourceStripHtml += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';

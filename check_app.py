@@ -263,7 +263,9 @@ def main():
             and 'WEIGHTED_CARD_START' in app_text
             and 'WEIGHTED_CARD_END' in app_text
             and "sourceStripHtml" in app_text
-            and "原始推荐号" in app_text
+            and "当前号：" in app_text
+            and "当前状态：" in app_text
+            and "模型建议：" in app_text
             and 'id="ultimateLockCard"' in app_text
             and 'id="selectorActionCard"' in app_text
             and "ULT_CARD_HISTORY" in app_text
