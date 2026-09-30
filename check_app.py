@@ -358,7 +358,7 @@ def main():
 
     if page_audit_path.exists():
         page_audit_text = page_audit_path.read_text(encoding="utf-8")
-        for token in ["PAGE AUDIT PASSED", "gateBlocked", "snapshotSkipped", "promoteSectionToTop", "weightedSummary"]:
+        for token in ["PAGE AUDIT PASSED", "snapshotSkipped", "weightedSummary", "sourceWindows", "sourceWindowSummary", "threePeriodRecords", "每条号源最多只有一个进行中的三期窗口", "WEIGHTED_CARD_START", "历史回测"]:
             if token in page_audit_text:
                 pass_(f"page_audit.js 含 {token}")
             else:
