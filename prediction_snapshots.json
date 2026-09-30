@@ -1122,7 +1122,7 @@
       "generatedAt": "2026-09-29T13:41:18.468Z",
       "basedOn": 272,
       "target": 273,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -1165,11 +1165,126 @@
             }
           ]
         }
+      },
+      "actualTails": [
+        0,
+        3,
+        5,
+        6,
+        7,
+        8
+      ],
+      "actualPeriod": 273,
+      "settledAt": "2026-09-30T13:54:47.651Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            2,
+            4
+          ],
+          "perPick": [
+            {
+              "tail": 2,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C",
+              "hit": false
+            },
+            {
+              "tail": 4,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C",
+              "hit": false
+            }
+          ],
+          "hits": [],
+          "count": 0,
+          "hit": false
+        },
+        "weightedBounce": {
+          "picks": [
+            0,
+            8
+          ],
+          "perPick": [
+            {
+              "tail": 0,
+              "score": 3,
+              "tag": null,
+              "grade": "D",
+              "hit": true
+            },
+            {
+              "tail": 8,
+              "score": 1,
+              "tag": null,
+              "grade": "D",
+              "hit": true
+            }
+          ],
+          "hits": [
+            0,
+            8
+          ],
+          "count": 2,
+          "hit": true
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-09-30T13:54:47.652Z",
+      "basedOn": 273,
+      "target": 274,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "ambiguous": false,
+          "picks": [
+            {
+              "tail": 5,
+              "score": 93.9,
+              "tag": "连出3",
+              "grade": "A"
+            },
+            {
+              "tail": 2,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            }
+          ]
+        },
+        "weightedBounce": {
+          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
+          "picks": [
+            {
+              "tail": 1,
+              "score": 3,
+              "miss": 2,
+              "maxMiss": 5,
+              "ratio": 0.4,
+              "weightedBounceRate": 0.7361563517915309,
+              "sample": 43.857142857142854
+            },
+            {
+              "tail": 2,
+              "score": 0,
+              "miss": 1,
+              "maxMiss": 11,
+              "ratio": 0.09090909090909091,
+              "weightedBounceRate": 0.6296296296296295,
+              "sample": 81
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 272,
-  "updatedAt": "2026-09-29T16:48:39.192Z",
+  "latestPeriod": 273,
+  "updatedAt": "2026-09-30T13:54:47.771Z",
   "threePeriodRecords": [
     {
       "target": 273,
@@ -1188,6 +1303,24 @@
       "hitIndex": null,
       "settledPeriod": 273,
       "settledAt": "2026-09-29T15:14:51.661Z"
+    },
+    {
+      "target": 274,
+      "basedOn": 273,
+      "generatedAt": "2026-09-30T13:54:47.771Z",
+      "action": "跟双号",
+      "source": "double",
+      "rule": "P1/P6",
+      "reason": "双号达到A级且加权反弹信号确认",
+      "stream": "D1",
+      "tail": 5,
+      "score": 93.9,
+      "grade": "A",
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
     }
   ],
   "sourceWindows": [
@@ -1202,7 +1335,21 @@
       "grade": "C",
       "tag": "5期3次",
       "status": "pending",
-      "attempts": [],
+      "attempts": [
+        {
+          "period": 273,
+          "tail": 2,
+          "actualTails": [
+            0,
+            3,
+            5,
+            6,
+            7,
+            8
+          ],
+          "hit": false
+        }
+      ],
       "hitIndex": null,
       "settledPeriod": null,
       "settledAt": null
@@ -1218,7 +1365,21 @@
       "grade": "C",
       "tag": "5期3次",
       "status": "pending",
-      "attempts": [],
+      "attempts": [
+        {
+          "period": 273,
+          "tail": 4,
+          "actualTails": [
+            0,
+            3,
+            5,
+            6,
+            7,
+            8
+          ],
+          "hit": false
+        }
+      ],
       "hitIndex": null,
       "settledPeriod": null,
       "settledAt": null
@@ -1233,11 +1394,25 @@
       "score": 3,
       "grade": "D",
       "tag": null,
-      "status": "pending",
-      "attempts": [],
-      "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 273,
+          "tail": 0,
+          "actualTails": [
+            0,
+            3,
+            5,
+            6,
+            7,
+            8
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 273,
+      "settledAt": "2026-09-30T13:54:47.649Z"
     },
     {
       "target": 273,
@@ -1247,6 +1422,52 @@
       "model": "加权反弹",
       "tail": 8,
       "score": 1,
+      "grade": "D",
+      "tag": null,
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 273,
+          "tail": 8,
+          "actualTails": [
+            0,
+            3,
+            5,
+            6,
+            7,
+            8
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 273,
+      "settledAt": "2026-09-30T13:54:47.651Z"
+    },
+    {
+      "target": 274,
+      "basedOn": 273,
+      "generatedAt": "2026-09-30T13:54:47.651Z",
+      "stream": "W1",
+      "model": "加权反弹",
+      "tail": 1,
+      "score": 3,
+      "grade": "D",
+      "tag": null,
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    },
+    {
+      "target": 274,
+      "basedOn": 273,
+      "generatedAt": "2026-09-30T13:54:47.651Z",
+      "stream": "W2",
+      "model": "加权反弹",
+      "tail": 2,
+      "score": 0,
       "grade": "D",
       "tag": null,
       "status": "pending",
