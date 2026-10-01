@@ -1289,7 +1289,7 @@
         9
       ],
       "actualPeriod": 274,
-      "settledAt": "2026-10-01T13:52:24.492Z",
+      "settledAt": "2026-10-01T13:54:29.610Z",
       "results": {
         "doubleRecommendation": {
           "picks": [
@@ -1350,7 +1350,7 @@
     },
     {
       "modelVersion": "core-v1",
-      "generatedAt": "2026-10-01T13:52:24.492Z",
+      "generatedAt": "2026-10-01T13:54:29.610Z",
       "basedOn": 274,
       "target": 275,
       "settled": false,
@@ -1381,7 +1381,7 @@
     }
   ],
   "latestPeriod": 274,
-  "updatedAt": "2026-10-01T13:52:24.595Z",
+  "updatedAt": "2026-10-01T13:54:29.623Z",
   "threePeriodRecords": [
     {
       "target": 273,
@@ -1413,16 +1413,29 @@
       "tail": 5,
       "score": 93.9,
       "grade": "A",
-      "status": "pending",
-      "attempts": [],
-      "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 274,
+          "tail": 5,
+          "actualTails": [
+            2,
+            3,
+            5,
+            6,
+            9
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 274,
+      "settledAt": "2026-10-01T13:54:29.609Z"
     },
     {
       "target": 275,
       "basedOn": 274,
-      "generatedAt": "2026-10-01T13:52:24.595Z",
+      "generatedAt": "2026-10-01T13:54:29.623Z",
       "action": "观望",
       "source": null,
       "rule": "P5/P6",
@@ -1435,7 +1448,7 @@
       "attempts": [],
       "hitIndex": null,
       "settledPeriod": 275,
-      "settledAt": "2026-10-01T13:52:24.595Z"
+      "settledAt": "2026-10-01T13:54:29.623Z"
     }
   ],
   "sourceWindows": [
@@ -1479,7 +1492,7 @@
       ],
       "hitIndex": 2,
       "settledPeriod": 274,
-      "settledAt": "2026-10-01T13:52:24.490Z"
+      "settledAt": "2026-10-01T13:54:29.610Z"
     },
     {
       "target": 273,
@@ -1639,12 +1652,12 @@
       ],
       "hitIndex": 1,
       "settledPeriod": 274,
-      "settledAt": "2026-10-01T13:52:24.492Z"
+      "settledAt": "2026-10-01T13:54:29.610Z"
     },
     {
       "target": 275,
       "basedOn": 274,
-      "generatedAt": "2026-10-01T13:52:24.492Z",
+      "generatedAt": "2026-10-01T13:54:29.610Z",
       "stream": "D1",
       "model": "双号追热",
       "tail": 5,
@@ -1660,7 +1673,7 @@
     {
       "target": 275,
       "basedOn": 274,
-      "generatedAt": "2026-10-01T13:52:24.492Z",
+      "generatedAt": "2026-10-01T13:54:29.610Z",
       "stream": "W2",
       "model": "加权反弹",
       "tail": null,
@@ -1671,23 +1684,7 @@
       "attempts": [],
       "hitIndex": null,
       "settledPeriod": 275,
-      "settledAt": "2026-10-01T13:52:24.492Z"
-    },
-    {
-      "target": 276,
-      "basedOn": 275,
-      "generatedAt": "2026-10-01T13:52:24.492Z",
-      "stream": "W2",
-      "model": "加权反弹",
-      "tail": null,
-      "score": null,
-      "grade": null,
-      "tag": null,
-      "status": "skip",
-      "attempts": [],
-      "hitIndex": null,
-      "settledPeriod": 276,
-      "settledAt": "2026-10-01T13:52:24.492Z"
+      "settledAt": "2026-10-01T13:54:29.610Z"
     }
   ]
 }
