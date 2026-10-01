@@ -760,22 +760,58 @@
     refs.sort(function (a, b) { return b.edge - a.edge; });
 
     var html = "";
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">每日选号下单顺序</h2><span class="section__hint">按顺序看，不做反向操作</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">每日选号下单顺序</h2><span class="section__hint">先选号、再看风险、最后手动记录</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
-    html += '<div><b>第1步 看调度：</b>先打开“三期内必出”，只看顶部最终动作：跟双号、跟加权或观望。</div>';
-    html += '<div><b>第2步 先排除：</b>最终动作是“观望”就不下单；加权空推荐时，不自行改追双号。</div>';
-    html += '<div><b>第3步 选号码：</b>只看双号追热D1、D2；D1优先，D1不适合时再看D2。</div>';
-    html += '<div><b>第4步 看置信率：</b>调度页双号推荐流分别给出正确概率和“优先/观察/避让”。优先才正常下单，观察只小注，避让或无信号不下。</div>';
-    html += '<div><b>第5步 选执行方式：</b>进入“追三期下单”，在固定追号和每期追推荐中选择一种。</div>';
-    html += '<div><b>第6步 选倍投：</b>按追号/追推荐页面的当前P档执行。P8只在高分状态使用，风险最高。</div>';
-    html += '<div><b>第7步 记录下单：</b>到“追三期下单”填写来源、执行方式、位置、起始期、尾号、倍投和本金。</div>';
-    html += '<div><b>第8步 等自动结算：</b>开奖数据齐全后系统自动判断第1期中、第2期中、第3期中或三期全错。</div>';
+    html += '<div><b>第1步 选号码：</b>先打开“双号追热”，只看 D1、D2 两个推荐号；D1优先，D1状态不适合时再看 D2。</div>';
+    html += '<div><b>第2步 看风险：</b>看推荐卡下方的四色状态和“连错遗漏记录”。绿色正常；黄色、橙色重点观察；红色为高风险提醒，不自动改号，是否下单仍由你确认。</div>';
+    html += '<div><b>第3步 看调度：</b>打开“三期内必出”，查看 D1、D2 当前窗口、最终动作和真实快照；动作是“观望”时只记录，不进入实际下单。</div>';
+    html += '<div><b>第4步 定执行：</b>需要下单时进入“追三期下单”，选择固定追号或每期追推荐，填写来源、位置、起始期、尾号和基础金额。</div>';
+    html += '<div><b>第5步 选倍投：</b>按当前页面允许的 P 档手动选择；倍投、本金和是否下单都由你确认。</div>';
+    html += '<div><b>第6步 等结算：</b>开奖数据更新后，系统自动结算第1期中、第2期中、第3期中或三期全错，并写入下单记录和追中记录。</div>';
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">';
-    html += '<button class="chip" data-overview-tab="selector">先看三期内必出</button>';
+    html += '<button class="chip" data-overview-tab="pick3">先看双号追热</button>';
+    html += '<button class="chip" data-overview-tab="selector">再看三期内必出</button>';
     html += '<button class="chip" data-overview-tab="orderlog">去追三期下单</button>';
     html += '</div>';
-    html += '<div style="margin-top:8px;font-size:12px;color:var(--muted)">当前直接执行口径：先看调度；只有调度给出跟双号或跟加权，且对应首推为“优先”时，才进入追三期下单。本金和实际下注仍由你确认。</div>';
+    html += '<div style="margin-top:8px;font-size:12px;color:var(--muted)">当前口径：双号追热只负责选号，四色状态负责预警，三期内必中只做结果账本，追三期下单只做手动记录和自动结算。任何页面都不自动替你下注。</div>';
     html += '</div></div></div>';
+
+    var pageGuides = {
+      overview: ["总览", "查看最新开奖、页面说明和每日操作顺序。", "每天打开小程序时先看。"],
+      pick3: ["双号追热", "双号选号模型，输出 D1、D2，并显示四色风险状态和对错遗漏。", "每天第一步选号时看。"],
+      selector: ["三期内必出", "查看 D1、D2 的三期窗口、调度动作、真实快照和历史回测。", "选号后、下单前看。"],
+      orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
+      segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
+      missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖。", "找遗漏结构时看。"],
+      parity: ["单双热图", "单数在左、双数在右，查看逐期开出和遗漏。", "观察单双分布时看。"],
+      trend: ["遗漏热图", "逐期查看尾数开出、遗漏深度和滚动开出率。", "复盘走势时看。"],
+      zodtrend: ["生肖走势", "按年份查看生肖开出趋势。", "看生肖长期走势时看。"],
+      zodwindow: ["生肖窗口", "按窗口统计生肖热度、遗漏和连出。", "看生肖短中期窗口时看。"],
+      zodmonitor: ["生肖遗漏", "查看生肖当前遗漏、历史最大和最近15次遗漏。", "监控生肖遗漏时看。"],
+      personality: ["尾号性格", "查看每个尾号的遗漏、反弹和连出统计。", "研究单个尾号性格时看。"],
+      datarecord: ["三期规律", "查看三期组合和规律记录。", "研究三期组合时看。"],
+      miss: ["遗漏监控", "查看尾号当前遗漏、历史最大和最近15次遗漏。", "监控尾号遗漏时看。"],
+      tails: ["冷热分析", "按窗口比较尾号实际开出率与理论基准。", "判断冷热偏离时看。"],
+      windowk: ["窗口走势", "按不同窗口查看尾号走势变化。", "比较窗口表现时看。"],
+      zodrecords: ["生肖开奖", "按年份查看生肖开奖记录。", "查生肖历史开奖时看。"],
+      backtest: ["策略回测", "查看样本、命中、基准、置信区间和结论。", "检验策略效果时看。"],
+      numtrend: ["号码走势", "按号码查看历史走势和期数变化。", "查看号码级走势时看。"]
+    };
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">页面说明</h2><span class="section__hint">每个页面负责什么 · 点击卡片可跳转</span></div></div>';
+    html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px">';
+    NAV_GROUPS.forEach(function (group) {
+      group.tabs.forEach(function (id) {
+        var guide = pageGuides[id];
+        if (!guide) return;
+        html += '<div class="panel" style="padding:12px;min-width:0;display:flex;flex-direction:column;gap:7px">';
+        html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b>' + guide[0] + '</b><span class="chip">' + group.label + '</span></div>';
+        html += '<div style="font-size:12px;line-height:1.65;color:var(--muted)">' + guide[1] + '</div>';
+        html += '<div style="font-size:12px;line-height:1.65"><b>什么时候看：</b>' + guide[2] + '</div>';
+        html += '<div><button class="chip" data-overview-tab="' + id + '">打开页面</button></div>';
+        html += '</div>';
+      });
+    });
+    html += '</div></div>';
 
     html += '<div class="section">';
     html += '<div class="grid-3">';
