@@ -78,7 +78,7 @@ must(Array.isArray(snapshotJs.sourceWindows), "snapshots.js 含四条原始号�
 const sourceWindowRecords = Array.isArray(snapshotJs.sourceWindows) ? snapshotJs.sourceWindows : [];
 const pendingByStream = {};
 sourceWindowRecords.forEach((r) => { if (r.status === "pending") pendingByStream[r.stream] = (pendingByStream[r.stream] || 0) + 1; });
-must(["D1", "D2", "W1", "W2"].every((k) => (pendingByStream[k] || 0) <= 1), "每条号源最多只有一个进行中的三期窗口");
+must(["D1", "D2"].every((k) => (pendingByStream[k] || 0) <= 1), "每条号源最多只有一个进行中的三期窗口");
 const sourceSummary = snapshotJs.sourceWindowSummary || {};
 must(["D1", "D2", "W1", "W2"].every((k) => sourceSummary.byStream && sourceSummary.byStream[k]), "snapshots.js 含四条原始号源窗口汇总");
 const threeSummary = snapshotJs.threePeriodSummary || {};
@@ -103,7 +103,7 @@ const tabsBlock = (appText.match(/var TABS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || 
 const tabIds = [...tabsBlock.matchAll(/id:\s*"([^"]+)"/g)].map((m) => m[1]);
 const missingTabs = tabIds.filter((id) => !appText.includes('state.tab === "' + id + '"') && !appText.includes("renderUltimateMode"));
 must(tabIds.length > 0 && missingTabs.length === 0, "所有导航页面都有渲染入口");
-const modelFlow = ["pick3", "predict", "selector", "orderlog"];
+const modelFlow = ["pick3", "selector", "orderlog"];
 const flowPositions = modelFlow.map((id) => tabIds.indexOf(id));
 must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions[i - 1])), "导航按模型流程排序");
 

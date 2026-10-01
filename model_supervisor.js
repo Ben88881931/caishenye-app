@@ -198,7 +198,7 @@ function generateSnapshotsJs(snapshots) {
 
   const sourceWindows = (Array.isArray(snapshots.sourceWindows) ? snapshots.sourceWindows : []).map((r) => Object.assign({}, r));
   const sourceWindowSummary = { total: sourceWindows.length, byStream: {} };
-  ["D1", "D2", "W1", "W2"].forEach((key) => {
+  ["D1", "D2"].forEach((key) => {
     const rows = sourceWindows.filter((r) => r.stream === key);
     const acted = rows.filter((r) => r.tail != null);
     const settled = acted.filter((r) => r.status === "hit" || r.status === "miss");
@@ -262,7 +262,7 @@ function settleThreePeriodRecords(snapshots, raw, model) {
     if (rec.status !== "pending" || rec.tail == null) continue;
     if (!Array.isArray(rec.attempts)) rec.attempts = [];
     while (rec.attempts.length < 3) {
-      const period = Number(rec.startPeriod) + rec.attempts.length;
+      const period = Number(rec.startPeriod || rec.target) + rec.attempts.length;
       if (!raw[String(period)]) break;
       const actualTails = model.tailsOf(period);
       const hit = actualTails.includes(Number(rec.tail));
@@ -327,14 +327,15 @@ function addSourceWindow(snapshots, model, raw, prediction, stream, target) {
 
 function settleSourceWindows(snapshots, raw, model, prediction, latest) {
   if (!Array.isArray(snapshots.sourceWindows)) snapshots.sourceWindows = [];
-  const streams = ["D1", "D2", "W1", "W2"];
+  snapshots.sourceWindows = snapshots.sourceWindows.filter((r) => r.stream === "D1" || r.stream === "D2");
+  const streams = ["D1", "D2"];
   for (const stream of streams) {
     let guard = 0;
     while (guard++ < 30) {
       let current = snapshots.sourceWindows.find((r) => r.stream === stream && r.status === "pending");
       if (!current) current = addSourceWindow(snapshots, model, raw, prediction, stream, latest + 1);
       if (current.status === "skip") {
-        if (current.target > latest + 1) break;
+        if (current.target >= latest + 1) break;
         addSourceWindow(snapshots, model, raw, prediction, stream, current.target + 1);
         continue;
       }

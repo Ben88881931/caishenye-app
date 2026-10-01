@@ -308,11 +308,7 @@
       Number(w.current.weightedBounceRate) >= opts.minBounceRate &&
       Number(w.current.sample) >= opts.minBounceSample);
     var dConfirmed = !!(d.current && !overheat && d.currentMissStreak !== 2 &&
-      d.current.score >= opts.minDoubleScore && w.current &&
-      Number(w.current.weightedBounceRate) >= opts.minWeightedConfirm &&
-      d2.currentHitStreak < 3);
-    var wConfirmed = !!(w.current && (w.currentMissStreak === 2 || w.currentHitStreak === 1) &&
-      w2.currentMissStreak !== 2);
+      d.current.score >= opts.minDoubleScore && d2.currentHitStreak < 3);
 
     var source = null;
     var reason = "";
@@ -320,20 +316,16 @@
     if (dConfirmed) {
       source = "double";
       rule = "P1/P6";
-      reason = "双号达到A级且加权反弹信号确认";
-    } else if (wConfirmed) {
-      source = "weighted";
-      rule = "P2/P4";
-      reason = w.currentMissStreak === 2 ? "加权对错遗漏2期，进入反弹观察" : "加权刚连续命中1期";
+      reason = "双号达到A级且未触发过热或备选连中限制";
     } else {
       source = null;
       rule = "P5/P6";
-      reason = overheat ? "双号连出过热，等待更明确信号" : "双号未确认且加权未达到强切换门槛，空仓观望";
+      reason = overheat ? "双号连出过热，等待更明确信号" : "双号未确认，空仓观望";
     }
     return {
       period: rows[index].period,
       source: source,
-      action: source === "double" ? "跟双号" : source === "weighted" ? "跟加权" : "观望",
+      action: source === "double" ? "跟双号" : "观望",
       rule: rule,
       reason: reason,
       double: d,
@@ -341,8 +333,7 @@
       streams: { D1: d1, D2: d2, W1: w1, W2: w2 },
       overheat: overheat,
       coldRebound: coldRebound,
-      dConfirmed: dConfirmed,
-      wConfirmed: wConfirmed
+      dConfirmed: dConfirmed
     };
   }
 

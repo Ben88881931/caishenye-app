@@ -352,7 +352,6 @@
   var TABS = [
     { id: "overview", label: "总览" },
     { id: "pick3", label: "双号追热" },
-    { id: "predict", label: "加权反弹" },
     { id: "selector", label: "三期内必出" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
@@ -374,7 +373,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "predict", "selector", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "selector", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -765,8 +764,8 @@
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
     html += '<div><b>第1步 看调度：</b>先打开“三期内必出”，只看顶部最终动作：跟双号、跟加权或观望。</div>';
     html += '<div><b>第2步 先排除：</b>最终动作是“观望”就不下单；加权空推荐时，不自行改追双号。</div>';
-    html += '<div><b>第3步 选号码：</b>跟双号时优先看D1，D1不是“优先”再看D2；跟加权时只看W1，W2只作校验，不单独下注。</div>';
-    html += '<div><b>第4步 看置信率：</b>调度页四条推荐流分别给出正确概率和“优先/观察/避让”。优先才正常下单，观察只小注，避让或无信号不下。</div>';
+    html += '<div><b>第3步 选号码：</b>只看双号追热D1、D2；D1优先，D1不适合时再看D2。</div>';
+    html += '<div><b>第4步 看置信率：</b>调度页双号推荐流分别给出正确概率和“优先/观察/避让”。优先才正常下单，观察只小注，避让或无信号不下。</div>';
     html += '<div><b>第5步 选执行方式：</b>进入“追三期下单”，在固定追号和每期追推荐中选择一种。</div>';
     html += '<div><b>第6步 选倍投：</b>按追号/追推荐页面的当前P档执行。P8只在高分状态使用，风险最高。</div>';
     html += '<div><b>第7步 记录下单：</b>到“追三期下单”填写来源、执行方式、位置、起始期、尾号、倍投和本金。</div>';
@@ -1724,7 +1723,7 @@
     html += '<div class="section"><div class="panel"><div class="panel__body">';
     html += '<div class="ord-grid">';
     html += '<div class="ord-item"><label>模式</label><select id="uoMode"><option value="number">追号</option><option value="recommend">追推荐</option></select></div>';
-    html += '<div class="ord-item"><label>位置</label><select id="uoPos"><option value="D1">D1双号首推</option><option value="D2">D2双号备选</option><option value="W1">W1加权首推</option><option value="W2">W2加权备选</option></select></div>';
+    html += '<div class="ord-item"><label>位置</label><select id="uoPos"><option value="D1">D1双号首推</option><option value="D2">D2双号备选</option></select></div>';
     html += '<div class="ord-item"><label>起始期数</label><input id="uoStart" type="number" min="1" value="' + (latest + 1) + '"></div>';
     html += '<div class="ord-item"><label>尾号</label><input id="uoTail" type="number" min="0" max="9" value="0"></div>';
     html += '<div class="ord-item"><label>倍投</label><select id="uoPattern"><option value="P6">P6 保本</option><option value="P7">P7 收益型</option><option value="P8">P8 激进</option></select></div>';
@@ -2395,7 +2394,7 @@
     var lockTone = { border: "#16a34a", bg: "#f0fdf4", text: "#166534", soft: "#bbf7d0" };
     var gateTone = { border: "#d97706", bg: "#fffbeb", text: "#92400e", soft: "#fef3c7" };
     var sourceRows = [];
-    ["D1", "D2", "W1", "W2"].forEach(function (key) {
+    ["D1", "D2"].forEach(function (key) {
       var state = gateStreams && gateStreams[key];
       sourceRows.push({
         key: key,
@@ -2404,12 +2403,12 @@
         model: key.charAt(0) === "D" ? "双号" : "下期"
       });
     });
-    var executeKey = gateAction === "跟双号" ? "D1" : gateAction === "跟加权" ? "W1" : null;
+    var executeKey = gateAction === "跟双号" ? "D1" : null;
     var executePick = null;
     for (var exi = 0; exi < sourceRows.length; exi++) {
       if (sourceRows[exi].key === executeKey && sourceRows[exi].pick) executePick = sourceRows[exi].pick;
     }
-    var executeLabel = gateAction === "跟双号" ? "双号 D1" : gateAction === "跟加权" ? "加权 W1" : "";
+    var executeLabel = gateAction === "跟双号" ? "双号 D1" : "";
     if (!gateBlocked && !executePick) {
       gateBlocked = true;
       gateAction = "观望";
@@ -2443,7 +2442,7 @@
     var streamThree = {};
     var allStreamBatches = [];
     if (window.CAISHEN_SELECTOR && window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest) {
-      ["D1", "D2", "W1", "W2"].forEach(function (key) {
+      ["D1", "D2"].forEach(function (key) {
         streamThree[key] = window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest(RAW, MODEL, key, options);
         streamThree[key].batches.forEach(function (batch) { allStreamBatches.push(batch); });
       });
@@ -2462,12 +2461,12 @@
     }
     html += '</div></div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">四流三期内命中结构</h2><span class="section__hint">D1、D2、W1、W2独立统计 · 原始推荐号</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">四流三期内命中结构</h2><span class="section__hint">D1、D2独立统计 · 原始推荐号</span></div></div>';
     html += '<div class="section"><div class="panel" style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="min-width:620px">';
     html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
     html += '<span>推荐流</span><span>批次</span><span>3期中</span><span>第1期中</span><span>第2期中</span><span>第3期中</span><span>三期全错</span></div>';
-    ["D1", "D2", "W1", "W2"].forEach(function (key) {
+    ["D1", "D2"].forEach(function (key) {
       var r = streamThree[key];
       html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px">';
       html += '<b style="color:' + (key.charAt(0) === "D" ? "#16a34a" : "#2563eb") + '">' + r.label + '</b>';
@@ -2528,11 +2527,9 @@
     var threeByStream = {
       D1: S.runThreePeriodStreamBacktest(RAW, MODEL, "D1", options),
       D2: S.runThreePeriodStreamBacktest(RAW, MODEL, "D2", options),
-      W1: S.runThreePeriodStreamBacktest(RAW, MODEL, "W1", options),
-      W2: S.runThreePeriodStreamBacktest(RAW, MODEL, "W2", options)
     };
     var sourceStripHtml = '';
-    ["D1", "D2", "W1", "W2"].forEach(function (key) {
+    ["D1", "D2"].forEach(function (key) {
       var r = threeByStream[key];
       var streamState = decision.streams && decision.streams[key] ? decision.streams[key] : null;
       var realWindows = (window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows) ? window.APP_SNAPSHOTS.sourceWindows : []).filter(function (w) { return w.stream === key; });
@@ -2666,17 +2663,17 @@
     if (!threeSnap.length) html += '<div style="color:#9ca3af;font-size:12px">暂无真实快照，下一次 sync 开始记录</div>';
     html += '</div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">四条推荐流</h2><span class="section__hint">D1、D2、W1、W2分别统计对错序列</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">双号推荐流</h2><span class="section__hint">D1、D2、W1、W2分别统计对错序列</span></div></div>';
     html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">';
-    ["D1", "D2", "W1", "W2"].forEach(function (key) { html += streamCard(decision.streams[key]); });
+    ["D1", "D2"].forEach(function (key) { html += streamCard(decision.streams[key]); });
     html += "</div></div>";
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">优化后的调度规则</h2><span class="section__hint">当前版本以避开无效相位为主</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
-    html += '<div><b>P1 双号确认：</b>D1达到A级及以上，且W1反弹率≥65%，允许跟双号。</div>';
+    html += '<div><b>P1 双号确认：</b>D1达到A级及以上、未过热，且D2未连续命中3期，允许跟双号。</div>';
     html += '<div><b>P2 双号备选校验：</b>D2连续命中3期后，暂停双号确认。</div>';
-    html += '<div><b>P3 加权反弹：</b>W1对错遗漏达到2期，或刚刚连续命中1期，允许跟加权。</div>';
-    html += '<div><b>P4 加权备选校验：</b>W2连续错2期时，不跟随加权。</div>';
+    html += '';
+    html += '';
     html += '<div><b>P5 双边哑火：</b>加权空推荐且双号未确认，直接观望。</div>';
     html += '<div><b>P6 热号阻断：</b>D1推荐尾号实际连出≥5期，禁止追热。</div>';
     html += "</div></div></div>";
@@ -2704,12 +2701,12 @@
     html += '<div class="stat"><div class="stat__value">' + threeRes.sources.double + " / " + threeRes.sources.weighted + '</div><div class="stat__label">来源：双号 / 加权</div></div>';
     html += "</div></div>";
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">四条线独立追3期</h2><span class="section__hint">统一从第31期开始 · D1、D2、W1、W2分别锁定各自首推号追3期</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">双号两线独立追3期</h2><span class="section__hint">统一从第31期开始 · D1、D2分别锁定各自首推号追3期</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="min-width:620px">';
     html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
     html += '<span>推荐流</span><span>批次</span><span>3期中</span><span>第1期中</span><span>第2期中</span><span>第3期中</span><span>三期全错</span></div>';
-    ["D1", "D2", "W1", "W2"].forEach(function (key) {
+    ["D1", "D2"].forEach(function (key) {
       var r = threeByStream[key];
       html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px">';
       html += '<b style="color:' + (key.charAt(0) === "D" ? "#16a34a" : "#2563eb") + '">' + r.label + '</b>';
