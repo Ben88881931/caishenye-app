@@ -2546,6 +2546,9 @@
       if (currentPick) sourceStripHtml += '<div><b>当前状态：</b>连中' + (streamState.currentHitStreak || 0) + '期 · 连错' + (streamState.currentMissStreak || 0) + '期 · 尾号连出' + (streamState.tailStreak || 0) + '期</div>';
       else sourceStripHtml += '<div><b>当前状态：</b>没有有效推荐号</div>';
       sourceStripHtml += '<div><b>模型建议：</b>' + (conf.action || "无信号") + '</div>';
+      var riskSnap = streamStreakSnapshot(analysis.rows, key);
+      var riskState = streakRiskState(riskSnap);
+      sourceStripHtml += '<div><b>推荐流健康度：</b>' + riskChipHtml(key, riskSnap) + ' <span style="color:' + riskState.color + ';font-weight:700">' + riskState.text + '</span></div>';
       sourceStripHtml += '<div><b>历史顺序回测：</b>3期中 ' + r.hits + '/' + r.n + ' = ' + pctFmt(r.hitRate) + ' · 第1期' + r.first + ' · 第2期' + r.second + ' · 第3期' + r.third + ' · 全错' + r.miss + '</div>';
       sourceStripHtml += '</div>';
       sourceStripHtml += '<div style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
@@ -2574,6 +2577,17 @@
       if (!displayRows.length) sourceStripHtml += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
       sourceStripHtml += '</div></div></div>';
     });
+
+    var selectorMissRows = analysis.rows.map(function (row) {
+      var picks = [];
+      if (row.D1) picks.push(row.D1.tail);
+      if (row.D2) picks.push(row.D2.tail);
+      return { period: row.period, picks: picks, actual: row.actual || [], live: false };
+    });
+    var selectorNextPrediction = MODEL.buildPrediction(analysis.latestPeriod);
+    var selectorNextPicks = (selectorNextPrediction.doubleRecommendation || []).map(function (p) { return p.tail; });
+    selectorMissRows.push({ period: analysis.nextPeriod, picks: selectorNextPicks, actual: [], live: true });
+    var selectorMissHtml = buildMissScrollHTML(selectorMissRows, { id: "selectorMissScroll" });
 
     var endPeriod = analysis.latestPeriod;
     var midPeriod = Math.floor((31 + endPeriod) / 2);
@@ -2626,6 +2640,7 @@
       S.VERSION + ' · 不预测号码 · 监控双号追热与加权追冷的相位</span></div></div>';
 
     html += sourceStripHtml;
+    html += selectorMissHtml;
     html += '<div class="section" id="selectorActionCard"><div class="panel" style="padding:16px 14px">';
     html += '<div style="text-align:center">';
     html += '<div style="font-size:12px;color:var(--muted);font-weight:700">本轮候选从第' + analysis.nextPeriod + '期开始</div>';
@@ -2733,9 +2748,155 @@
     renderUltimateMode("recommend");
   }
 
+  function streamStreakSnapshot(rows, stream) {
+    var hitStreak = 0, missStreak = 0;
+    var maxHit = 0, maxMiss = 0;
+    var hitRun = 0, missRun = 0;
+    var recent = [];
+    rows.forEach(function (row) {
+      var pick = row[stream];
+      if (!pick) return;
+      recent.push(pick.hit ? 1 : 0);
+      if (recent.length > 20) recent.shift();
+      if (pick.hit) {
+        hitRun++;
+        missRun = 0;
+      } else {
+        missRun++;
+        hitRun = 0;
+      }
+      if (hitRun > maxHit) maxHit = hitRun;
+      if (missRun > maxMiss) maxMiss = missRun;
+    });
+    for (var i = rows.length - 1; i >= 0; i--) {
+      var item = rows[i][stream];
+      if (!item) continue;
+      if (item.hit) {
+        if (missStreak) break;
+        hitStreak++;
+      } else {
+        if (hitStreak) break;
+        missStreak++;
+      }
+    }
+    var recentHits = recent.reduce(function (a, b) { return a + b; }, 0);
+    return {
+      hitStreak: hitStreak,
+      missStreak: missStreak,
+      maxHit: maxHit,
+      maxMiss: maxMiss,
+      recent20: recent.length ? recentHits / recent.length : 0
+    };
+  }
+
+  function streakRiskState(snapshot) {
+    var hs = snapshot.hitStreak || 0;
+    var ms = snapshot.missStreak || 0;
+    if (hs >= 8 || ms >= 6) {
+      return {
+        key: "red",
+        label: "红色",
+        color: "#b91c1c",
+        bg: "#fef2f2",
+        border: "#fecaca",
+        text: hs >= 8 ? "连中" + hs + "期，进入历史深水区" : "连错" + ms + "期，进入历史深水区"
+      };
+    }
+    if (hs >= 5 || ms >= 3) {
+      return {
+        key: "orange",
+        label: "橙色",
+        color: "#c2410c",
+        bg: "#fff7ed",
+        border: "#fed7aa",
+        text: hs >= 5 ? "连中" + hs + "期，明显偏热" : "连错" + ms + "期，明显偏弱"
+      };
+    }
+    if (hs >= 3 || ms >= 2) {
+      return {
+        key: "yellow",
+        label: "黄色",
+        color: "#a16207",
+        bg: "#fffbeb",
+        border: "#fde68a",
+        text: hs >= 3 ? "连中" + hs + "期，开始偏热" : "连错" + ms + "期，开始偏弱"
+      };
+    }
+    return {
+      key: "green",
+      label: "绿色",
+      color: "#15803d",
+      bg: "#f0fdf4",
+      border: "#bbf7d0",
+      text: hs > 0 ? "连中" + hs + "期，状态正常" : (ms > 0 ? "连错" + ms + "期，状态正常" : "当前状态正常")
+    };
+  }
+
+  function riskChipHtml(label, snapshot) {
+    var risk = streakRiskState(snapshot);
+    return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid ' + risk.border +
+      ';border-radius:999px;background:' + risk.bg + ';color:' + risk.color + ';font-size:11px;font-weight:800">' +
+      label + " " + risk.label + "</span>";
+  }
+
+  function buildMissScrollHTML(records, options) {
+    options = options || {};
+    var fMiss = 0, sMiss = 0, fMax = 0, sMax = 0;
+    var missCells = [];
+    for (var ri = 0; ri < records.length; ri++) {
+      var q = records[ri] || {};
+      var picks = q.picks || [];
+      var actual = q.actual || [];
+      var fh = null, sh = null;
+      if (picks.length && actual.length && !q.live) fh = actual.indexOf(picks[0]) >= 0;
+      if (picks.length > 1 && actual.length && !q.live) sh = actual.indexOf(picks[1]) >= 0;
+      var c1, c2;
+      if (q.live) {
+        c1 = '<span style="color:#2563eb">①待</span>';
+        c2 = '<span style="color:#2563eb">②待</span>';
+      } else if (fh === null) {
+        c1 = '<span style="color:#9ca3af">①空</span>';
+        c2 = '<span style="color:#9ca3af">②空</span>';
+      } else {
+        if (fh) { fMiss = 0; c1 = '<span style="color:#16a34a">①中</span>'; }
+        else { fMiss++; if (fMiss > fMax) fMax = fMiss; c1 = '<span style="color:#dc2626">①' + fMiss + '</span>'; }
+        if (sh !== null) {
+          if (sh) { sMiss = 0; c2 = '<span style="color:#16a34a">②中</span>'; }
+          else { sMiss++; if (sMiss > sMax) sMax = sMiss; c2 = '<span style="color:#dc2626">②' + sMiss + '</span>'; }
+        } else {
+          c2 = '<span style="color:#9ca3af">②空</span>';
+        }
+      }
+      missCells.push({ period: q.period, c1: c1, c2: c2 });
+    }
+    var hint = options.hint || ('①第一推荐 最高连错 ' + fMax + ' 期 · ②第二推荐 最高连错 ' + sMax +
+      ' 期 · 当前连错 ①' + fMiss + ' ②' + sMiss + ' · 横向滑动 · 新→旧');
+    var sectionId = options.id || "pick3MissScroll";
+    var html = '<div class="section" id="' + sectionId + '"><div class="section__head"><h2 class="section__title">连错遗漏记录</h2><span class="section__hint">' + hint + '</span></div></div>';
+    html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="display:flex;gap:5px;min-width:max-content">';
+    for (var ri = missCells.length - 1; ri >= 0; ri--) {
+      var q = missCells[ri];
+      html += '<div style="min-width:54px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 3px;background:#fff">';
+      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:3px">' + q.period + '</div>';
+      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + q.c1 + '</div>';
+      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + q.c2 + '</div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
   function renderPick3() {
     var N = latest;
     var top2 = pickTopAt(N, 2);
+    var riskRows = (window.CAISHEN_SELECTOR && window.CAISHEN_SELECTOR.buildSignals)
+      ? window.CAISHEN_SELECTOR.buildSignals(RAW, MODEL, { startPeriod: 31 })
+      : [];
+    var riskSnaps = {
+      D1: streamStreakSnapshot(riskRows, "D1"),
+      D2: streamStreakSnapshot(riskRows, "D2")
+    };
 
     var html = '<div class="section" id="pick3RecommendCard"><div class="section__head"><h2 class="section__title">双号追热</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
 
@@ -2750,10 +2911,15 @@
         html += '<div class="num" style="width:60px;height:60px;font-size:26px;font-weight:800">尾' + p.d + '</div>';
         html += '<div style="margin-top:8px"><span class="chip">' + p.tag + '</span></div>';
         html += '<div style="font-size:14px;color:#16a34a;font-weight:700;margin-top:6px">' + p.sc + ' 分 · ' + MODEL.gradeOf(p.sc) + '级</div>';
+        var riskKey = i === 0 ? "D1" : "D2";
+        var riskState = streakRiskState(riskSnaps[riskKey]);
+        html += '<div style="margin-top:7px">' + riskChipHtml(riskKey, riskSnaps[riskKey]) + '</div>';
+        html += '<div style="font-size:11px;color:' + riskState.color + ';margin-top:3px;font-weight:700">' + riskState.text + '</div>';
         html += '</div>';
       });
       html += '</div>';
     }
+    html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:11px;color:var(--muted);text-align:center">预警：绿=正常 · 黄=连中3-4/连错2 · 橙=连中5-7/连错3-5 · 红=连中8+/连错6+</div>';
     html += '</div></div>';
 
     var snapStats = window.APP_SNAPSHOTS || null;
@@ -2961,49 +3127,7 @@
     html += '<div class="stat"><div class="stat__value">' + d2 + '</div><div class="stat__label">中2</div></div>';
     html += '</div></div>';
 
-    // 连错遗漏记录：横向滚动条（①第一推荐 ②第二推荐，显示连错遗漏值），最新在最左
-    var fMiss = 0, sMiss = 0, fMax = 0, sMax = 0;
-    var missCells = [];
-    for (var ri2 = 0; ri2 < hist.length; ri2++) {
-      var q = hist[ri2];
-      var fh = null, sh = null;
-      if (q.picks.length) {
-        if (q.actual) fh = q.actual.indexOf(q.picks[0]) >= 0;
-        if (q.picks.length > 1 && q.actual) sh = q.actual.indexOf(q.picks[1]) >= 0;
-      }
-      var c1, c2;
-      if (q.live) {
-        c1 = '<span style="color:#2563eb">①待</span>';
-        c2 = '<span style="color:#2563eb">②待</span>';
-      } else if (fh === null) {
-        c1 = '<span style="color:#9ca3af">①空</span>';
-        c2 = '<span style="color:#9ca3af">②空</span>';
-      } else {
-        if (fh) { fMiss = 0; c1 = '<span style="color:#16a34a">①中</span>'; }
-        else { fMiss++; if (fMiss > fMax) fMax = fMiss; c1 = '<span style="color:#dc2626">①' + fMiss + '</span>'; }
-        if (sh !== null) {
-          if (sh) { sMiss = 0; c2 = '<span style="color:#16a34a">②中</span>'; }
-          else { sMiss++; if (sMiss > sMax) sMax = sMiss; c2 = '<span style="color:#dc2626">②' + sMiss + '</span>'; }
-        } else {
-          c2 = '<span style="color:#9ca3af">②空</span>';
-        }
-      }
-      missCells.push({ period: q.period, c1: c1, c2: c2 });
-    }
-    var fCur = fMiss, sCur = sMiss;
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">连错遗漏记录</h2><span class="section__hint">①第一推荐 最高连错 ' + fMax + ' 期 · ②第二推荐 最高连错 ' + sMax + ' 期 · 当前连错 ①' + fCur + ' ②' + sCur + ' · 横向滑动 · 新→旧</span></div></div>';
-    html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="display:flex;gap:5px;min-width:max-content">';
-    for (var ri2 = missCells.length - 1; ri2 >= 0; ri2--) {
-      var q = missCells[ri2];
-      html += '<div style="min-width:54px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 3px;background:#fff">';
-      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:3px">' + q.period + '</div>';
-      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + q.c1 + '</div>';
-      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + q.c2 + '</div>';
-      html += '</div>';
-    }
-    html += '</div></div>';
+    html += buildMissScrollHTML(hist, { id: "pick3MissScroll" });
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序，最新在上）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
     html += '<div class="panel">';
@@ -3053,8 +3177,8 @@
     html += '</div>';
 
     html += '<p class="disclaimer">双号追热基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
-    promoteSectionToTop("连错遗漏记录", ["pick3RecommendCard"]);
     promoteSectionToTop("五级强度 · 逐期对错", ["pick3RecommendCard"]);
+    promoteSectionToTop("连错遗漏记录", ["pick3RecommendCard"]);
     view.innerHTML = html;
   }
 
