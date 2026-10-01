@@ -761,19 +761,26 @@
 
     var html = "";
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每日选号下单顺序</h2><span class="section__hint">先选号、再看风险、最后手动记录</span></div></div>';
-    html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
-    html += '<div><b>第1步 选号码：</b>先打开“双号追热”，只看 D1、D2 两个推荐号；D1优先，D1状态不适合时再看 D2。</div>';
-    html += '<div><b>第2步 看风险：</b>看推荐卡下方的四色状态和“连错遗漏记录”。绿色正常；黄色、橙色重点观察；红色为高风险提醒，不自动改号，是否下单仍由你确认。</div>';
-    html += '<div><b>第3步 看调度：</b>打开“三期内必出”，查看 D1、D2 当前窗口、最终动作和真实快照；动作是“观望”时只记录，不进入实际下单。</div>';
-    html += '<div><b>第4步 定执行：</b>需要下单时进入“追三期下单”，选择固定追号或每期追推荐，填写来源、位置、起始期、尾号和基础金额。</div>';
-    html += '<div><b>第5步 选倍投：</b>按当前页面允许的 P 档手动选择；倍投、本金和是否下单都由你确认。</div>';
-    html += '<div><b>第6步 等结算：</b>开奖数据更新后，系统自动结算第1期中、第2期中、第3期中或三期全错，并写入下单记录和追中记录。</div>';
-    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">';
+    var flowSteps = [
+      ["选号码", "先打开“双号追热”，只看 D1、D2 两个推荐号；D1优先，D1状态不适合时再看 D2。"],
+      ["看风险", "看推荐卡下方的四色状态和“连错遗漏记录”。绿色正常；黄色、橙色重点观察；红色为高风险提醒，不自动改号，是否下单仍由你确认。"],
+      ["看调度", "打开“三期内必出”，查看 D1、D2 当前窗口、最终动作和真实快照；动作是“观望”时只记录，不进入实际下单。"],
+      ["定执行", "需要下单时进入“追三期下单”，选择固定追号或每期追推荐，填写来源、位置、起始期、尾号和基础金额。"],
+      ["选倍投", "按当前页面允许的 P 档手动选择；倍投、本金和是否下单都由你确认。"],
+      ["等结算", "开奖数据更新后，系统自动结算第1期中、第2期中、第3期中或三期全错，并写入下单记录和追中记录。"]
+    ];
+    html += '<div class="section"><div class="panel"><div class="panel__body">';
+    html += '<div class="overview-flow">';
+    flowSteps.forEach(function (step, i) {
+      html += '<div class="overview-step"><span class="overview-step__num">' + (i + 1) + '</span><div><b>' + step[0] + '</b><span>' + step[1] + '</span></div></div>';
+    });
+    html += '</div>';
+    html += '<div class="overview-actions">';
     html += '<button class="chip" data-overview-tab="pick3">先看双号追热</button>';
     html += '<button class="chip" data-overview-tab="selector">再看三期内必出</button>';
     html += '<button class="chip" data-overview-tab="orderlog">去追三期下单</button>';
     html += '</div>';
-    html += '<div style="margin-top:8px;font-size:12px;color:var(--muted)">当前口径：双号追热只负责选号，四色状态负责预警，三期内必中只做结果账本，追三期下单只做手动记录和自动结算。任何页面都不自动替你下注。</div>';
+    html += '<div class="overview-note">当前口径：双号追热只负责选号，四色状态负责预警，三期内必中只做结果账本，追三期下单只做手动记录和自动结算。任何页面都不自动替你下注。</div>';
     html += '</div></div></div>';
 
     var pageGuides = {
@@ -798,17 +805,25 @@
       numtrend: ["号码走势", "按号码查看历史走势和期数变化。", "查看号码级走势时看。"]
     };
     html += '<div class="section"><div class="section__head"><h2 class="section__title">页面说明</h2><span class="section__hint">每个页面负责什么 · 点击卡片可跳转</span></div></div>';
-    html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px">';
+    var groupTheme = {
+      recommend: ["#2563eb", "#eff6ff"],
+      trends: ["#0891b2", "#ecfeff"],
+      miss: ["#d97706", "#fffbeb"],
+      zodiac: ["#c2410c", "#fff7ed"],
+      tools: ["#7c3aed", "#f5f3ff"]
+    };
+    html += '<div class="section"><div class="overview-pages-grid">';
     NAV_GROUPS.forEach(function (group) {
+      var theme = groupTheme[group.id] || ["#64748b", "#f8fafc"];
       group.tabs.forEach(function (id) {
         var guide = pageGuides[id];
         if (!guide) return;
-        html += '<div class="panel" style="padding:12px;min-width:0;display:flex;flex-direction:column;gap:7px">';
-        html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b>' + guide[0] + '</b><span class="chip">' + group.label + '</span></div>';
-        html += '<div style="font-size:12px;line-height:1.65;color:var(--muted)">' + guide[1] + '</div>';
-        html += '<div style="font-size:12px;line-height:1.65"><b>什么时候看：</b>' + guide[2] + '</div>';
-        html += '<div><button class="chip" data-overview-tab="' + id + '">打开页面</button></div>';
-        html += '</div>';
+        html += '<article class="overview-page-card" style="--guide-accent:' + theme[0] + ';--guide-soft:' + theme[1] + '">';
+        html += '<div class="overview-page-card__head"><span class="overview-page-card__group">' + group.label + '</span><h3>' + guide[0] + '</h3></div>';
+        html += '<p class="overview-page-card__desc">' + guide[1] + '</p>';
+        html += '<div class="overview-page-card__when"><b>什么时候看</b><span>' + guide[2] + '</span></div>';
+        html += '<button class="overview-page-card__cta" data-overview-tab="' + id + '">打开页面 <span aria-hidden="true">→</span></button>';
+        html += '</article>';
       });
     });
     html += '</div></div>';
