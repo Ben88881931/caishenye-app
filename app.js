@@ -2507,6 +2507,47 @@
           : window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest(RAW, MODEL, key, options);
       });
     }
+    if (!isRecommendMode && window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows)) {
+      ["D1", "D2"].forEach(function (key) {
+        if (!streamThree[key]) streamThree[key] = { stream: key, label: key === "D1" ? "双号首推" : "双号备选", batches: [] };
+        var seen = {};
+        streamThree[key].batches.forEach(function (b) { seen[b.startPeriod] = true; });
+        window.APP_SNAPSHOTS.sourceWindows.filter(function (w) { return w.stream === key; }).forEach(function (w) {
+          if (seen[w.target]) return;
+          seen[w.target] = true;
+          streamThree[key].batches.push({
+            stream: key,
+            label: streamThree[key].label,
+            sourceKind: "snapshot",
+            status: w.status || "pending",
+            startPeriod: w.target,
+            tail: w.tail,
+            hitIndex: w.hitIndex == null ? null : w.hitIndex,
+            attempts: (w.attempts || []).map(function (a) { return { period: a.period, tail: a.tail, hit: a.hit, source: "snapshot" }; })
+          });
+        });
+        streamThree[key].batches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
+      });
+    }
+    if (isRecommendMode) {
+      var livePrediction = MODEL.buildPrediction(analysis.endPeriod);
+      var livePicks = livePrediction.doubleRecommendation || [];
+      ["D1", "D2"].forEach(function (key, index) {
+        if (!streamThree[key]) streamThree[key] = { stream: key, label: key === "D1" ? "双号首推" : "双号备选", batches: [] };
+        var p = livePicks[index];
+        streamThree[key].batches.push({
+          stream: key,
+          label: streamThree[key].label,
+          sourceKind: "live",
+          status: "pending",
+          startPeriod: analysis.nextPeriod,
+          tail: p ? p.tail : null,
+          hitIndex: null,
+          attempts: [{ period: analysis.nextPeriod, tail: p ? p.tail : null, hit: null, source: "live" }]
+        });
+        streamThree[key].batches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
+      });
+    }
 
     html += '<!--ULT_RECORDS_START-->';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
@@ -2535,19 +2576,24 @@
     html += '</div></div></div>';
 
     var renderBatchCard = function (batch) {
-      var isHit = batch.hitIndex !== 4;
+      var isPending = batch.status === "pending" || batch.hitIndex == null;
+      var isHit = !isPending && batch.hitIndex !== 4;
       var endPeriod = batch.attempts && batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
+      var sourceText = isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "live" ? "当前窗口" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : (batch.sourceKind === "snapshot" ? "真实快照" : "历史回测");
       var h = '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
       h += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
-      h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期 · ' + (isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : "回测") + '</div>';
+      h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期 · ' + sourceText + '</div>';
       var batchMain = isRecommendMode
         ? '推荐序列 ' + (batch.attempts || []).map(function (a) { return a.tail == null ? '空' : '尾' + a.tail; }).join('→')
         : '原始号 尾' + batch.tail;
       h += '<div style="font-size:16px;font-weight:900;margin:4px 0">' + batchMain + '</div>';
       (batch.attempts || []).forEach(function (a) {
-        h += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · ' + (isRecommendMode ? '当期推荐' : '锁定号') + ' 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
+        var tone = a.hit === true ? "#16a34a" : a.hit === false ? "#dc2626" : "#2563eb";
+        var mark = a.hit === true ? "中" : a.hit === false ? "错" : "待开奖";
+        h += '<div style="font-size:11px;color:' + tone + '">第' + a.period + '期 · ' + (isRecommendMode ? '当期推荐' : '锁定号') + ' 尾' + a.tail + ' · ' + mark + '</div>';
       });
-      h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
+      var endText = isPending ? "等待第" + endPeriod + "期结算" : (isHit ? "第" + batch.hitIndex + "期中" : "三期全错");
+      h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isPending ? "#2563eb" : isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + endText + '</div>';
       h += '</div>';
       return h;
     };
