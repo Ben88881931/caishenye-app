@@ -765,7 +765,7 @@
     var flowSteps = [
       ["选号码", "先打开“双号追热”，只看 D1、D2 两个推荐号；D1优先，D1状态不适合时再看 D2。"],
       ["看风险", "看推荐卡下方的四色状态和“连错遗漏记录”。绿色正常；黄色、橙色重点观察；红色为高风险提醒，不自动改号，是否下单仍由你确认。"],
-      ["看调度", "打开“三期内必出”，查看 D1、D2 当前窗口、最终动作和真实快照；动作是“观望”时只记录，不进入实际下单。"],
+      ["看调度", "打开“三期内追号码”，查看 D1、D2 当前窗口和最终动作；动作是“观望”时只记录，不进入实际下单。"],
       ["定执行", "需要下单时进入“追三期下单”，选择固定追号或每期追推荐，填写来源、位置、起始期、尾号和基础金额。"],
       ["选倍投", "按当前页面允许的 P 档手动选择；倍投、本金和是否下单都由你确认。"],
       ["等结算", "开奖数据更新后，系统自动结算第1期中、第2期中、第3期中或三期全错，并写入下单记录和追中记录。"]
@@ -778,7 +778,7 @@
     html += '</div>';
     html += '<div class="overview-actions">';
     html += '<button class="chip" data-overview-tab="pick3">先看双号追热</button>';
-    html += '<button class="chip" data-overview-tab="selector">再看三期内必出</button>';
+    html += '<button class="chip" data-overview-tab="chasenumber">再看三期内追号码</button>';
     html += '<button class="chip" data-overview-tab="orderlog">去追三期下单</button>';
     html += '</div>';
     html += '<div class="overview-note">当前口径：双号追热只负责选号，四色状态负责预警，三期内必中只做结果账本，追三期下单只做手动记录和自动结算。任何页面都不自动替你下注。</div>';
@@ -3846,7 +3846,7 @@
     if (hsc) hsc.scrollTop = hsc.scrollHeight;
   }
 
-  // ===== 数据记录系统（三期内必出规律分析） =====
+  // ===== 数据记录系统（三期窗口规律分析） =====
   function calcGapStats(num) {
     var stats = {};
     for (var gap = 1; gap <= 5; gap++) {
