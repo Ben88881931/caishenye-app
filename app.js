@@ -2374,7 +2374,7 @@
     var options = { startPeriod: 31 };
     var isRecommendMode = mode === "recommend";
     var modeLabel = isRecommendMode ? "三期内追推荐" : "三期内追号码";
-    var modeHint = isRecommendMode ? "三期内必出的推荐号 · 窗口结束后下一期按最新推荐重新开窗" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
+    var modeHint = isRecommendMode ? "三期内追推荐 · 每期采用当期最新推荐 · 优先展示真实快照" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
     autoSettleUltimateOrders();
     var analysis = UM.analyze(RAW, MODEL, options);
     var strategyResult = isRecommendMode
@@ -2470,7 +2470,7 @@
       executeLabel = "";
     }
     if (isRecommendMode) {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。窗口结束后，下一期重新开一个新窗口。</div></div></div>';
+      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。262期起优先使用开奖前保存的真实快照，之前的才标为历史回测。</div></div></div>';
     } else {
       html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追号码。</b><br>窗口开始时锁定一个推荐号，连续检查3期，号码不变；任意一期命中或三期全错后结束。窗口结束后，下一期重新锁定最新推荐号开新窗口。</div></div></div>';
     }
@@ -2544,7 +2544,7 @@
       var endPeriod = batch.attempts && batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
       html += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
       html += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
-      html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期</div>';
+      html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期 · ' + (isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : "回测") + '</div>';
       var batchMain = isRecommendMode
         ? '推荐序列 ' + (batch.attempts || []).map(function (a) { return a.tail == null ? '空' : '尾' + a.tail; }).join('→')
         : '原始号 尾' + batch.tail;
@@ -2955,6 +2955,22 @@
     var S = window.CAISHEN_SELECTOR;
     var rows = S && S.buildSignals ? S.buildSignals(raw, model, options || { startPeriod: 31 }) : [];
     var label = stream === "D1" ? "双号首推" : "双号备选";
+    var snapDetail = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.detail) ? window.APP_SNAPSHOTS.detail : [];
+    var snapMap = {};
+    snapDetail.forEach(function (rec) {
+      if (!rec || rec.target == null || !Array.isArray(rec.picks)) return;
+      snapMap[Number(rec.target)] = rec;
+    });
+    rows.forEach(function (row) {
+      var rec = snapMap[Number(row.period)];
+      if (!rec) { row.source = "backtest"; return; }
+      var actual = Array.isArray(rec.actualTails) ? rec.actualTails : [];
+      row.source = "snapshot";
+      row.actual = actual;
+      var p = rec.picks[stream === "D1" ? 0 : 1];
+      var pick = p ? { tail: p.tail, hit: actual.indexOf(p.tail) >= 0 } : null;
+      if (stream === "D1") row.D1 = pick; else row.D2 = pick;
+    });
     var batches = [];
     var i = 0;
     while (i < rows.length) {
@@ -2965,13 +2981,16 @@
         if (i + j >= rows.length) { incomplete = true; break; }
         var pick = rows[i + j][stream];
         var hit = !!(pick && rows[i + j].actual.indexOf(pick.tail) >= 0);
-        attempts.push({ period: rows[i + j].period, tail: pick ? pick.tail : null, hit: hit });
+        attempts.push({ period: rows[i + j].period, tail: pick ? pick.tail : null, hit: hit, source: rows[i + j].source || "backtest" });
         if (hit) { hitIndex = j + 1; break; }
       }
       if (incomplete) break;
+      var sourceKinds = attempts.map(function (a) { return a.source; });
+      var sourceKind = sourceKinds.every(function (s) { return s === "snapshot"; }) ? "snapshot" : (sourceKinds.some(function (s) { return s === "snapshot"; }) ? "mixed" : "backtest");
       batches.push({
         stream: stream,
         label: label,
+        sourceKind: sourceKind,
         startPeriod: rows[i].period,
         tail: attempts.length ? attempts[0].tail : null,
         recommendationSequence: attempts.map(function (a) { return a.tail; }),
