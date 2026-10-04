@@ -353,6 +353,7 @@
     { id: "overview", label: "总览" },
     { id: "pick3", label: "双号追热" },
     { id: "selector", label: "三期内必出" },
+    { id: "chaserecommend", label: "追推荐号" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -369,11 +370,10 @@
     { id: "zodrecords", label: "生肖开奖" },
     { id: "backtest", label: "策略回测" },
     { id: "numtrend", label: "号码走势" },
-    { id: "orderlog", label: "追三期下单" },
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "selector", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "selector", "chaserecommend", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -787,6 +787,7 @@
       overview: ["总览", "查看最新开奖、页面说明和每日操作顺序。", "每天打开小程序时先看。"],
       pick3: ["双号追热", "双号选号模型，输出 D1、D2，并显示四色风险状态和对错遗漏。", "每天第一步选号时看。"],
       selector: ["三期内必出", "查看 D1、D2 的三期窗口、调度动作、真实快照和历史回测。", "选号后、下单前看。"],
+      chaserecommend: ["追推荐号", "按每期新推荐分别开3期窗口，允许并行，专门记录追推荐模式的命中分布。", "需要单独比较追推荐表现时看。"],
       orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
       segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
       missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖。", "找遗漏结构时看。"],
@@ -2370,7 +2371,7 @@
 
     var options = { startPeriod: 31 };
     var isRecommendMode = mode === "recommend";
-    var modeLabel = isRecommendMode ? "每期追三期" : "固定追三期";
+    var modeLabel = isRecommendMode ? "追推荐号（三期）" : "固定追三期";
     var modeHint = isRecommendMode ? "每期新推荐独立追3期 · 允许并行追号线" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
     autoSettleUltimateOrders();
     var analysis = UM.analyze(RAW, MODEL, options);
