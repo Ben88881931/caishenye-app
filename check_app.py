@@ -467,14 +467,14 @@ def main():
                     else:
                         pass_("snapshots.js 含四条原始号源真实窗口，状态机每流仅一个进行中窗口")
                     if not isinstance(snap_data.get("threePeriodRecords"), list):
-                        fail("snapshots.js 缺少三期内必出真实快照")
+                        fail("snapshots.js 缺少三期内追号码真实快照")
                     else:
-                        pass_("snapshots.js 含三期内必出真实快照")
+                        pass_("snapshots.js 含三期内追号码真实快照")
                     three_summary = snap_data.get("threePeriodSummary")
                     if not isinstance(three_summary, dict) or not all(f in three_summary for f in ["n", "acted", "settled", "pending", "skipped", "hits", "miss", "hit3Rate"]):
-                        fail("snapshots.js 缺少三期内必出汇总")
+                        fail("snapshots.js 缺少三期内追号码汇总")
                     else:
-                        pass_("snapshots.js 含三期内必出汇总")
+                        pass_("snapshots.js 含三期内追号码汇总")
 
                     buckets = snap_data.get("scoreBuckets")
                     if not isinstance(buckets, dict) or not buckets:
