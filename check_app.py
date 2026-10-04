@@ -289,9 +289,9 @@ def main():
         else:
             fail("追三期下单缺少自动结算")
         if "function renderSelector" in app_text and "window.CAISHEN_SELECTOR" in app_text and "第四套调度" in app_text:
-            pass_("三期内必出页面存在")
+            pass_("三期内追推荐调度代码存在")
         else:
-            fail("三期内必出页面不完整")
+            fail("三期内追推荐调度代码不完整")
 
     index_path = REPO / "index.html"
     if not index_path.exists():

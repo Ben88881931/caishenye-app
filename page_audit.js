@@ -73,7 +73,7 @@ must(summary.hits === weightedHits && summary.miss === actedWeighted.length - we
 const settledDoubleTargets = records.filter((r) => r.settled && r.results && r.results.doubleRecommendation).map((r) => Number(r.target)).sort((a, b) => a - b);
 const detailTargets = (snapshotJs.detail || []).map((r) => Number(r.target)).sort((a, b) => a - b);
 must(JSON.stringify(settledDoubleTargets) === JSON.stringify(detailTargets), "双号五级明细与已结算快照一致");
-must(Array.isArray(snapshotJs.threePeriodRecords), "snapshots.js 含三期内必出真实快照");
+must(Array.isArray(snapshotJs.threePeriodRecords), "snapshots.js 含三期内追推荐真实快照");
 must(Array.isArray(snapshotJs.sourceWindows), "snapshots.js 含双号原始号源真实窗口");
 const sourceWindowRecords = Array.isArray(snapshotJs.sourceWindows) ? snapshotJs.sourceWindows : [];
 const pendingByStream = {};
@@ -82,13 +82,13 @@ must(["D1", "D2"].every((k) => (pendingByStream[k] || 0) <= 1), "每条号源最
 const sourceSummary = snapshotJs.sourceWindowSummary || {};
 must(["D1", "D2"].every((k) => sourceSummary.byStream && sourceSummary.byStream[k]), "snapshots.js 含双号原始号源窗口汇总");
 const threeSummary = snapshotJs.threePeriodSummary || {};
-must(["n", "acted", "settled", "pending", "skipped", "hits", "miss", "first", "second", "third", "hit3Rate"].every((k) => k in threeSummary), "snapshots.js 含三期内必出汇总");
+must(["n", "acted", "settled", "pending", "skipped", "hits", "miss", "first", "second", "third", "hit3Rate"].every((k) => k in threeSummary), "snapshots.js 含三期内追推荐汇总");
 
 const selector = require("./model_selector.js").analyze(raw, model, { startPeriod: 31 });
-must(Number(selector.nextPeriod) === latest + 1, "三期内必出预测期正确");
-must(["跟双号", "跟加权", "观望"].includes(selector.decision.action), "三期内必出动作合法");
+must(Number(selector.nextPeriod) === latest + 1, "三期内追推荐预测期正确");
+must(["跟双号", "观望"].includes(selector.decision.action), "三期内追推荐动作合法");
 const ultimate = require("./ultimate_model.js").analyze(raw, model, { startPeriod: 31 });
-must(Number(ultimate.nextPeriod) === latest + 1, "追号/每期追三期预测期正确");
+must(Number(ultimate.nextPeriod) === latest + 1, "追号/三期内追推荐预测期正确");
 must(["分批启用", "观望"].includes(ultimate.decision.action), "固定追三期总决策合法");
 
 must(appText.includes("WEIGHTED_CARD_START") && appText.includes("WEIGHTED_CARD_END") && appText.indexOf('var weightedHeaderPos = html.indexOf(\'<div class="section" id="weightedPageHeader">\')') > appText.indexOf("var weightedCardStart = html.indexOf") && appText.includes("sourceStripHtml") && appText.includes("下一轮窗口号：") && appText.includes("当前状态：") && appText.includes("真实快照") && appText.includes("历史回测") && appText.includes("历史顺序回测") && appText.includes("settleManualOrder") && appText.includes("ORDER_PATTERNS") && !appText.includes("ultimateQuickAdd") && !appText.includes("data-uo-gen") && appText.includes("rowMap") && appText.includes("模型建议：") && appText.includes("第' + batch.startPeriod + '期批次") && appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START") && appText.includes("card-followup"), "本期选号通过HTML顺序直接置顶且三期内四流记录紧接卡片下方");
