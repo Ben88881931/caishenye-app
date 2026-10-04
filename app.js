@@ -353,7 +353,7 @@
     { id: "overview", label: "总览" },
     { id: "pick3", label: "双号追热" },
     { id: "selector", label: "三期内必出" },
-    { id: "chaserecommend", label: "追推荐号" },
+    { id: "chaserecommend", label: "三期追推荐" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -787,7 +787,7 @@
       overview: ["总览", "查看最新开奖、页面说明和每日操作顺序。", "每天打开小程序时先看。"],
       pick3: ["双号追热", "双号选号模型，输出 D1、D2，并显示四色风险状态和对错遗漏。", "每天第一步选号时看。"],
       selector: ["三期内必出", "查看 D1、D2 的三期窗口、调度动作、真实快照和历史回测。", "选号后、下单前看。"],
-      chaserecommend: ["追推荐号", "按每期新推荐分别开3期窗口，允许并行，专门记录追推荐模式的命中分布。", "需要单独比较追推荐表现时看。"],
+      chaserecommend: ["三期追推荐", "三期内必出的推荐号：每期新推荐独立开3期窗口，逐期检查第1/2/3期并记录命中分布。", "需要单独比较追推荐表现时看。"],
       orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
       segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
       missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖。", "找遗漏结构时看。"],
@@ -2371,8 +2371,8 @@
 
     var options = { startPeriod: 31 };
     var isRecommendMode = mode === "recommend";
-    var modeLabel = isRecommendMode ? "追推荐号（三期）" : "固定追三期";
-    var modeHint = isRecommendMode ? "每期新推荐独立追3期 · 允许并行追号线" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
+    var modeLabel = isRecommendMode ? "三期内必出的推荐号" : "固定追三期";
+    var modeHint = isRecommendMode ? "三期内必出的推荐号 · 每期新推荐独立开3期窗口 · 允许并行" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
     autoSettleUltimateOrders();
     var analysis = UM.analyze(RAW, MODEL, options);
     var strategyResult = isRecommendMode
@@ -2466,6 +2466,9 @@
       gateAction = "观望";
       executeKey = null;
       executeLabel = "";
+    }
+    if (isRecommendMode) {
+      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内必出的推荐号。</b><br>每期产生的新推荐号，从推荐期开始分别检查第1期、第2期、第3期；任意一期命中或三期全错后，该窗口结束。每期新推荐独立开窗，允许窗口并行，不做二次筛选。</div></div></div>';
     }
     html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
     html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + (gateBlocked ? "今日动作" : "今日执行") + '</div>';
