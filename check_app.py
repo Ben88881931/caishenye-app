@@ -223,12 +223,12 @@ def main():
             pass_("app.js 含调度/追号/追推荐/追三期下单导航")
         else:
             fail("app.js 缺少调度/追号/追推荐/追三期下单导航")
-        if "固定追三期" in app_text and "每期追三期" in app_text and "追三期下单" in app_text and "追中记录" in app_text and "执行规则" in app_text and "四流三期内命中结构" in app_text:
+        if "固定追三期" in app_text and "每期追三期" in app_text and "追三期下单" in app_text and "追中记录" in app_text and "执行规则" in app_text and "双流三期内命中结构" in app_text:
             pass_("追号/追推荐/追三期下单及模型内追中记录区块完整")
         else:
             fail("追号/追推荐/追三期下单页面区块不完整")
         if (
-            "观望 · 不追" in app_text
+            "仅建议，不代替执行" in app_text
             and "今日执行" in app_text
             and "追尾" in app_text
             and "两个原始号源" in app_text
