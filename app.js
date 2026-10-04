@@ -2471,9 +2471,9 @@
     }
     var html = "";
     if (isRecommendMode) {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。本页只使用开奖前保存的真实快照；历史回测不进入窗口记录和统计。</div></div></div>';
+      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。真实快照优先展示并实时记录；没有快照的历史窗口保留，并明确标注为历史回测。</div></div></div>';
     } else {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追号码。</b><br>窗口开始时锁定一个推荐号，连续检查3期，号码不变；任意一期命中或三期全错后结束。窗口结束后，下一期重新锁定最新推荐号开新窗口。本页只使用真实快照记录。</div></div></div>';
+      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追号码。</b><br>窗口开始时锁定一个推荐号，连续检查3期，号码不变；任意一期命中或三期全错后结束。窗口结束后，下一期重新锁定最新推荐号开新窗口。真实快照优先展示；没有快照的历史窗口保留，并明确标注为历史回测。</div></div></div>';
     }
     html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
     html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + "窗口记录" + '</div>';
@@ -2509,11 +2509,8 @@
     if (!isRecommendMode && window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows)) {
       ["D1", "D2"].forEach(function (key) {
         if (!streamThree[key]) streamThree[key] = { stream: key, label: key === "D1" ? "双号首推" : "双号备选", batches: [] };
-        var seen = {};
-        streamThree[key].batches.forEach(function (b) { seen[b.startPeriod] = true; });
         window.APP_SNAPSHOTS.sourceWindows.filter(function (w) { return w.stream === key; }).forEach(function (w) {
-          if (seen[w.target]) return;
-          seen[w.target] = true;
+          streamThree[key].batches = streamThree[key].batches.filter(function (b) { return b.startPeriod !== w.target; });
           streamThree[key].batches.push({
             stream: key,
             label: streamThree[key].label,
@@ -2531,7 +2528,10 @@
     if (!isRecommendMode) {
       ["D1", "D2"].forEach(function (key) {
         if (!streamThree[key]) streamThree[key] = { stream: key, label: key === "D1" ? "双号首推" : "双号备选", batches: [] };
-        streamThree[key].batches = (streamThree[key].batches || []).filter(function (b) { return b.sourceKind === "snapshot"; });
+        (streamThree[key].batches || []).forEach(function (b) {
+          if (!b.sourceKind) b.sourceKind = "backtest";
+          if (!b.status) b.status = b.hitIndex === 4 ? "miss" : "hit";
+        });
       });
     }
     if (isRecommendMode) {
@@ -3045,7 +3045,6 @@
       var pick = p ? { tail: p.tail, hit: actual.indexOf(p.tail) >= 0 } : null;
       if (stream === "D1") row.D1 = pick; else row.D2 = pick;
     });
-    rows = rows.filter(function (row) { return row.source === "snapshot"; });
     var batches = [];
     var i = 0;
     while (i < rows.length) {
