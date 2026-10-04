@@ -352,7 +352,6 @@
   var TABS = [
     { id: "overview", label: "总览" },
     { id: "pick3", label: "双号追热" },
-    { id: "selector", label: "三期内必出" },
     { id: "chasenumber", label: "三期内追号码" },
     { id: "chaserecommend", label: "三期内追推荐" },
     { id: "orderlog", label: "追三期下单" },
@@ -374,7 +373,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "selector", "chasenumber", "chaserecommend", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "chaserecommend", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -698,6 +697,7 @@
   }
 
   function render() {
+    if (state.tab === "selector") state.tab = "chasenumber";
     var tabChanged = state.tab !== renderedTab;
     renderTabs();
     if (state.tab === "overview") renderOverview();
@@ -2484,7 +2484,7 @@
     html += '<span style="font-size:12px;color:' + lockTone.text + '">第' + analysis.nextPeriod + '期进入追三期窗口</span>';
     html += '</div>';
     html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid ' + lockTone.soft + '">';
-    html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';margin-bottom:6px">四个原始号源 · 不再二次筛选</div>';
+    html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';margin-bottom:6px">两个原始号源 · 不再二次筛选</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px">';
     sourceRows.forEach(function (row) {
       var isExec = !gateBlocked && row.key === executeKey;

@@ -216,7 +216,7 @@ def main():
         else:
             pass_("追号/追推荐/追三期下单页面函数存在")
         if (
-            'id: "selector"' in app_text
+            'id: "chasenumber"' in app_text
             and 'id: "orderlog"' in app_text
             and "window.CAISHEN_ULTIMATE" in app_text
         ):
@@ -231,7 +231,7 @@ def main():
             "观望 · 不追" in app_text
             and "今日执行" in app_text
             and "追尾" in app_text
-            and "四个原始号源" in app_text
+            and "两个原始号源" in app_text
             and "自动进入追三期记录" in app_text
             and "不再二次筛选" in app_text
             and "MODEL.buildPrediction(analysis.endPeriod)" in app_text
@@ -244,7 +244,7 @@ def main():
             pass_("顶部导航支持粘性定位、位置保持和当前项可见")
         else:
             fail("顶部导航缺少粘性定位、位置保持或当前项可见逻辑")
-        flow_ids = ["pick3", "selector", "orderlog"]
+        flow_ids = ["pick3", "chasenumber", "chaserecommend", "orderlog"]
         flow_pos = [app_text.find(chr(34) + fid + chr(34)) for fid in flow_ids]
         if all(pos >= 0 for pos in flow_pos) and flow_pos == sorted(flow_pos):
             pass_("导航按模型流程排序")
