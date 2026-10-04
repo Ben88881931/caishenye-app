@@ -3869,7 +3869,7 @@
   }
 
   function renderDataRecord() {
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">三期规律</h2><span class="section__hint">三期内必出规律分析</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">三期规律</h2><span class="section__hint">三期窗口规律分析</span></div>';
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + periods.length + '</div><div class="stat__label">总期数</div></div>';
     html += '<div class="stat"><div class="stat__value">' + latest + '</div><div class="stat__label">最新期</div></div>';
