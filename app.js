@@ -2500,16 +2500,13 @@
     html += '<!--ULT_CARD_HISTORY-->';
 
     var streamThree = {};
-    var allStreamBatches = [];
     if (window.CAISHEN_SELECTOR && window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest) {
       ["D1", "D2"].forEach(function (key) {
         streamThree[key] = isRecommendMode
           ? runRecommendationWindowBacktest(RAW, MODEL, key, options)
           : window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest(RAW, MODEL, key, options);
-        streamThree[key].batches.forEach(function (batch) { allStreamBatches.push(batch); });
       });
     }
-    allStreamBatches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
 
     html += '<!--ULT_RECORDS_START-->';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
@@ -2537,27 +2534,34 @@
     });
     html += '</div></div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">双流三期内滚动记录</h2><span class="section__hint">每格标注来源、起始期、原始号和结束期 · 新→旧</span></div></div>';
-    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="display:flex;gap:6px;min-width:max-content">';
-    allStreamBatches.forEach(function (batch) {
+    var renderBatchCard = function (batch) {
       var isHit = batch.hitIndex !== 4;
       var endPeriod = batch.attempts && batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
-      html += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
-      html += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
-      html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期 · ' + (isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : "回测") + '</div>';
+      var h = '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
+      h += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
+      h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期 · ' + (isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : "回测") + '</div>';
       var batchMain = isRecommendMode
         ? '推荐序列 ' + (batch.attempts || []).map(function (a) { return a.tail == null ? '空' : '尾' + a.tail; }).join('→')
         : '原始号 尾' + batch.tail;
-      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">' + batchMain + '</div>';
+      h += '<div style="font-size:16px;font-weight:900;margin:4px 0">' + batchMain + '</div>';
       (batch.attempts || []).forEach(function (a) {
-        html += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
+        h += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · ' + (isRecommendMode ? '当期推荐' : '锁定号') + ' 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
       });
-      html += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
-      html += '</div>';
+      h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
+      h += '</div>';
+      return h;
+    };
+    ["D1", "D2"].forEach(function (key) {
+      var streamResult = streamThree[key] || { label: key, batches: [] };
+      var batches = (streamResult.batches || []).slice().sort(function (a, b) { return b.startPeriod - a.startPeriod; });
+      var streamName = key + " " + streamResult.label + (key === "D1" ? " · 首推" : " · 备选");
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内滚动记录 · ' + streamName + '</h2><span class="section__hint">' + streamName + '独立滚动条 · 新→旧</span></div></div>';
+      html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+      html += '<div style="display:flex;gap:6px;min-width:max-content">';
+      batches.forEach(function (batch) { html += renderBatchCard(batch); });
+      if (!batches.length) html += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
+      html += '</div></div>';
     });
-    if (!allStreamBatches.length) html += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
-    html += '</div></div>';
 
     html += hitLogSectionHTML(mode);
     html += '<!--ULT_RECORDS_END-->';
