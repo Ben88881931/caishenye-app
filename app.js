@@ -3100,6 +3100,29 @@
       D2: streamStreakSnapshot(riskRows, "D2")
     };
 
+    var hist = [], cum = 0, peak = 0, maxDD = 0;
+    var actDays = 0, tHits = 0, tPicks = 0;
+    var d0 = 0, d1 = 0, d2 = 0;
+    for (var cur = 1; cur <= N - 1; cur++) {
+      var sel = pickTopAt(cur, 2);
+      var actual = tailsOf(cur + 1);
+      if (!sel.length) {
+        hist.push({ period: cur + 1, picks: [], sig: [], actual: actual, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: false });
+        continue;
+      }
+      var h = 0;
+      for (var i = 0; i < sel.length; i++) if (actual.indexOf(sel[i].d) >= 0) h++;
+      actDays++; tPicks += sel.length; tHits += h;
+      if (h === 0) d0++; else if (h === 1) d1++; else d2++;
+      var pnl = +(h * 0.8 - (sel.length - h) * 1).toFixed(2);
+      cum = +(cum + pnl).toFixed(2);
+      if (cum > peak) peak = cum;
+      var dd = +(peak - cum).toFixed(2);
+      if (dd > maxDD) maxDD = dd;
+      hist.push({ period: cur + 1, picks: sel.map(function (c) { return c.d; }), sig: sel.map(function (c) { return c.tag; }), actual: actual, hits: h, pnl: pnl, cum: cum, dd: dd, live: false });
+    }
+    hist.push({ period: N + 1, picks: top2.map(function (c) { return c.d; }), sig: top2.map(function (c) { return c.tag; }), actual: null, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: true });
+
     var html = '<div class="section" id="pick3RecommendCard"><div class="section__head"><h2 class="section__title">双号追热</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:18px 14px">';
@@ -3123,6 +3146,8 @@
     }
     html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:11px;color:var(--muted);text-align:center">预警：绿=正常 · 黄=连中3-4/连错2 · 橙=连中5-7/连错3-5 · 红=连中8+/连错6+</div>';
     html += '</div></div>';
+
+    html += buildMissScrollHTML(hist, { id: "pick3MissScroll" });
 
     var snapStats = window.APP_SNAPSHOTS || null;
     function snapRate(nr, hr) {
@@ -3290,29 +3315,6 @@
       html += '</div></div>';
     }
 
-    var hist = [], cum = 0, peak = 0, maxDD = 0;
-    var actDays = 0, tHits = 0, tPicks = 0;
-    var d0 = 0, d1 = 0, d2 = 0;
-    for (var cur = 1; cur <= N - 1; cur++) {
-      var sel = pickTopAt(cur, 2);
-      var actual = tailsOf(cur + 1);
-      if (!sel.length) {
-        hist.push({ period: cur + 1, picks: [], sig: [], actual: actual, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: false });
-        continue;
-      }
-      var h = 0;
-      for (var i = 0; i < sel.length; i++) if (actual.indexOf(sel[i].d) >= 0) h++;
-      actDays++; tPicks += sel.length; tHits += h;
-      if (h === 0) d0++; else if (h === 1) d1++; else d2++;
-      var pnl = +(h * 0.8 - (sel.length - h) * 1).toFixed(2);
-      cum = +(cum + pnl).toFixed(2);
-      if (cum > peak) peak = cum;
-      var dd = +(peak - cum).toFixed(2);
-      if (dd > maxDD) maxDD = dd;
-      hist.push({ period: cur + 1, picks: sel.map(function (c) { return c.d; }), sig: sel.map(function (c) { return c.tag; }), actual: actual, hits: h, pnl: pnl, cum: cum, dd: dd, live: false });
-    }
-    hist.push({ period: N + 1, picks: top2.map(function (c) { return c.d; }), sig: top2.map(function (c) { return c.tag; }), actual: null, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: true });
-
     var singleRate = tPicks ? (tHits / tPicks * 100).toFixed(2) : '0.00';
     var atLeast1 = actDays - d0;
 
@@ -3328,8 +3330,6 @@
     html += '<div class="stat"><div class="stat__value">' + d1 + '</div><div class="stat__label">中1</div></div>';
     html += '<div class="stat"><div class="stat__value">' + d2 + '</div><div class="stat__label">中2</div></div>';
     html += '</div></div>';
-
-    html += buildMissScrollHTML(hist, { id: "pick3MissScroll" });
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序，最新在上）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
     html += '<div class="panel">';
@@ -3379,15 +3379,6 @@
     html += '</div>';
 
     html += '<p class="disclaimer">双号追热基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
-    promoteSectionToTop("五级强度 · 逐期对错", ["pick3RecommendCard"]);
-    var pick3Anchor = view.querySelector("#pick3RecommendCard");
-    var missSection = null;
-    var pick3Sections = view.querySelectorAll(".section");
-    for (var psi = 0; psi < pick3Sections.length; psi++) {
-      var psh = pick3Sections[psi].querySelector(".section__title");
-      if (psh && psh.textContent === "连错遗漏记录") { missSection = pick3Sections[psi]; break; }
-    }
-    if (pick3Anchor && missSection) view.insertBefore(missSection, pick3Anchor.nextSibling);
     view.innerHTML = html;
   }
 
