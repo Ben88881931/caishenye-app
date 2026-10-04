@@ -3380,7 +3380,14 @@
 
     html += '<p class="disclaimer">双号追热基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     promoteSectionToTop("五级强度 · 逐期对错", ["pick3RecommendCard"]);
-    promoteSectionToTop("连错遗漏记录", ["pick3RecommendCard"]);
+    var pick3Anchor = view.querySelector("#pick3RecommendCard");
+    var missSection = null;
+    var pick3Sections = view.querySelectorAll(".section");
+    for (var psi = 0; psi < pick3Sections.length; psi++) {
+      var psh = pick3Sections[psi].querySelector(".section__title");
+      if (psh && psh.textContent === "连错遗漏记录") { missSection = pick3Sections[psi]; break; }
+    }
+    if (pick3Anchor && missSection) view.insertBefore(missSection, pick3Anchor.nextSibling);
     view.innerHTML = html;
   }
 
