@@ -2469,6 +2469,7 @@
       executeKey = null;
       executeLabel = "";
     }
+    var html = "";
     if (isRecommendMode) {
       html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。262期起优先使用开奖前保存的真实快照，之前的才标为历史回测。</div></div></div>';
     } else {
