@@ -765,7 +765,7 @@
     var flowSteps = [
       ["选号码", "先打开“双号追热”，只看 D1、D2 两个推荐号；D1优先，D1状态不适合时再看 D2。"],
       ["看风险", "看推荐卡下方的四色状态和“连错遗漏记录”。绿色正常；黄色、橙色重点观察；红色为高风险提醒，不自动改号，是否下单仍由你确认。"],
-      ["看调度", "打开“三期内追号码”，查看 D1、D2 当前窗口和最终动作；动作是“观望”时只记录，不进入实际下单。"],
+      ["看调度", "打开“三期内追号码”，查看 D1、D2 当前窗口和最终动作；观望只作建议，窗口照常记录，是否下单由你确认。"],
       ["定执行", "需要下单时进入“追三期下单”，选择固定追号或每期追推荐，填写来源、位置、起始期、尾号和基础金额。"],
       ["选倍投", "按当前页面允许的 P 档手动选择；倍投、本金和是否下单都由你确认。"],
       ["等结算", "开奖数据更新后，系统自动结算第1期中、第2期中、第3期中或三期全错，并写入下单记录和追中记录。"]
@@ -2476,26 +2476,25 @@
       html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追号码。</b><br>窗口开始时锁定一个推荐号，连续检查3期，号码不变；任意一期命中或三期全错后结束。窗口结束后，下一期重新锁定最新推荐号开新窗口。</div></div></div>';
     }
     html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
-    html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + (gateBlocked ? "今日动作" : "今日执行") + '</div>';
-    html += '<div style="font-size:40px;line-height:1.05;font-weight:900;color:' + lockTone.text + ';margin:6px 0">' + (gateBlocked ? "观望 · 不追" : "追尾" + executePick.tail) + '</div>';
+    html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + "窗口记录" + '</div>';
+    html += '<div style="font-size:40px;line-height:1.05;font-weight:900;color:' + lockTone.text + ';margin:6px 0">' + (gateBlocked ? "建议：观望" : "建议：跟双号") + '</div>';
     html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
-    if (gateBlocked) html += '<span style="padding:4px 8px;border:1px solid ' + gateTone.border + ';border-radius:6px;background:' + gateTone.bg + ';color:' + gateTone.text + ';font-size:12px;font-weight:900">不追</span>';
-    else html += '<span style="padding:4px 8px;border:1px solid ' + lockTone.soft + ';border-radius:6px;background:#fff;color:' + lockTone.text + ';font-size:12px;font-weight:900">执行号来源：' + executeLabel + '</span>';
+    html += '<span style="padding:4px 8px;border:1px solid ' + gateTone.border + ';border-radius:6px;background:' + gateTone.bg + ';color:' + gateTone.text + ';font-size:12px;font-weight:900">仅建议，不代替执行</span>';
     html += '<span style="font-size:12px;color:' + lockTone.text + '">第' + analysis.nextPeriod + '期进入追三期窗口</span>';
     html += '</div>';
     html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid ' + lockTone.soft + '">';
     html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';margin-bottom:6px">两个原始号源 · 不再二次筛选</div>';
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px">';
     sourceRows.forEach(function (row) {
-      var isExec = !gateBlocked && row.key === executeKey;
+      var isExec = false;
       html += '<div style="border:2px solid ' + (isExec ? lockTone.border : "#d1d5db") + ';border-radius:8px;padding:9px 10px;background:#fff">';
       html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b style="color:' + (isExec ? lockTone.text : "#374151") + '">' + row.key + ' ' + row.label + '</b><span class="chip">' + (row.pick ? "尾" + row.pick.tail : "空") + '</span></div>';
       html += '<div style="font-size:11px;color:var(--muted);margin-top:5px">' + (row.pick ? row.pick.grade + '级 ' + row.pick.score.toFixed(1) + '分 · ' + (row.pick.tag || "-") : "空推荐") + ' · ' + row.model + '</div>';
-      html += '<div style="font-size:11px;font-weight:800;color:' + (isExec ? lockTone.text : "#6b7280") + ';margin-top:5px">' + (isExec ? "执行追三期" : "自动进入追三期记录") + '</div>';
+      html += '<div style="font-size:11px;font-weight:800;color:' + (isExec ? lockTone.text : "#6b7280") + ';margin-top:5px">' + "窗口照常记录" + '</div>';
       html += '</div>';
     });
     html += '</div></div>';
-    html += '<div style="margin-top:10px;font-size:12px;color:' + (gateBlocked ? gateTone.text : lockTone.text) + '">' + (gateBlocked ? "追三期只记录，不生成订单。" : "原号直接进入下单表，不再做强弱或P档筛选。") + '</div>';
+    html += '<div style="margin-top:10px;font-size:12px;color:' + (gateBlocked ? gateTone.text : lockTone.text) + '">' + "窗口和记录不受建议影响；是否下单由你确认。" + '</div>';
     html += '</div></div>';
     html += '<!--ULT_CARD_HISTORY-->';
 
@@ -2611,7 +2610,7 @@
 
     html += hitLogSectionHTML(mode);
     html += '<!--ULT_RECORDS_END-->';
-    html += '<p class="disclaimer">' + modeLabel + '只监控双号追热D1/D2，不读取加权反弹。' + (isRecommendMode ? '追推荐模式会给每期新推荐各开一条3期追号线，允许并行。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
+    html += '<p class="disclaimer">' + modeLabel + '只监控双号追热D1/D2，不读取加权反弹。' + (isRecommendMode ? '追推荐模式窗口结束后，下一期按最新推荐重新开窗。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
     var ultStartMarker = '<!--ULT_RECORDS_START-->';
     var ultEndMarker = '<!--ULT_RECORDS_END-->';
     var ultStart = html.indexOf(ultStartMarker);
