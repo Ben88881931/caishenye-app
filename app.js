@@ -2468,7 +2468,7 @@
       executeLabel = "";
     }
     if (isRecommendMode) {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内必出的推荐号。</b><br>每期产生的新推荐号，从推荐期开始分别检查第1期、第2期、第3期；任意一期命中或三期全错后，该窗口结束。窗口结束后，下一期按最新推荐重新开一个新窗口；同一时间每个位置只保留一个进行中的窗口。</div></div></div>';
+      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内必出的推荐号。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。窗口结束后，下一期重新开一个新窗口。</div></div></div>';
     }
     html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
     html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + (gateBlocked ? "今日动作" : "今日执行") + '</div>';
@@ -2498,7 +2498,9 @@
     var allStreamBatches = [];
     if (window.CAISHEN_SELECTOR && window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest) {
       ["D1", "D2"].forEach(function (key) {
-        streamThree[key] = window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest(RAW, MODEL, key, options);
+        streamThree[key] = isRecommendMode
+          ? runRecommendationWindowBacktest(RAW, MODEL, key, options)
+          : window.CAISHEN_SELECTOR.runThreePeriodStreamBacktest(RAW, MODEL, key, options);
         streamThree[key].batches.forEach(function (batch) { allStreamBatches.push(batch); });
       });
     }
@@ -2508,8 +2510,8 @@
     html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
     if (isRecommendMode) {
-      html += '<div><b>追推荐号：</b>拿到推荐号后追3期；命中第1/2/3期或三期全错后，该窗口结束。</div>';
-      html += '<div><b>重新开窗：</b>窗口结束后，下一期按最新推荐重新开窗；同一时间只保留一条进行中的窗口。</div>';
+      html += '<div><b>追推荐号：</b>窗口内第1/2/3期分别采用当期最新推荐，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。</div>';
+      html += '<div><b>重新开窗：</b>窗口结束后，下一期重新开始一个新的3期窗口。</div>';
     } else {
       html += '<div><b>固定追三期：</b>拿到原始推荐号后固定追3期，未结束前不换号。</div>';
       html += '<div><b>本页作用：</b>记录固定号码在3期窗口内的结果，不进行P档或强弱二次筛选。</div>';
@@ -2539,7 +2541,10 @@
       html += '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
       html += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
       html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期</div>';
-      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">原始号 尾' + batch.tail + '</div>';
+      var batchMain = isRecommendMode
+        ? '推荐序列 ' + (batch.attempts || []).map(function (a) { return a.tail == null ? '空' : '尾' + a.tail; }).join('→')
+        : '原始号 尾' + batch.tail;
+      html += '<div style="font-size:16px;font-weight:900;margin:4px 0">' + batchMain + '</div>';
       (batch.attempts || []).forEach(function (a) {
         html += '<div style="font-size:11px;color:' + (a.hit ? "#16a34a" : "#dc2626") + '">第' + a.period + '期 · 尾' + a.tail + ' · ' + (a.hit ? "中" : "错") + '</div>';
       });
@@ -2940,6 +2945,48 @@
     }
     html += '</div></div>';
     return html;
+  }
+
+  function runRecommendationWindowBacktest(raw, model, stream, options) {
+    var S = window.CAISHEN_SELECTOR;
+    var rows = S && S.buildSignals ? S.buildSignals(raw, model, options || { startPeriod: 31 }) : [];
+    var label = stream === "D1" ? "双号首推" : "双号备选";
+    var batches = [];
+    var i = 0;
+    while (i < rows.length) {
+      var attempts = [];
+      var hitIndex = 4;
+      var incomplete = false;
+      for (var j = 0; j < 3; j++) {
+        if (i + j >= rows.length) { incomplete = true; break; }
+        var pick = rows[i + j][stream];
+        var hit = !!(pick && rows[i + j].actual.indexOf(pick.tail) >= 0);
+        attempts.push({ period: rows[i + j].period, tail: pick ? pick.tail : null, hit: hit });
+        if (hit) { hitIndex = j + 1; break; }
+      }
+      if (incomplete) break;
+      batches.push({
+        stream: stream,
+        label: label,
+        startPeriod: rows[i].period,
+        tail: attempts.length ? attempts[0].tail : null,
+        recommendationSequence: attempts.map(function (a) { return a.tail; }),
+        hitIndex: hitIndex,
+        result: hitIndex === 1 ? "hit1" : hitIndex === 2 ? "hit2" : hitIndex === 3 ? "hit3" : "miss",
+        attempts: attempts
+      });
+      i += hitIndex === 4 ? 3 : hitIndex;
+    }
+    var counts = { first: 0, second: 0, third: 0, miss: 0 };
+    batches.forEach(function (b) {
+      if (b.hitIndex === 1) counts.first++;
+      else if (b.hitIndex === 2) counts.second++;
+      else if (b.hitIndex === 3) counts.third++;
+      else counts.miss++;
+    });
+    var n = batches.length;
+    var hits = counts.first + counts.second + counts.third;
+    return { stream: stream, label: label, batches: batches, n: n, hits: hits, hitRate: n ? hits / n : 0, first: counts.first, second: counts.second, third: counts.third, miss: counts.miss, firstRate: n ? counts.first / n : 0, secondRate: n ? counts.second / n : 0, thirdRate: n ? counts.third / n : 0, missRate: n ? counts.miss / n : 0 };
   }
 
   function renderPick3() {
