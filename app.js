@@ -2471,9 +2471,9 @@
     }
     var html = "";
     if (isRecommendMode) {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。262期起优先使用开奖前保存的真实快照，之前的才标为历史回测。</div></div></div>';
+      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。本页只使用开奖前保存的真实快照；历史回测不进入窗口记录和统计。</div></div></div>';
     } else {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追号码。</b><br>窗口开始时锁定一个推荐号，连续检查3期，号码不变；任意一期命中或三期全错后结束。窗口结束后，下一期重新锁定最新推荐号开新窗口。</div></div></div>';
+      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追号码。</b><br>窗口开始时锁定一个推荐号，连续检查3期，号码不变；任意一期命中或三期全错后结束。窗口结束后，下一期重新锁定最新推荐号开新窗口。本页只使用真实快照记录。</div></div></div>';
     }
     html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
     html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + "窗口记录" + '</div>';
@@ -2528,6 +2528,12 @@
         streamThree[key].batches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
       });
     }
+    if (!isRecommendMode) {
+      ["D1", "D2"].forEach(function (key) {
+        if (!streamThree[key]) streamThree[key] = { stream: key, label: key === "D1" ? "双号首推" : "双号备选", batches: [] };
+        streamThree[key].batches = (streamThree[key].batches || []).filter(function (b) { return b.sourceKind === "snapshot"; });
+      });
+    }
     if (isRecommendMode) {
       var livePrediction = MODEL.buildPrediction(analysis.endPeriod);
       var livePicks = livePrediction.doubleRecommendation || [];
@@ -2548,6 +2554,24 @@
       });
     }
 
+    ["D1", "D2"].forEach(function (key) {
+      var all = streamThree[key].batches || [];
+      var done = all.filter(function (b) { return b.status !== "pending" && b.hitIndex != null; });
+      var counts2 = { first: 0, second: 0, third: 0, miss: 0 };
+      done.forEach(function (b) { if (b.hitIndex === 1) counts2.first++; else if (b.hitIndex === 2) counts2.second++; else if (b.hitIndex === 3) counts2.third++; else counts2.miss++; });
+      var n2 = done.length, hits2 = counts2.first + counts2.second + counts2.third;
+      streamThree[key].n = n2;
+      streamThree[key].hits = hits2;
+      streamThree[key].hitRate = n2 ? hits2 / n2 : 0;
+      streamThree[key].first = counts2.first;
+      streamThree[key].second = counts2.second;
+      streamThree[key].third = counts2.third;
+      streamThree[key].miss = counts2.miss;
+      streamThree[key].firstRate = n2 ? counts2.first / n2 : 0;
+      streamThree[key].secondRate = n2 ? counts2.second / n2 : 0;
+      streamThree[key].thirdRate = n2 ? counts2.third / n2 : 0;
+      streamThree[key].missRate = n2 ? counts2.miss / n2 : 0;
+    });
     html += '<!--ULT_RECORDS_START-->';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
@@ -3021,6 +3045,7 @@
       var pick = p ? { tail: p.tail, hit: actual.indexOf(p.tail) >= 0 } : null;
       if (stream === "D1") row.D1 = pick; else row.D2 = pick;
     });
+    rows = rows.filter(function (row) { return row.source === "snapshot"; });
     var batches = [];
     var i = 0;
     while (i < rows.length) {
