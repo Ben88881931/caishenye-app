@@ -2372,7 +2372,7 @@
     var options = { startPeriod: 31 };
     var isRecommendMode = mode === "recommend";
     var modeLabel = isRecommendMode ? "三期内必出的推荐号" : "固定追三期";
-    var modeHint = isRecommendMode ? "三期内必出的推荐号 · 每期新推荐独立开3期窗口 · 允许并行" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
+    var modeHint = isRecommendMode ? "三期内必出的推荐号 · 窗口结束后下一期按最新推荐重新开窗" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
     autoSettleUltimateOrders();
     var analysis = UM.analyze(RAW, MODEL, options);
     var strategyResult = isRecommendMode
@@ -2468,7 +2468,7 @@
       executeLabel = "";
     }
     if (isRecommendMode) {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内必出的推荐号。</b><br>每期产生的新推荐号，从推荐期开始分别检查第1期、第2期、第3期；任意一期命中或三期全错后，该窗口结束。每期新推荐独立开窗，允许窗口并行，不做二次筛选。</div></div></div>';
+      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内必出的推荐号。</b><br>每期产生的新推荐号，从推荐期开始分别检查第1期、第2期、第3期；任意一期命中或三期全错后，该窗口结束。窗口结束后，下一期按最新推荐重新开一个新窗口；同一时间每个位置只保留一个进行中的窗口。</div></div></div>';
     }
     html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
     html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + (gateBlocked ? "今日动作" : "今日执行") + '</div>';
@@ -2508,15 +2508,15 @@
     html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
     if (isRecommendMode) {
-      html += '<div><b>每期追三期：</b>每期拿到的新推荐都独立开始一条3期线，允许并行。原始推荐号不改变。</div>';
-      html += '<div><b>本页作用：</b>记录每一条新推荐在第1期、第2期还是第3期中，或三期全错。</div>';
+      html += '<div><b>追推荐号：</b>拿到推荐号后追3期；命中第1/2/3期或三期全错后，该窗口结束。</div>';
+      html += '<div><b>重新开窗：</b>窗口结束后，下一期按最新推荐重新开窗；同一时间只保留一条进行中的窗口。</div>';
     } else {
       html += '<div><b>固定追三期：</b>拿到原始推荐号后固定追3期，未结束前不换号。</div>';
       html += '<div><b>本页作用：</b>记录固定号码在3期窗口内的结果，不进行P档或强弱二次筛选。</div>';
     }
     html += '</div></div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">四流三期内命中结构</h2><span class="section__hint">D1、D2独立统计 · 原始推荐号</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">双流三期内命中结构</h2><span class="section__hint">D1、D2独立统计 · 原始推荐号</span></div></div>';
     html += '<div class="section"><div class="panel" style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="min-width:620px">';
     html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .8fr .8fr .8fr .8fr .8fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
@@ -2530,7 +2530,7 @@
     });
     html += '</div></div></div>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">四流三期内滚动记录</h2><span class="section__hint">每格标注来源、起始期、原始号和结束期 · 新→旧</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">双流三期内滚动记录</h2><span class="section__hint">每格标注来源、起始期、原始号和结束期 · 新→旧</span></div></div>';
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="display:flex;gap:6px;min-width:max-content">';
     allStreamBatches.forEach(function (batch) {
