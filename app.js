@@ -2615,8 +2615,12 @@
         var mark = a.hit === true ? "中" : a.hit === false ? "错" : "待开奖";
         h += '<div style="font-size:11px;color:' + tone + '">第' + a.period + '期 · ' + (isRecommendMode ? '当期推荐' : '锁定号') + ' 尾' + a.tail + ' · ' + mark + '</div>';
       });
-      var endText = isPending ? "等待第" + endPeriod + "期结算" : (isHit ? "第" + batch.hitIndex + "期中" : "三期全错");
-      h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isPending ? "#2563eb" : isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + endText + '</div>';
+      var expectedEnd = batch.startPeriod + 2;
+      if (isPending) {
+        h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:#2563eb">当前状态：窗口进行中 · 等待第' + expectedEnd + '期结算</div>';
+      } else {
+        h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
+      }
       h += '</div>';
       return h;
     };
