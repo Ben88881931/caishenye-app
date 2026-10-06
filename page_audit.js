@@ -79,6 +79,14 @@ const sourceWindowRecords = Array.isArray(snapshotJs.sourceWindows) ? snapshotJs
 const pendingByStream = {};
 sourceWindowRecords.forEach((r) => { if (r.status === "pending") pendingByStream[r.stream] = (pendingByStream[r.stream] || 0) + 1; });
 must(["D1", "D2"].every((k) => (pendingByStream[k] || 0) <= 1), "每条号源最多只有一个进行中的三期窗口");
+const activeWindows = ["D1", "D2"].map((k) => sourceWindowRecords
+  .filter((r) => r.stream === k && r.status === "pending")
+  .sort((a, b) => Number(b.target) - Number(a.target))[0] || null);
+must(activeWindows.every((w) => w && Array.isArray(w.attempts) && w.attempts.length >= 1
+  && w.attempts.every((a) => Number(a.period) >= Number(w.target) && Number(a.period) <= Number(w.target) + 2)),
+  "每条号源当前窗口必须从锁定期起逐期记录且不换号");
+must(activeWindows.every((w) => Number(w.attempts[w.attempts.length - 1].period) + 1 <= Number(w.target) + 2),
+  "每条号源当前窗口状态必须指向下一检查期");
 const sourceSummary = snapshotJs.sourceWindowSummary || {};
 must(["D1", "D2"].every((k) => sourceSummary.byStream && sourceSummary.byStream[k]), "snapshots.js 含双号原始号源窗口汇总");
 const threeSummary = snapshotJs.threePeriodSummary || {};
@@ -97,6 +105,7 @@ must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab"
 const cssText = read("styles.css");
 must(cssText.includes("position: sticky") && cssText.includes("grid-template-columns: repeat(5") && cssText.includes("min-height: 42px"), "导航为粘性五项分段布局且触控高度合格");
 must(appText.includes("执行规则") && appText.includes("双流三期内命中结构") && !appText.includes("固定方案对照") && !appText.includes("本页子模型状态") && appText.includes("仅建议，不代替执行") && appText.includes("窗口照常记录") && appText.includes("两个原始号源") && appText.includes("不再二次筛选") && !appText.includes("仅观察候选"), "追三期使用两个原始号源且不二次筛选");
+must(appText.includes("function activeSnapshotWindow") && appText.includes("当前窗口第") && appText.includes("锁定号不换") && appText.includes("下一期检查"), "追号码顶部必须显示当前锁定窗口且状态指向下一检查期");
 must(!appText.includes('id: "orderfollow"') && !appText.includes("下单追投"), "不存在已废弃的下单追投入口");
 
 const tabsBlock = (appText.match(/var TABS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || "";

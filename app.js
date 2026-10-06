@@ -2446,14 +2446,35 @@
     }
     var lockTone = { border: "#16a34a", bg: "#f0fdf4", text: "#166534", soft: "#bbf7d0" };
     var gateTone = { border: "#d97706", bg: "#fffbeb", text: "#92400e", soft: "#fef3c7" };
+    function activeSnapshotWindow(stream) {
+      var wins = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows)
+        ? window.APP_SNAPSHOTS.sourceWindows
+        : [];
+      return wins.filter(function (w) {
+        return w.stream === stream && w.status === "pending";
+      }).sort(function (a, b) {
+        return Number(b.target) - Number(a.target);
+      })[0] || null;
+    }
     var sourceRows = [];
     ["D1", "D2"].forEach(function (key) {
       var state = gateStreams && gateStreams[key];
+      var activeWindow = !isRecommendMode ? activeSnapshotWindow(key) : null;
+      var pick = activeWindow ? {
+        tail: activeWindow.tail,
+        score: Number(activeWindow.score || 0),
+        grade: activeWindow.grade || "-",
+        tag: activeWindow.tag || "-"
+      } : (state ? state.current : null);
       sourceRows.push({
         key: key,
         label: state ? state.label : key,
-        pick: state ? state.current : null,
-        model: key.charAt(0) === "D" ? "双号" : "下期"
+        pick: pick,
+        model: key.charAt(0) === "D" ? "双号" : "下期",
+        activeWindow: activeWindow,
+        statusText: activeWindow
+          ? "当前窗口第" + Math.min((activeWindow.attempts || []).length + 1, 3) + "期 · 锁定号不换"
+          : (isRecommendMode ? "本期采用最新推荐" : "暂未开新窗口")
       });
     });
     var executeKey = gateAction === "跟双号" ? "D1" : null;
@@ -2468,6 +2489,15 @@
       executeKey = null;
       executeLabel = "";
     }
+    var windowProgressText = "";
+    if (isRecommendMode) {
+      windowProgressText = "第" + analysis.nextPeriod + "期采用最新推荐";
+    } else {
+      var activeCount = sourceRows.filter(function (row) { return !!row.activeWindow; }).length;
+      windowProgressText = activeCount > 0
+        ? "第" + analysis.nextPeriod + "期继续当前窗口 · 号码不变"
+        : "第" + analysis.nextPeriod + "期暂不开新窗口";
+    }
     var html = "";
     if (isRecommendMode) {
       html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。真实快照优先展示并实时记录；没有快照的历史窗口保留，并明确标注为历史回测。</div></div></div>';
@@ -2479,7 +2509,7 @@
     html += '<div style="font-size:40px;line-height:1.05;font-weight:900;color:' + lockTone.text + ';margin:6px 0">' + (gateBlocked ? "建议：观望" : "建议：跟双号") + '</div>';
     html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
     html += '<span style="padding:4px 8px;border:1px solid ' + gateTone.border + ';border-radius:6px;background:' + gateTone.bg + ';color:' + gateTone.text + ';font-size:12px;font-weight:900">仅建议，不代替执行</span>';
-    html += '<span style="font-size:12px;color:' + lockTone.text + '">第' + analysis.nextPeriod + '期进入追三期窗口</span>';
+    html += '<span style="font-size:12px;color:' + lockTone.text + '">' + windowProgressText + '</span>';
     html += '</div>';
     html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid ' + lockTone.soft + '">';
     html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';margin-bottom:6px">两个原始号源 · 不再二次筛选</div>';
@@ -2489,7 +2519,7 @@
       html += '<div style="border:2px solid ' + (isExec ? lockTone.border : "#d1d5db") + ';border-radius:8px;padding:9px 10px;background:#fff">';
       html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b style="color:' + (isExec ? lockTone.text : "#374151") + '">' + row.key + ' ' + row.label + '</b><span class="chip">' + (row.pick ? "尾" + row.pick.tail : "空") + '</span></div>';
       html += '<div style="font-size:11px;color:var(--muted);margin-top:5px">' + (row.pick ? row.pick.grade + '级 ' + row.pick.score.toFixed(1) + '分 · ' + (row.pick.tag || "-") : "空推荐") + ' · ' + row.model + '</div>';
-      html += '<div style="font-size:11px;font-weight:800;color:' + (isExec ? lockTone.text : "#6b7280") + ';margin-top:5px">' + "窗口照常记录" + '</div>';
+      html += '<div style="font-size:11px;font-weight:800;color:' + (isExec ? lockTone.text : "#6b7280") + ';margin-top:5px">' + (row.statusText || "窗口照常记录") + '</div>';
       html += '</div>';
     });
     html += '</div></div>';
@@ -2616,7 +2646,11 @@
       });
       var expectedEnd = batch.startPeriod + 2;
       if (isPending) {
-        h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:#2563eb">当前状态：窗口进行中 · 等待第' + expectedEnd + '期结算</div>';
+        var nextCheckPeriod = batch.attempts && batch.attempts.length
+          ? batch.attempts[batch.attempts.length - 1].period + 1
+          : batch.startPeriod;
+        if (nextCheckPeriod > expectedEnd) nextCheckPeriod = expectedEnd;
+        h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:#2563eb">当前状态：窗口进行中 · 下一期检查 第' + nextCheckPeriod + '期</div>';
       } else {
         h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
       }
