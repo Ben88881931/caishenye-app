@@ -111,7 +111,8 @@ must(appText.includes("result: \"pending\"") && appText.includes("snapshot+live"
 must(appText.includes("buildThreePeriodCorrectScrollHTML") && appText.includes("三期内对错滚动条") && appText.includes("第\" + batch.hitIndex + \"期中") && appText.includes("三期全错"), "追号码和追推荐必须分别显示三期内对错滚动条");
 must(appText.includes("batch.status !== \"miss\" && batch.hitIndex >= 1 && batch.hitIndex <= 3"), "对错滚动条必须把 hitIndex=0 视为三期全错");
 must(appText.includes("threeCorrectScroll") && appText.includes("[\"D1\", \"D2\"].forEach(function (key)") && appText.includes("overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px"), "对错滚动条 D1/D2 必须上下可见且各自独立滚动");
-must(appText.includes("buildRealtimeSnapshotRateHTML") && appText.includes("真实快照命中率 · 实时记录") && appText.includes("threePeriodRealtimeSnapshotRows") && appText.includes("doubleSnapshotRows"), "双号追热、追号码、追推荐必须显示实时真实快照命中率");
+must(appText.includes("buildRealtimeSnapshotRateHTML") && appText.includes("真实快照命中率 · 实时记录") && appText.includes("threePeriodRealtimeSnapshotRows") && appText.includes("firstSnapshotRows") && appText.includes("secondSnapshotRows") && appText.includes("第一推荐 D1") && appText.includes("第二推荐 D2"), "双号追热、追号码、追推荐必须分开显示 D1/D2 实时真实快照命中率");
+must(!appText.includes("D1+D2 合计") && !appText.includes("双号合计 · 至少中一"), "实时命中率只保留 D1/D2 独立记录，不做合计");
 must(!appText.includes('id: "orderfollow"') && !appText.includes("下单追投"), "不存在已废弃的下单追投入口");
 
 const tabsBlock = (appText.match(/var TABS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || "";

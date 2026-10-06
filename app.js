@@ -2364,37 +2364,46 @@
   }
 
   function buildRealtimeSnapshotRateHTML(config) {
-    var rows = (config.rows || []).slice().sort(function (a, b) {
-      return Number(b.period) - Number(a.period);
-    });
-    var n = rows.length;
-    var hits = rows.filter(function (r) { return r.hit === true; }).length;
-    var miss = n - hits;
-    var rate = n ? (hits / n * 100).toFixed(1) + "%" : "样本不足";
+    var groups = Array.isArray(config.groups) ? config.groups : [{
+      label: config.label || "",
+      rows: config.rows || [],
+      pendingText: config.pendingText || "-",
+      color: config.color || "#111827"
+    }];
     var html = '';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">真实快照命中率 · 实时记录</h2><span class="section__hint">' + (config.hint || "只统计开奖前保存、开奖后已结算的真实快照；未开奖不计入") + '</span></div></div>';
-    html += '<div class="section"><div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value" style="color:' + (hits >= miss ? "#16a34a" : "#dc2626") + '">' + rate + '</div><div class="stat__label">命中率 · 中' + hits + ' 错' + miss + ' 共' + n + '</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + (rows.length ? rows[0].period : "-") + '</div><div class="stat__label">最新已结算快照期</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + (config.pendingText || "-") + '</div><div class="stat__label">待开奖 / 进行中</div></div>';
-    html += '</div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px 10px">';
-    html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin-bottom:6px">最新真实快照记录 · 新→旧</div>';
-    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
-    if (!rows.length) {
-      html += '<span style="font-size:12px;color:#9ca3af">暂无已结算真实快照</span>';
-    } else {
-      rows.slice(0, 30).forEach(function (r) {
-        var tone = r.hit ? "#16a34a" : "#dc2626";
-        var bg = r.hit ? "#f0fdf4" : "#fef2f2";
-        var border = r.hit ? "#bbf7d0" : "#fecaca";
-        html += '<div style="min-width:76px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + ';text-align:center">';
-        html += '<div style="font-size:10px;color:#6b7280">第' + r.period + '期' + (r.stream ? ' · ' + r.stream : '') + '</div>';
-        html += '<div style="font-size:14px;font-weight:900;color:' + tone + ';margin-top:2px">' + (r.hit ? '中' : '错') + '</div>';
-        html += '</div>';
+    groups.forEach(function (group) {
+      var rows = (group.rows || []).slice().sort(function (a, b) {
+        return Number(b.period) - Number(a.period);
       });
-    }
-    html += '</div></div></div>';
+      var n = rows.length;
+      var hits = rows.filter(function (r) { return r.hit === true; }).length;
+      var miss = n - hits;
+      var rate = n ? (hits / n * 100).toFixed(1) + "%" : "样本不足";
+      html += '<div class="section"><div class="panel" style="padding:12px 10px;border-left:4px solid ' + (group.color || "#6b7280") + '">';
+      html += '<div style="font-size:13px;font-weight:900;color:' + (group.color || "#111827") + ';margin-bottom:8px">' + (group.label || "合计") + '</div>';
+      html += '<div class="grid-3">';
+      html += '<div class="stat"><div class="stat__value" style="color:' + (hits >= miss ? "#16a34a" : "#dc2626") + '">' + rate + '</div><div class="stat__label">命中率 · 中' + hits + ' 错' + miss + ' 共' + n + '</div></div>';
+      html += '<div class="stat"><div class="stat__value">' + (rows.length ? rows[0].period : "-") + '</div><div class="stat__label">最新已结算快照期</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + (group.pendingText || "-") + '</div><div class="stat__label">待开奖 / 进行中</div></div>';
+      html += '</div>';
+      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">最新真实快照记录 · 新→旧</div>';
+      html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
+      if (!rows.length) {
+        html += '<span style="font-size:12px;color:#9ca3af">暂无已结算真实快照</span>';
+      } else {
+        rows.slice(0, 30).forEach(function (r) {
+          var tone = r.hit ? "#16a34a" : "#dc2626";
+          var bg = r.hit ? "#f0fdf4" : "#fef2f2";
+          var border = r.hit ? "#bbf7d0" : "#fecaca";
+          html += '<div style="min-width:76px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + ';text-align:center">';
+          html += '<div style="font-size:10px;color:#6b7280">第' + r.period + '期' + (r.stream ? ' · ' + r.stream : '') + '</div>';
+          html += '<div style="font-size:14px;font-weight:900;color:' + tone + ';margin-top:2px">' + (r.hit ? '中' : '错') + '</div>';
+          html += '</div>';
+        });
+      }
+      html += '</div></div></div>';
+    });
     return html;
   }
 
@@ -2716,13 +2725,26 @@
     });
     html += '<!--ULT_RECORDS_START-->';
     var realtimeThree = threePeriodRealtimeSnapshotRows(streamThree);
-    var realtimePendingText = realtimeThree.pending.length
-      ? realtimeThree.pending.map(function (p) { return p.stream + " 第" + p.period + "期"; }).join(" · ")
-      : "无";
+    var realtimePendingByStream = {};
+    realtimeThree.pending.forEach(function (p) {
+      realtimePendingByStream[p.stream] = "第" + p.period + "期";
+    });
     html += buildRealtimeSnapshotRateHTML({
       hint: (isRecommendMode ? "三期内追推荐" : "三期内追号码") + " · 只统计真实快照已结算窗口；进行中窗口不计入",
-      rows: realtimeThree.rows,
-      pendingText: realtimePendingText
+      groups: [
+        {
+          label: "第一推荐 D1",
+          rows: realtimeThree.rows.filter(function (r) { return r.stream === "D1"; }),
+          pendingText: realtimePendingByStream.D1 || "无",
+          color: "#16a34a"
+        },
+        {
+          label: "第二推荐 D2",
+          rows: realtimeThree.rows.filter(function (r) { return r.stream === "D2"; }),
+          pendingText: realtimePendingByStream.D2 || "无",
+          color: "#2563eb"
+        }
+      ]
     });
     html += buildThreePeriodCorrectScrollHTML(streamThree, isRecommendMode);
     html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
@@ -3328,15 +3350,22 @@
 
     var snapStats = window.APP_SNAPSHOTS || null;
     if (snapStats && Array.isArray(snapStats.detail)) {
-      var doubleSnapshotRows = snapStats.detail.filter(function (rec) {
+      var firstSnapshotRows = [], secondSnapshotRows = [];
+      snapStats.detail.filter(function (rec) {
         return rec && Number.isFinite(Number(rec.target));
-      }).map(function (rec) {
-        return { period: Number(rec.target), hit: rec.atLeastOne === true };
+      }).forEach(function (rec) {
+        var target = Number(rec.target);
+        var picks = Array.isArray(rec.picks) ? rec.picks : [];
+        if (picks[0]) firstSnapshotRows.push({ period: target, hit: picks[0].hit === true });
+        if (picks[1]) secondSnapshotRows.push({ period: target, hit: picks[1].hit === true });
       });
+      var doublePending = "第" + (N + 1) + "期";
       html += buildRealtimeSnapshotRateHTML({
-        hint: "双号至少中一 · 只统计开奖前保存、开奖后已结算的真实快照；未开奖不计入",
-        rows: doubleSnapshotRows,
-        pendingText: "第" + (N + 1) + "期"
+        hint: "第一推荐 D1、第二推荐 D2 分别独立统计；只统计开奖前保存、开奖后已结算的真实快照，未开奖不计入",
+        groups: [
+          { label: "第一推荐 D1", rows: firstSnapshotRows, pendingText: doublePending, color: "#16a34a" },
+          { label: "第二推荐 D2", rows: secondSnapshotRows, pendingText: doublePending, color: "#2563eb" }
+        ]
       });
     }
     function snapRate(nr, hr) {
