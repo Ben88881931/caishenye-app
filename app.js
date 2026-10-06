@@ -2366,16 +2366,16 @@
   function buildThreePeriodCorrectScrollHTML(streamThree, isRecommendMode) {
     var html = '';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内对错滚动条</h2><span class="section__hint">D1/D2 独立线 · 新→旧 · 中=绿 错=红 进行中=蓝</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="display:flex;gap:14px;min-width:max-content;align-items:flex-start">';
+    html += '<div class="section"><div class="panel" style="padding:12px 10px">';
     ["D1", "D2"].forEach(function (key) {
       var result = streamThree[key] || { label: key, batches: [] };
       var batches = (result.batches || []).slice().sort(function (a, b) {
         return Number(b.startPeriod) - Number(a.startPeriod);
       });
-      html += '<div style="min-width:300px">';
+      html += '<div id="threeCorrectScroll' + key + '"' + (key === "D1" ? ' style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e5e7eb"' : '') + '>';
       html += '<div style="font-size:12px;font-weight:900;color:' + (key === "D1" ? "#16a34a" : "#2563eb") + ';margin-bottom:6px">' + key + ' ' + result.label + '</div>';
-      html += '<div style="display:flex;gap:6px">';
+      html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">';
+      html += '<div style="display:flex;gap:6px;min-width:max-content">';
       if (!batches.length) {
         html += '<span style="font-size:12px;color:#9ca3af">暂无记录</span>';
       } else {
@@ -2399,9 +2399,9 @@
           html += '</div>';
         });
       }
-      html += '</div></div>';
+      html += '</div></div></div>';
     });
-    html += '</div></div></div>';
+    html += '</div></div>';
     return html;
   }
 
