@@ -2363,6 +2363,63 @@
     return MODEL.pickTopAt(cur, k);
   }
 
+  function buildRealtimeSnapshotRateHTML(config) {
+    var rows = (config.rows || []).slice().sort(function (a, b) {
+      return Number(b.period) - Number(a.period);
+    });
+    var n = rows.length;
+    var hits = rows.filter(function (r) { return r.hit === true; }).length;
+    var miss = n - hits;
+    var rate = n ? (hits / n * 100).toFixed(1) + "%" : "样本不足";
+    var html = '';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">真实快照命中率 · 实时记录</h2><span class="section__hint">' + (config.hint || "只统计开奖前保存、开奖后已结算的真实快照；未开奖不计入") + '</span></div></div>';
+    html += '<div class="section"><div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (hits >= miss ? "#16a34a" : "#dc2626") + '">' + rate + '</div><div class="stat__label">命中率 · 中' + hits + ' 错' + miss + ' 共' + n + '</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + (rows.length ? rows[0].period : "-") + '</div><div class="stat__label">最新已结算快照期</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + (config.pendingText || "-") + '</div><div class="stat__label">待开奖 / 进行中</div></div>';
+    html += '</div></div>';
+    html += '<div class="section"><div class="panel" style="padding:12px 10px">';
+    html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin-bottom:6px">最新真实快照记录 · 新→旧</div>';
+    html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
+    if (!rows.length) {
+      html += '<span style="font-size:12px;color:#9ca3af">暂无已结算真实快照</span>';
+    } else {
+      rows.slice(0, 30).forEach(function (r) {
+        var tone = r.hit ? "#16a34a" : "#dc2626";
+        var bg = r.hit ? "#f0fdf4" : "#fef2f2";
+        var border = r.hit ? "#bbf7d0" : "#fecaca";
+        html += '<div style="min-width:76px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + ';text-align:center">';
+        html += '<div style="font-size:10px;color:#6b7280">第' + r.period + '期' + (r.stream ? ' · ' + r.stream : '') + '</div>';
+        html += '<div style="font-size:14px;font-weight:900;color:' + tone + ';margin-top:2px">' + (r.hit ? '中' : '错') + '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div></div></div>';
+    return html;
+  }
+
+  function threePeriodRealtimeSnapshotRows(streamThree) {
+    var rows = [];
+    var pending = [];
+    ["D1", "D2"].forEach(function (key) {
+      var batches = (streamThree[key] && streamThree[key].batches) || [];
+      batches.forEach(function (batch) {
+        if (batch.status === "pending" || batch.hitIndex == null) {
+          if (batch.status === "pending") pending.push({ stream: key, period: batch.startPeriod });
+          return;
+        }
+        if (batch.sourceKind !== "snapshot") return;
+        var attempts = batch.attempts || [];
+        rows.push({
+          period: attempts.length ? attempts[attempts.length - 1].period : batch.startPeriod,
+          hit: batch.status === "hit" || (batch.hitIndex >= 1 && batch.hitIndex <= 3),
+          stream: key
+        });
+      });
+    });
+    return { rows: rows, pending: pending };
+  }
+
   function buildThreePeriodCorrectScrollHTML(streamThree, isRecommendMode) {
     var html = '';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内对错滚动条</h2><span class="section__hint">D1/D2 独立线 · 新→旧 · 中=绿 错=红 进行中=蓝</span></div></div>';
@@ -2658,6 +2715,15 @@
       streamThree[key].missRate = n2 ? counts2.miss / n2 : 0;
     });
     html += '<!--ULT_RECORDS_START-->';
+    var realtimeThree = threePeriodRealtimeSnapshotRows(streamThree);
+    var realtimePendingText = realtimeThree.pending.length
+      ? realtimeThree.pending.map(function (p) { return p.stream + " 第" + p.period + "期"; }).join(" · ")
+      : "无";
+    html += buildRealtimeSnapshotRateHTML({
+      hint: (isRecommendMode ? "三期内追推荐" : "三期内追号码") + " · 只统计真实快照已结算窗口；进行中窗口不计入",
+      rows: realtimeThree.rows,
+      pendingText: realtimePendingText
+    });
     html += buildThreePeriodCorrectScrollHTML(streamThree, isRecommendMode);
     html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
@@ -3261,6 +3327,18 @@
     html += buildMissScrollHTML(hist, { id: "pick3MissScroll" });
 
     var snapStats = window.APP_SNAPSHOTS || null;
+    if (snapStats && Array.isArray(snapStats.detail)) {
+      var doubleSnapshotRows = snapStats.detail.filter(function (rec) {
+        return rec && Number.isFinite(Number(rec.target));
+      }).map(function (rec) {
+        return { period: Number(rec.target), hit: rec.atLeastOne === true };
+      });
+      html += buildRealtimeSnapshotRateHTML({
+        hint: "双号至少中一 · 只统计开奖前保存、开奖后已结算的真实快照；未开奖不计入",
+        rows: doubleSnapshotRows,
+        pendingText: "第" + (N + 1) + "期"
+      });
+    }
     function snapRate(nr, hr) {
       return nr >= 20 ? (hr / nr * 100).toFixed(1) + '%' : '样本不足';
     }
