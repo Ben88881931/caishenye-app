@@ -2363,6 +2363,48 @@
     return MODEL.pickTopAt(cur, k);
   }
 
+  function buildThreePeriodCorrectScrollHTML(streamThree, isRecommendMode) {
+    var html = '';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内对错滚动条</h2><span class="section__hint">D1/D2 独立线 · 新→旧 · 中=绿 错=红 进行中=蓝</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="display:flex;gap:14px;min-width:max-content;align-items:flex-start">';
+    ["D1", "D2"].forEach(function (key) {
+      var result = streamThree[key] || { label: key, batches: [] };
+      var batches = (result.batches || []).slice().sort(function (a, b) {
+        return Number(b.startPeriod) - Number(a.startPeriod);
+      });
+      html += '<div style="min-width:300px">';
+      html += '<div style="font-size:12px;font-weight:900;color:' + (key === "D1" ? "#16a34a" : "#2563eb") + ';margin-bottom:6px">' + key + ' ' + result.label + '</div>';
+      html += '<div style="display:flex;gap:6px">';
+      if (!batches.length) {
+        html += '<span style="font-size:12px;color:#9ca3af">暂无记录</span>';
+      } else {
+        batches.forEach(function (batch) {
+          var isPending = batch.status === "pending" || batch.hitIndex == null;
+          var isHit = !isPending && batch.status !== "miss" && batch.hitIndex >= 1 && batch.hitIndex <= 3;
+          var tone = isPending ? "#2563eb" : (isHit ? "#16a34a" : "#dc2626");
+          var bg = isPending ? "#eff6ff" : (isHit ? "#f0fdf4" : "#fef2f2");
+          var border = isPending ? "#bfdbfe" : (isHit ? "#bbf7d0" : "#fecaca");
+          var attemptsCount = (batch.attempts || []).length;
+          var resultText = isPending
+            ? (attemptsCount ? "进行中 " + Math.min(attemptsCount, 3) + "/3" : "待检查")
+            : (isHit ? "第" + batch.hitIndex + "期中" : "三期全错");
+          var mainText = isRecommendMode
+            ? "推荐 " + (batch.attempts || []).map(function (a) { return a.tail == null ? "空" : "尾" + a.tail; }).join("→")
+            : "锁定 尾" + batch.tail;
+          html += '<div style="min-width:96px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + '">';
+          html += '<div style="font-size:10px;color:#6b7280">起始 第' + batch.startPeriod + '期</div>';
+          html += '<div style="font-size:13px;font-weight:900;color:' + tone + ';margin-top:2px">' + resultText + '</div>';
+          html += '<div style="font-size:10px;color:#6b7280;margin-top:3px;white-space:nowrap">' + mainText + '</div>';
+          html += '</div>';
+        });
+      }
+      html += '</div></div>';
+    });
+    html += '</div></div></div>';
+    return html;
+  }
+
   function renderUltimateMode(mode) {
     var UM = window.CAISHEN_ULTIMATE;
     if (!UM) {
@@ -2559,7 +2601,7 @@
         if (!streamThree[key]) streamThree[key] = { stream: key, label: key === "D1" ? "双号首推" : "双号备选", batches: [] };
         (streamThree[key].batches || []).forEach(function (b) {
           if (!b.sourceKind) b.sourceKind = "backtest";
-          if (!b.status) b.status = b.hitIndex === 4 ? "miss" : "hit";
+          if (!b.status) b.status = b.hitIndex >= 1 && b.hitIndex <= 3 ? "hit" : "miss";
         });
       });
     }
@@ -2616,6 +2658,7 @@
       streamThree[key].missRate = n2 ? counts2.miss / n2 : 0;
     });
     html += '<!--ULT_RECORDS_START-->';
+    html += buildThreePeriodCorrectScrollHTML(streamThree, isRecommendMode);
     html += '<div class="section"><div class="section__head"><h2 class="section__title">执行规则</h2><span class="section__hint">两个页面只负责执行方式，不重新选号</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.8">';
     if (isRecommendMode) {
@@ -2643,7 +2686,7 @@
 
     var renderBatchCard = function (batch) {
       var isPending = batch.status === "pending" || batch.hitIndex == null;
-      var isHit = !isPending && batch.hitIndex !== 4;
+      var isHit = !isPending && batch.status !== "miss" && batch.hitIndex >= 1 && batch.hitIndex <= 3;
       var endPeriod = batch.attempts && batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
       var sourceText = isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "snapshot+live" ? "快照+当前" : batch.sourceKind === "live" ? "当前窗口" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : (batch.sourceKind === "snapshot" ? "真实快照" : "历史回测");
       var h = '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
@@ -2742,13 +2785,13 @@
       sourceStripHtml += '</div>';
       sourceStripHtml += '<div style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:6px;min-width:max-content">';
       var realRows = realWindows.map(function (w) { return { startPeriod: w.target, tail: w.tail, attempts: w.attempts || [], hitIndex: w.hitIndex, status: w.status || "pending", source: "真实快照" }; });
-      var backtestRows = r.batches.slice(-40).reverse().map(function (b) { return { startPeriod: b.startPeriod, tail: b.tail, attempts: b.attempts || [], hitIndex: b.hitIndex, status: b.hitIndex === 4 ? "miss" : "hit", source: "历史回测" }; });
+      var backtestRows = r.batches.slice(-40).reverse().map(function (b) { return { startPeriod: b.startPeriod, tail: b.tail, attempts: b.attempts || [], hitIndex: b.hitIndex, status: b.hitIndex >= 1 && b.hitIndex <= 3 ? "hit" : "miss", source: "历史回测" }; });
       var rowMap = {};
       backtestRows.forEach(function (row) { rowMap[row.startPeriod] = row; });
       realRows.forEach(function (row) { rowMap[row.startPeriod] = row; });
       var displayRows = Object.keys(rowMap).map(function (k) { return rowMap[k]; }).sort(function (a, b) { return b.startPeriod - a.startPeriod; });
       displayRows.forEach(function (batch) {
-        var status = batch.status || (batch.hitIndex === 4 ? "miss" : "hit");
+        var status = batch.status || (batch.hitIndex >= 1 && batch.hitIndex <= 3 ? "hit" : "miss");
         var isHit = status === "hit";
         var statusColor = status === "hit" ? "#16a34a" : status === "miss" ? "#dc2626" : status === "pending" ? "#2563eb" : "#6b7280";
         var statusText = status === "hit" ? "第" + batch.hitIndex + "期中" : status === "miss" ? "三期全错" : status === "pending" ? "结算中" : "空推荐";
