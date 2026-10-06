@@ -2569,16 +2569,30 @@
       ["D1", "D2"].forEach(function (key, index) {
         if (!streamThree[key]) streamThree[key] = { stream: key, label: key === "D1" ? "双号首推" : "双号备选", batches: [] };
         var p = livePicks[index];
-        streamThree[key].batches.push({
-          stream: key,
-          label: streamThree[key].label,
-          sourceKind: "live",
-          status: "pending",
-          startPeriod: analysis.nextPeriod,
-          tail: p ? p.tail : null,
-          hitIndex: null,
-          attempts: [{ period: analysis.nextPeriod, tail: p ? p.tail : null, hit: null, source: "live" }]
-        });
+        var liveAttempt = { period: analysis.nextPeriod, tail: p ? p.tail : null, hit: null, source: "live" };
+        var pendingBatch = (streamThree[key].batches || []).filter(function (b) {
+          return b.status === "pending" && Array.isArray(b.attempts) && b.attempts.length < 3;
+        }).sort(function (a, b) {
+          return Number(b.startPeriod) - Number(a.startPeriod);
+        })[0] || null;
+        if (pendingBatch) {
+          var alreadyLive = pendingBatch.attempts.some(function (a) { return Number(a.period) === Number(analysis.nextPeriod); });
+          if (!alreadyLive) pendingBatch.attempts.push(liveAttempt);
+          pendingBatch.sourceKind = pendingBatch.sourceKind === "snapshot" ? "snapshot+live" : "live";
+          pendingBatch.recommendationSequence = pendingBatch.attempts.map(function (a) { return a.tail; });
+        } else {
+          streamThree[key].batches.push({
+            stream: key,
+            label: streamThree[key].label,
+            sourceKind: "live",
+            status: "pending",
+            startPeriod: analysis.nextPeriod,
+            tail: p ? p.tail : null,
+            recommendationSequence: [p ? p.tail : null],
+            hitIndex: null,
+            attempts: [liveAttempt]
+          });
+        }
         streamThree[key].batches.sort(function (a, b) { return b.startPeriod - a.startPeriod; });
       });
     }
@@ -2631,7 +2645,7 @@
       var isPending = batch.status === "pending" || batch.hitIndex == null;
       var isHit = !isPending && batch.hitIndex !== 4;
       var endPeriod = batch.attempts && batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
-      var sourceText = isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "live" ? "当前窗口" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : (batch.sourceKind === "snapshot" ? "真实快照" : "历史回测");
+      var sourceText = isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "snapshot+live" ? "快照+当前" : batch.sourceKind === "live" ? "当前窗口" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : (batch.sourceKind === "snapshot" ? "真实快照" : "历史回测");
       var h = '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
       h += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
       h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期 · ' + sourceText + '</div>';
@@ -3095,7 +3109,27 @@
         attempts.push({ period: rows[i + j].period, tail: pick ? pick.tail : null, hit: hit, source: rows[i + j].source || "backtest" });
         if (hit) { hitIndex = j + 1; break; }
       }
-      if (incomplete) break;
+      if (incomplete) {
+        if (attempts.length) {
+          var pendingSources = attempts.map(function (a) { return a.source; });
+          var pendingSourceKind = pendingSources.every(function (s) { return s === "snapshot"; })
+            ? "snapshot"
+            : (pendingSources.some(function (s) { return s === "snapshot"; }) ? "mixed" : "backtest");
+          batches.push({
+            stream: stream,
+            label: label,
+            sourceKind: pendingSourceKind,
+            status: "pending",
+            startPeriod: rows[i].period,
+            tail: attempts.length ? attempts[0].tail : null,
+            recommendationSequence: attempts.map(function (a) { return a.tail; }),
+            hitIndex: null,
+            result: "pending",
+            attempts: attempts
+          });
+        }
+        break;
+      }
       var sourceKinds = attempts.map(function (a) { return a.source; });
       var sourceKind = sourceKinds.every(function (s) { return s === "snapshot"; }) ? "snapshot" : (sourceKinds.some(function (s) { return s === "snapshot"; }) ? "mixed" : "backtest");
       batches.push({
@@ -3112,7 +3146,7 @@
       i += hitIndex === 4 ? 3 : hitIndex;
     }
     var counts = { first: 0, second: 0, third: 0, miss: 0 };
-    batches.forEach(function (b) {
+    batches.filter(function (b) { return b.status !== "pending"; }).forEach(function (b) {
       if (b.hitIndex === 1) counts.first++;
       else if (b.hitIndex === 2) counts.second++;
       else if (b.hitIndex === 3) counts.third++;
