@@ -122,62 +122,6 @@ function generateSnapshotsJs(snapshots) {
     });
   }
 
-  const weightedRecords = records
-    .filter((rec) => rec.models && rec.models.weightedBounce && Array.isArray(rec.models.weightedBounce.picks))
-    .map((rec) => {
-      const picks = rec.models.weightedBounce.picks || [];
-      const actualTails = rec.actualTails || [];
-      const savedResult = rec.results && rec.results.weightedBounce;
-      const savedPerPick = savedResult && Array.isArray(savedResult.perPick) ? savedResult.perPick : [];
-      const perPick = picks.map((p) => {
-        const saved = savedPerPick.find((x) => x.tail === p.tail);
-        const resolvedHit = saved && typeof saved.hit === "boolean"
-          ? saved.hit
-          : actualTails.includes(p.tail);
-        return {
-          tail: p.tail,
-          score: p.score,
-          miss: p.miss,
-          maxMiss: p.maxMiss,
-          ratio: p.ratio,
-          weightedBounceRate: p.weightedBounceRate,
-          sample: p.sample,
-          hit: rec.settled ? resolvedHit : null
-        };
-      });
-      const hits = perPick.filter((p) => p.hit === true).map((p) => p.tail);
-      return {
-        target: rec.target,
-        basedOn: rec.basedOn,
-        settled: !!rec.settled,
-        skipped: perPick.length === 0,
-        picks: perPick,
-        actualTails: actualTails,
-        hits: hits,
-        hit: rec.settled ? hits.length > 0 : null,
-        settledAt: rec.settledAt || null
-      };
-    })
-    .sort((a, b) => a.target - b.target);
-
-  const weightedSettled = weightedRecords.filter((r) => r.settled);
-  const weightedActed = weightedSettled.filter((r) => r.picks.length > 0);
-  const weightedSkipped = weightedSettled.filter((r) => r.picks.length === 0).length;
-  const weightedFirst = weightedActed.filter((r) => r.picks[0].hit === true).length;
-  const weightedSecond = weightedActed.filter((r) => r.picks.length >= 2 && r.picks[1].hit === true).length;
-  const weightedBoth = weightedActed.filter((r) => r.picks.length >= 2 && r.picks.every((p) => p.hit === true)).length;
-  const weightedSummary = {
-    n: weightedActed.length,
-    settled: weightedSettled.length,
-    skipped: weightedSkipped,
-    hits: weightedActed.filter((r) => r.hit).length,
-    miss: weightedActed.filter((r) => !r.hit).length,
-    firstPick: { n: weightedActed.length, hits: weightedFirst, miss: weightedActed.length - weightedFirst },
-    secondPick: { n: weightedActed.length, hits: weightedSecond, miss: weightedActed.length - weightedSecond },
-    atLeastOne: { n: weightedActed.length, hits: weightedActed.filter((r) => r.hit).length, miss: weightedActed.filter((r) => !r.hit).length },
-    both: { n: weightedActed.length, hits: weightedBoth, miss: weightedActed.length - weightedBoth }
-  };
-
   const threePeriodRecords = (Array.isArray(snapshots.threePeriodRecords) ? snapshots.threePeriodRecords : []).map((r) => Object.assign({}, r));
   const threeActed = threePeriodRecords.filter((r) => r.tail != null && r.action !== "观望");
   const threeSettled = threeActed.filter((r) => r.status === "hit" || r.status === "miss");
@@ -223,8 +167,6 @@ function generateSnapshotsJs(snapshots) {
     combos: combos,
     scoreBuckets: scoreBuckets,
     tags: tags,
-    weightedRecords: weightedRecords,
-    weightedSummary: weightedSummary,
     detail: detail,
     threePeriodRecords: threePeriodRecords,
     threePeriodSummary: threeSummary,
@@ -285,18 +227,16 @@ function settleThreePeriodRecords(snapshots, raw, model) {
 }
 
 function sourcePickForWindow(snapshots, model, raw, prediction, stream, target) {
-  const index = stream === "D1" || stream === "W1" ? 0 : 1;
+  const index = stream === "D1" ? 0 : 1;
   const saved = snapshots.records.find((r) => Number(r.target) === Number(target));
   if (saved) {
-    const picks = stream.charAt(0) === "D"
-      ? (saved.models && saved.models.doubleRecommendation && saved.models.doubleRecommendation.picks)
-      : (saved.models && saved.models.weightedBounce && saved.models.weightedBounce.picks);
+    const picks = saved.models && saved.models.doubleRecommendation && saved.models.doubleRecommendation.picks;
     return Array.isArray(picks) ? (picks[index] || null) : null;
   }
   const base = Number(target) - 1;
   if (!raw[String(base)]) return null;
   const pred = base === Number(prediction.basedOn) ? prediction : model.buildPrediction(base);
-  const picks = stream.charAt(0) === "D" ? pred.doubleRecommendation : pred.weightedBounce;
+  const picks = pred.doubleRecommendation;
   return Array.isArray(picks) ? (picks[index] || null) : null;
 }
 
@@ -310,7 +250,7 @@ function addSourceWindow(snapshots, model, raw, prediction, stream, target) {
     basedOn: Number(target) - 1,
     generatedAt: new Date().toISOString(),
     stream,
-    model: stream.charAt(0) === "D" ? "双号追热" : "加权反弹",
+    model: "双号追热",
     tail: pending ? pick.tail : null,
     score: pending ? pick.score : null,
     grade: pending ? (pick.grade || gradeOf(pick.score)) : null,
@@ -388,7 +328,6 @@ function sync() {
     rec.settled = true;
     rec.results = {};
     rec.results.doubleRecommendation = modelHit(rec.models.doubleRecommendation, actualTails);
-    rec.results.weightedBounce = modelHit(rec.models.weightedBounce, actualTails);
   }
 
   const target = latest + 1;
@@ -404,10 +343,6 @@ function sync() {
           description: "连出惯性分层打分，推2个尾号",
           ambiguous: !!prediction.doubleAmbiguous,
           picks: prediction.doubleRecommendation
-        },
-        weightedBounce: {
-          description: "恰好遗漏k期加权近期反弹率，推2个尾号",
-          picks: prediction.weightedBounce
         }
       }
     });
@@ -423,9 +358,6 @@ function sync() {
     if (decision && decision.source === "double" && decision.streams && decision.streams.D1.current) {
       streamKey = "D1";
       pick = decision.streams.D1.current;
-    } else if (decision && decision.source === "weighted" && decision.streams && decision.streams.W1.current) {
-      streamKey = "W1";
-      pick = decision.streams.W1.current;
     }
     const pending = !!(pick && pick.tail != null);
     snapshots.threePeriodRecords.push({
@@ -472,7 +404,6 @@ function report() {
   const snapshots = loadSnapshots();
   const records = snapshots.records || [];
   const d = summarize(records, "doubleRecommendation");
-  const w = summarize(records, "weightedBounce");
   const pending = records.filter((r) => !r.settled);
   const settled = records.filter((r) => r.settled);
   const firstHit = (key, idx) => settled.filter((r) => {
@@ -487,9 +418,6 @@ function report() {
   console.log("===== 真实预测快照报告 =====");
   console.log(`双号至少中一：${d.hits}/${d.settled} = ${(d.rate * 100).toFixed(1)}%`);
   console.log(`双号首推：${firstHit("doubleRecommendation", 0)}/${d.settled}`);
-  console.log(`加权至少中一：${w.hits}/${w.acted} = ${(w.rate * 100).toFixed(1)}% · 跳过${w.skipped}期`);
-  console.log(`加权首推：${firstHit("weightedBounce", 0)}/${w.acted}`);
-  console.log(`加权两个全中：${bothHit("weightedBounce")}/${w.acted}`);
   const threeRecords = Array.isArray(snapshots.threePeriodRecords) ? snapshots.threePeriodRecords : [];
   const threeActed = threeRecords.filter((r) => r.tail != null && r.action !== "观望");
   const threeSettled = threeActed.filter((r) => r.status === "hit" || r.status === "miss");
@@ -502,9 +430,8 @@ function report() {
     console.log("\n最近已结算：");
     for (const r of recent) {
       const dr = r.results.doubleRecommendation;
-      const wr = r.results.weightedBounce;
       console.log(
-        `第${r.target}期 实际[${r.actualTails.join(",")}] 双号[${dr.picks.join(",")}]${dr.hit ? "中" : "未中"} 加权[${wr.picks.join(",")}]${wr.hit ? "中" : "未中"}`
+        `第${r.target}期 实际[${r.actualTails.join(",")}] 双号[${dr.picks.join(",")}]${dr.hit ? "中" : "未中"}`
       );
     }
   }

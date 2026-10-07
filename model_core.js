@@ -8,18 +8,6 @@
   "use strict";
 
   var BASE_RATE = [0.4717, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539];
-  var BOUNCE = { 0: 2, 1: 3, 2: 1, 3: 1, 4: 2, 5: 1, 6: 2, 7: 2, 8: 2, 9: 4 };
-  var NEW_MODEL = {
-    decayRate: 1.75,
-    bounceThresh: 0.75,
-    bounceThresh2: 0.65,
-    wBounce: 5,
-    wBounce2: 3,
-    wDepth: 1,
-    depthThresh: 0.5,
-    minSample: 2,
-    minEvents: 5
-  };
 
   // 双号推荐五级强度映射（唯一权威定义，页面/监督脚本/统计脚本统一引用，禁止各算一套）
   var GRADE_TIERS = [
@@ -110,79 +98,6 @@
       return m;
     }
 
-    function weightedExactBounce(d, upto, k) {
-      var totalW = 0, hitsW = 0, run = 0;
-      var total = 0, hits = 0;
-      var uidx = periods.indexOf(upto);
-      if (uidx < 0) return { rate: 0, sample: 0, total: 0, hits: 0 };
-      for (var i = 0; i < periods.length - 1; i++) {
-        if (periods[i] >= upto) break;
-        if (hit(periods[i], d)) {
-          run = 0;
-        } else {
-          run++;
-          if (run === k) {
-            var distFromEnd = uidx - i;
-            var weight = Math.max(1, 10 - distFromEnd / NEW_MODEL.decayRate);
-            totalW += weight;
-            total++;
-            if (hit(periods[i + 1], d)) {
-              hitsW += weight;
-              hits++;
-            }
-          }
-        }
-      }
-      return { rate: totalW ? hitsW / totalW : 0, sample: totalW, total: total, hits: hits };
-    }
-
-    function missDepthRatio(d, upto) {
-      var m = missUntil(d, upto);
-      var maxM = 0, run = 0;
-      for (var i = 0; i < periods.length; i++) {
-        if (periods[i] > upto) break;
-        if (hit(periods[i], d)) {
-          run = 0;
-        } else {
-          run++;
-          if (run > maxM) maxM = run;
-        }
-      }
-      return { miss: m, maxMiss: maxM, ratio: maxM > 0 ? m / maxM : 0 };
-    }
-
-    function weightedPickAt(cur, k) {
-      var last = {};
-      for (var d = 0; d < 10; d++) last[d] = hit(cur, d);
-      var cands = [];
-      for (var d2 = 0; d2 < 10; d2++) {
-        if (last[d2]) continue;
-        var md = missDepthRatio(d2, cur);
-        var wb = weightedExactBounce(d2, cur, md.miss);
-        var score = 0;
-        if (wb.sample >= NEW_MODEL.minSample && wb.total >= NEW_MODEL.minEvents) {
-          if (wb.rate >= NEW_MODEL.bounceThresh) score += NEW_MODEL.wBounce;
-          else if (wb.rate >= NEW_MODEL.bounceThresh2) score += NEW_MODEL.wBounce2;
-        }
-        if (md.ratio >= NEW_MODEL.depthThresh) score += NEW_MODEL.wDepth;
-        cands.push({
-          d: d2,
-          score: score,
-          miss: md.miss,
-          maxMiss: md.maxMiss,
-          ratio: md.ratio,
-          wbr: wb.rate,
-          wbSample: wb.sample,
-          wbHits: wb.hits,
-          wbTotal: wb.total
-        });
-      }
-      cands.sort(function (a, b) { return b.score - a.score || a.d - b.d; });
-      if (!cands.length || cands[0].score <= 0) return [];
-      if (cands.length >= 2 && cands[0].score === cands[1].score) return [];
-      return cands.slice(0, k);
-    }
-
     function pickTopAt(cur, k) {
       var picks = [];
       for (var d = 1; d <= 9; d++) {
@@ -212,17 +127,6 @@
         doubleAmbiguous: doublePicks.length >= 2 && doublePicks[0].sc === doublePicks[1].sc,
         doubleRecommendation: doublePicks.map(function (p) {
           return { tail: p.d, score: p.sc, tag: p.tag, grade: gradeOf(p.sc) };
-        }),
-        weightedBounce: weightedPickAt(cur, 2).map(function (p) {
-          return {
-            tail: p.d,
-            score: p.score,
-            miss: p.miss,
-            maxMiss: p.maxMiss,
-            ratio: p.ratio,
-            weightedBounceRate: p.wbr,
-            sample: p.wbSample
-          };
         })
       };
     }
@@ -232,12 +136,9 @@
       hit: hit,
       tailsOf: tailsOf,
       pickTopAt: pickTopAt,
-      weightedPickAt: weightedPickAt,
       buildPrediction: buildPrediction,
       gradeOf: gradeOf,
       baseRate: BASE_RATE,
-      thresholds: NEW_MODEL,
-      bounceCritical: BOUNCE
     };
   }
 

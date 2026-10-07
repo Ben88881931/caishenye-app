@@ -53,22 +53,8 @@ if (pending.length === 1) {
   const p = pending[0];
   const dPicks = (p.models.doubleRecommendation.picks || []).map((x) => ({ tail: x.tail, score: x.score }));
   const dExpected = (prediction.doubleRecommendation || []).map((x) => ({ tail: x.tail, score: x.score }));
-  const wPicks = (p.models.weightedBounce.picks || []).map((x) => ({ tail: x.tail, score: x.score }));
-  const wExpected = (prediction.weightedBounce || []).map((x) => ({ tail: x.tail, score: x.score }));
   must(JSON.stringify(dPicks) === JSON.stringify(dExpected), "下一期双号快照与模型输出一致");
-  must(JSON.stringify(wPicks) === JSON.stringify(wExpected), "下一期加权快照与模型输出一致，空推荐也一致");
 }
-
-const weightedRecords = Array.isArray(snapshotJs.weightedRecords) ? snapshotJs.weightedRecords : [];
-const settledWeighted = weightedRecords.filter((r) => r.settled);
-const actedWeighted = settledWeighted.filter((r) => Array.isArray(r.picks) && r.picks.length > 0);
-const summary = snapshotJs.weightedSummary || {};
-must(weightedRecords.every((r) => r.skipped === (Array.isArray(r.picks) && r.picks.length === 0)), "weightedRecords 的 skipped 字段正确");
-must(summary.n === actedWeighted.length, "加权汇总 n 只统计实际推荐");
-must(summary.settled === settledWeighted.length, "加权汇总 settled 等于全部已结算");
-must(summary.skipped === settledWeighted.length - actedWeighted.length, "加权汇总 skipped 等于空推荐期数");
-const weightedHits = actedWeighted.filter((r) => r.hit).length;
-must(summary.hits === weightedHits && summary.miss === actedWeighted.length - weightedHits, "加权命中/未中不包含跳过期");
 
 const settledDoubleTargets = records.filter((r) => r.settled && r.results && r.results.doubleRecommendation).map((r) => Number(r.target)).sort((a, b) => a - b);
 const detailTargets = (snapshotJs.detail || []).map((r) => Number(r.target)).sort((a, b) => a - b);
@@ -100,8 +86,8 @@ const ultimate = require("./ultimate_model.js").analyze(raw, model, { startPerio
 must(Number(ultimate.nextPeriod) === latest + 1, "追号/三期内追推荐预测期正确");
 must(["分批启用", "观望"].includes(ultimate.decision.action), "固定追三期总决策合法");
 
-must(appText.includes("WEIGHTED_CARD_START") && appText.includes("WEIGHTED_CARD_END") && appText.indexOf('var weightedHeaderPos = html.indexOf(\'<div class="section" id="weightedPageHeader">\')') > appText.indexOf("var weightedCardStart = html.indexOf") && appText.includes("sourceStripHtml") && appText.includes("下一轮窗口号：") && appText.includes("当前状态：") && appText.includes("真实快照") && appText.includes("历史回测") && appText.includes("历史顺序回测") && appText.includes("settleManualOrder") && appText.includes("ORDER_PATTERNS") && !appText.includes("ultimateQuickAdd") && !appText.includes("data-uo-gen") && appText.includes("rowMap") && appText.includes("模型建议：") && appText.includes("第' + batch.startPeriod + '期批次") && appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START") && appText.includes("card-followup"), "本期选号通过HTML顺序直接置顶且三期内四流记录紧接卡片下方");
-must(appText.includes("snapshotSkipped") && appText.includes("跳过，未参与结算"), "空快照不会回退成实时推荐");
+must(appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START") && appText.includes("card-followup") && appText.includes("真实快照") && appText.includes("历史回测"), "三期内记录与真实/历史链路完整");
+must(!appText.includes("加权") && !appText.includes("weightedBounce") && !appText.includes("W1") && !appText.includes("W2"), "活动页面与代码不得再出现加权模型残留");
 must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab") && appText.includes("nav-group-caret") && appText.includes("window.scrollTo"), "导航保持横向位置、当前项可见且切页回顶");
 const cssText = read("styles.css");
 must(cssText.includes("position: sticky") && cssText.includes("grid-template-columns: repeat(5") && cssText.includes("min-height: 42px"), "导航为粘性五项分段布局且触控高度合格");

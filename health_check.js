@@ -94,9 +94,6 @@ function snapshotBothSummary(key) {
 }
 
 const snapDouble = snapshotSummary('doubleRecommendation');
-const snapWeighted = snapshotSummary('weightedBounce');
-const snapWeightedFirst = snapshotPickSummary('weightedBounce', 0);
-const snapWeightedBoth = snapshotBothSummary('weightedBounce');
 const snapPending = snapshotRecords.filter(r => !r.settled).length;
 
 console.log('===== v3 模型健康检查（分账）=====\n');
@@ -114,9 +111,6 @@ console.log('当前连续未中 ' + missStreak + ' 期');
 
 console.log('\n--- 真实快照账（开奖前保存，开奖后结算）---');
 console.log('双号至少中一: ' + snapDouble.hits + '/' + snapDouble.n + ' = ' + pct(snapDouble.rate));
-console.log('加权至少中一: ' + snapWeighted.hits + '/' + snapWeighted.n + ' = ' + pct(snapWeighted.rate) + '，跳过 ' + snapWeighted.skipped + ' 期');
-console.log('加权首推: ' + snapWeightedFirst.hits + '/' + snapWeightedFirst.n + ' = ' + pct(snapWeightedFirst.rate));
-console.log('加权两个全中: ' + snapWeightedBoth.hits + '/' + snapWeightedBoth.n + ' = ' + pct(snapWeightedBoth.rate));
 console.log('待开奖: ' + snapPending + ' 期');
 
 // 预警判断（实盘样本不足时不作结论）
@@ -132,4 +126,4 @@ if (liveSettled.length < 10) {
   console.log('✅ 状态正常：实盘 ' + pct(live.rate) + '，回测 ' + pct(bt['命中率'] || 0));
 }
 
-console.log('\n【健康检查结果】回测 ' + pct(bt['命中率'] || 0) + '，旧实盘 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期），真实快照双号至少中一 ' + snapDouble.hits + '/' + snapDouble.n + '，加权首推 ' + snapWeightedFirst.hits + '/' + snapWeightedFirst.n + '，加权至少中一 ' + snapWeighted.hits + '/' + snapWeighted.n);
+console.log('\n【健康检查结果】回测 ' + pct(bt['命中率'] || 0) + '，旧实盘 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期），真实快照双号至少中一 ' + snapDouble.hits + '/' + snapDouble.n);

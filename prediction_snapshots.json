@@ -23,29 +23,6 @@
               "tag": "7期4次"
             }
           ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 1,
-              "score": 6,
-              "miss": 3,
-              "maxMiss": 5,
-              "ratio": 0.6,
-              "weightedBounceRate": 0.7777777777777778,
-              "sample": 9
-            },
-            {
-              "tail": 0,
-              "score": 0,
-              "miss": 1,
-              "maxMiss": 9,
-              "ratio": 0.1111111111111111,
-              "weightedBounceRate": 0.5631067961165049,
-              "sample": 88.28571428571428
-            }
-          ]
         }
       },
       "actualTails": [
@@ -69,17 +46,6 @@
             7
           ],
           "count": 2,
-          "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            1,
-            0
-          ],
-          "hits": [
-            0
-          ],
-          "count": 1,
           "hit": true
         }
       }
@@ -105,29 +71,6 @@
               "tag": "5期3次"
             }
           ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 9,
-              "score": 3,
-              "miss": 1,
-              "maxMiss": 7,
-              "ratio": 0.14285714285714285,
-              "weightedBounceRate": 0.7485822306238186,
-              "sample": 75.57142857142857
-            },
-            {
-              "tail": 1,
-              "score": 1,
-              "miss": 4,
-              "maxMiss": 5,
-              "ratio": 0.8,
-              "weightedBounceRate": 0,
-              "sample": 2
-            }
-          ]
         }
       },
       "actualTails": [
@@ -147,17 +90,6 @@
           ],
           "hits": [
             2
-          ],
-          "count": 1,
-          "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            9,
-            1
-          ],
-          "hits": [
-            9
           ],
           "count": 1,
           "hit": true
@@ -185,29 +117,6 @@
               "tag": "5期3次"
             }
           ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 1,
-              "score": 6,
-              "miss": 5,
-              "maxMiss": 5,
-              "ratio": 1,
-              "weightedBounceRate": 1,
-              "sample": 2
-            },
-            {
-              "tail": 0,
-              "score": 0,
-              "miss": 1,
-              "maxMiss": 9,
-              "ratio": 0.1111111111111111,
-              "weightedBounceRate": 0.6080246913580247,
-              "sample": 92.57142857142857
-            }
-          ]
         }
       },
       "actualTails": [
@@ -231,18 +140,6 @@
           ],
           "count": 1,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            1,
-            0
-          ],
-          "hits": [
-            1,
-            0
-          ],
-          "count": 2,
-          "hit": true
         }
       }
     },
@@ -265,29 +162,6 @@
               "tail": 8,
               "score": 93.9,
               "tag": "连出3"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 9,
-              "score": 5,
-              "miss": 1,
-              "maxMiss": 7,
-              "ratio": 0.14285714285714285,
-              "weightedBounceRate": 0.7654320987654321,
-              "sample": 81
-            },
-            {
-              "tail": 3,
-              "score": 0,
-              "miss": 1,
-              "maxMiss": 7,
-              "ratio": 0.14285714285714285,
-              "weightedBounceRate": 0.5464285714285715,
-              "sample": 80
             }
           ]
         }
@@ -325,32 +199,6 @@
           "hits": [],
           "count": 0,
           "hit": false
-        },
-        "weightedBounce": {
-          "picks": [
-            9,
-            3
-          ],
-          "perPick": [
-            {
-              "tail": 9,
-              "score": 5,
-              "grade": "D",
-              "hit": true
-            },
-            {
-              "tail": 3,
-              "score": 0,
-              "grade": "D",
-              "hit": true
-            }
-          ],
-          "hits": [
-            9,
-            3
-          ],
-          "count": 2,
-          "hit": true
         }
       }
     },
@@ -375,29 +223,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 7,
-              "score": 6,
-              "miss": 3,
-              "maxMiss": 5,
-              "ratio": 0.6,
-              "weightedBounceRate": 0.7851851851851852,
-              "sample": 19.285714285714285
-            },
-            {
-              "tail": 1,
-              "score": 0,
-              "miss": 1,
-              "maxMiss": 5,
-              "ratio": 0.2,
-              "weightedBounceRate": 0.5567375886524824,
-              "sample": 80.57142857142857
             }
           ]
         }
@@ -438,33 +263,6 @@
           ],
           "count": 1,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            7,
-            1
-          ],
-          "perPick": [
-            {
-              "tail": 7,
-              "score": 6,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            },
-            {
-              "tail": 1,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            }
-          ],
-          "hits": [
-            7
-          ],
-          "count": 1,
-          "hit": true
         }
       }
     },
@@ -489,29 +287,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 0,
-              "score": 0,
-              "miss": 1,
-              "maxMiss": 9,
-              "ratio": 0.1111111111111111,
-              "weightedBounceRate": 0.6466973886328725,
-              "sample": 93
-            },
-            {
-              "tail": 1,
-              "score": 0,
-              "miss": 2,
-              "maxMiss": 5,
-              "ratio": 0.4,
-              "weightedBounceRate": 0.564,
-              "sample": 35.714285714285715
             }
           ]
         }
@@ -551,34 +326,6 @@
           "hits": [],
           "count": 0,
           "hit": false
-        },
-        "weightedBounce": {
-          "picks": [
-            0,
-            1
-          ],
-          "perPick": [
-            {
-              "tail": 0,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            },
-            {
-              "tail": 1,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            }
-          ],
-          "hits": [
-            0,
-            1
-          ],
-          "count": 2,
-          "hit": true
         }
       }
     },
@@ -603,29 +350,6 @@
               "score": 93.9,
               "tag": "连出3",
               "grade": "A"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 3,
-              "score": 0,
-              "miss": 2,
-              "maxMiss": 7,
-              "ratio": 0.2857142857142857,
-              "weightedBounceRate": 0.5606694560669455,
-              "sample": 34.142857142857146
-            },
-            {
-              "tail": 4,
-              "score": 0,
-              "miss": 2,
-              "maxMiss": 6,
-              "ratio": 0.3333333333333333,
-              "weightedBounceRate": 0.5599999999999999,
-              "sample": 35.714285714285715
             }
           ]
         }
@@ -667,33 +391,6 @@
           ],
           "count": 1,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            3,
-            4
-          ],
-          "perPick": [
-            {
-              "tail": 3,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            },
-            {
-              "tail": 4,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            }
-          ],
-          "hits": [
-            4
-          ],
-          "count": 1,
-          "hit": true
         }
       }
     },
@@ -718,29 +415,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 2,
-              "score": 0,
-              "miss": 1,
-              "maxMiss": 11,
-              "ratio": 0.09090909090909091,
-              "weightedBounceRate": 0.564796905222437,
-              "sample": 73.85714285714288
-            },
-            {
-              "tail": 3,
-              "score": 0,
-              "miss": 3,
-              "maxMiss": 7,
-              "ratio": 0.42857142857142855,
-              "weightedBounceRate": 0.4,
-              "sample": 15
             }
           ]
         }
@@ -782,33 +456,6 @@
           ],
           "count": 1,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            2,
-            3
-          ],
-          "perPick": [
-            {
-              "tail": 2,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            },
-            {
-              "tail": 3,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            }
-          ],
-          "hits": [
-            2
-          ],
-          "count": 1,
-          "hit": true
         }
       }
     },
@@ -834,29 +481,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 7,
-              "score": 6,
-              "miss": 3,
-              "maxMiss": 5,
-              "ratio": 0.6,
-              "weightedBounceRate": 0.9113924050632911,
-              "sample": 22.571428571428573
-            },
-            {
-              "tail": 3,
-              "score": 1,
-              "miss": 4,
-              "maxMiss": 7,
-              "ratio": 0.5714285714285714,
-              "weightedBounceRate": 0.3333333333333333,
-              "sample": 9
             }
           ]
         }
@@ -897,33 +521,6 @@
           ],
           "count": 1,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            7,
-            3
-          ],
-          "perPick": [
-            {
-              "tail": 7,
-              "score": 6,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            },
-            {
-              "tail": 3,
-              "score": 1,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            }
-          ],
-          "hits": [
-            7
-          ],
-          "count": 1,
-          "hit": true
         }
       }
     },
@@ -951,10 +548,6 @@
               "grade": "C"
             }
           ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": []
         }
       },
       "actualTails": [
@@ -992,13 +585,6 @@
           ],
           "count": 1,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [],
-          "perPick": [],
-          "hits": [],
-          "count": 0,
-          "hit": false
         }
       }
     },
@@ -1024,29 +610,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 9,
-              "score": 3,
-              "miss": 1,
-              "maxMiss": 7,
-              "ratio": 0.14285714285714285,
-              "weightedBounceRate": 0.7417475728155339,
-              "sample": 73.57142857142857
-            },
-            {
-              "tail": 3,
-              "score": 1,
-              "miss": 6,
-              "maxMiss": 7,
-              "ratio": 0.8571428571428571,
-              "weightedBounceRate": 0.5,
-              "sample": 4
             }
           ]
         }
@@ -1087,33 +650,6 @@
           ],
           "count": 1,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            9,
-            3
-          ],
-          "perPick": [
-            {
-              "tail": 9,
-              "score": 3,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            },
-            {
-              "tail": 3,
-              "score": 1,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            }
-          ],
-          "hits": [
-            3
-          ],
-          "count": 1,
-          "hit": true
         }
       }
     },
@@ -1139,29 +675,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 0,
-              "score": 3,
-              "miss": 1,
-              "maxMiss": 9,
-              "ratio": 0.1111111111111111,
-              "weightedBounceRate": 0.667779632721202,
-              "sample": 85.57142857142857
-            },
-            {
-              "tail": 8,
-              "score": 1,
-              "miss": 3,
-              "maxMiss": 6,
-              "ratio": 0.5,
-              "weightedBounceRate": 0.3333333333333333,
-              "sample": 15
             }
           ]
         }
@@ -1201,34 +714,6 @@
           "hits": [],
           "count": 0,
           "hit": false
-        },
-        "weightedBounce": {
-          "picks": [
-            0,
-            8
-          ],
-          "perPick": [
-            {
-              "tail": 0,
-              "score": 3,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            },
-            {
-              "tail": 8,
-              "score": 1,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            }
-          ],
-          "hits": [
-            0,
-            8
-          ],
-          "count": 2,
-          "hit": true
         }
       }
     },
@@ -1254,29 +739,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 1,
-              "score": 3,
-              "miss": 2,
-              "maxMiss": 5,
-              "ratio": 0.4,
-              "weightedBounceRate": 0.7361563517915309,
-              "sample": 43.857142857142854
-            },
-            {
-              "tail": 2,
-              "score": 0,
-              "miss": 1,
-              "maxMiss": 11,
-              "ratio": 0.09090909090909091,
-              "weightedBounceRate": 0.6296296296296295,
-              "sample": 81
             }
           ]
         }
@@ -1318,33 +780,6 @@
           ],
           "count": 2,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            1,
-            2
-          ],
-          "perPick": [
-            {
-              "tail": 1,
-              "score": 3,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            },
-            {
-              "tail": 2,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            }
-          ],
-          "hits": [
-            2
-          ],
-          "count": 1,
-          "hit": true
         }
       }
     },
@@ -1372,10 +807,6 @@
               "grade": "A"
             }
           ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": []
         }
       },
       "actualTails": [
@@ -1414,13 +845,6 @@
           ],
           "count": 1,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [],
-          "perPick": [],
-          "hits": [],
-          "count": 0,
-          "hit": false
         }
       }
     },
@@ -1446,29 +870,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 1,
-              "score": 1,
-              "miss": 4,
-              "maxMiss": 5,
-              "ratio": 0.8,
-              "weightedBounceRate": 0,
-              "sample": 4.571428571428571
-            },
-            {
-              "tail": 0,
-              "score": 0,
-              "miss": 2,
-              "maxMiss": 9,
-              "ratio": 0.2222222222222222,
-              "weightedBounceRate": 0.5714285714285714,
-              "sample": 28
             }
           ]
         }
@@ -1507,34 +908,6 @@
           "hits": [],
           "count": 0,
           "hit": false
-        },
-        "weightedBounce": {
-          "picks": [
-            1,
-            0
-          ],
-          "perPick": [
-            {
-              "tail": 1,
-              "score": 1,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            },
-            {
-              "tail": 0,
-              "score": 0,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            }
-          ],
-          "hits": [
-            1,
-            0
-          ],
-          "count": 2,
-          "hit": true
         }
       }
     },
@@ -1560,29 +933,6 @@
               "score": 92.5,
               "tag": "5期3次",
               "grade": "C"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 6,
-              "score": 4,
-              "miss": 2,
-              "maxMiss": 4,
-              "ratio": 0.5,
-              "weightedBounceRate": 0.6896551724137931,
-              "sample": 29
-            },
-            {
-              "tail": 8,
-              "score": 1,
-              "miss": 3,
-              "maxMiss": 6,
-              "ratio": 0.5,
-              "weightedBounceRate": 0.559748427672956,
-              "sample": 22.714285714285715
             }
           ]
         }
@@ -1623,31 +973,6 @@
           ],
           "count": 2,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            6,
-            8
-          ],
-          "perPick": [
-            {
-              "tail": 6,
-              "score": 4,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            },
-            {
-              "tail": 8,
-              "score": 1,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            }
-          ],
-          "hits": [],
-          "count": 0,
-          "hit": false
         }
       }
     },
@@ -1673,29 +998,6 @@
               "score": 93.9,
               "tag": "连出3",
               "grade": "A"
-            }
-          ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 5,
-              "score": 3,
-              "miss": 3,
-              "maxMiss": 8,
-              "ratio": 0.375,
-              "weightedBounceRate": 0.6585365853658537,
-              "sample": 17.57142857142857
-            },
-            {
-              "tail": 6,
-              "score": 1,
-              "miss": 3,
-              "maxMiss": 4,
-              "ratio": 0.75,
-              "weightedBounceRate": 0.5555555555555556,
-              "sample": 9
             }
           ]
         }
@@ -1738,33 +1040,6 @@
           ],
           "count": 2,
           "hit": true
-        },
-        "weightedBounce": {
-          "picks": [
-            5,
-            6
-          ],
-          "perPick": [
-            {
-              "tail": 5,
-              "score": 3,
-              "tag": null,
-              "grade": "D",
-              "hit": false
-            },
-            {
-              "tail": 6,
-              "score": 1,
-              "tag": null,
-              "grade": "D",
-              "hit": true
-            }
-          ],
-          "hits": [
-            6
-          ],
-          "count": 1,
-          "hit": true
         }
       }
     },
@@ -1792,10 +1067,6 @@
               "grade": "A"
             }
           ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": []
         }
       },
       "actualTails": [
@@ -1833,13 +1104,6 @@
           "hits": [],
           "count": 0,
           "hit": false
-        },
-        "weightedBounce": {
-          "picks": [],
-          "perPick": [],
-          "hits": [],
-          "count": 0,
-          "hit": false
         }
       }
     },
@@ -1867,35 +1131,12 @@
               "grade": "C"
             }
           ]
-        },
-        "weightedBounce": {
-          "description": "恰好遗漏k期加权近期反弹率，推2个尾号",
-          "picks": [
-            {
-              "tail": 5,
-              "score": 1,
-              "miss": 5,
-              "maxMiss": 8,
-              "ratio": 0.625,
-              "weightedBounceRate": 0.3333333333333333,
-              "sample": 3
-            },
-            {
-              "tail": 1,
-              "score": 0,
-              "miss": 1,
-              "maxMiss": 5,
-              "ratio": 0.2,
-              "weightedBounceRate": 0.49822064056939497,
-              "sample": 80.28571428571429
-            }
-          ]
         }
       }
     }
   ],
   "latestPeriod": 279,
-  "updatedAt": "2026-10-06T15:02:05.338Z",
+  "updatedAt": "2026-10-07T04:56:34.204Z",
   "threePeriodRecords": [
     {
       "target": 273,
@@ -1904,7 +1145,7 @@
       "action": "观望",
       "source": null,
       "rule": "P5/P6",
-      "reason": "双号未确认且加权未达到强切换门槛，空仓观望",
+      "reason": "双号未确认，空仓观望",
       "stream": null,
       "tail": null,
       "score": null,
@@ -1922,7 +1163,7 @@
       "action": "跟双号",
       "source": "double",
       "rule": "P1/P6",
-      "reason": "双号达到A级且加权反弹信号确认",
+      "reason": "双号达到A级且信号确认",
       "stream": "D1",
       "tail": 5,
       "score": 93.9,

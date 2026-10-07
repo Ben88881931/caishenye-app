@@ -14,11 +14,7 @@
     endPeriod: null,
     recentWindow: 20,
     hotStreakLimit: 5,
-    coldOmission: 4,
-    minBounceRate: 0.55,
-    minBounceSample: 5,
     minDoubleScore: 93.9,
-    minWeightedConfirm: 0.65,
     missSwitchLimit: 3,
     minEdge: -0.01
   };
@@ -63,11 +59,6 @@
       score: pick.score,
       tag: pick.tag || "",
       grade: pick.grade || model.gradeOf(pick.score),
-      miss: pick.miss,
-      maxMiss: pick.maxMiss,
-      ratio: pick.ratio,
-      weightedBounceRate: pick.weightedBounceRate,
-      sample: pick.sample,
       baseRate: model.baseRate[pick.tail],
       hit: actual.indexOf(pick.tail) >= 0
     };
@@ -85,15 +76,12 @@
       var prediction = model.buildPrediction(p - 1);
       var actual = actualTails(raw, p);
       var d = prediction.doubleRecommendation || [];
-      var w = prediction.weightedBounce || [];
       rows.push({
         period: p,
         basedOn: p - 1,
         actual: actual,
         D1: makePick(d[0], actual, model),
-        D2: makePick(d[1], actual, model),
-        W1: makePick(w[0], actual, model),
-        W2: makePick(w[1], actual, model)
+        D2: makePick(d[1], actual, model)
       });
     }
     return rows;
@@ -102,16 +90,12 @@
   function streamPick(row, stream) {
     if (stream === "double" || stream === "D1") return row.D1;
     if (stream === "D2") return row.D2;
-    if (stream === "weighted" || stream === "W1") return row.W1;
-    if (stream === "W2") return row.W2;
     return null;
   }
 
   function streamLabel(stream) {
     if (stream === "D1" || stream === "double") return "双号首推";
     if (stream === "D2") return "双号备选";
-    if (stream === "W1" || stream === "weighted") return "加权首推";
-    if (stream === "W2") return "加权备选";
     return stream;
   }
 
@@ -295,18 +279,10 @@
     var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
     var d1 = streamState(rows, index, "D1", raw, opts);
     var d2 = streamState(rows, index, "D2", raw, opts);
-    var w1 = streamState(rows, index, "W1", raw, opts);
-    var w2 = streamState(rows, index, "W2", raw, opts);
     d1.confidence = independentConfidence(rows, index, "D1", d1, raw, opts);
     d2.confidence = independentConfidence(rows, index, "D2", d2, raw, opts);
-    w1.confidence = independentConfidence(rows, index, "W1", w1, raw, opts);
-    w2.confidence = independentConfidence(rows, index, "W2", w2, raw, opts);
     var d = d1;
-    var w = w1;
     var overheat = !!(d.current && d.tailStreak >= opts.hotStreakLimit);
-    var coldRebound = !!(w.current && Number(w.current.miss) >= opts.coldOmission &&
-      Number(w.current.weightedBounceRate) >= opts.minBounceRate &&
-      Number(w.current.sample) >= opts.minBounceSample);
     var dConfirmed = !!(d.current && !overheat && d.currentMissStreak !== 2 &&
       d.current.score >= opts.minDoubleScore && d2.currentHitStreak < 3);
 
@@ -329,10 +305,8 @@
       rule: rule,
       reason: reason,
       double: d,
-      weighted: w,
-      streams: { D1: d1, D2: d2, W1: w1, W2: w2 },
+      streams: { D1: d1, D2: d2 },
       overheat: overheat,
-      coldRebound: coldRebound,
       dConfirmed: dConfirmed
     };
   }
@@ -345,15 +319,12 @@
     var latest = periods[periods.length - 1];
     var prediction = model.buildPrediction(latest);
     var d = prediction.doubleRecommendation || [];
-    var w = prediction.weightedBounce || [];
     var future = {
       period: latest + 1,
       basedOn: latest,
       actual: [],
       D1: makePick(d[0], [], model),
-      D2: makePick(d[1], [], model),
-      W1: makePick(w[0], [], model),
-      W2: makePick(w[1], [], model)
+      D2: makePick(d[1], [], model)
     };
     var allRows = rows.concat([future]);
     var decision = decide(allRows, allRows.length - 1, raw, opts);
@@ -376,12 +347,11 @@
     var hits = 0;
     var bets = 0;
     var observed = 0;
-    var actionCounts = { double: 0, weighted: 0, observe: 0 };
+    var actionCounts = { double: 0, observe: 0 };
     var ruleCounts = {};
     for (var i = 0; i < rows.length; i++) {
       var pick = null;
       if (mode === "double") pick = rows[i].D1;
-      else if (mode === "weighted") pick = rows[i].W1;
       else {
         var decision = decide(rows, i, raw, opts);
         pick = streamPick(rows[i], decision.source);
@@ -487,7 +457,7 @@
       i += hitIndex === 4 ? 3 : hitIndex;
     }
     var counts = { first: 0, second: 0, third: 0, miss: 0 };
-    var sources = { double: 0, weighted: 0 };
+    var sources = { double: 0 };
     batches.forEach(function (batch) {
       if (batch.hitIndex === 1) counts.first++;
       else if (batch.hitIndex === 2) counts.second++;

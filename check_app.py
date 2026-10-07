@@ -131,7 +131,7 @@ def main():
         except subprocess.CalledProcessError as e:
             fail("app.js 语法错误：" + (e.stderr or "").strip())
 
-        for func in ["renderPredict", "missRebound", "backtestSignal", "calcGapStats"]:
+        for func in ["missRebound", "backtestSignal", "calcGapStats"]:
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少关键函数 {func}")
         else:
@@ -148,28 +148,6 @@ def main():
                 fail(f"app.js 缺少导航标签 {tab_id}")
         else:
             pass_("生肖窗口/遗漏导航标签存在")
-
-        for func in ["combinedPredictHistory", "weightedSnapshotHistory"]:
-            if f"function {func}" not in app_text:
-                fail(f"app.js 缺少加权反弹历史函数 {func}")
-        else:
-            pass_("加权反弹真实快照与全历史合并函数存在")
-        if "for (var N = 1; N <= latest - 1; N++)" in app_text:
-            pass_("加权反弹回测从第1期起点开始")
-        else:
-            fail("加权反弹回测没有从第1期起点开始")
-        if "首推/备选结果" in app_text and "连错遗漏记录" in app_text and "真实快照" in app_text:
-            pass_("加权反弹历史使用双号追热式滚动对错记录")
-        else:
-            fail("加权反弹历史没有使用双号追热式滚动对错记录")
-        if "最高连错" in app_text and "当前连错" in app_text:
-            pass_("加权反弹含首推/备选独立连错统计")
-        else:
-            fail("加权反弹缺少首推/备选连错统计")
-        if "function weightedHistoryPerformance" in app_text and "首推命中率" in app_text and "累计盈亏" in app_text and "最大回撤" in app_text:
-            pass_("加权反弹含首推单号历史业绩统计")
-        else:
-            fail("加权反弹缺少首推单号历史业绩统计")
 
         # 导航自定义排序检查
         if "function getVisibleTabs" in app_text:
@@ -210,7 +188,7 @@ def main():
         else:
             fail("app.js 缺少分类折叠、分类排序或页面跨类移动")
 
-        for func in ["renderSelector", "renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "hitLogSectionHTML"]:
+        for func in ["renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "hitLogSectionHTML"]:
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少终极模型函数 {func}")
         else:
@@ -248,31 +226,10 @@ def main():
             pass_("导航按模型流程排序")
         else:
             fail("导航未按模型流程排序")
-        if "snapshotSkipped" in app_text and "开奖前快照：跳过" in app_text and "跳过，未参与结算" in app_text:
-            pass_("加权反弹空快照不再回退显示实时排序")
-        else:
-            fail("加权反弹空快照仍会错误回退显示")
         if (
-            'id="weightedPageHeader"' in app_text
-            and 'id="predictRecommendCard"' in app_text
-            and 'id="pick3RecommendCard"' in app_text
+            'id="pick3RecommendCard"' in app_text
             and "function promoteSectionToTop" in app_text
-            and 'WEIGHTED_CARD_START' in app_text
-            and 'WEIGHTED_CARD_END' in app_text
-            and "sourceStripHtml" in app_text
-            and "下一轮窗口号：" in app_text
-            and "当前状态：" in app_text
-            and "真实快照" in app_text
-            and "历史回测" in app_text
-            and "历史顺序回测" in app_text
-            and "settleManualOrder" in app_text
-            and "ORDER_PATTERNS" in app_text
-            and "ultimateQuickAdd" not in app_text
-            and "data-uo-gen" not in app_text
-            and "rowMap" in app_text
-            and "模型建议：" in app_text
             and 'id="ultimateLockCard"' in app_text
-            and 'id="selectorActionCard"' in app_text
             and "ULT_CARD_HISTORY" in app_text
             and "ULT_RECORDS_START" in app_text
             and "card-followup" in app_text
@@ -288,10 +245,10 @@ def main():
             pass_("追三期下单含自动结算")
         else:
             fail("追三期下单缺少自动结算")
-        if "function renderSelector" in app_text and "window.CAISHEN_SELECTOR" in app_text and "第四套调度" in app_text:
-            pass_("三期内追推荐调度代码存在")
+        if "function renderUltimateMode" in app_text and "window.CAISHEN_SELECTOR" in app_text and "buildThreePeriodCorrectScrollHTML" in app_text:
+            pass_("三期内追推荐窗口代码存在")
         else:
-            fail("三期内追推荐调度代码不完整")
+            fail("三期内追推荐窗口代码不完整")
 
     index_path = REPO / "index.html"
     if not index_path.exists():
@@ -346,7 +303,7 @@ def main():
 
     if selector_path.exists():
         selector_text = selector_path.read_text(encoding="utf-8")
-        for token in ["buildSignals", "streamState", "independentConfidence", "conditionalTable", "decide", "streams: { D1", "analyze", "runBacktest", "runConfidenceBacktest", "runThreePeriodBacktest", "runThreePeriodStreamBacktest", "minDoubleScore", "minWeightedConfirm"]:
+        for token in ["buildSignals", "streamState", "independentConfidence", "conditionalTable", "decide", "streams: { D1", "analyze", "runBacktest", "runConfidenceBacktest", "runThreePeriodBacktest", "runThreePeriodStreamBacktest", "minDoubleScore"]:
             if token in selector_text:
                 pass_(f"model_selector.js 含 {token}")
             else:
@@ -356,7 +313,7 @@ def main():
 
     if page_audit_path.exists():
         page_audit_text = page_audit_path.read_text(encoding="utf-8")
-        for token in ["PAGE AUDIT PASSED", "snapshotSkipped", "weightedSummary", "sourceWindows", "sourceWindowSummary", "threePeriodRecords", "每条号源最多只有一个进行中的三期窗口", "WEIGHTED_CARD_START", "历史回测"]:
+        for token in ["PAGE AUDIT PASSED", "sourceWindows", "sourceWindowSummary", "threePeriodRecords", "每条号源最多只有一个进行中的三期窗口", "历史回测"]:
             if token in page_audit_text:
                 pass_(f"page_audit.js 含 {token}")
             else:
@@ -435,37 +392,10 @@ def main():
                     else:
                         pass_("snapshots.js 含等级组合统计")
 
-                    weighted = snap_data.get("weightedRecords")
-                    if not isinstance(weighted, list) or not weighted:
-                        fail("snapshots.js 缺少 weightedRecords（加权反弹快照）")
-                    else:
-                        ok_w = True
-                        for rec in weighted:
-                            if not all(f in rec for f in ["target", "settled", "picks", "actualTails"]):
-                                fail("snapshots.js weightedRecords 记录字段不完整")
-                                ok_w = False
-                                break
-                            for p in rec.get("picks", []):
-                                if "tail" not in p:
-                                    fail("snapshots.js weightedRecords pick 缺少 tail")
-                                    ok_w = False
-                                    break
-                            if not ok_w:
-                                break
-                        if ok_w:
-                            pass_("snapshots.js 含加权反弹真实快照记录")
-
-                    weighted_summary = snap_data.get("weightedSummary")
-                    if not isinstance(weighted_summary, dict) or not all(
-                        f in weighted_summary for f in ["n", "settled", "skipped", "hits", "miss", "firstPick", "secondPick", "atLeastOne", "both"]
-                    ):
-                        fail("snapshots.js 缺少 weightedSummary")
-                    else:
-                        pass_("snapshots.js 含加权反弹首推/备选/至少中一/全中汇总")
                     if not isinstance(snap_data.get("sourceWindows"), list):
-                        fail("snapshots.js 缺少四条原始号源真实窗口")
+                        fail("snapshots.js 缺少 D1/D2 原始号源真实窗口")
                     else:
-                        pass_("snapshots.js 含四条原始号源真实窗口，状态机每流仅一个进行中窗口")
+                        pass_("snapshots.js 含 D1/D2 原始号源真实窗口，状态机每流仅一个进行中窗口")
                     if not isinstance(snap_data.get("threePeriodRecords"), list):
                         fail("snapshots.js 缺少三期内追号码真实快照")
                     else:
@@ -516,11 +446,6 @@ def main():
                 pass_(f"model_core.js 含 {fn}")
             else:
                 fail(f"model_core.js 缺少 {fn}")
-        if "minEvents" in core_text and "cands[0].score <= 0" in core_text and "cands[0].score === cands[1].score" in core_text:
-            pass_("model_core.js 含无信号/并列跳过规则")
-        else:
-            fail("model_core.js 缺少无信号/并列跳过规则")
-
     # 逐期记录：结算结果必须含每个尾号命中详情（perPick）
     if supervisor_path.exists():
         sup_text = supervisor_path.read_text(encoding="utf-8")

@@ -35,8 +35,8 @@ console.log("数据截至 " + analysis.latestPeriod + "，预测 " + analysis.ne
 console.log("当前动作：" + analysis.decision.action + " | " + analysis.decision.rule + " | " + analysis.decision.reason);
 
 console.log("");
-console.log("四条推荐流状态");
-["D1", "D2", "W1", "W2"].forEach((stream) => {
+console.log("双号推荐流状态");
+["D1", "D2"].forEach((stream) => {
   const state = analysis.decision.streams[stream];
   const confidence = state.confidence || {};
   console.log(
@@ -59,7 +59,6 @@ console.log("四条推荐流状态");
 console.log("");
 console.log("单期跟推荐回测");
 printResult("死磕双号", selector.runBacktest(raw, model, "double", baseOptions));
-printResult("死磕加权", selector.runBacktest(raw, model, "weighted", baseOptions));
 printResult("第四套调度", selector.runBacktest(raw, model, "selector", baseOptions));
 
 const threePeriod = selector.runThreePeriodBacktest(raw, model, baseOptions);
@@ -71,12 +70,12 @@ console.log(
     "命中率=" + pct(threePeriod.hitRate),
     "第1/2/3期=" + threePeriod.first + "/" + threePeriod.second + "/" + threePeriod.third,
     "三期全错=" + threePeriod.miss,
-    "来源D/W=" + threePeriod.sources.double + "/" + threePeriod.sources.weighted
+    "来源双号=" + threePeriod.sources.double
   ].join(" | ")
 );
 
-console.log("四条推荐流独立追3期");
-["D1", "D2", "W1", "W2"].forEach((stream) => {
+console.log("双号推荐流独立追3期");
+["D1", "D2"].forEach((stream) => {
   const result = selector.runThreePeriodStreamBacktest(raw, model, stream, baseOptions);
   console.log(
     [
@@ -91,8 +90,8 @@ console.log("四条推荐流独立追3期");
 });
 
 console.log("");
-console.log("四条推荐流独立置信回测");
-["D1", "D2", "W1", "W2"].forEach((stream) => {
+console.log("双号推荐流独立置信回测");
+["D1", "D2"].forEach((stream) => {
   printResult(stream, selector.runConfidenceBacktest(raw, model, stream, baseOptions));
 });
 
