@@ -69,10 +69,21 @@ must(["D1", "D2"].every((k) => (pendingByStream[k] || 0) <= 1), "每条号源最
 const activeWindows = ["D1", "D2"].map((k) => sourceWindowRecords
   .filter((r) => r.stream === k && r.status === "pending")
   .sort((a, b) => Number(b.target) - Number(a.target))[0] || null);
-must(activeWindows.every((w) => w && Array.isArray(w.attempts) && w.attempts.length >= 1
-  && w.attempts.every((a) => Number(a.period) >= Number(w.target) && Number(a.period) <= Number(w.target) + 2)),
+const pendingTarget = pending.length ? Number(pending[0].target) : latest + 1;
+function activeWindowAttemptsValid(w) {
+  if (!w || !Array.isArray(w.attempts)) return false;
+  if (w.attempts.length === 0) return Number(w.target) === pendingTarget;
+  const start = Number(w.target);
+  return w.attempts.every((a, i) => Number(a.period) === start + i);
+}
+function activeWindowNextCheck(w) {
+  return w.attempts.length
+    ? Number(w.attempts[w.attempts.length - 1].period) + 1
+    : Number(w.target);
+}
+must(activeWindows.every(activeWindowAttemptsValid),
   "每条号源当前窗口必须从锁定期起逐期记录且不换号");
-must(activeWindows.every((w) => Number(w.attempts[w.attempts.length - 1].period) + 1 <= Number(w.target) + 2),
+must(activeWindows.every((w) => activeWindowNextCheck(w) <= Number(w.target) + 2),
   "每条号源当前窗口状态必须指向下一检查期");
 const sourceSummary = snapshotJs.sourceWindowSummary || {};
 must(["D1", "D2"].every((k) => sourceSummary.byStream && sourceSummary.byStream[k]), "snapshots.js 含双号原始号源窗口汇总");
