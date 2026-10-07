@@ -416,7 +416,8 @@
       net: Number(equity.toFixed(4)),
       roi: bets ? equity / bets : 0,
       maxDrawdown: Number(maxDrawdown.toFixed(4)),
-      skipped: skipped
+      skipped: skipped,
+      observed: skipped
     };
   }
 
