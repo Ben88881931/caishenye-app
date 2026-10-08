@@ -122,6 +122,10 @@ const modelFlow = ["pick3", "chasenumber", "chaserecommend", "orderlog"];
 const flowPositions = modelFlow.map((id) => tabIds.indexOf(id));
 must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions[i - 1])), "导航按模型流程排序");
 
+const workflowText = read("SUPERVISOR_WORKFLOW.md");
+must(workflowText.includes("五道闸门") && workflowText.includes("不得事后补造快照") && workflowText.includes("资金调度只做倍率"), "权威工作流必须包含数据真实性五道闸门和资金调度只做倍率规则");
+must(!/mock|demo|sampleData|假数据|模拟数据/i.test(appText), "所有页面都不得内置伪造、演示或模拟数据");
+
 const versions = [...indexText.matchAll(/(?:styles\.css|data\.js|model_core\.js|model_selector\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)/g)].map((m) => m[1]);
 must(versions.length === 7 && new Set(versions).size === 1, "7处资源版本一致");
 
