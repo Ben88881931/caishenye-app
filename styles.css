@@ -1308,6 +1308,22 @@ body {
 .hist-table .hist-miss { color: #9ca3af; }
 .hist-table .hist-miss-sum { color: #dc2626; font-weight: 700; font-size: 11px; }
 
+/* 执行提示：只放大尾号数字，避免整页数字一起变大挤压布局。 */
+.exec-line__label {
+  font-size: 17px;
+  line-height: 1.2;
+}
+.exec-line__label--tail {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.05;
+}
+.exec-window-card__tail {
+  font-size: 18px;
+  font-weight: 900;
+  color: inherit;
+}
+
 /* 桌面端加宽，手机端收紧边距并让标签栏更容易滑动 */
 @media (min-width: 768px) {
   .appbar__inner,

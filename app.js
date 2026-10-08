@@ -1905,8 +1905,17 @@
   function buildExecWindows(line) {
     var windows = [];
     var active = null;
+    var waiting = null;
     var p = line.kind === "tail" ? 1 : 31;
     while (p <= latest) {
+      if (waiting) {
+        var waitingActual = MODEL.tailsOf(p);
+        if (waitingActual.indexOf(Number(waiting.tail)) >= 0) {
+          waiting = null;
+        }
+        p++;
+        continue;
+      }
       var trigger = null;
       if (!active) {
         if (line.kind === "tail") {
@@ -1936,13 +1945,31 @@
         active.hitIndex = 0;
         active.status = "miss";
         windows.push(active);
+        var waitTail = null;
+        for (var wi = active.attempts.length - 1; wi >= 0; wi--) {
+          if (active.attempts[wi].tail != null) {
+            waitTail = active.attempts[wi].tail;
+            break;
+          }
+        }
         active = null;
         p++;
+        if (waitTail != null) {
+          waiting = { tail: waitTail, fromPeriod: p };
+        }
       } else {
         p++;
       }
     }
-    return { windows: windows, active: active };
+    return {
+      windows: windows,
+      active: active,
+      waiting: waiting ? {
+        tail: waiting.tail,
+        fromPeriod: waiting.fromPeriod,
+        waited: latest >= waiting.fromPeriod ? latest - waiting.fromPeriod + 1 : 0
+      } : null
+    };
   }
 
   function execWindowProfit(line, windowRow) {
@@ -1988,12 +2015,25 @@
   function execWindowText(windowRow) {
     if (windowRow.status === "hit") {
       var tail = windowRow.attempts[windowRow.hitIndex - 1].tail;
-      return "第" + windowRow.start + "期 · 尾" + tail + " · 第" + windowRow.hitIndex + "期中";
+      return "第" + windowRow.start + "期 · 尾<span class=\"exec-window-card__tail\">" + tail + "</span> · 第" + windowRow.hitIndex + "期中";
     }
-    return "第" + windowRow.start + "期 · 三期全错";
+    return "第" + windowRow.start + "期 · 连续3期未中 · 本窗口结束";
+  }
+
+  function execAttemptText(attempt) {
+    return "尾<span class=\"exec-window-card__tail\">" + attempt.tail + "</span>" + (attempt.hit ? "中" : "错");
   }
 
   function execNextAction(line, result, nextPeriod) {
+    if (result.waiting) {
+      return {
+        action: "等待",
+        amount: 0,
+        stage: "等待开奖",
+        status: "尾" + result.waiting.tail + "开出后下一期重开",
+        color: "#d97706"
+      };
+    }
     if (result.active) {
       var attempts = result.active.attempts.length;
       var expected = Number(result.active.start) + attempts;
@@ -2033,13 +2073,16 @@
       var firstStart = result.windows.length ? result.windows[0].start : (result.active ? result.active.start : (line.kind === "tail" ? 1 : 31));
       html += '<div class="section"><div class="panel" style="padding:12px 10px">';
       html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
-      html += '<b style="font-size:14px">' + line.label + '</b>';
+      html += '<b class="exec-line__label' + (line.kind === "tail" ? " exec-line__label--tail" : "") + '">' + line.label + '</b>';
       html += '<span class="chip">公式 ' + line.plan.join(":") + '</span>';
       html += '<span class="chip">记录起点 第' + firstStart + '期</span>';
       html += '<span class="chip">金额 ' + planText + '</span>';
       html += '<span class="chip">3期内命中率 ' + (stats.hitRate * 100).toFixed(1) + '%</span>';
-      html += '<span class="chip">第1/2/3期 ' + stats.first + '/' + stats.second + '/' + stats.third + ' · 全错 ' + stats.miss + '</span>';
+      html += '<span class="chip">第1/2/3期中 ' + stats.first + '/' + stats.second + '/' + stats.third + '期</span>';
       html += '<span class="chip" style="background:#ecfdf5;border-color:#86efac;color:#166534;font-weight:900">已结算窗口：中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗</span>';
+      if (result.waiting) {
+        html += '<span class="chip" style="background:#fffbeb;border-color:#fcd34d;color:#92400e;font-weight:900">等待尾' + result.waiting.tail + ' · 已等' + result.waiting.waited + '期</span>';
+      }
       html += '<span style="font-size:12px;color:' + (stats.net >= 0 ? "#16a34a" : "#dc2626") + '">历史净收益 ' + (stats.net >= 0 ? "+" : "") + stats.net + ' 元 · ROI ' + (stats.roi * 100).toFixed(1) + '%</span>';
       html += '</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">';
@@ -2061,7 +2104,7 @@
           html += '<div style="min-width:150px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + '">';
           html += '<div style="font-size:10px;color:#6b7280">起始 第' + w.start + '期</div>';
           html += '<div style="font-size:12px;font-weight:900;color:' + tone + ';margin-top:2px">' + execWindowText(w) + '</div>';
-          html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (w.attempts || []).map(function (a) { return "尾" + a.tail + (a.hit ? "中" : "错"); }).join("→") + '</div>';
+          html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (w.attempts || []).map(execAttemptText).join("→") + '</div>';
           html += '</div>';
         });
       }
@@ -2069,7 +2112,14 @@
         html += '<div style="min-width:150px;border:1px dashed #93c5fd;border-radius:8px;padding:6px 7px;background:#eff6ff">';
         html += '<div style="font-size:10px;color:#6b7280">起始 第' + result.active.start + '期</div>';
         html += '<div style="font-size:12px;font-weight:900;color:#2563eb;margin-top:2px">进行中 · 已' + result.active.attempts.length + '/3期</div>';
-        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (result.active.attempts || []).map(function (a) { return "尾" + a.tail + (a.hit ? "中" : "错"); }).join("→") + '</div>';
+        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (result.active.attempts || []).map(execAttemptText).join("→") + '</div>';
+        html += '</div>';
+      }
+      if (result.waiting) {
+        html += '<div style="min-width:150px;border:1px dashed #f59e0b;border-radius:8px;padding:6px 7px;background:#fffbeb">';
+        html += '<div style="font-size:10px;color:#6b7280">等待开始 第' + result.waiting.fromPeriod + '期</div>';
+        html += '<div style="font-size:12px;font-weight:900;color:#b45309;margin-top:2px">等待 尾<span class="exec-window-card__tail">' + result.waiting.tail + '</span> 开出</div>';
+        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">已观察' + result.waiting.waited + '期 · 开出后下一期重开</div>';
         html += '</div>';
       }
       html += '</div></div></div>';
