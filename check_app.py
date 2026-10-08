@@ -241,10 +241,10 @@ def main():
             pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和14条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
-        if "function renderFunds" in app_text and "资金调度" in app_text and "单窗最大风险预算" in app_text and "合计最大风险" in app_text and "v2_funds_risk_budget" in app_text and "100元起注" in app_text and "Math.max(100" in app_text:
-            pass_("资金调度页面包含风险预算、合计风险和14线建议下注")
+        if "function renderFunds" in app_text and "fundsOpportunity" in app_text and "加仓：1.5倍" in app_text and "重：1.0倍" in app_text and "标准：0.75倍" in app_text and "轻：0.5倍" in app_text and "暂停：0倍" in app_text and "锁仓 1.0倍" in app_text and "机会分" in app_text and "本金锚定" in app_text and "10,000元" in app_text and "本金占用率" in app_text and "本窗合计风险" in app_text and "Math.max(100" in app_text:
+            pass_("资金调度页面包含机会定档、1万元本金锚定、100元起注和14线建议下注")
         else:
-            fail("资金调度页面缺少风险预算或建议下注逻辑")
+            fail("资金调度页面缺少窗口定档或建议下注逻辑")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
