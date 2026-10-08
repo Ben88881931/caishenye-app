@@ -201,8 +201,8 @@ def main():
             pass_("app.js 含调度/追号/追推荐/追三期下单导航")
         else:
             fail("app.js 缺少调度/追号/追推荐/追三期下单导航")
-        if "三期内追号码" in app_text and "三期内追推荐" in app_text and "追三期下单" in app_text and "追中记录" in app_text and "执行规则" in app_text and "双流三期内命中结构" in app_text:
-            pass_("追号/追推荐/追三期下单及模型内追中记录区块完整")
+        if "三期内追号码" in app_text and "三期内追推荐" in app_text and "追三期下单" in app_text and "下单记录表" in app_text and "执行规则" in app_text and "双流三期内命中结构" in app_text:
+            pass_("追号/追推荐/追三期下单及下单记录表区块完整")
         else:
             fail("追号/追推荐/追三期下单页面区块不完整")
         if (
@@ -237,14 +237,14 @@ def main():
             pass_("三期内记录与调度记录均紧接卡片下方展示")
         else:
             fail("三期内记录未紧接卡片下方展示")
-        if "v2_ultimate_order_log" in app_text and "ultimateOrderNet" in app_text and "第1期中" in app_text and "第2期中" in app_text and "第3期中" in app_text:
-            pass_("追三期下单与追中记录含本地存储、结算计算和命中期数")
+        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "倍率" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text:
+            pass_("下单记录表含号码轨迹、倍率、自动结果和收益计算")
         else:
-            fail("追三期下单缺少本地存储或结算计算")
-        if "function autoSettleUltimateOrders" in app_text and "自动结算" in app_text:
-            pass_("追三期下单含自动结算")
+            fail("下单记录表缺少本地存储、倍率或收益计算")
+        if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
+            pass_("下单记录表含自动结算")
         else:
-            fail("追三期下单缺少自动结算")
+            fail("下单记录表缺少自动结算")
         if "function renderUltimateMode" in app_text and "window.CAISHEN_SELECTOR" in app_text and "buildThreePeriodCorrectScrollHTML" in app_text:
             pass_("三期内追推荐窗口代码存在")
         else:

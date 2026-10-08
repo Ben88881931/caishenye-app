@@ -347,6 +347,7 @@
     tail: 0,
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
     recordPage: 0,
+    orderTail: lsGet("v2_order_tail", "all"),
   };
 
   var TABS = [
@@ -1691,6 +1692,7 @@
 
   // ===== 双号模型追三期下单表 =====
   var ULT_ORDER_KEY = "v2_ultimate_order_log";
+  var SIMPLE_ORDER_KEY = "v2_simple_order_log";
   var ORDER_PATTERNS = {
     P6: [1, 1.25, 2.8125],
     P7: [1, 1.5, 3.375],
@@ -1759,65 +1761,107 @@
     return "待开奖";
   }
 
-  function renderOrderLog() {
-    var rows = autoSettleUltimateOrders();
-    var settled = rows.filter(function (r) { return r.result !== "pending"; });
-    var wins = settled.filter(function (r) { return r.result !== "miss"; }).length;
-    var net = settled.reduce(function (sum, r) { return sum + (ultimateOrderNet(r) || 0); }, 0);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">追三期下单</h2><span class="section__hint">追号与追推荐分开记录 · 开奖数据齐后自动结算 · 本机浏览器保存</span></div></div>';
+  function simpleOrdersLoad() {
+    var rows = lsGet(SIMPLE_ORDER_KEY, []);
+    return Array.isArray(rows) ? rows : [];
+  }
 
-    html += '<div class="section"><div class="grid-2">';
-    html += '<div class="stat"><div class="stat__value">' + rows.length + '</div><div class="stat__label">全部记录</div></div>';
+  function simpleOrdersSave(rows) {
+    lsSet(SIMPLE_ORDER_KEY, rows);
+  }
+
+  function settleSimpleOrder(row) {
+    if (!row || row.result !== "pending") return row;
+    var period = Number(row.period);
+    var tail = Number(row.tail);
+    var bits = RAW[String(period)];
+    if (!Number.isFinite(period) || !Number.isFinite(tail) || tail < 0 || tail > 9 || !bits) return row;
+    var hit = bits[tail] === "1";
+    row.result = hit ? "hit" : "miss";
+    row.settledPeriod = period;
+    row.settledAt = new Date().toISOString();
+    return row;
+  }
+
+  function autoSettleSimpleOrders() {
+    var rows = simpleOrdersLoad();
+    var changed = false;
+    rows.forEach(function (row) {
+      if (row.result !== "pending") return;
+      var before = row.result;
+      settleSimpleOrder(row);
+      if (row.result !== before) changed = true;
+    });
+    if (changed) simpleOrdersSave(rows);
+    return rows;
+  }
+
+  function simpleOrderProfit(row) {
+    var multiplier = Number(row.multiplier || 0);
+    if (!Number.isFinite(multiplier) || row.result === "pending") return null;
+    if (row.result === "hit") return +(multiplier * 0.8).toFixed(2);
+    if (row.result === "miss") return +(-multiplier).toFixed(2);
+    return null;
+  }
+
+  function renderOrderLog() {
+    var allRows = autoSettleSimpleOrders();
+    var activeTail = state.orderTail && state.orderTail !== "all" ? Number(state.orderTail) : "all";
+    var rows = activeTail === "all" ? allRows : allRows.filter(function (r) { return Number(r.tail) === activeTail; });
+    var settled = rows.filter(function (r) { return r.result !== "pending"; });
+    var totalProfit = settled.reduce(function (sum, r) { return sum + (simpleOrderProfit(r) || 0); }, 0);
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">' + (activeTail === "all" ? "下单记录表" : "尾" + activeTail + " · 历史下单轨迹") + '</h2><span class="section__hint">只记录期数、号码、倍率；结果按实际开奖自动判定，收益按1.8赔率计算 · 本机保存</span></div></div>';
+
+    html += '<div class="section"><div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value">' + rows.length + '</div><div class="stat__label">' + (activeTail === "all" ? "全部记录" : "尾" + activeTail + "记录") + '</div></div>';
     html += '<div class="stat"><div class="stat__value">' + rows.filter(function (r) { return r.result === "pending"; }).length + '</div><div class="stat__label">待开奖</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + wins + "/" + settled.length + '</div><div class="stat__label">已结算命中 / 已结算</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:' + (net >= 0 ? "#16a34a" : "#dc2626") + '">' + (net >= 0 ? "+" : "") + net.toFixed(2) + '</div><div class="stat__label">历史净收益（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (totalProfit >= 0 ? "#16a34a" : "#dc2626") + '">' + (totalProfit >= 0 ? "+" : "") + totalProfit.toFixed(2) + '</div><div class="stat__label">累计收益（元）</div></div>';
     html += '</div></div>';
+
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:11px;font-weight:900;color:#6b7280;margin-bottom:7px">号码历史轨迹入口</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    html += '<button class="chip" data-order-tail="all" style="' + (activeTail === "all" ? "background:#111827;color:#fff" : "") + '">全部</button>';
+    for (var td = 0; td < 10; td++) {
+      var tailRows = allRows.filter(function (r) { return Number(r.tail) === td; });
+      var tailProfit = tailRows.filter(function (r) { return r.result !== "pending"; }).reduce(function (sum, r) { return sum + (simpleOrderProfit(r) || 0); }, 0);
+      html += '<button class="chip" data-order-tail="' + td + '" style="' + (activeTail === td ? "background:#111827;color:#fff" : "") + '">尾' + td + ' · ' + tailRows.length + '笔 · ' + (tailProfit >= 0 ? "+" : "") + tailProfit.toFixed(2) + '</button>';
+    }
+    html += '</div></div></div>';
 
     html += '<div class="section"><div class="panel"><div class="panel__body">';
     html += '<div class="ord-grid">';
-    html += '<div class="ord-item"><label>模式</label><select id="uoMode"><option value="number">追号</option><option value="recommend">追推荐</option></select></div>';
-    html += '<div class="ord-item"><label>位置</label><select id="uoPos"><option value="D1">D1双号首推</option><option value="D2">D2双号备选</option></select></div>';
-    html += '<div class="ord-item"><label>起始期数</label><input id="uoStart" type="number" min="1" value="' + (latest + 1) + '"></div>';
-    html += '<div class="ord-item"><label>尾号</label><input id="uoTail" type="number" min="0" max="9" value="0"></div>';
-    html += '<div class="ord-item"><label>倍投</label><select id="uoPattern"><option value="P6">P6 保本</option><option value="P7">P7 收益型</option><option value="P8">P8 激进</option></select></div>';
-    html += '<div class="ord-item"><label>基础金额</label><input id="uoBase" type="number" min="1" step="1" value="1"></div>';
-    html += '<div class="ord-item"><label>结算结果</label><select id="uoResult"><option value="pending">待开奖</option><option value="hit1">第1期中</option><option value="hit2">第2期中</option><option value="hit3">第3期中</option><option value="miss">三期全错</option></select></div>';
+    html += '<div class="ord-item"><label>期数</label><input id="soPeriod" type="number" min="1" value="' + (latest + 1) + '"></div>';
+    html += '<div class="ord-item"><label>号码（尾号）</label><input id="soTail" type="number" min="0" max="9" value="0"></div>';
+    html += '<div class="ord-item"><label>倍率</label><input id="soMultiplier" type="number" min="0.01" step="0.01" value="1"></div>';
     html += '</div>';
-    html += '<button class="btn-primary" data-uo-add="1" style="margin-top:10px">新增记录</button>';
+    html += '<button class="btn-primary" data-so-add="1" style="margin-top:10px">新增下单记录</button>';
     html += '</div></div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="min-width:900px">';
-    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .6fr .6fr .5fr 1.05fr .6fr .8fr .65fr .65fr .5fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
-    html += '<span>时间</span><span>模式</span><span>位置</span><span>起始期</span><span>尾号</span><span>倍投</span><span>基础</span><span>结果</span><span>结算期</span><span>净收益</span><span>操作</span></div>';
+    html += '<div style="min-width:720px">';
+    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .7fr .7fr .7fr .7fr .5fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>时间</span><span>期数</span><span>号码</span><span>倍率</span><span>结果</span><span>收益</span><span>操作</span></div>';
     if (!rows.length) {
-      html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无追三期下单</div>';
+      html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无下单记录</div>';
     } else {
-      rows.slice().sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).forEach(function (row) {
-        var value = ultimateOrderNet(row);
-        html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .6fr .6fr .5fr 1.05fr .6fr .8fr .65fr .65fr .5fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
+      rows.slice().sort(function (a, b) {
+        return Number(b.period || 0) - Number(a.period || 0) || String(b.createdAt).localeCompare(String(a.createdAt));
+      }).forEach(function (row) {
+        var profit = simpleOrderProfit(row);
+        var resultText = row.result === "hit" ? "中" : row.result === "miss" ? "错" : "待开奖";
+        var resultColor = row.result === "hit" ? "#16a34a" : row.result === "miss" ? "#dc2626" : "#2563eb";
+        html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .7fr .7fr .7fr .7fr .5fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
         html += '<span>' + (row.createdAt || "").replace("T", " ").slice(0, 16) + '</span>';
-        html += '<span>' + (row.mode === "recommend" ? "追推荐" : "追号") + '</span>';
-        html += '<span>' + row.position + '</span>';
-        html += '<span>' + row.startPeriod + '</span>';
+        html += '<span>第' + row.period + '期</span>';
         html += '<span>尾' + row.tail + '</span>';
-        html += '<span>' + (ORDER_PATTERNS[row.pattern] || []).join("/") + '</span>';
-        html += '<span>' + row.base + '</span>';
-        if (row.autoSettled) {
-          html += '<span style="font-weight:800;color:' + (row.result === "miss" ? "#dc2626" : "#16a34a") + '">' + ultimateResultLabel(row.result) + ' · 自动</span>';
-        } else {
-          html += '<span><select data-uo-result="' + row.id + '" style="font-size:12px;padding:4px"><option value="pending"' + (row.result === "pending" ? " selected" : "") + '>待开奖</option><option value="hit1"' + (row.result === "hit1" ? " selected" : "") + '>第1期中</option><option value="hit2"' + (row.result === "hit2" ? " selected" : "") + '>第2期中</option><option value="hit3"' + (row.result === "hit3" ? " selected" : "") + '>第3期中</option><option value="miss"' + (row.result === "miss" ? " selected" : "") + '>三期全错</option></select></span>';
-        }
-        var hitIndex = row.hitIndex || (row.result === "hit1" ? 1 : row.result === "hit2" ? 2 : row.result === "hit3" ? 3 : 0);
-        var settledPeriod = row.settledPeriod || (row.result === "pending" ? "" : Number(row.startPeriod) + Math.max(0, hitIndex - 1) + (row.result === "miss" ? 2 : 0));
-        html += '<span>' + (settledPeriod || "-") + '</span>';
-        html += '<span style="color:' + (value == null ? "#6b7280" : value >= 0 ? "#16a34a" : "#dc2626") + '">' + (value == null ? "-" : (value >= 0 ? "+" : "") + value.toFixed(2)) + '</span>';
-        html += '<button class="chip" data-uo-del="' + row.id + '">删</button>';
+        html += '<span>' + row.multiplier + '倍</span>';
+        html += '<span style="font-weight:800;color:' + resultColor + '">' + resultText + '</span>';
+        html += '<span style="font-weight:800;color:' + (profit == null ? "#6b7280" : profit >= 0 ? "#16a34a" : "#dc2626") + '">' + (profit == null ? "-" : (profit >= 0 ? "+" : "") + profit.toFixed(2)) + '</span>';
+        html += '<button class="chip" data-so-del="' + row.id + '">删</button>';
         html += '</div>';
       });
     }
     html += '</div></div></div>';
-    html += '<p class="disclaimer">本页只做手动下单记录和按实际开奖结算，不读取任何模型推荐、不自动生成订单、不参与选号。记录只保存在本机浏览器。</p>';
+    html += '<p class="disclaimer">本页只记录下单期数、号码和倍率，不读取模型推荐，不自动生成订单，不参与选号。收益按每单位命中 +0.8、未中 -1 计算并乘以倍率。</p>';
     view.innerHTML = html;
   }
 
@@ -2328,7 +2372,6 @@
       html += '</div></div>';
     });
 
-    html += hitLogSectionHTML(mode);
     html += '<!--ULT_RECORDS_END-->';
     html += '<p class="disclaimer">' + modeLabel + '只监控双号追热D1/D2。' + (isRecommendMode ? '追推荐模式窗口结束后，下一期按最新推荐重新开窗。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
     var ultStartMarker = '<!--ULT_RECORDS_START-->';
@@ -3569,6 +3612,40 @@
     if (selectorHistoryBtn) {
       selectorHistoryFilter = selectorHistoryBtn.dataset.selectorHistoryFilter;
       renderSelector();
+      return;
+    }
+    var orderTailBtn = e.target.closest("[data-order-tail]");
+    if (orderTailBtn) {
+      state.orderTail = orderTailBtn.dataset.orderTail;
+      lsSet("v2_order_tail", state.orderTail);
+      renderOrderLog();
+      return;
+    }
+    var soDel = e.target.closest("[data-so-del]");
+    if (soDel) {
+      var soId = soDel.dataset.soDel;
+      simpleOrdersSave(simpleOrdersLoad().filter(function (r) { return r.id !== soId; }));
+      renderOrderLog();
+      return;
+    }
+    if (e.target.closest("[data-so-add]")) {
+      var soPeriod = Number(document.getElementById("soPeriod").value);
+      var soTail = Number(document.getElementById("soTail").value);
+      var soMultiplier = Number(document.getElementById("soMultiplier").value);
+      if (!Number.isFinite(soPeriod) || soPeriod < 1) { alert("期数不正确"); return; }
+      if (!Number.isFinite(soTail) || soTail < 0 || soTail > 9) { alert("号码必须为0-9"); return; }
+      if (!Number.isFinite(soMultiplier) || soMultiplier <= 0) { alert("倍率必须大于0"); return; }
+      var simpleRows = simpleOrdersLoad();
+      simpleRows.push({
+        id: Date.now() + "-" + Math.random().toString(16).slice(2),
+        createdAt: new Date().toISOString(),
+        period: soPeriod,
+        tail: soTail,
+        multiplier: soMultiplier,
+        result: "pending"
+      });
+      simpleOrdersSave(simpleRows);
+      renderOrderLog();
       return;
     }
     var uoDel = e.target.closest("[data-uo-del]");
