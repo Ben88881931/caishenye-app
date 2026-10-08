@@ -201,7 +201,7 @@ def main():
             pass_("app.js 含调度/追号/追推荐/追三期下单导航")
         else:
             fail("app.js 缺少调度/追号/追推荐/追三期下单导航")
-        if "三期内追号码" in app_text and "三期内追推荐" in app_text and "追三期下单" in app_text and "下单记录表" in app_text and "执行规则" in app_text and "双流三期内命中结构" in app_text:
+        if "三期内追号码" in app_text and "三期内追推荐" in app_text and "执行提示" in app_text and "追三期下单" in app_text and "下单记录表" in app_text and "执行规则" in app_text and "双流三期内命中结构" in app_text:
             pass_("追号/追推荐/追三期下单及下单记录表区块完整")
         else:
             fail("追号/追推荐/追三期下单页面区块不完整")
@@ -220,7 +220,7 @@ def main():
             pass_("顶部导航支持粘性定位、位置保持和当前项可见")
         else:
             fail("顶部导航缺少粘性定位、位置保持或当前项可见逻辑")
-        flow_ids = ["pick3", "chasenumber", "chaserecommend", "orderlog"]
+        flow_ids = ["pick3", "chasenumber", "chaserecommend", "orderhint", "orderlog"]
         flow_pos = [app_text.find(chr(34) + fid + chr(34)) for fid in flow_ids]
         if all(pos >= 0 for pos in flow_pos) and flow_pos == sorted(flow_pos):
             pass_("导航按模型流程排序")
@@ -237,8 +237,8 @@ def main():
             pass_("三期内记录与调度记录均紧接卡片下方展示")
         else:
             fail("三期内记录未紧接卡片下方展示")
-        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text:
-            pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益和三期锁定窗口")
+        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "HINT_PLANS" in app_text and "data-hint-open" in app_text:
+            pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和执行提示")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:

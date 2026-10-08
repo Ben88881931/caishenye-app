@@ -355,6 +355,7 @@
     { id: "pick3", label: "双号追热" },
     { id: "chasenumber", label: "三期内追号码" },
     { id: "chaserecommend", label: "三期内追推荐" },
+    { id: "orderhint", label: "执行提示" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -374,7 +375,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "chaserecommend", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "chaserecommend", "orderhint", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -722,6 +723,7 @@
     else if (state.tab === "selector") renderSelector();
     else if (state.tab === "chasenumber") renderChaseNumber();
     else if (state.tab === "chaserecommend") renderChaseRecommendation();
+    else if (state.tab === "orderhint") renderOrderHint();
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
@@ -1694,6 +1696,18 @@
   var ULT_ORDER_KEY = "v2_ultimate_order_log";
   var SIMPLE_ORDER_KEY = "v2_simple_order_log";
   var SIMPLE_WINDOW_KEY = "v2_simple_order_windows";
+  var HINT_PLANS = {
+    0: [0, 500, 0],
+    1: [0, 500, 500],
+    2: [500, 500, 0],
+    3: [0, 500, 0],
+    4: [0, 500, 500],
+    5: [0, 500, 500],
+    6: [0, 500, 500],
+    7: [0, 500, 500],
+    8: [0, 500, 0],
+    9: [500, 500, 0],
+  };
   var ORDER_PATTERNS = {
     P6: [1, 1.25, 2.8125],
     P7: [1, 1.5, 3.375],
@@ -1851,6 +1865,73 @@
     if (row.result === "hit") return +(amount * 0.8).toFixed(2);
     if (row.result === "miss") return +(-amount).toFixed(2);
     return null;
+  }
+
+  function renderOrderHint() {
+    var nextPeriod = latest + 1;
+    var prediction = MODEL.buildPrediction(latest);
+    var picks = prediction.doubleRecommendation || [];
+    var recommended = {};
+    picks.forEach(function (p, i) {
+      recommended[p.tail] = i === 0 ? "D1" : "D2";
+    });
+    var windows = simpleWindowsLoad();
+    var pendingByTail = {};
+    windows.forEach(function (w) {
+      var status = simpleWindowStatus(w);
+      if (status.status === "pending") pendingByTail[Number(w.tail)] = w;
+    });
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">执行提示</h2><span class="section__hint">第' + nextPeriod + '期 · 主模型信号 + 已开三期窗口 · 只提示，不自动下单</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    html += '<div style="min-width:820px">';
+    html += '<div style="display:grid;grid-template-columns:1.3fr .7fr 1fr .7fr .7fr .7fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>尾号</span><span>本期动作</span><span>当前状态</span><span>本期金额</span><span>窗口期序</span><span>下一期计划</span></div>';
+    for (var tail = 0; tail < 10; tail++) {
+      var plan = HINT_PLANS[tail] || [0, 500, 0];
+      var w = pendingByTail[tail];
+      var status = w ? simpleWindowStatus(w) : null;
+      var action = "不下";
+      var actionColor = "#6b7280";
+      var stateText = "等待主模型重新推荐";
+      var amount = 0;
+      var stageText = "-";
+      var nextPlan = "-";
+      var openWindow = false;
+      if (status && status.status === "pending") {
+        var attempts = status.attempts.length;
+        var expectedPeriod = Number(w.startPeriod) + attempts;
+        stageText = "第" + Math.min(attempts + 1, 3) + "期";
+        if (expectedPeriod === nextPeriod) {
+          amount = Number(plan[attempts] || 0);
+          action = amount > 0 ? "下注" : "等待";
+          actionColor = amount > 0 ? "#16a34a" : "#2563eb";
+          stateText = "窗口进行中 · 尾" + w.tail;
+          if (attempts < 2 && Number(plan[attempts + 1] || 0) > 0) nextPlan = "第" + (attempts + 2) + "期 " + plan[attempts + 1] + "元";
+        } else {
+          action = "检查";
+          actionColor = "#dc2626";
+          stateText = "窗口与数据不连续";
+        }
+      } else if (recommended[tail]) {
+        openWindow = true;
+        amount = Number(plan[0] || 0);
+        action = amount > 0 ? "下注" : "开窗等待";
+        actionColor = amount > 0 ? "#16a34a" : "#2563eb";
+        stateText = "主模型 " + recommended[tail] + " 推荐";
+        if (Number(plan[1] || 0) > 0) nextPlan = "第2期 " + plan[1] + "元";
+      }
+      html += '<div style="display:grid;grid-template-columns:1.3fr .7fr 1fr .7fr .7fr .7fr;gap:6px;padding:9px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
+      html += '<b>尾' + tail + '</b>';
+      html += '<span style="font-weight:900;color:' + actionColor + '">' + action + '</span>';
+      html += '<span>' + stateText + (openWindow ? ' <button class="chip" data-hint-open="' + tail + '" style="margin-left:4px">建立窗口</button>' : '') + '</span>';
+      html += '<span>' + (amount > 0 ? amount + '元' : '-') + '</span>';
+      html += '<span>' + stageText + '</span>';
+      html += '<span>' + nextPlan + '</span>';
+      html += '</div>';
+    }
+    html += '</div></div></div>';
+    html += '<p class="disclaimer">执行提示只根据主模型 D1/D2 推荐和本机已开窗口计算，不自动下单；“建立窗口”只记录三期跟踪，不代表已下注。</p>';
+    view.innerHTML = html;
   }
 
   function renderOrderLog() {
@@ -3695,6 +3776,12 @@
       state.orderTail = orderTailBtn.dataset.orderTail;
       lsSet("v2_order_tail", state.orderTail);
       renderOrderLog();
+      return;
+    }
+    var hintOpen = e.target.closest("[data-hint-open]");
+    if (hintOpen) {
+      attachSimpleWindow(Number(hintOpen.dataset.hintOpen), latest + 1);
+      renderOrderHint();
       return;
     }
     var soDel = e.target.closest("[data-so-del]");
