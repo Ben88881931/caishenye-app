@@ -356,6 +356,7 @@
     { id: "chasenumber", label: "三期内追号码" },
     { id: "chaserecommend", label: "三期内追推荐" },
     { id: "orderhint", label: "执行提示" },
+    { id: "funds", label: "资金调度" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -375,7 +376,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "chaserecommend", "orderhint", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "chaserecommend", "orderhint", "funds", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -724,6 +725,7 @@
     else if (state.tab === "chasenumber") renderChaseNumber();
     else if (state.tab === "chaserecommend") renderChaseRecommendation();
     else if (state.tab === "orderhint") renderOrderHint();
+    else if (state.tab === "funds") renderFunds();
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
@@ -792,6 +794,7 @@
       pick3: ["双号追热", "双号选号模型，输出 D1、D2，并显示四色风险状态和对错遗漏。", "每天第一步选号时看。"],
       chasenumber: ["三期内追号码", "锁定一个推荐号连续追3期，窗口内不换号；命中或三期全错后结束，下一期重新锁定推荐号开新窗口。", "按固定号码追三期时看。"],
       chaserecommend: ["三期内追推荐", "窗口内第1/2/3期分别采用当期最新推荐，号码可以每期不同；命中或三期全错后重新开窗。", "按每期最新推荐追三期时看。"],
+      funds: ["资金调度", "只根据各线窗口状态、历史命中率和ROI分配下注金额；等待线强制0，当前总风险不能超过预算。", "决定今天下不下、每条线下多少时看。"],
       orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
       segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
       missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖。", "找遗漏结构时看。"],
@@ -2125,6 +2128,175 @@
       html += '</div></div></div>';
     });
     html += '<p class="disclaimer">尾0–尾9只读取各自开奖结果，完全不读取D1/D2；追号码D1/D2和追推荐D1/D2各自只读取对应模型信号。本页只做执行提示和线路对错记录，不自动下单；历史公式仍需时间外验证。</p>';
+    view.innerHTML = html;
+  }
+
+  var FUNDS_BUDGET_KEY = "v2_funds_risk_budget";
+
+  function fundsQuality(stats) {
+    if (stats.settled < 50) {
+      return { label: "样本不足", weight: 0.5, color: "#6b7280", reason: "样本不足，先轻仓观察" };
+    }
+    if (stats.hitRate >= 0.92 && stats.roi > 0) {
+      return { label: "核心", weight: 1, color: "#16a34a", reason: "窗口命中率和ROI均达标" };
+    }
+    if (stats.hitRate >= 0.90 && stats.roi > -0.03) {
+      return { label: "稳健", weight: 0.7, color: "#2563eb", reason: "历史表现中等，按比例下注" };
+    }
+    if (stats.hitRate >= 0.88) {
+      return { label: "观察", weight: 0.35, color: "#d97706", reason: "命中率尚可但收益偏弱，只做轻仓" };
+    }
+    return { label: "暂停", weight: 0, color: "#dc2626", reason: "历史命中率或ROI不达标，暂不下注" };
+  }
+
+  function scaleFundPlan(plan, weight) {
+    return plan.map(function (amount) {
+      if (!amount || weight <= 0) return 0;
+      return Math.max(10, Math.round(amount * weight / 10) * 10);
+    });
+  }
+
+  function planRisk(plan) {
+    return plan.reduce(function (sum, amount) { return sum + Number(amount || 0); }, 0);
+  }
+
+  function renderFunds() {
+    var riskBudget = Number(lsGet(FUNDS_BUDGET_KEY, 5000));
+    if (!Number.isFinite(riskBudget) || riskBudget <= 0) riskBudget = 5000;
+    var nextPeriod = latest + 1;
+    var lockedRisk = 0;
+    var desiredNewRisk = 0;
+    var drafts = EXEC_LINES.map(function (line) {
+      var result = buildExecWindows(line);
+      var stats = execLineStats(line, result.windows);
+      var quality = fundsQuality(stats);
+      var row = {
+        line: line,
+        result: result,
+        stats: stats,
+        quality: quality,
+        mode: "new",
+        weight: quality.weight,
+        plan: line.plan.slice(),
+        remainingRisk: 0,
+        reason: quality.reason
+      };
+      if (result.waiting) {
+        row.mode = "waiting";
+        row.weight = 0;
+        row.plan = [0, 0, 0];
+        row.reason = "错窗等待中：等尾" + result.waiting.tail + "开出";
+      } else if (result.active) {
+        row.mode = "active";
+        row.weight = 1;
+        row.remainingRisk = planRisk(line.plan.slice(result.active.attempts.length));
+        lockedRisk += row.remainingRisk;
+        row.reason = "窗口已经进行中，保持原公式，不临时改注";
+      } else if (quality.weight <= 0) {
+        row.mode = "blocked";
+        row.plan = [0, 0, 0];
+      } else {
+        desiredNewRisk += planRisk(line.plan) * quality.weight;
+      }
+      return row;
+    });
+
+    var availableNewRisk = Math.max(0, riskBudget - lockedRisk);
+    var budgetScale = desiredNewRisk > availableNewRisk && desiredNewRisk > 0
+      ? availableNewRisk / desiredNewRisk
+      : 1;
+    var newRisk = 0;
+    var activeCount = 0;
+    var waitingCount = 0;
+    var newCount = 0;
+    var blockedCount = 0;
+
+    var rows = drafts.map(function (row) {
+      var action = "";
+      var amount = 0;
+      var maxLoss = 0;
+      var color = row.quality.color;
+      var finalPlan = row.plan.slice();
+      if (row.mode === "waiting") {
+        action = "等待";
+        waitingCount++;
+        color = "#d97706";
+      } else if (row.mode === "active") {
+        action = "续追";
+        activeCount++;
+        amount = Number(row.line.plan[row.result.active.attempts.length] || 0);
+        maxLoss = row.remainingRisk;
+        color = "#2563eb";
+      } else if (row.mode === "blocked") {
+        action = "不下";
+        blockedCount++;
+        color = "#dc2626";
+      } else {
+        var finalWeight = row.quality.weight * budgetScale;
+        finalPlan = scaleFundPlan(row.line.plan, finalWeight);
+        maxLoss = planRisk(finalPlan);
+        if (maxLoss <= 0) {
+          action = "不下";
+          blockedCount++;
+          color = "#dc2626";
+        } else {
+          action = row.line.plan[0] > 0 ? "下注" : "开窗";
+          amount = Number(finalPlan[0] || 0);
+          newCount++;
+          newRisk += maxLoss;
+          if (budgetScale < 0.999) row.reason += "；受总风险预算压缩";
+        }
+      }
+      return {
+        line: row.line,
+        stats: row.stats,
+        quality: row.quality,
+        action: action,
+        amount: amount,
+        maxLoss: maxLoss,
+        plan: finalPlan,
+        color: color,
+        reason: row.reason,
+        waiting: row.result.waiting
+      };
+    });
+
+    var totalRisk = lockedRisk + newRisk;
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 14条线统一风控</h2><span class="section__hint">只决定下不下、下多少；等待线强制0，总风险不超过预算</span></div></div>';
+    html += '<div class="section"><div class="panel fund-controls"><div class="ord-grid">';
+    html += '<div class="ord-item"><label>单窗最大风险预算</label><input id="fundsRiskBudget" data-funds-budget type="number" min="500" step="500" value="' + riskBudget + '"></div>';
+    html += '<div class="ord-item"><label>资金调度规则</label><input type="text" value="核心/稳健/观察/暂停 · 四档" disabled></div>';
+    html += '</div></div></div>';
+
+    html += '<div class="section"><div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value">' + riskBudget + '</div><div class="stat__label">单窗风险预算（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + lockedRisk + '</div><div class="stat__label">已锁定风险（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#d97706">' + newRisk + '</div><div class="stat__label">本轮新开风险（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (totalRisk > riskBudget ? "#dc2626" : "#16a34a") + '">' + totalRisk + '</div><div class="stat__label">合计最大风险（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + activeCount + '/' + newCount + '/' + waitingCount + '</div><div class="stat__label">续追 / 新开 / 等待</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + blockedCount + '</div><div class="stat__label">暂停不下</div></div>';
+    html += '</div></div>';
+
+    rows.forEach(function (row) {
+      html += '<div class="section"><div class="panel fund-line" style="border-left-color:' + row.color + '">';
+      html += '<div class="exec-line__head">';
+      html += '<b class="exec-line__label' + (row.line.kind === "tail" ? " exec-line__label--tail" : "") + '">' + row.line.label + '</b>';
+      html += '<span class="chip" style="color:' + row.color + ';font-weight:900">' + row.quality.label + '</span>';
+      html += '<span class="chip">窗口命中率 ' + (row.stats.hitRate * 100).toFixed(1) + '%</span>';
+      html += '<span class="chip">ROI ' + (row.stats.roi * 100).toFixed(1) + '%</span>';
+      if (row.waiting) html += '<span class="chip" style="background:#fffbeb;border-color:#fcd34d;color:#92400e">等待尾' + row.waiting.tail + ' · 已等' + row.waiting.waited + '期</span>';
+      html += '</div>';
+      html += '<div class="exec-line__metrics">';
+      html += '<div class="stat"><div class="stat__value" style="color:' + row.color + '">' + row.action + '</div><div class="stat__label">建议动作</div></div>';
+      html += '<div class="stat"><div class="stat__value">' + (row.amount > 0 ? row.amount + "元" : "-") + '</div><div class="stat__label">本期金额</div></div>';
+      html += '<div class="stat"><div class="stat__value">' + (row.maxLoss > 0 ? row.maxLoss + "元" : "-") + '</div><div class="stat__label">本窗最大亏损</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + row.plan.join(" / ") + '</div><div class="stat__label">建议计划</div></div>';
+      html += '</div>';
+      html += '<div class="fund-reason">' + row.reason + ' · 下一检查期 第' + nextPeriod + '期</div>';
+      html += '</div></div>';
+    });
+
+    html += '<p class="disclaimer">资金调度只做风险建议，不自动下单。等待线金额强制为0；窗口进行中不改已锁公式；所有线路合计风险不得超过设置的预算。</p>';
     view.innerHTML = html;
   }
 
@@ -4125,6 +4297,14 @@
   });
 
   view.addEventListener("change", function (e) {
+    var fundsBudget = e.target.closest("[data-funds-budget]");
+    if (fundsBudget) {
+      var budget = Number(fundsBudget.value);
+      if (!Number.isFinite(budget) || budget < 500) budget = 500;
+      lsSet(FUNDS_BUDGET_KEY, budget);
+      renderFunds();
+      return;
+    }
     var resultSelect = e.target.closest("[data-uo-result]");
     if (!resultSelect) return;
     var id = resultSelect.dataset.uoResult;

@@ -241,6 +241,10 @@ def main():
             pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和14条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
+        if "function renderFunds" in app_text and "资金调度" in app_text and "单窗最大风险预算" in app_text and "合计最大风险" in app_text and "v2_funds_risk_budget" in app_text:
+            pass_("资金调度页面包含风险预算、合计风险和14线建议下注")
+        else:
+            fail("资金调度页面缺少风险预算或建议下注逻辑")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:

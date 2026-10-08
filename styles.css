@@ -1324,6 +1324,40 @@ body {
   color: inherit;
 }
 
+.fund-controls {
+  padding: 12px;
+}
+.fund-line {
+  padding: 12px 10px;
+  border-left: 4px solid var(--accent);
+}
+.fund-line .exec-line__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 9px;
+}
+.fund-line .stat {
+  padding: 12px;
+}
+.fund-line .stat__value {
+  font-size: 24px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.fund-line .stat__label {
+  margin-top: 5px;
+  font-size: 13px;
+}
+.fund-reason {
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* 桌面端加宽，手机端收紧边距并让标签栏更容易滑动 */
 @media (min-width: 768px) {
   .appbar__inner,
