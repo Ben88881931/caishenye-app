@@ -2143,7 +2143,7 @@
       target = nextPick ? nextPick.tail : null;
     }
     if (target == null) {
-      return { label: "暂停 0倍", weight: 0, color: "#dc2626", score: 0, reason: "当前没有可用推荐号" };
+      return { label: "无号 0倍", weight: 0, color: "#dc2626", score: 0, reason: "当前没有可用推荐号" };
     }
     var count5 = 0;
     var count10 = 0;
