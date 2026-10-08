@@ -1905,12 +1905,12 @@
   function buildExecWindows(line) {
     var windows = [];
     var active = null;
-    var p = 31;
+    var p = line.kind === "tail" ? 1 : 31;
     while (p <= latest) {
       var trigger = null;
       if (!active) {
         if (line.kind === "tail") {
-          if (execHasTail(p, line.tail)) trigger = { tail: line.tail };
+          trigger = { tail: line.tail };
         } else {
           trigger = execPick(p, line.stream);
         }
@@ -1988,7 +1988,7 @@
       }
       return { action: "检查", amount: 0, stage: "-", status: "窗口状态不连续", color: "#dc2626" };
     }
-    var willTrigger = line.kind === "tail" ? execHasTail(nextPeriod, line.tail) : !!execPick(nextPeriod, line.stream);
+    var willTrigger = line.kind === "tail" ? true : !!execPick(nextPeriod, line.stream);
     if (willTrigger) {
       return {
         action: line.plan[0] > 0 ? "下注" : "开窗等待",
@@ -2004,16 +2004,18 @@
   function renderOrderHint() {
     execPredCache = {};
     var nextPeriod = latest + 1;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">执行提示 · 14条独立线路</h2><span class="section__hint">10个尾数线 + 追号码D1/D2 + 追推荐D1/D2 · 第' + nextPeriod + '期 · 只提示，不自动下单</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">执行提示 · 14条独立线路</h2><span class="section__hint">10个尾数线只看开奖数据 · 4条推荐线只看D1/D2 · 第' + nextPeriod + '期 · 只提示，不自动下单</span></div></div>';
     EXEC_LINES.forEach(function (line) {
       var result = buildExecWindows(line);
       var stats = execLineStats(line, result.windows);
       var action = execNextAction(line, result, nextPeriod);
       var planText = line.plan.join(" / ");
+      var firstStart = result.windows.length ? result.windows[0].start : (result.active ? result.active.start : (line.kind === "tail" ? 1 : 31));
       html += '<div class="section"><div class="panel" style="padding:12px 10px">';
       html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
       html += '<b style="font-size:14px">' + line.label + '</b>';
       html += '<span class="chip">公式 ' + line.plan.join(":") + '</span>';
+      html += '<span class="chip">记录起点 第' + firstStart + '期</span>';
       html += '<span class="chip">金额 ' + planText + '</span>';
       html += '<span style="font-size:12px;color:' + (stats.net >= 0 ? "#16a34a" : "#dc2626") + '">历史净收益 ' + (stats.net >= 0 ? "+" : "") + stats.net + ' 元 · ROI ' + (stats.roi * 100).toFixed(1) + '%</span>';
       html += '</div>';
@@ -2049,7 +2051,7 @@
       }
       html += '</div></div></div>';
     });
-    html += '<p class="disclaimer">本页只做执行提示和线路对错记录，不自动下单；历史公式仍需时间外验证，尾3、尾5历史表现偏弱但保留独立线路用于观察。</p>';
+    html += '<p class="disclaimer">尾0–尾9只读取各自开奖结果，完全不读取D1/D2；追号码D1/D2和追推荐D1/D2各自只读取对应模型信号。本页只做执行提示和线路对错记录，不自动下单；历史公式仍需时间外验证。</p>';
     view.innerHTML = html;
   }
 
