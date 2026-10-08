@@ -1979,6 +1979,8 @@
       second: second,
       third: third,
       miss: miss,
+      hitWindows: hits,
+      missWindows: miss,
       hitRate: settled.length ? hits / settled.length : 0
     };
   }
@@ -2037,6 +2039,7 @@
       html += '<span class="chip">金额 ' + planText + '</span>';
       html += '<span class="chip">3期内命中率 ' + (stats.hitRate * 100).toFixed(1) + '%</span>';
       html += '<span class="chip">第1/2/3期 ' + stats.first + '/' + stats.second + '/' + stats.third + ' · 全错 ' + stats.miss + '</span>';
+      html += '<span class="chip" style="background:#ecfdf5;border-color:#86efac;color:#166534;font-weight:900">已结算窗口：中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗</span>';
       html += '<span style="font-size:12px;color:' + (stats.net >= 0 ? "#16a34a" : "#dc2626") + '">历史净收益 ' + (stats.net >= 0 ? "+" : "") + stats.net + ' 元 · ROI ' + (stats.roi * 100).toFixed(1) + '%</span>';
       html += '</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">';
@@ -2045,7 +2048,7 @@
       html += '<div class="stat"><div class="stat__value">' + action.stage + '</div><div class="stat__label">窗口期序</div></div>';
       html += '<div class="stat"><div class="stat__value">' + action.status + '</div><div class="stat__label">当前状态</div></div>';
       html += '</div>';
-      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 新→旧</div>';
+      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
       html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
       var recent = result.windows.slice().reverse();
       if (!recent.length) {
