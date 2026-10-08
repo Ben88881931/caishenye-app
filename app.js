@@ -1957,12 +1957,30 @@
     var settled = windows.filter(function (w) { return w.status !== "pending"; });
     var turnover = 0;
     var net = 0;
+    var first = 0, second = 0, third = 0, miss = 0;
     windows.forEach(function (w) {
       var attempts = w.hitIndex === 1 ? 1 : w.hitIndex === 2 ? 2 : 3;
       turnover += line.plan[0] + (attempts > 1 ? line.plan[1] : 0) + (attempts > 2 ? line.plan[2] : 0);
     });
-    settled.forEach(function (w) { net += execWindowProfit(line, w); });
-    return { turnover: turnover, net: +net.toFixed(2), roi: turnover ? net / turnover : 0, settled: settled.length };
+    settled.forEach(function (w) {
+      net += execWindowProfit(line, w);
+      if (w.hitIndex === 1) first++;
+      else if (w.hitIndex === 2) second++;
+      else if (w.hitIndex === 3) third++;
+      else miss++;
+    });
+    var hits = first + second + third;
+    return {
+      turnover: turnover,
+      net: +net.toFixed(2),
+      roi: turnover ? net / turnover : 0,
+      settled: settled.length,
+      first: first,
+      second: second,
+      third: third,
+      miss: miss,
+      hitRate: settled.length ? hits / settled.length : 0
+    };
   }
 
   function execWindowText(windowRow) {
@@ -2017,6 +2035,8 @@
       html += '<span class="chip">公式 ' + line.plan.join(":") + '</span>';
       html += '<span class="chip">记录起点 第' + firstStart + '期</span>';
       html += '<span class="chip">金额 ' + planText + '</span>';
+      html += '<span class="chip">3期内命中率 ' + (stats.hitRate * 100).toFixed(1) + '%</span>';
+      html += '<span class="chip">第1/2/3期 ' + stats.first + '/' + stats.second + '/' + stats.third + ' · 全错 ' + stats.miss + '</span>';
       html += '<span style="font-size:12px;color:' + (stats.net >= 0 ? "#16a34a" : "#dc2626") + '">历史净收益 ' + (stats.net >= 0 ? "+" : "") + stats.net + ' 元 · ROI ' + (stats.roi * 100).toFixed(1) + '%</span>';
       html += '</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">';
@@ -2025,9 +2045,9 @@
       html += '<div class="stat"><div class="stat__value">' + action.stage + '</div><div class="stat__label">窗口期序</div></div>';
       html += '<div class="stat"><div class="stat__value">' + action.status + '</div><div class="stat__label">当前状态</div></div>';
       html += '</div>';
-      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 新→旧</div>';
+      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 新→旧</div>';
       html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
-      var recent = result.windows.slice(-30).reverse();
+      var recent = result.windows.slice().reverse();
       if (!recent.length) {
         html += '<span style="font-size:12px;color:#9ca3af">暂无已结束窗口</span>';
       } else {
