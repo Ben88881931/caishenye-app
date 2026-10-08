@@ -101,7 +101,7 @@ must(appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START
 must(!appText.includes("加权") && !appText.includes("weightedBounce") && !appText.includes("W1") && !appText.includes("W2"), "活动页面与代码不得再出现加权模型残留");
 must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab") && appText.includes("nav-group-caret") && appText.includes("window.scrollTo"), "导航保持横向位置、当前项可见且切页回顶");
 must(appText.includes("var waiting = null") && appText.includes("waitingActual.indexOf") && appText.includes("等待尾") && appText.includes("开出后下一期重开") && appText.includes("等待开始 第"), "执行提示14条线错窗后必须等待最后追的尾号开出，再下一期重开");
-must(appText.includes("function renderFunds") && appText.includes("v2_funds_risk_budget") && appText.includes("单窗最大风险预算") && appText.includes("合计最大风险") && appText.includes("建议计划"), "资金调度页必须包含风险预算、14线建议计划和总风险上限");
+must(appText.includes("function renderFunds") && appText.includes("v2_funds_risk_budget") && appText.includes("单窗最大风险预算") && appText.includes("合计最大风险") && appText.includes("建议计划") && appText.includes("100元起注") && appText.includes("Math.max(100"), "资金调度页必须包含风险预算、14线建议计划、100元起注和总风险上限");
 const cssText = read("styles.css");
 must(cssText.includes("position: sticky") && cssText.includes("grid-template-columns: repeat(5") && cssText.includes("min-height: 42px"), "导航为粘性五项分段布局且触控高度合格");
 must(appText.includes("执行规则") && appText.includes("双流三期内命中结构") && !appText.includes("固定方案对照") && !appText.includes("本页子模型状态") && appText.includes("仅建议，不代替执行") && appText.includes("窗口照常记录") && appText.includes("两个原始号源") && appText.includes("不再二次筛选") && !appText.includes("仅观察候选"), "追三期使用两个原始号源且不二次筛选");

@@ -1327,6 +1327,9 @@ body {
 .fund-controls {
   padding: 12px;
 }
+.fund-controls .ord-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .fund-line {
   padding: 12px 10px;
   border-left: 4px solid var(--accent);

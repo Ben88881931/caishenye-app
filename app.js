@@ -2152,7 +2152,7 @@
   function scaleFundPlan(plan, weight) {
     return plan.map(function (amount) {
       if (!amount || weight <= 0) return 0;
-      return Math.max(10, Math.round(amount * weight / 10) * 10);
+      return Math.max(100, Math.round(amount * weight / 100) * 100);
     });
   }
 
@@ -2162,10 +2162,9 @@
 
   function renderFunds() {
     var riskBudget = Number(lsGet(FUNDS_BUDGET_KEY, 5000));
-    if (!Number.isFinite(riskBudget) || riskBudget <= 0) riskBudget = 5000;
+    if (!Number.isFinite(riskBudget) || riskBudget < 500) riskBudget = 5000;
     var nextPeriod = latest + 1;
     var lockedRisk = 0;
-    var desiredNewRisk = 0;
     var drafts = EXEC_LINES.map(function (line) {
       var result = buildExecWindows(line);
       var stats = execLineStats(line, result.windows);
@@ -2195,16 +2194,31 @@
       } else if (quality.weight <= 0) {
         row.mode = "blocked";
         row.plan = [0, 0, 0];
-      } else {
-        desiredNewRisk += planRisk(line.plan) * quality.weight;
       }
       return row;
     });
 
     var availableNewRisk = Math.max(0, riskBudget - lockedRisk);
-    var budgetScale = desiredNewRisk > availableNewRisk && desiredNewRisk > 0
-      ? availableNewRisk / desiredNewRisk
-      : 1;
+    var remainingNewRisk = availableNewRisk;
+    drafts
+      .filter(function (row) { return row.mode === "new" && row.quality.weight > 0; })
+      .sort(function (a, b) {
+        if (b.quality.weight !== a.quality.weight) return b.quality.weight - a.quality.weight;
+        return b.stats.roi - a.stats.roi;
+      })
+      .forEach(function (row) {
+        var candidatePlan = scaleFundPlan(row.line.plan, row.quality.weight);
+        var candidateRisk = planRisk(candidatePlan);
+        if (candidateRisk > 0 && candidateRisk <= remainingNewRisk) {
+          row.allocated = true;
+          row.finalPlan = candidatePlan;
+          row.maxLoss = candidateRisk;
+          remainingNewRisk -= candidateRisk;
+        } else {
+          row.allocated = false;
+          row.reason += "；按100元起注后预算不足";
+        }
+      });
     var newRisk = 0;
     var activeCount = 0;
     var waitingCount = 0;
@@ -2232,19 +2246,19 @@
         blockedCount++;
         color = "#dc2626";
       } else {
-        var finalWeight = row.quality.weight * budgetScale;
-        finalPlan = scaleFundPlan(row.line.plan, finalWeight);
-        maxLoss = planRisk(finalPlan);
-        if (maxLoss <= 0) {
+        if (!row.allocated || !row.finalPlan) {
           action = "不下";
           blockedCount++;
           color = "#dc2626";
+          finalPlan = [0, 0, 0];
         } else {
+          finalPlan = row.finalPlan;
+          maxLoss = row.maxLoss;
           action = row.line.plan[0] > 0 ? "下注" : "开窗";
           amount = Number(finalPlan[0] || 0);
           newCount++;
           newRisk += maxLoss;
-          if (budgetScale < 0.999) row.reason += "；受总风险预算压缩";
+          if (finalPlan.join(":") !== row.line.plan.join(":")) row.reason += "；按100元起注取整";
         }
       }
       return {
