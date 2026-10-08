@@ -2131,7 +2131,7 @@
     view.innerHTML = html;
   }
 
-  function fundsOpportunity(line, result, stats, nextPeriod) {
+  function fundsWindowPattern(line, result, stats, nextPeriod) {
     if (result.waiting) {
       return { label: "等待 0倍", weight: 0, color: "#d97706", score: 0, reason: "错窗等待中，等确认尾号开出" };
     }
@@ -2158,19 +2158,25 @@
       if (MODEL.tailsOf(q).indexOf(Number(target)) >= 0) break;
       omission++;
     }
+    var hitWindows = stats.first + stats.second + stats.third;
+    var firstShare = hitWindows ? stats.first / hitWindows : 0;
+    var thirdShare = hitWindows ? stats.third / hitWindows : 0;
+    var stage = result.active ? result.active.attempts.length + 1 : 1;
     var score = 50;
-    score += (count5 / 5 - 0.55) * 80;
-    score += (count10 / 10 - 0.55) * 40;
-    score += Math.max(-10, Math.min(15, (10 - omission) * 1.5));
-    score += (stats.hitRate - 0.90) * 60;
-    score += Math.max(-5, Math.min(10, stats.roi * 50));
+    score += (stats.hitRate - 0.90) * 120;
+    score += (firstShare - 0.55) * 70;
+    score -= thirdShare * 20;
+    score += (count5 / 5 - 0.55) * 30;
+    score += (count10 / 10 - 0.55) * 15;
+    score += Math.max(-6, Math.min(8, (6 - omission) * 1.2));
+    if (stage === 2) score += stats.second > stats.third ? 4 : -4;
+    if (stage === 3) score -= 6;
     score = Math.max(0, Math.min(100, score));
-    var reason = "机会" + score.toFixed(0) + " · 近5期" + count5 + "次 · 当前遗漏" + omission + " · 历史命中" + (stats.hitRate * 100).toFixed(1) + "%";
-    if (score >= 78) return { label: "加仓 1.5倍", weight: 1.5, color: "#dc2626", score: score, reason: reason + " · 当下窗口机会高" };
-    if (score >= 65) return { label: "重 1.0倍", weight: 1, color: "#16a34a", score: score, reason: reason + " · 当下窗口机会较高" };
-    if (score >= 52) return { label: "标准 0.75倍", weight: 0.75, color: "#2563eb", score: score, reason: reason + " · 使用标准仓位" };
-    if (score >= 40) return { label: "轻 0.5倍", weight: 0.5, color: "#d97706", score: score, reason: reason + " · 当下窗口机会一般" };
-    return { label: "暂停 0倍", weight: 0, color: "#dc2626", score: score, reason: reason + " · 当下窗口机会偏低" };
+    var reason = "规律分" + score.toFixed(0) + " · 1期中率" + (firstShare * 100).toFixed(1) + "% · 3期中率" + (stats.hitRate * 100).toFixed(1) + "% · 第3期占比" + (thirdShare * 100).toFixed(1) + "% · 近5期" + count5 + "次 · 遗漏" + omission;
+    if (score >= 78) return { label: "加仓 1.5倍", weight: 1.5, color: "#dc2626", score: score, reason: reason + " · 窗口规律强" };
+    if (score >= 65) return { label: "重 1.0倍", weight: 1, color: "#16a34a", score: score, reason: reason + " · 窗口规律较好" };
+    if (score >= 52) return { label: "标准 0.75倍", weight: 0.75, color: "#2563eb", score: score, reason: reason + " · 窗口规律一般" };
+    return { label: "轻 0.5倍", weight: 0.5, color: "#d97706", score: score, reason: reason + " · 窗口规律偏弱，仍轻仓" };
   }
 
   function scaleFundPlan(plan, weight) {
@@ -2192,7 +2198,7 @@
     var drafts = EXEC_LINES.map(function (line) {
       var result = buildExecWindows(line);
       var stats = execLineStats(line, result.windows);
-      var quality = fundsOpportunity(line, result, stats, nextPeriod);
+      var quality = fundsWindowPattern(line, result, stats, nextPeriod);
       var row = {
         line: line,
         result: result,
@@ -2223,25 +2229,13 @@
       return row;
     });
 
-    var remainingRisk = Math.max(0, FUND_CAPITAL - lockedRisk);
     drafts
       .filter(function (row) { return row.mode === "new" && row.quality.weight > 0; })
-      .sort(function (a, b) {
-        if (b.quality.weight !== a.quality.weight) return b.quality.weight - a.quality.weight;
-        return b.stats.roi - a.stats.roi;
-      })
       .forEach(function (row) {
         var candidatePlan = scaleFundPlan(row.line.plan, row.quality.weight);
         var candidateRisk = planRisk(candidatePlan);
-        if (candidateRisk > 0 && candidateRisk <= remainingRisk) {
-          row.allocated = true;
-          row.finalPlan = candidatePlan;
-          row.maxLoss = candidateRisk;
-          remainingRisk -= candidateRisk;
-        } else {
-          row.allocated = false;
-          row.reason += "；1万元本金内资金不足";
-        }
+        row.finalPlan = candidatePlan;
+        row.maxLoss = candidateRisk;
       });
     var newRisk = 0;
     var activeCount = 0;
@@ -2278,24 +2272,17 @@
           color = "#2563eb";
         }
       } else if (row.mode === "blocked") {
-        action = "不下";
+        action = "无号";
         blockedCount++;
         color = "#dc2626";
       } else {
-        if (!row.allocated || !row.finalPlan) {
-          action = "不下";
-          blockedCount++;
-          color = "#dc2626";
-          finalPlan = [0, 0, 0];
-        } else {
-          finalPlan = row.finalPlan;
-          maxLoss = row.maxLoss;
-          action = row.line.plan[0] > 0 ? "下注" : "开窗";
-          amount = Number(finalPlan[0] || 0);
-          newCount++;
-          newRisk += maxLoss;
-          if (finalPlan.join(":") !== row.line.plan.join(":")) row.reason += "；按100元起注取整";
-        }
+        finalPlan = row.finalPlan || scaleFundPlan(row.line.plan, row.quality.weight);
+        maxLoss = row.maxLoss || planRisk(finalPlan);
+        action = row.line.plan[0] > 0 ? "下注" : "开窗";
+        amount = Number(finalPlan[0] || 0);
+        newCount++;
+        newRisk += maxLoss;
+        if (finalPlan.join(":") !== row.line.plan.join(":")) row.reason += "；按100元起注取整";
       }
       return {
         line: row.line,
@@ -2313,18 +2300,18 @@
 
     var totalRisk = lockedRisk + newRisk;
     var capitalUse = FUND_CAPITAL ? totalRisk / FUND_CAPITAL : 0;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 14条线统一定档</h2><span class="section__hint">按号码和当前窗口风险定轻/重；本金锚定1万元，下注100元起</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 14条线统一定档</h2><span class="section__hint">按每个号码自己的三期窗口规律定轻/重；本金锚定1万元，下注100元起</span></div></div>';
     html += '<div class="section"><div class="panel fund-controls"><div class="ord-grid">';
-    html += '<div class="ord-item"><label>定档规则</label><input type="text" value="加仓1.5倍 / 重1.0倍 / 标准0.75倍 / 轻0.5倍 / 暂停0倍" disabled></div>';
+    html += '<div class="ord-item"><label>定档规则</label><input type="text" value="按窗口规律分：加仓1.5倍 / 重1.0倍 / 标准0.75倍 / 轻0.5倍 / 等待0倍" disabled></div>';
     html += '<div class="ord-item"><label>本金锚定</label><input type="text" value="10,000元 · 最低下注100元" disabled></div>';
     html += '</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:14px;font-weight:900;color:#334155;margin-bottom:7px">仓位倍数标准</div>';
     html += '<div style="font-size:13px;line-height:1.8;color:#475569">';
-    html += '<div><b style="color:#dc2626">加仓：1.5倍</b> · 当前和近期机会分不低于78，号码当下窗口机会高。</div>';
-    html += '<div><b style="color:#16a34a">重：1.0倍</b> · 窗口命中率不低于92%，且ROI为正。</div>';
-    html += '<div><b style="color:#2563eb">标准：0.75倍</b> · 窗口命中率不低于90%，且ROI不低于-3%。</div>';
-    html += '<div><b style="color:#d97706">轻：0.5倍</b> · 窗口命中率不低于88%，或样本暂不足。</div>';
-    html += '<div><b style="color:#dc2626">暂停：0倍</b> · 低于上述标准，本条不下注。</div>';
+    html += '<div><b style="color:#dc2626">加仓：1.5倍</b> · 该号码窗口规律分不低于78。</div>';
+    html += '<div><b style="color:#16a34a">重：1.0倍</b> · 窗口规律分65–77。</div>';
+    html += '<div><b style="color:#2563eb">标准：0.75倍</b> · 窗口规律分52–64。</div>';
+    html += '<div><b style="color:#d97706">轻：0.5倍</b> · 窗口规律分低于52，仍按轻仓下注。</div>';
+    html += '<div><b style="color:#d97706">等待/无号：0倍</b> · 错窗等待确认或当前没有推荐号时才为0。</div>';
     html += '<div>最终金额 = 原公式金额 × 对应倍数，单笔最低100元，并按100元递增。</div>';
     html += '</div></div></div>';
 
@@ -2333,10 +2320,10 @@
     html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + lockedRisk + '</div><div class="stat__label">窗口已锁定风险（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#d97706">' + newRisk + '</div><div class="stat__label">本轮新开风险（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + totalRisk + '</div><div class="stat__label">本窗合计风险（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:' + (capitalUse > 0.8 ? "#dc2626" : "#16a34a") + '">' + (capitalUse * 100).toFixed(1) + '%</div><div class="stat__label">本金占用率</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (capitalUse > 1 ? "#dc2626" : "#16a34a") + '">' + (capitalUse * 100).toFixed(1) + '%</div><div class="stat__label">本金占用率（参考）</div></div>';
     html += '<div class="stat"><div class="stat__value">' + activeCount + '/' + newCount + '/' + waitingCount + '</div><div class="stat__label">续追 / 新开 / 等待</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + blockedCount + '</div><div class="stat__label">暂停不下</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="font-size:18px">1.5 / 1.0 / 0.75 / 0.5 / 0</div><div class="stat__label">加仓 / 重 / 标准 / 轻 / 暂停倍数</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + blockedCount + '</div><div class="stat__label">无号不下</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:18px">1.5 / 1.0 / 0.75 / 0.5 / 0</div><div class="stat__label">加仓 / 重 / 标准 / 轻 / 等待倍数</div></div>';
     html += '</div></div>';
 
     rows.forEach(function (row) {
@@ -2346,7 +2333,7 @@
       html += '<span class="chip" style="color:' + row.color + ';font-weight:900">' + row.quality.label + '</span>';
       html += '<span class="chip">窗口命中率 ' + (row.stats.hitRate * 100).toFixed(1) + '%</span>';
       html += '<span class="chip">ROI ' + (row.stats.roi * 100).toFixed(1) + '%</span>';
-      html += '<span class="chip">机会分 ' + row.quality.score.toFixed(0) + '</span>';
+      html += '<span class="chip">规律分 ' + row.quality.score.toFixed(0) + '</span>';
       if (row.waiting) html += '<span class="chip" style="background:#fffbeb;border-color:#fcd34d;color:#92400e">等待尾' + row.waiting.tail + ' · 已等' + row.waiting.waited + '期</span>';
       html += '</div>';
       html += '<div class="exec-line__metrics">';
@@ -2359,7 +2346,7 @@
       html += '</div></div>';
     });
 
-    html += '<p class="disclaimer">资金调度只做风险建议，不自动下单。本金固定锚定10,000元；等待线金额强制为0；窗口进行中不改已锁公式；每条线按自己的风险和当前窗口单独定轻/重；任何下注最低100元。</p>';
+    html += '<p class="disclaimer">资金调度只做倍率建议，不自动下单。本金1万元只用于计算占用率参考，不自动砍线；等待线金额强制为0；窗口进行中机会低时锁仓1.0倍、机会高时可加仓；任何下注最低100元。</p>';
     view.innerHTML = html;
   }
 
