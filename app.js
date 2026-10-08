@@ -1708,6 +1708,22 @@
     8: [0, 500, 0],
     9: [500, 500, 0],
   };
+  var EXEC_LINES = [
+    { id: "tail0", label: "尾0", kind: "tail", tail: 0, plan: [0, 500, 0] },
+    { id: "tail1", label: "尾1", kind: "tail", tail: 1, plan: [0, 500, 500] },
+    { id: "tail2", label: "尾2", kind: "tail", tail: 2, plan: [500, 500, 0] },
+    { id: "tail3", label: "尾3", kind: "tail", tail: 3, plan: [500, 500, 0] },
+    { id: "tail4", label: "尾4", kind: "tail", tail: 4, plan: [0, 500, 500] },
+    { id: "tail5", label: "尾5", kind: "tail", tail: 5, plan: [500, 500, 500] },
+    { id: "tail6", label: "尾6", kind: "tail", tail: 6, plan: [500, 500, 500] },
+    { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 500, 500] },
+    { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [500, 500, 0] },
+    { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [0, 500, 0] },
+    { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [500, 500, 0] },
+    { id: "fixedD2", label: "追号码 D2", kind: "fixed", stream: "D2", plan: [0, 500, 500] },
+    { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [0, 500, 0] },
+    { id: "recD2", label: "追推荐 D2", kind: "recommend", stream: "D2", plan: [0, 500, 0] },
+  ];
   var ORDER_PATTERNS = {
     P6: [1, 1.25, 2.8125],
     P7: [1, 1.5, 3.375],
@@ -1867,70 +1883,173 @@
     return null;
   }
 
-  function renderOrderHint() {
-    var nextPeriod = latest + 1;
-    var prediction = MODEL.buildPrediction(latest);
+  var execPredCache = {};
+  function execPrediction(period) {
+    if (!execPredCache[period]) execPredCache[period] = MODEL.buildPrediction(period - 1);
+    return execPredCache[period];
+  }
+
+  function execPick(period, stream) {
+    if (period <= 1) return null;
+    var prediction = execPrediction(period);
     var picks = prediction.doubleRecommendation || [];
-    var recommended = {};
-    picks.forEach(function (p, i) {
-      recommended[p.tail] = i === 0 ? "D1" : "D2";
-    });
-    var windows = simpleWindowsLoad();
-    var pendingByTail = {};
-    windows.forEach(function (w) {
-      var status = simpleWindowStatus(w);
-      if (status.status === "pending") pendingByTail[Number(w.tail)] = w;
-    });
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">执行提示</h2><span class="section__hint">第' + nextPeriod + '期 · 主模型信号 + 已开三期窗口 · 只提示，不自动下单</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="min-width:820px">';
-    html += '<div style="display:grid;grid-template-columns:1.3fr .7fr 1fr .7fr .7fr .7fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
-    html += '<span>尾号</span><span>本期动作</span><span>当前状态</span><span>本期金额</span><span>窗口期序</span><span>下一期计划</span></div>';
-    for (var tail = 0; tail < 10; tail++) {
-      var plan = HINT_PLANS[tail] || [0, 500, 0];
-      var w = pendingByTail[tail];
-      var status = w ? simpleWindowStatus(w) : null;
-      var action = "不下";
-      var actionColor = "#6b7280";
-      var stateText = "等待主模型重新推荐";
-      var amount = 0;
-      var stageText = "-";
-      var nextPlan = "-";
-      var openWindow = false;
-      if (status && status.status === "pending") {
-        var attempts = status.attempts.length;
-        var expectedPeriod = Number(w.startPeriod) + attempts;
-        stageText = "第" + Math.min(attempts + 1, 3) + "期";
-        if (expectedPeriod === nextPeriod) {
-          amount = Number(plan[attempts] || 0);
-          action = amount > 0 ? "下注" : "等待";
-          actionColor = amount > 0 ? "#16a34a" : "#2563eb";
-          stateText = "窗口进行中 · 尾" + w.tail;
-          if (attempts < 2 && Number(plan[attempts + 1] || 0) > 0) nextPlan = "第" + (attempts + 2) + "期 " + plan[attempts + 1] + "元";
+    return picks[stream === "D1" ? 0 : 1] || null;
+  }
+
+  function execHasTail(period, tail) {
+    var d1 = execPick(period, "D1");
+    var d2 = execPick(period, "D2");
+    return !!(d1 && Number(d1.tail) === Number(tail)) || !!(d2 && Number(d2.tail) === Number(tail));
+  }
+
+  function buildExecWindows(line) {
+    var windows = [];
+    var active = null;
+    var p = 31;
+    while (p <= latest) {
+      var trigger = null;
+      if (!active) {
+        if (line.kind === "tail") {
+          if (execHasTail(p, line.tail)) trigger = { tail: line.tail };
         } else {
-          action = "检查";
-          actionColor = "#dc2626";
-          stateText = "窗口与数据不连续";
+          trigger = execPick(p, line.stream);
         }
-      } else if (recommended[tail]) {
-        openWindow = true;
-        amount = Number(plan[0] || 0);
-        action = amount > 0 ? "下注" : "开窗等待";
-        actionColor = amount > 0 ? "#16a34a" : "#2563eb";
-        stateText = "主模型 " + recommended[tail] + " 推荐";
-        if (Number(plan[1] || 0) > 0) nextPlan = "第2期 " + plan[1] + "元";
+        if (!trigger) { p++; continue; }
+        active = {
+          start: p,
+          lockedTail: line.kind === "recommend" ? null : trigger.tail,
+          attempts: []
+        };
       }
-      html += '<div style="display:grid;grid-template-columns:1.3fr .7fr 1fr .7fr .7fr .7fr;gap:6px;padding:9px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
-      html += '<b>尾' + tail + '</b>';
-      html += '<span style="font-weight:900;color:' + actionColor + '">' + action + '</span>';
-      html += '<span>' + stateText + (openWindow ? ' <button class="chip" data-hint-open="' + tail + '" style="margin-left:4px">建立窗口</button>' : '') + '</span>';
-      html += '<span>' + (amount > 0 ? amount + '元' : '-') + '</span>';
-      html += '<span>' + stageText + '</span>';
-      html += '<span>' + nextPlan + '</span>';
-      html += '</div>';
+      var actual = MODEL.tailsOf(p);
+      var pick = line.kind === "recommend" ? execPick(p, line.stream) : { tail: active.lockedTail };
+      var tail = pick ? pick.tail : null;
+      var hit = tail != null && actual.indexOf(Number(tail)) >= 0;
+      active.attempts.push({ period: p, tail: tail, hit: hit });
+      if (hit) {
+        active.hitIndex = active.attempts.length;
+        active.status = "hit";
+        windows.push(active);
+        active = null;
+        p++;
+      } else if (active.attempts.length >= 3) {
+        active.hitIndex = 0;
+        active.status = "miss";
+        windows.push(active);
+        active = null;
+        p++;
+      } else {
+        p++;
+      }
     }
-    html += '</div></div></div>';
-    html += '<p class="disclaimer">执行提示只根据主模型 D1/D2 推荐和本机已开窗口计算，不自动下单；“建立窗口”只记录三期跟踪，不代表已下注。</p>';
+    return { windows: windows, active: active };
+  }
+
+  function execWindowProfit(line, windowRow) {
+    var plan = line.plan;
+    if (windowRow.hitIndex === 1) return +(plan[0] * 0.8).toFixed(2);
+    if (windowRow.hitIndex === 2) return +(-plan[0] + plan[1] * 0.8).toFixed(2);
+    if (windowRow.hitIndex === 3) return +(-plan[0] - plan[1] + plan[2] * 0.8).toFixed(2);
+    return +(-plan[0] - plan[1] - plan[2]).toFixed(2);
+  }
+
+  function execLineStats(line, windows) {
+    var settled = windows.filter(function (w) { return w.status !== "pending"; });
+    var turnover = 0;
+    var net = 0;
+    windows.forEach(function (w) {
+      var attempts = w.hitIndex === 1 ? 1 : w.hitIndex === 2 ? 2 : 3;
+      turnover += line.plan[0] + (attempts > 1 ? line.plan[1] : 0) + (attempts > 2 ? line.plan[2] : 0);
+    });
+    settled.forEach(function (w) { net += execWindowProfit(line, w); });
+    return { turnover: turnover, net: +net.toFixed(2), roi: turnover ? net / turnover : 0, settled: settled.length };
+  }
+
+  function execWindowText(windowRow) {
+    if (windowRow.status === "hit") {
+      var tail = windowRow.attempts[windowRow.hitIndex - 1].tail;
+      return "第" + windowRow.start + "期 · 尾" + tail + " · 第" + windowRow.hitIndex + "期中";
+    }
+    return "第" + windowRow.start + "期 · 三期全错";
+  }
+
+  function execNextAction(line, result, nextPeriod) {
+    if (result.active) {
+      var attempts = result.active.attempts.length;
+      var expected = Number(result.active.start) + attempts;
+      if (expected === nextPeriod && attempts < 3) {
+        return {
+          action: line.plan[attempts] > 0 ? "下注" : "等待",
+          amount: Number(line.plan[attempts] || 0),
+          stage: "第" + (attempts + 1) + "期",
+          status: "窗口进行中",
+          color: line.plan[attempts] > 0 ? "#16a34a" : "#2563eb"
+        };
+      }
+      return { action: "检查", amount: 0, stage: "-", status: "窗口状态不连续", color: "#dc2626" };
+    }
+    var willTrigger = line.kind === "tail" ? execHasTail(nextPeriod, line.tail) : !!execPick(nextPeriod, line.stream);
+    if (willTrigger) {
+      return {
+        action: line.plan[0] > 0 ? "下注" : "开窗等待",
+        amount: Number(line.plan[0] || 0),
+        stage: "第1期",
+        status: "可开新窗口",
+        color: line.plan[0] > 0 ? "#16a34a" : "#2563eb"
+      };
+    }
+    return { action: "不下", amount: 0, stage: "-", status: "等待重新推荐", color: "#6b7280" };
+  }
+
+  function renderOrderHint() {
+    execPredCache = {};
+    var nextPeriod = latest + 1;
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">执行提示 · 14条独立线路</h2><span class="section__hint">10个尾数线 + 追号码D1/D2 + 追推荐D1/D2 · 第' + nextPeriod + '期 · 只提示，不自动下单</span></div></div>';
+    EXEC_LINES.forEach(function (line) {
+      var result = buildExecWindows(line);
+      var stats = execLineStats(line, result.windows);
+      var action = execNextAction(line, result, nextPeriod);
+      var planText = line.plan.join(" / ");
+      html += '<div class="section"><div class="panel" style="padding:12px 10px">';
+      html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+      html += '<b style="font-size:14px">' + line.label + '</b>';
+      html += '<span class="chip">公式 ' + line.plan.join(":") + '</span>';
+      html += '<span class="chip">金额 ' + planText + '</span>';
+      html += '<span style="font-size:12px;color:' + (stats.net >= 0 ? "#16a34a" : "#dc2626") + '">历史净收益 ' + (stats.net >= 0 ? "+" : "") + stats.net + ' 元 · ROI ' + (stats.roi * 100).toFixed(1) + '%</span>';
+      html += '</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">';
+      html += '<div class="stat"><div class="stat__value" style="color:' + action.color + '">' + action.action + '</div><div class="stat__label">本期动作</div></div>';
+      html += '<div class="stat"><div class="stat__value">' + (action.amount > 0 ? action.amount + "元" : "-") + '</div><div class="stat__label">本期金额</div></div>';
+      html += '<div class="stat"><div class="stat__value">' + action.stage + '</div><div class="stat__label">窗口期序</div></div>';
+      html += '<div class="stat"><div class="stat__value">' + action.status + '</div><div class="stat__label">当前状态</div></div>';
+      html += '</div>';
+      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 新→旧</div>';
+      html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
+      var recent = result.windows.slice(-30).reverse();
+      if (!recent.length) {
+        html += '<span style="font-size:12px;color:#9ca3af">暂无已结束窗口</span>';
+      } else {
+        recent.forEach(function (w) {
+          var tone = w.status === "hit" ? "#16a34a" : "#dc2626";
+          var bg = w.status === "hit" ? "#f0fdf4" : "#fef2f2";
+          var border = w.status === "hit" ? "#bbf7d0" : "#fecaca";
+          html += '<div style="min-width:150px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + '">';
+          html += '<div style="font-size:10px;color:#6b7280">起始 第' + w.start + '期</div>';
+          html += '<div style="font-size:12px;font-weight:900;color:' + tone + ';margin-top:2px">' + execWindowText(w) + '</div>';
+          html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (w.attempts || []).map(function (a) { return "尾" + a.tail + (a.hit ? "中" : "错"); }).join("→") + '</div>';
+          html += '</div>';
+        });
+      }
+      if (result.active) {
+        html += '<div style="min-width:150px;border:1px dashed #93c5fd;border-radius:8px;padding:6px 7px;background:#eff6ff">';
+        html += '<div style="font-size:10px;color:#6b7280">起始 第' + result.active.start + '期</div>';
+        html += '<div style="font-size:12px;font-weight:900;color:#2563eb;margin-top:2px">进行中 · 已' + result.active.attempts.length + '/3期</div>';
+        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (result.active.attempts || []).map(function (a) { return "尾" + a.tail + (a.hit ? "中" : "错"); }).join("→") + '</div>';
+        html += '</div>';
+      }
+      html += '</div></div></div>';
+    });
+    html += '<p class="disclaimer">本页只做执行提示和线路对错记录，不自动下单；历史公式仍需时间外验证，尾3、尾5历史表现偏弱但保留独立线路用于观察。</p>';
     view.innerHTML = html;
   }
 
