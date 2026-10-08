@@ -1693,6 +1693,7 @@
   // ===== 双号模型追三期下单表 =====
   var ULT_ORDER_KEY = "v2_ultimate_order_log";
   var SIMPLE_ORDER_KEY = "v2_simple_order_log";
+  var SIMPLE_WINDOW_KEY = "v2_simple_order_windows";
   var ORDER_PATTERNS = {
     P6: [1, 1.25, 2.8125],
     P7: [1, 1.5, 3.375],
@@ -1770,6 +1771,54 @@
     lsSet(SIMPLE_ORDER_KEY, rows);
   }
 
+  function simpleWindowsLoad() {
+    var rows = lsGet(SIMPLE_WINDOW_KEY, []);
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  function simpleWindowsSave(rows) {
+    lsSet(SIMPLE_WINDOW_KEY, rows);
+  }
+
+  function simpleWindowStatus(windowRow) {
+    var tail = Number(windowRow.tail);
+    var start = Number(windowRow.startPeriod);
+    var attempts = [];
+    for (var i = 0; i < 3; i++) {
+      var period = start + i;
+      var bits = RAW[String(period)];
+      if (!bits) break;
+      var hit = bits[tail] === "1";
+      attempts.push({ period: period, hit: hit });
+      if (hit) {
+        return { status: "hit", hitIndex: i + 1, attempts: attempts, settledPeriod: period };
+      }
+    }
+    if (attempts.length === 3) {
+      return { status: "miss", hitIndex: 0, attempts: attempts, settledPeriod: start + 2 };
+    }
+    return { status: "pending", hitIndex: null, attempts: attempts, settledPeriod: null };
+  }
+
+  function attachSimpleWindow(tail, period) {
+    var windows = simpleWindowsLoad();
+    var active = windows.filter(function (w) {
+      return Number(w.tail) === Number(tail)
+        && Number(w.startPeriod) <= Number(period)
+        && Number(w.startPeriod) + 2 >= Number(period)
+        && simpleWindowStatus(w).status === "pending";
+    }).sort(function (a, b) { return Number(b.startPeriod) - Number(a.startPeriod); })[0];
+    if (active) return active.startPeriod;
+    windows.push({
+      id: Date.now() + "-" + Math.random().toString(16).slice(2),
+      tail: Number(tail),
+      startPeriod: Number(period),
+      createdAt: new Date().toISOString()
+    });
+    simpleWindowsSave(windows);
+    return Number(period);
+  }
+
   function settleSimpleOrder(row) {
     if (!row || row.result !== "pending") return row;
     var period = Number(row.period);
@@ -1797,10 +1846,10 @@
   }
 
   function simpleOrderProfit(row) {
-    var multiplier = Number(row.multiplier || 0);
-    if (!Number.isFinite(multiplier) || row.result === "pending") return null;
-    if (row.result === "hit") return +(multiplier * 0.8).toFixed(2);
-    if (row.result === "miss") return +(-multiplier).toFixed(2);
+    var amount = Number(row.amount || 1);
+    if (!Number.isFinite(amount) || row.result === "pending") return null;
+    if (row.result === "hit") return +(amount * 0.8).toFixed(2);
+    if (row.result === "miss") return +(-amount).toFixed(2);
     return null;
   }
 
@@ -1810,7 +1859,7 @@
     var rows = activeTail === "all" ? allRows : allRows.filter(function (r) { return Number(r.tail) === activeTail; });
     var settled = rows.filter(function (r) { return r.result !== "pending"; });
     var totalProfit = settled.reduce(function (sum, r) { return sum + (simpleOrderProfit(r) || 0); }, 0);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">' + (activeTail === "all" ? "下单记录表" : "尾" + activeTail + " · 历史下单轨迹") + '</h2><span class="section__hint">只记录期数、号码、倍率；结果按实际开奖自动判定，收益按1.8赔率计算 · 本机保存</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">' + (activeTail === "all" ? "下单记录表" : "尾" + activeTail + " · 历史下单轨迹") + '</h2><span class="section__hint">记录期数、号码、下单金额；赔率固定1.8，结果按实际开奖自动判定 · 本机保存</span></div></div>';
 
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + rows.length + '</div><div class="stat__label">' + (activeTail === "all" ? "全部记录" : "尾" + activeTail + "记录") + '</div></div>';
@@ -1827,19 +1876,45 @@
     }
     html += '</div></div></div>';
 
+    var allWindows = simpleWindowsLoad();
+    var visibleWindows = activeTail === "all" ? allWindows : allWindows.filter(function (w) { return Number(w.tail) === activeTail; });
+    visibleWindows = visibleWindows.slice().sort(function (a, b) { return Number(b.startPeriod) - Number(a.startPeriod); });
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内锁定窗口</h2><span class="section__hint">每个号码第一次下单自动锁定3期，期间号码不变；中出或三期全错后关闭</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:7px;min-width:max-content">';
+    if (!visibleWindows.length) {
+      html += '<span style="font-size:12px;color:#9ca3af">暂无锁定窗口</span>';
+    } else {
+      visibleWindows.forEach(function (w) {
+        var status = simpleWindowStatus(w);
+        var statusText = status.status === "hit" ? "第" + status.hitIndex + "期中" : status.status === "miss" ? "三期全错" : "进行中";
+        var statusColor = status.status === "hit" ? "#16a34a" : status.status === "miss" ? "#dc2626" : "#2563eb";
+        var attemptsText = status.attempts.length
+          ? status.attempts.map(function (a) { return "第" + a.period + "期" + (a.hit ? "中" : "错"); }).join(" · ")
+          : "尚未开奖";
+        html += '<div style="min-width:180px;border:1px solid #e0e3e8;border-radius:8px;padding:8px 9px;background:#fff">';
+        html += '<div style="font-size:12px;font-weight:900">尾' + w.tail + ' · 起始第' + w.startPeriod + '期</div>';
+        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">窗口 第' + w.startPeriod + '–' + (Number(w.startPeriod) + 2) + '期</div>';
+        html += '<div style="font-size:13px;font-weight:900;color:' + statusColor + ';margin-top:5px">' + statusText + '</div>';
+        html += '<div style="font-size:10px;color:#6b7280;margin-top:4px;white-space:nowrap">' + attemptsText + '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div></div></div>';
+
     html += '<div class="section"><div class="panel"><div class="panel__body">';
     html += '<div class="ord-grid">';
     html += '<div class="ord-item"><label>期数</label><input id="soPeriod" type="number" min="1" value="' + (latest + 1) + '"></div>';
     html += '<div class="ord-item"><label>号码（尾号）</label><input id="soTail" type="number" min="0" max="9" value="0"></div>';
-    html += '<div class="ord-item"><label>倍率</label><input id="soMultiplier" type="number" min="0.01" step="0.01" value="1"></div>';
+    html += '<div class="ord-item"><label>下单金额（元）</label><input id="soAmount" type="number" min="0.01" step="0.01" value="1"></div>';
+    html += '<div class="ord-item"><label>赔率</label><div style="padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;background:#f9fafb;font-weight:900">固定 1.8</div></div>';
     html += '</div>';
     html += '<button class="btn-primary" data-so-add="1" style="margin-top:10px">新增下单记录</button>';
     html += '</div></div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="min-width:720px">';
-    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .7fr .7fr .7fr .7fr .5fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
-    html += '<span>时间</span><span>期数</span><span>号码</span><span>倍率</span><span>结果</span><span>收益</span><span>操作</span></div>';
+    html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .7fr .7fr .7fr .7fr .7fr .5fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
+    html += '<span>时间</span><span>期数</span><span>号码</span><span>金额</span><span>赔率</span><span>结果</span><span>收益</span><span>操作</span></div>';
     if (!rows.length) {
       html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无下单记录</div>';
     } else {
@@ -1849,11 +1924,12 @@
         var profit = simpleOrderProfit(row);
         var resultText = row.result === "hit" ? "中" : row.result === "miss" ? "错" : "待开奖";
         var resultColor = row.result === "hit" ? "#16a34a" : row.result === "miss" ? "#dc2626" : "#2563eb";
-        html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .7fr .7fr .7fr .7fr .5fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
+        html += '<div style="display:grid;grid-template-columns:1.2fr .7fr .7fr .7fr .7fr .7fr .7fr .5fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
         html += '<span>' + (row.createdAt || "").replace("T", " ").slice(0, 16) + '</span>';
         html += '<span>第' + row.period + '期</span>';
         html += '<span>尾' + row.tail + '</span>';
-        html += '<span>' + row.multiplier + '倍</span>';
+        html += '<span>' + Number(row.amount || 1).toFixed(2) + '</span>';
+        html += '<span>1.8</span>';
         html += '<span style="font-weight:800;color:' + resultColor + '">' + resultText + '</span>';
         html += '<span style="font-weight:800;color:' + (profit == null ? "#6b7280" : profit >= 0 ? "#16a34a" : "#dc2626") + '">' + (profit == null ? "-" : (profit >= 0 ? "+" : "") + profit.toFixed(2)) + '</span>';
         html += '<button class="chip" data-so-del="' + row.id + '">删</button>';
@@ -1861,7 +1937,7 @@
       });
     }
     html += '</div></div></div>';
-    html += '<p class="disclaimer">本页只记录下单期数、号码和倍率，不读取模型推荐，不自动生成订单，不参与选号。收益按每单位命中 +0.8、未中 -1 计算并乘以倍率。</p>';
+    html += '<p class="disclaimer">本页只记录下单期数、号码和金额，不读取模型推荐，不自动生成订单，不参与选号。赔率固定1.8，命中净收益 +0.8×金额，未中 -1×金额。</p>';
     view.innerHTML = html;
   }
 
@@ -3631,17 +3707,20 @@
     if (e.target.closest("[data-so-add]")) {
       var soPeriod = Number(document.getElementById("soPeriod").value);
       var soTail = Number(document.getElementById("soTail").value);
-      var soMultiplier = Number(document.getElementById("soMultiplier").value);
+      var soAmount = Number(document.getElementById("soAmount").value);
       if (!Number.isFinite(soPeriod) || soPeriod < 1) { alert("期数不正确"); return; }
       if (!Number.isFinite(soTail) || soTail < 0 || soTail > 9) { alert("号码必须为0-9"); return; }
-      if (!Number.isFinite(soMultiplier) || soMultiplier <= 0) { alert("倍率必须大于0"); return; }
+      if (!Number.isFinite(soAmount) || soAmount <= 0) { alert("下单金额必须大于0"); return; }
       var simpleRows = simpleOrdersLoad();
+      var windowStart = attachSimpleWindow(soTail, soPeriod);
       simpleRows.push({
         id: Date.now() + "-" + Math.random().toString(16).slice(2),
         createdAt: new Date().toISOString(),
         period: soPeriod,
         tail: soTail,
-        multiplier: soMultiplier,
+        amount: soAmount,
+        odds: 1.8,
+        windowStart: windowStart,
         result: "pending"
       });
       simpleOrdersSave(simpleRows);

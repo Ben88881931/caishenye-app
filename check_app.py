@@ -237,8 +237,8 @@ def main():
             pass_("三期内记录与调度记录均紧接卡片下方展示")
         else:
             fail("三期内记录未紧接卡片下方展示")
-        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "倍率" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text:
-            pass_("下单记录表含号码轨迹、倍率、自动结果和收益计算")
+        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text:
+            pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益和三期锁定窗口")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
