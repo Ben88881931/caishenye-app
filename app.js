@@ -2075,6 +2075,7 @@
       var planText = line.plan.join(" / ");
       var firstStart = result.windows.length ? result.windows[0].start : (result.active ? result.active.start : (line.kind === "tail" ? 1 : 31));
       html += '<div class="section"><div class="panel" style="padding:12px 10px">';
+      html += '<div class="exec-line-summary">';
       html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
       html += '<b class="exec-line__label' + (line.kind === "tail" ? " exec-line__label--tail" : "") + '">' + line.label + '</b>';
       html += '<span class="chip">公式（元） ' + line.plan.join(":") + '</span>';
@@ -2086,6 +2087,7 @@
         html += '<span class="chip" style="background:#fffbeb;border-color:#fcd34d;color:#92400e;font-weight:900">等待尾' + result.waiting.tail + ' · 已等' + result.waiting.waited + '期</span>';
       }
       html += '<span style="font-size:12px;color:' + (stats.net >= 0 ? "#16a34a" : "#dc2626") + '">历史净收益 ' + (stats.net >= 0 ? "+" : "") + stats.net + ' 元 · ROI ' + (stats.roi * 100).toFixed(1) + '%</span>';
+      html += '</div>';
       html += '</div>';
       html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
       html += '<div style="font-size:11px;color:#64748b;margin:0 0 6px">中窗=3期内至少中1次；错窗=连续3期未中；首次命中分布之和=中窗数。</div>';

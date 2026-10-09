@@ -1333,6 +1333,13 @@ body {
 .exec-window-card--current {
   order: -1;
 }
+.exec-line-summary {
+  padding: 10px 11px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #f8fafc;
+  margin-bottom: 10px;
+}
 
 .fund-controls {
   padding: 12px;
