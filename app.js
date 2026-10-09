@@ -2077,9 +2077,8 @@
       html += '<div class="section"><div class="panel" style="padding:12px 10px">';
       html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
       html += '<b class="exec-line__label' + (line.kind === "tail" ? " exec-line__label--tail" : "") + '">' + line.label + '</b>';
-      html += '<span class="chip">公式 ' + line.plan.join(":") + '</span>';
+      html += '<span class="chip">公式（元） ' + line.plan.join(":") + '</span>';
       html += '<span class="chip">记录起点 第' + firstStart + '期</span>';
-      html += '<span class="chip">金额 ' + planText + '</span>';
       html += '<span class="chip">3期内命中率 ' + (stats.hitRate * 100).toFixed(1) + '%</span>';
       html += '<span class="chip">首次命中分布：第1期' + stats.first + ' / 第2期' + stats.second + ' / 第3期' + stats.third + '</span>';
       html += '<span class="chip" style="background:#ecfdf5;border-color:#86efac;color:#166534;font-weight:900">已结算窗口：中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗</span>';
@@ -2087,12 +2086,6 @@
         html += '<span class="chip" style="background:#fffbeb;border-color:#fcd34d;color:#92400e;font-weight:900">等待尾' + result.waiting.tail + ' · 已等' + result.waiting.waited + '期</span>';
       }
       html += '<span style="font-size:12px;color:' + (stats.net >= 0 ? "#16a34a" : "#dc2626") + '">历史净收益 ' + (stats.net >= 0 ? "+" : "") + stats.net + ' 元 · ROI ' + (stats.roi * 100).toFixed(1) + '%</span>';
-      html += '</div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">';
-      html += '<div class="stat"><div class="stat__value" style="color:' + action.color + '">' + action.action + '</div><div class="stat__label">本期动作</div></div>';
-      html += '<div class="stat"><div class="stat__value">' + (action.amount > 0 ? action.amount + "元" : "-") + '</div><div class="stat__label">本期金额</div></div>';
-      html += '<div class="stat"><div class="stat__value">' + action.stage + '</div><div class="stat__label">窗口期序</div></div>';
-      html += '<div class="stat"><div class="stat__value">' + action.status + '</div><div class="stat__label">当前状态</div></div>';
       html += '</div>';
       html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
       html += '<div style="font-size:11px;color:#64748b;margin:0 0 6px">中窗=3期内至少中1次；错窗=连续3期未中；首次命中分布之和=中窗数。</div>';
@@ -2105,7 +2098,8 @@
       } else if (result.active) {
         html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + ' · ' + (result.active.attempts || []).map(execAttemptText).join('→') + '</div>';
       } else {
-        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + ' · ' + action.status + ' · 计划 ' + planText + '</div>';
+        var extraStatus = action.status === "可开新窗口" ? "" : " · " + action.status;
+        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + extraStatus + ' · 计划 ' + planText + '</div>';
       }
       html += '</div>';
       var recent = result.windows.slice().sort(function (a, b) {
