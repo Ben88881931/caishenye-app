@@ -2738,20 +2738,68 @@
     html += '<div class="stat"><div class="stat__value">' + selected.orderHit.toFixed(2) + '%</div><div class="stat__label">实际下单命中率</div></div>';
     html += '<div class="stat"><div class="stat__value">' + selected.maxWindowRisk + '</div><div class="stat__label">单窗最大风险（元）</div></div>';
     html += '</div></div>';
-    var missRecords = selected.records.filter(function (item) { return item.window.hitIndex === 0; }).slice().reverse();
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">连续全错窗口记录</h2><span class="section__hint">每个全错窗口标明连错第几次、等待尾号和本窗亏损</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">';
-    if (!missRecords.length) {
-      html += '<div style="font-size:13px;color:#64748b">没有三期全错窗口</div>';
+    var missRuns = [];
+    var currentRun = null;
+    selected.records.forEach(function (item) {
+      if (item.window.hitIndex === 0) {
+        if (!currentRun) {
+          currentRun = { length: 0, start: item.window.start, end: item.window.start, loss: 0, waitTail: null };
+          missRuns.push(currentRun);
+        }
+        currentRun.length++;
+        currentRun.end = item.window.start;
+        currentRun.loss += item.profit;
+        currentRun.waitTail = item.window.attempts.length ? item.window.attempts[item.window.attempts.length - 1].tail : "-";
+      } else {
+        currentRun = null;
+      }
+    });
+    var runCounts = { one: 0, two: 0, three: 0, fourPlus: 0 };
+    missRuns.forEach(function (run) {
+      if (run.length === 1) runCounts.one++;
+      else if (run.length === 2) runCounts.two++;
+      else if (run.length === 3) runCounts.three++;
+      else runCounts.fourPlus++;
+    });
+    function continueMissRate(streak) {
+      var base = 0;
+      var nextMiss = 0;
+      for (var i = 0; i + streak < selected.records.length; i++) {
+        var allMiss = true;
+        for (var j = 0; j < streak; j++) {
+          if (selected.records[i + j].window.hitIndex !== 0) { allMiss = false; break; }
+        }
+        if (!allMiss) continue;
+        base++;
+        if (selected.records[i + streak].window.hitIndex === 0) nextMiss++;
+      }
+      return base ? (nextMiss / base) * 100 : 0;
+    }
+    var afterOne = continueMissRate(1);
+    var afterTwo = continueMissRate(2);
+    var afterThree = continueMissRate(3);
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口连续全错规律</h2><span class="section__hint">统计连续2窗、3窗、4窗以上全错，以及继续全错的概率</span></div></div>';
+    html += '<div class="section"><div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value">' + runCounts.one + '</div><div class="stat__label">单次全错次数</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#d97706">' + runCounts.two + '</div><div class="stat__label">连续2窗全错</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + runCounts.three + '</div><div class="stat__label">连续3窗全错</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#991b1b">' + runCounts.fourPlus + '</div><div class="stat__label">连续4窗及以上</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + afterOne.toFixed(2) + '%</div><div class="stat__label">1窗全错后，下窗继续错</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + afterTwo.toFixed(2) + '%</div><div class="stat__label">2窗连错后，第3窗继续错</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + afterThree.toFixed(2) + '%</div><div class="stat__label">3窗连错后，第4窗继续错</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.maxLossStreak + '窗</div><div class="stat__label">历史最大连续全错</div></div>';
+    html += '</div></div>';
+    var consecutiveRuns = missRuns.filter(function (run) { return run.length >= 2; }).slice().reverse();
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:8px">连续2窗及以上记录</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px">';
+    if (!consecutiveRuns.length) {
+      html += '<div style="font-size:13px;color:#64748b">没有连续2窗全错记录</div>';
     } else {
-      missRecords.forEach(function (item) {
-        var w = item.window;
-        var waitTail = w.attempts.length ? w.attempts[w.attempts.length - 1].tail : "-";
+      consecutiveRuns.forEach(function (run) {
         html += '<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:8px;padding:9px">';
-        html += '<div style="font-size:15px;font-weight:900;color:#b91c1c">连错第' + item.missStreak + '次</div>';
-        html += '<div style="font-size:12px;color:#475569;margin-top:4px">窗口：' + wmPeriodLabel(w.start) + '</div>';
-        html += '<div style="font-size:12px;color:#475569">等待尾' + waitTail + '重新开出</div>';
-        html += '<div style="font-size:13px;font-weight:900;color:#dc2626;margin-top:4px">本窗亏损 ' + Math.round(item.profit) + '</div>';
+        html += '<div style="font-size:15px;font-weight:900;color:#b91c1c">连续' + run.length + '窗全错</div>';
+        html += '<div style="font-size:12px;color:#475569;margin-top:4px">' + wmPeriodLabel(run.start) + ' → ' + wmPeriodLabel(run.end) + '</div>';
+        html += '<div style="font-size:12px;color:#475569">等待尾' + run.waitTail + '重新开出</div>';
+        html += '<div style="font-size:13px;font-weight:900;color:#dc2626;margin-top:4px">累计亏损 ' + Math.round(run.loss) + '</div>';
         html += '</div>';
       });
     }
