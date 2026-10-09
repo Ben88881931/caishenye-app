@@ -2443,10 +2443,10 @@
       html += '<span class="chip">公式（元） ' + row.formulaName + ' · ' + row.line.plan.join(":") + '</span>';
       html += '<span class="chip" style="color:' + row.color + ';font-weight:900">' + row.action + '</span></div>';
       html += '<div class="exec-line__metrics">';
-      html += '<div class="stat"><div class="stat__value">' + (row.amount > 0 ? row.amount + "元" : "-") + '</div><div class="stat__label">本期按公式金额</div></div>';
+      html += '<div class="stat" style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:8px"><div class="stat__value" style="font-size:26px;color:#1d4ed8">' + (row.amount > 0 ? row.amount + "元" : "-") + '</div><div class="stat__label">当期资金 · 本期按公式金额</div></div>';
       html += '<div class="stat"><div class="stat__value">' + (row.maxLoss > 0 ? row.maxLoss + "元" : "-") + '</div><div class="stat__label">本窗剩余风险</div></div>';
       html += '<div class="stat"><div class="stat__value" style="font-size:18px">第' + row.stage + '期</div><div class="stat__label">当前窗口期序</div></div>';
-      html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + row.status + '</div><div class="stat__label">当前状态</div></div>';
+      html += '<div class="stat" style="background:' + (row.amount > 0 ? "#f0fdf4" : "#fffbeb") + ';border:2px solid ' + row.color + ';border-radius:8px;padding:8px"><div class="stat__value" style="font-size:20px;color:' + row.color + '">' + row.status + '</div><div class="stat__label">当前状态</div></div>';
       html += '</div></div></div>';
     });
     html += '<p class="disclaimer">资金调度只按公式表执行，不再自行计算轻重倍率。公式为0表示历史训练和验证均未通过，不配仓；等待窗口金额为0；本金1万元只作占用率参考。</p>';
