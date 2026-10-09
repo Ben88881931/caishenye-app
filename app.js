@@ -1716,7 +1716,7 @@
   };
   var EXEC_LINES = [
     { id: "tail0", label: "尾0", kind: "tail", tail: 0, plan: [0, 0, 0] },
-    { id: "tail1", label: "尾1", kind: "tail", tail: 1, plan: [0, 0, 0] },
+    { id: "tail1", label: "尾1", kind: "tail", tail: 1, plan: [500, 1000, 2000] },
     { id: "tail2", label: "尾2", kind: "tail", tail: 2, plan: [1500, 0, 0] },
     { id: "tail3", label: "尾3", kind: "tail", tail: 3, plan: [0, 0, 1500] },
     { id: "tail4", label: "尾4", kind: "tail", tail: 4, plan: [0, 0, 1500] },
@@ -1727,26 +1727,26 @@
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [1500, 0, 0] },
     { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [1500, 0, 0] },
     { id: "fixedD2", label: "追号码 D2", kind: "fixed", stream: "D2", plan: [0, 1500, 0] },
-    { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [900, 600, 0] },
+    { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [500, 500, 500] },
     { id: "recD2", label: "追推荐 D2", kind: "recommend", stream: "D2", plan: [0, 1500, 0] },
   ];
 
   // 公式来源：2021-2023训练段 + 2024-2026验证段，两段均为正的阶段系数才配仓。
   var EXEC_FORMULA_AUDIT = {
-    tail0: { train: [-0.1744, -0.1525, -0.0949], valid: [-0.1399, 0.0359, -0.0191] },
-    tail1: { train: [0.0344, 0.0213, -0.0041], valid: [-0.0576, -0.0119, 0.0407] },
-    tail2: { train: [0.0929, 0.0229, 0.0095], valid: [0.0629, -0.0152, -0.0190] },
-    tail3: { train: [-0.0225, 0.0131, 0.0157], valid: [0.0378, -0.0187, 0.0124] },
-    tail4: { train: [0.0073, -0.0301, 0.0254], valid: [-0.0672, -0.0599, 0.0104] },
-    tail5: { train: [-0.0596, -0.0026, 0.0142], valid: [0.0671, -0.0343, 0.0014] },
-    tail6: { train: [0.0015, 0.0075, 0.0281], valid: [0.0168, -0.0457, 0.0322] },
-    tail7: { train: [0.0142, -0.0254, 0.0294], valid: [-0.0418, -0.0020, 0.0060] },
-    tail8: { train: [0.0010, 0.0026, -0.0078], valid: [-0.0145, 0.0020, -0.0155] },
-    tail9: { train: [0.0450, -0.0419, -0.0394], valid: [0.0280, 0.0488, -0.0270] },
-    fixedD1: { train: [0.0211, 0.0090, 0.0074], valid: [0.0055, -0.0284, -0.0055] },
-    fixedD2: { train: [0.0594, 0.0198, -0.0078], valid: [-0.0599, 0.0035, 0.0079] },
-    recD1: { train: [0.0246, 0.0262, 0.0031], valid: [0.0378, 0.0158, 0.0014] },
-    recD2: { train: [0.1122, 0.0333, -0.0084], valid: [-0.0618, 0.0060, 0.0015] },
+    tail0: { formula: "不配仓", train: [-0.1744, -0.1525, -0.0949], valid: [-0.1399, 0.0359, -0.0191], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 119 },
+    tail1: { formula: "双倍倍投", train: [0.0344, 0.0213, -0.0041], valid: [-0.0576, -0.0119, 0.0407], fullNet: 28400, fullRoi: 0.0264186047, trainNet: 12000, validNet: 16400, maxDrawdown: 21100, miss: 62 },
+    tail2: { formula: "阶段公式", train: [0.0929, 0.0229, 0.0095], valid: [0.0629, -0.0152, -0.0190], fullNet: 98100, fullRoi: 0.0778571429, trainNet: 58500, validNet: 39600, maxDrawdown: 25500, miss: 68 },
+    tail3: { formula: "阶段公式", train: [-0.0225, 0.0131, 0.0157], valid: [0.0378, -0.0187, 0.0124], fullNet: 16800, fullRoi: 0.0708860759, trainNet: 9000, validNet: 7800, maxDrawdown: 10800, miss: 64 },
+    tail4: { formula: "阶段公式", train: [0.0073, -0.0301, 0.0254], valid: [-0.0672, -0.0599, 0.0104], fullNet: 20700, fullRoi: 0.0779661017, trainNet: 14700, validNet: 6000, maxDrawdown: 11100, miss: 71 },
+    tail5: { formula: "阶段公式", train: [-0.0596, -0.0026, 0.0142], valid: [0.0671, -0.0343, 0.0014], fullNet: 9000, fullRoi: 0.0363636364, trainNet: 8100, validNet: 900, maxDrawdown: 10500, miss: 70 },
+    tail6: { formula: "阶段公式", train: [0.0015, 0.0075, 0.0281], valid: [0.0168, -0.0457, 0.0322], fullNet: 35200, fullRoi: 0.1111461951, trainNet: 15740, validNet: 19460, maxDrawdown: 6900, miss: 61 },
+    tail7: { formula: "阶段公式", train: [0.0142, -0.0254, 0.0294], valid: [-0.0418, -0.0020, 0.0060], fullNet: 21000, fullRoi: 0.0843373494, trainNet: 17400, validNet: 3600, maxDrawdown: 16500, miss: 66 },
+    tail8: { formula: "阶段公式", train: [0.0010, 0.0026, -0.0078], valid: [-0.0145, 0.0020, -0.0155], fullNet: 2700, fullRoi: 0.0051282051, trainNet: 1500, validNet: 1200, maxDrawdown: 26100, miss: 74 },
+    tail9: { formula: "阶段公式", train: [0.0450, -0.0419, -0.0394], valid: [0.0280, 0.0488, -0.0270], fullNet: 44100, fullRoi: 0.0361623616, trainNet: 26400, validNet: 17700, maxDrawdown: 32700, miss: 82 },
+    fixedD1: { formula: "阶段公式", train: [0.0211, 0.0090, 0.0074], valid: [0.0055, -0.0284, -0.0055], fullNet: 15300, fullRoi: 0.0130769231, trainNet: 12000, validNet: 3300, maxDrawdown: 40200, miss: 69 },
+    fixedD2: { formula: "阶段公式", train: [0.0594, 0.0198, -0.0078], valid: [-0.0599, 0.0035, 0.0079], fullNet: 13500, fullRoi: 0.0256410256, trainNet: 11400, validNet: 2100, maxDrawdown: 21900, miss: 67 },
+    recD1: { formula: "连追500", train: [0.0246, 0.0262, 0.0031], valid: [0.0378, 0.0158, 0.0014], fullNet: 22000, fullRoi: 0.0339244410, trainNet: 10500, validNet: 11500, maxDrawdown: 14900, miss: 63 },
+    recD2: { formula: "阶段公式", train: [0.1122, 0.0333, -0.0084], valid: [-0.0618, 0.0060, 0.0015], fullNet: 23700, fullRoi: 0.0456647399, trainNet: 20100, validNet: 3600, maxDrawdown: 18600, miss: 66 },
   };
   var ORDER_PATTERNS = {
     P6: [1, 1.25, 2.8125],
@@ -2393,6 +2393,7 @@
     var rows = EXEC_LINES.map(function (line) {
       var result = buildExecWindows(line);
       var enabled = planRisk(line.plan) > 0;
+      var formulaName = (EXEC_FORMULA_AUDIT[line.id] || {}).formula || "阶段公式";
       var stage = 1;
       var action = "下注";
       var amount = Number(line.plan[0] || 0);
@@ -2413,8 +2414,8 @@
         color = "#d97706";
       } else if (result.active) {
         stage = result.active.attempts.length + 1;
-        action = amount > 0 ? "续追" : "本期等待";
         amount = Number(line.plan[stage - 1] || 0);
+        action = amount > 0 ? "续追" : "本期等待";
         maxLoss = planRisk(line.plan.slice(stage - 1));
         status = "窗口第" + stage + "期";
         color = amount > 0 ? "#2563eb" : "#6b7280";
@@ -2425,7 +2426,7 @@
       }
       totalCurrent += amount;
       totalRisk += maxLoss;
-      return { line, action, amount, maxLoss, stage, status, color, enabled };
+      return { line, formulaName, action, amount, maxLoss, stage, status, color, enabled };
     });
     var use = FUND_CAPITAL ? totalCurrent / FUND_CAPITAL : 0;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 直接按公式安排</h2><span class="section__hint">公式表负责定金额，资金调度只按当前窗口取第几期金额；不再另算轻重模型</span></div></div>';
@@ -2439,7 +2440,7 @@
     rows.forEach(function (row) {
       html += '<div class="section"><div class="panel fund-line" style="border-left-color:' + row.color + '">';
       html += '<div class="exec-line__head"><b class="exec-line__label' + (row.line.kind === "tail" ? " exec-line__label--tail" : "") + '">' + row.line.label + '</b>';
-      html += '<span class="chip">公式（元） ' + row.line.plan.join(":") + '</span>';
+      html += '<span class="chip">公式（元） ' + row.formulaName + ' · ' + row.line.plan.join(":") + '</span>';
       html += '<span class="chip" style="color:' + row.color + ';font-weight:900">' + row.action + '</span></div>';
       html += '<div class="exec-line__metrics">';
       html += '<div class="stat"><div class="stat__value">' + (row.amount > 0 ? row.amount + "元" : "-") + '</div><div class="stat__label">本期按公式金额</div></div>';
@@ -2461,28 +2462,25 @@
     html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + enabled + '</div><div class="stat__label">通过验证并配仓</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + disabled + '</div><div class="stat__label">未通过验证，不配仓</div></div>';
     html += '</div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.7">公式系数 = 每投入1元的历史期望收益。正数才可能配仓；训练段和验证段必须同时为正。金额按100元递增，单窗总风险上限1500元。</div></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:820px"><thead><tr><th>线路</th><th>公式（元）</th><th>第1期系数<br><span style="font-size:11px">训练 / 验证</span></th><th>第2期系数<br><span style="font-size:11px">训练 / 验证</span></th><th>第3期系数<br><span style="font-size:11px">训练 / 验证</span></th><th>状态</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.7">公式按真实三期窗口逐期测试，选择训练段和验证段都盈利的方案。命中只按实际开奖记录结算；全错窗口会结束当前窗口，等锁定号重新开出后再开新窗。</div></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1180px"><thead><tr><th>线路</th><th>最终公式</th><th>第1/2/3期金额（元）</th><th>全周期净收益 / ROI</th><th>训练 / 验证净收益</th><th>最大回撤</th><th>全错窗口</th><th>状态</th></tr></thead><tbody>';
     EXEC_LINES.forEach(function (line) {
-      var audit = EXEC_FORMULA_AUDIT[line.id] || { train: [0, 0, 0], valid: [0, 0, 0] };
+      var audit = EXEC_FORMULA_AUDIT[line.id] || { formula: "阶段公式", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 };
       var enabledLine = planRisk(line.plan) > 0;
-      function coeffCell(index) {
-        var train = audit.train[index];
-        var valid = audit.valid[index];
-        var className = train > 0 && valid > 0 ? "#16a34a" : train <= 0 || valid <= 0 ? "#dc2626" : "#475569";
-        return '<span style="color:' + className + ';font-weight:800">' + (train >= 0 ? "+" : "") + train.toFixed(4) + ' / ' + (valid >= 0 ? "+" : "") + valid.toFixed(4) + '</span>';
-      }
+      var fullColor = audit.fullNet > 0 ? "#16a34a" : audit.fullNet < 0 ? "#dc2626" : "#475569";
       html += '<tr>';
       html += '<td><b>' + line.label + '</b></td>';
-      html += '<td><b>' + line.plan.join(":") + '</b></td>';
-      html += '<td>' + coeffCell(0) + '</td>';
-      html += '<td>' + coeffCell(1) + '</td>';
-      html += '<td>' + coeffCell(2) + '</td>';
+      html += '<td><b>' + audit.formula + '</b></td>';
+      html += '<td><b>' + line.plan.join(" / ") + '</b></td>';
+      html += '<td style="color:' + fullColor + ';font-weight:900">' + (audit.fullNet >= 0 ? "+" : "") + audit.fullNet + ' / ' + (audit.fullRoi * 100).toFixed(2) + '%</td>';
+      html += '<td>' + (audit.trainNet >= 0 ? "+" : "") + audit.trainNet + ' / ' + (audit.validNet >= 0 ? "+" : "") + audit.validNet + '</td>';
+      html += '<td>' + audit.maxDrawdown + '</td>';
+      html += '<td>' + audit.miss + '</td>';
       html += '<td><b style="color:' + (enabledLine ? "#16a34a" : "#dc2626") + '">' + (enabledLine ? "配仓" : "不配仓") + '</b></td>';
       html += '</tr>';
     });
     html += '</tbody></table></div></div>';
-    html += '<p class="disclaimer">公式表只展示历史验证结果，不预测下一期，不自动下单。训练或验证任一阶段系数不为正，该阶段金额为0；两段都未通过时整条线不配仓。</p>';
+    html += '<p class="disclaimer">公式表只展示历史验证结果，不预测下一期，不自动下单。训练或验证任一段不能稳定盈利时整条线不配仓；金额只表示历史测试中该线路在第1、2、3期应重或应轻。</p>';
     view.innerHTML = html;
   }
 
