@@ -2588,7 +2588,7 @@
 
   function wmSimulate(line, n) {
     var result = { windows: wmWindowsFor(line) };
-    var mult = 1;
+    var plan = [500, 500 * n, 500 * n * n];
     var net = 0;
     var turnover = 0;
     var bets = 0;
@@ -2602,17 +2602,16 @@
     var maxDD = 0;
     var equity = 0;
     var peak = 0;
-    var maxMult = 1;
+    var maxMult = n * n;
     var maxLossStreak = 0;
     var lossStreak = 0;
     var maxWindowRisk = 0;
     var records = [];
     result.windows.forEach(function (w) {
-      var scaled = line.plan.map(function (amount) { return amount * mult; });
       var tries = w.hitIndex === 0 ? 3 : w.hitIndex;
       var staked = 0;
       for (var j = 0; j < tries; j++) {
-        var amount = scaled[j] || 0;
+        var amount = plan[j] || 0;
         if (amount > 0) {
           staked += amount;
           turnover += amount;
@@ -2620,9 +2619,9 @@
           if (w.hitIndex === j + 1) hits++;
         }
       }
-      var payout = w.hitIndex > 0 ? (scaled[w.hitIndex - 1] || 0) * 1.8 : 0;
+      var payout = w.hitIndex > 0 ? (plan[w.hitIndex - 1] || 0) * 1.8 : 0;
       var profit = payout - staked;
-      maxWindowRisk = Math.max(maxWindowRisk, scaled.reduce(function (a, b) { return a + b; }, 0));
+      maxWindowRisk = Math.max(maxWindowRisk, plan.reduce(function (a, b) { return a + b; }, 0));
       net += profit;
       equity += profit;
       peak = Math.max(peak, equity);
@@ -2633,16 +2632,12 @@
       else if (w.hitIndex === 2) hits2++;
       else if (w.hitIndex === 3) hits3++;
       else missWindows++;
-      var nextMult = w.hitIndex > 0 ? 1 : mult * n;
-      records.push({ window: w, mult: mult, profit: profit, staked: staked, nextMult: nextMult });
+      records.push({ window: w, profit: profit, staked: staked });
       if (w.hitIndex > 0) {
-        mult = 1;
         lossStreak = 0;
       } else {
         lossStreak++;
         maxLossStreak = Math.max(maxLossStreak, lossStreak);
-        mult *= n;
-        maxMult = Math.max(maxMult, mult);
       }
     });
     return {
@@ -2690,7 +2685,7 @@
     var best = robust[0] || null;
     var activeN = Number(state.windowMultN);
     var selected = simulations.filter(function (s) { return s.n === activeN; })[0] || simulations[2];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 逐窗逐期</h2><span class="section__hint">每个窗口中了就停；上窗三期全错，下窗才按N倍投；中一次恢复1倍</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 逐窗逐期</h2><span class="section__hint">每个窗口三期按N倍投；中了就停；下窗恢复基础金额</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:flex;flex-wrap:wrap;gap:6px">';
     EXEC_LINES.forEach(function (item) {
       html += '<button class="chip" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '">' + item.label + '</button>';
@@ -2727,7 +2722,7 @@
     html += '<div class="stat"><div class="stat__value">' + selected.orderHit.toFixed(2) + '%</div><div class="stat__label">实际下单命中率</div></div>';
     html += '<div class="stat"><div class="stat__value">' + selected.maxWindowRisk + '</div><div class="stat__label">单窗最大风险（元）</div></div>';
     html += '</div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:900px"><thead><tr><th>窗口起始</th><th>第1期</th><th>第2期</th><th>第3期</th><th>结果</th><th>本窗倍率</th><th>本窗盈亏</th><th>下窗倍率</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + [500, 500 * selected.n, 500 * selected.n * selected.n].join(" / ") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:900px"><thead><tr><th>窗口起始</th><th>第1期</th><th>第2期</th><th>第3期</th><th>结果</th><th>本窗盈亏</th></tr></thead><tbody>';
     selected.records.slice().reverse().forEach(function (item) {
       var w = item.window;
       var resultText = w.hitIndex > 0 ? '第' + w.hitIndex + '期中' : '三期全错';
@@ -2738,13 +2733,11 @@
       html += '<td>' + wmAttemptCell(w, 1) + '</td>';
       html += '<td>' + wmAttemptCell(w, 2) + '</td>';
       html += '<td style="color:' + color + ';font-weight:900">' + resultText + '</td>';
-      html += '<td>' + item.mult.toFixed(2) + '倍</td>';
       html += '<td style="font-weight:900;color:' + (item.profit >= 0 ? "#16a34a" : "#dc2626") + '">' + (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</td>';
-      html += '<td>' + item.nextMult.toFixed(2) + '倍</td>';
       html += '</tr>';
     });
     html += '</tbody></table></div></div></div>';
-    html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口内中了就停止；三期全错后等待最后尾号重新开出，下一期开新窗口并应用跨窗口倍率。</p>';
+    html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
     view.innerHTML = html;
   }
 
