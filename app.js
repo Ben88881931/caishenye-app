@@ -2685,7 +2685,8 @@
     var best = robust[0] || null;
     var activeN = Number(state.windowMultN);
     var selected = simulations.filter(function (s) { return s.n === activeN; })[0] || simulations[2];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 逐窗逐期</h2><span class="section__hint">每个窗口三期按N倍投；中了就停；下窗恢复基础金额</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 真实窗口规律账本</h2><span class="section__hint">逐窗逐期看真实开奖结果；每窗三期按N倍投；中了就停；下窗恢复基础金额</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px">本页作用</div><div style="font-size:12px;color:#475569;line-height:1.8">把每条线的每一个窗口拆开，逐期记录第1/2/3期尾号、命中、错误、第几期中、三期全错、等待重开和下一窗口。数据只按真实开奖结果结算，不预测、不补造、不改历史。</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:flex;flex-wrap:wrap;gap:6px">';
     EXEC_LINES.forEach(function (item) {
       html += '<button class="chip" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '">' + item.label + '</button>';
@@ -2699,7 +2700,11 @@
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + line.label + '</div><div class="stat__label">当前线路</div></div>';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div class="stat__label">两段验证最优倍率</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + line.plan.join(" / ") + '</div><div class="stat__label">基础公式</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + (selected.n === 1 ? "500 / 500 / 500" : "500 / " + (500 * selected.n) + " / " + (500 * selected.n * selected.n)) + '</div><div class="stat__label">当前单窗金额</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + selected.records.length + '</div><div class="stat__label">真实窗口总数</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + (selected.records.length ? (((selected.records.length - selected.missWindows) / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">窗口命中率</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + (selected.records.length ? ((selected.missWindows / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">三期全错率</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.maxLossStreak + '窗</div><div class="stat__label">最大连续全错</div></div>';
     html += '</div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto"><table class="table" style="min-width:820px"><thead><tr><th>倍率</th><th>净收益</th><th>训练段</th><th>验证段</th><th>ROI</th><th>最大回撤</th><th>最高倍率</th><th>连续全错窗口</th></tr></thead><tbody>';
     simulations.forEach(function (s) {
@@ -2717,8 +2722,10 @@
     });
     html += '</tbody></table></div></div>';
     html += '<div class="section"><div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value">' + selected.hits1 + ' / ' + selected.hits2 + ' / ' + selected.hits3 + '</div><div class="stat__label">第1/2/3期中</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.missWindows + '</div><div class="stat__label">三期全错窗口</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + selected.hits1 + ' · ' + (selected.records.length ? ((selected.hits1 / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">第1期中</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + selected.hits2 + ' · ' + (selected.records.length ? ((selected.hits2 / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">第2期中</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + selected.hits3 + ' · ' + (selected.records.length ? ((selected.hits3 / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">第3期中</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.missWindows + ' · ' + (selected.records.length ? ((selected.missWindows / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">三期全错</div></div>';
     html += '<div class="stat"><div class="stat__value">' + selected.orderHit.toFixed(2) + '%</div><div class="stat__label">实际下单命中率</div></div>';
     html += '<div class="stat"><div class="stat__value">' + selected.maxWindowRisk + '</div><div class="stat__label">单窗最大风险（元）</div></div>';
     html += '</div></div>';
@@ -2727,7 +2734,8 @@
       var w = item.window;
       var resultText = w.hitIndex > 0 ? '第' + w.hitIndex + '期中' : '三期全错';
       var color = w.hitIndex > 0 ? "#16a34a" : "#dc2626";
-      html += '<tr>';
+      var rowBg = w.hitIndex === 0 ? "#fef2f2" : w.hitIndex === 3 ? "#fffbeb" : w.hitIndex === 2 ? "#eff6ff" : "#f0fdf4";
+      html += '<tr style="background:' + rowBg + '">';
       html += '<td><b>' + wmPeriodLabel(w.start) + '</b></td>';
       html += '<td>' + wmAttemptCell(w, 0) + '</td>';
       html += '<td>' + wmAttemptCell(w, 1) + '</td>';
