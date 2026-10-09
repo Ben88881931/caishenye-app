@@ -2692,7 +2692,7 @@
     html += '<div class="section"><div class="panel" style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px">本页作用</div><div style="font-size:12px;color:#475569;line-height:1.8">把每条线的每一个窗口拆开，逐期记录第1/2/3期尾号、命中、错误、第几期中、三期全错、等待重开和下一窗口。数据只按真实开奖结果结算，不预测、不补造、不改历史。</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:flex;flex-wrap:wrap;gap:6px">';
     EXEC_LINES.forEach(function (item) {
-      html += '<button class="chip" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '">' + item.label + '</button>';
+      html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:88px;min-height:44px;padding:10px 14px;font-size:15px;font-weight:900;' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '">' + item.label + '</button>';
     });
     html += '</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:6px">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
