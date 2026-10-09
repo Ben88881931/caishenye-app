@@ -2833,7 +2833,46 @@
       });
     }
     html += '</div></div></div>';
+    if (liveState.active) {
+      var active = liveState.active;
+      html += '<div class="section"><div class="panel" style="padding:10px;border:2px solid #2563eb;background:#eff6ff"><div style="font-size:13px;font-weight:900;color:#1d4ed8;margin-bottom:8px">当前进行中窗口 · ' + wmPeriodLabel(active.start) + '</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">';
+      for (var aj = 0; aj < 3; aj++) {
+        var expectedPeriod = active.start + aj;
+        var activeAttempt = active.attempts[aj];
+        html += '<div style="background:#fff;border-radius:8px;padding:9px">';
+        html += '<div style="font-size:12px;font-weight:900">第' + (aj + 1) + '期检查 · ' + wmPeriodLabel(expectedPeriod) + '</div>';
+        if (activeAttempt) {
+          html += '<div style="font-size:15px;font-weight:900;color:' + (activeAttempt.hit ? "#16a34a" : "#dc2626") + ';margin-top:5px">尾' + activeAttempt.tail + (activeAttempt.hit ? ' 中' : ' 错') + '</div>';
+        } else if (expectedPeriod <= latest) {
+          html += '<div style="font-size:15px;font-weight:900;color:#94a3b8;margin-top:5px">未记录</div>';
+        } else {
+          html += '<div style="font-size:15px;font-weight:900;color:#2563eb;margin-top:5px">待开奖</div>';
+        }
+        html += '</div>';
+      }
+      html += '</div></div></div>';
+    } else if (liveState.waiting) {
+      html += '<div class="section"><div class="panel" style="padding:12px;border:2px solid #f59e0b;background:#fffbeb"><div style="font-size:15px;font-weight:900;color:#92400e">当前等待窗口 · 等尾' + liveState.waiting.tail + '重新开出</div></div></div>';
+    }
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + [500, 500 * selected.n, 500 * selected.n * selected.n].join(" / ") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:980px"><thead><tr><th>窗口起始</th><th>第1期检查</th><th>第2期检查</th><th>第3期检查</th><th>结果</th><th>连续全错</th><th>本窗盈亏</th></tr></thead><tbody>';
+    if (liveState.active) {
+      var liveWindow = liveState.active;
+      html += '<tr style="background:#dbeafe;outline:2px solid #2563eb">';
+      html += '<td><b>当前窗口 · ' + wmPeriodLabel(liveWindow.start) + '</b></td>';
+      for (var lj = 0; lj < 3; lj++) {
+        var livePeriod = liveWindow.start + lj;
+        if (lj < liveWindow.attempts.length) {
+          html += '<td>' + wmAttemptCell(liveWindow, lj) + '</td>';
+        } else if (livePeriod <= latest) {
+          html += '<td><span style="color:#94a3b8">未记录</span></td>';
+        } else {
+          html += '<td><span style="color:#2563eb;font-weight:900">待开奖</span></td>';
+        }
+      }
+      html += '<td style="color:#1d4ed8;font-weight:900">进行中 · 已检查' + liveWindow.attempts.length + '期</td>';
+      html += '<td>-</td><td>--</td>';
+      html += '</tr>';
+    }
     selected.records.slice().reverse().forEach(function (item) {
       var w = item.window;
       var resultText = w.hitIndex > 0 ? '第' + w.hitIndex + '期中' : '三期全错';
