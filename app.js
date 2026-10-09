@@ -2429,21 +2429,19 @@
       totalRisk += maxLoss;
       return { line, formulaName, nextTail, action, amount, maxLoss, stage, status, color, enabled };
     });
-    var betTailMap = {};
-    rows.forEach(function (row) {
-      if (row.amount > 0 && row.nextTail != null) {
-        betTailMap[row.nextTail] = (betTailMap[row.nextTail] || 0) + row.amount;
-      }
+    var betRows = rows.filter(function (row) {
+      return row.amount > 0 && row.nextTail != null;
+    }).sort(function (a, b) {
+      return Number(a.nextTail) - Number(b.nextTail) || a.line.label.localeCompare(b.line.label);
     });
-    var betTails = Object.keys(betTailMap).sort(function (a, b) { return Number(a) - Number(b); });
     var use = FUND_CAPITAL ? totalCurrent / FUND_CAPITAL : 0;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 直接按公式安排</h2><span class="section__hint">公式表负责定金额，资金调度只按当前窗口取第几期金额；不再另算轻重模型</span></div></div>';
-    html += '<div class="section"><div class="panel" style="background:#111827;color:#fff;border:2px solid #111827"><div style="font-size:13px;font-weight:800;color:#cbd5e1;margin-bottom:8px">当期需下注尾号</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
-    if (!betTails.length) {
+    html += '<div class="section"><div class="panel" style="background:#111827;color:#fff;border:2px solid #111827"><div style="font-size:13px;font-weight:800;color:#cbd5e1;margin-bottom:8px">当期下注号码与金额 · 按线路单独列</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    if (!betRows.length) {
       html += '<div style="font-size:22px;font-weight:900">本期不下注</div>';
     } else {
-      betTails.forEach(function (tail) {
-        html += '<div style="display:flex;align-items:baseline;gap:6px;background:#fff;color:#111827;border-radius:8px;padding:8px 12px"><span style="font-size:30px;font-weight:900">' + tail + '</span><span style="font-size:13px;font-weight:800;color:#2563eb">' + betTailMap[tail] + '元</span></div>';
+      betRows.forEach(function (row) {
+        html += '<div style="display:flex;align-items:center;gap:8px;background:#fff;color:#111827;border-radius:8px;padding:8px 12px"><span style="font-size:30px;font-weight:900">' + row.nextTail + '</span><span style="font-size:12px;font-weight:800;color:#475569">' + row.line.label + '</span><span style="font-size:18px;font-weight:900;color:#2563eb">' + row.amount + '元</span></div>';
       });
     }
     html += '</div></div></div>';
