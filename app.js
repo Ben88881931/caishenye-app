@@ -2096,6 +2096,18 @@
       html += '</div>';
       html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
       html += '<div class="exec-line__scroll">';
+      html += '<div class="exec-window-card--current" data-current-window="1" style="min-width:190px;border:1px solid ' + action.color + ';border-radius:8px;padding:8px 9px;background:#f8fafc">';
+      html += '<div style="font-size:11px;font-weight:900;color:' + action.color + '">当前窗口</div>';
+      html += '<div style="font-size:15px;font-weight:900;color:' + action.color + ';margin-top:3px">' + action.action + (action.amount > 0 ? ' · ' + action.amount + '元' : '') + '</div>';
+      html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + ' · ' + action.status + '</div>';
+      if (result.waiting) {
+        html += '<div style="font-size:11px;color:#b45309;margin-top:3px">等待开始 第' + result.waiting.fromPeriod + '期 · 等待尾<span class="exec-window-card__tail">' + result.waiting.tail + '</span> · 已等' + result.waiting.waited + '期</div>';
+      } else if (result.active) {
+        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + (result.active.attempts || []).map(execAttemptText).join('→') + '</div>';
+      } else {
+        html += '<div style="font-size:11px;color:#475569;margin-top:3px">新窗口计划 ' + planText + '</div>';
+      }
+      html += '</div>';
       var recent = result.windows.slice().sort(function (a, b) {
         return Number(b.start) - Number(a.start);
       });
@@ -2112,20 +2124,6 @@
           html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (w.attempts || []).map(execAttemptText).join("→") + '</div>';
           html += '</div>';
         });
-      }
-      if (result.active) {
-        html += '<div class="exec-window-card--current" style="min-width:150px;border:1px dashed #93c5fd;border-radius:8px;padding:6px 7px;background:#eff6ff">';
-        html += '<div style="font-size:10px;color:#6b7280">起始 第' + result.active.start + '期</div>';
-        html += '<div style="font-size:12px;font-weight:900;color:#2563eb;margin-top:2px">进行中 · 已' + result.active.attempts.length + '/3期</div>';
-        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (result.active.attempts || []).map(execAttemptText).join("→") + '</div>';
-        html += '</div>';
-      }
-      if (result.waiting) {
-        html += '<div class="exec-window-card--current" style="min-width:150px;border:1px dashed #f59e0b;border-radius:8px;padding:6px 7px;background:#fffbeb">';
-        html += '<div style="font-size:10px;color:#6b7280">等待开始 第' + result.waiting.fromPeriod + '期</div>';
-        html += '<div style="font-size:12px;font-weight:900;color:#b45309;margin-top:2px">等待 尾<span class="exec-window-card__tail">' + result.waiting.tail + '</span> 开出</div>';
-        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">已观察' + result.waiting.waited + '期 · 开出后下一期重开</div>';
-        html += '</div>';
       }
       html += '</div></div></div>';
     });
