@@ -2095,8 +2095,10 @@
       html += '<div class="stat"><div class="stat__value">' + action.status + '</div><div class="stat__label">当前状态</div></div>';
       html += '</div>';
       html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
-      html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
-      var recent = result.windows.slice().reverse();
+      html += '<div class="exec-line__scroll">';
+      var recent = result.windows.slice().sort(function (a, b) {
+        return Number(b.start) - Number(a.start);
+      });
       if (!recent.length) {
         html += '<span style="font-size:12px;color:#9ca3af">暂无已结束窗口</span>';
       } else {
@@ -2112,14 +2114,14 @@
         });
       }
       if (result.active) {
-        html += '<div style="min-width:150px;border:1px dashed #93c5fd;border-radius:8px;padding:6px 7px;background:#eff6ff">';
+        html += '<div class="exec-window-card--current" style="min-width:150px;border:1px dashed #93c5fd;border-radius:8px;padding:6px 7px;background:#eff6ff">';
         html += '<div style="font-size:10px;color:#6b7280">起始 第' + result.active.start + '期</div>';
         html += '<div style="font-size:12px;font-weight:900;color:#2563eb;margin-top:2px">进行中 · 已' + result.active.attempts.length + '/3期</div>';
         html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (result.active.attempts || []).map(execAttemptText).join("→") + '</div>';
         html += '</div>';
       }
       if (result.waiting) {
-        html += '<div style="min-width:150px;border:1px dashed #f59e0b;border-radius:8px;padding:6px 7px;background:#fffbeb">';
+        html += '<div class="exec-window-card--current" style="min-width:150px;border:1px dashed #f59e0b;border-radius:8px;padding:6px 7px;background:#fffbeb">';
         html += '<div style="font-size:10px;color:#6b7280">等待开始 第' + result.waiting.fromPeriod + '期</div>';
         html += '<div style="font-size:12px;font-weight:900;color:#b45309;margin-top:2px">等待 尾<span class="exec-window-card__tail">' + result.waiting.tail + '</span> 开出</div>';
         html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">已观察' + result.waiting.waited + '期 · 开出后下一期重开</div>';
@@ -2129,6 +2131,11 @@
     });
     html += '<p class="disclaimer">尾0–尾9只读取各自开奖结果，完全不读取D1/D2；追号码D1/D2和追推荐D1/D2各自只读取对应模型信号。本页只做执行提示和线路对错记录，不自动下单；历史公式仍需时间外验证。</p>';
     view.innerHTML = html;
+    requestAnimationFrame(function () {
+      Array.prototype.forEach.call(view.querySelectorAll(".exec-line__scroll"), function (scroll) {
+        scroll.scrollLeft = 0;
+      });
+    });
   }
 
   function fundsWindowPattern(line, result, stats, nextPeriod) {

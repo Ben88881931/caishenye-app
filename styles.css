@@ -1323,6 +1323,16 @@ body {
   font-weight: 900;
   color: inherit;
 }
+.exec-line__scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+.exec-window-card--current {
+  order: -1;
+}
 
 .fund-controls {
   padding: 12px;
