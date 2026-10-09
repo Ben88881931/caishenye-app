@@ -2081,7 +2081,7 @@
       html += '<span class="chip">记录起点 第' + firstStart + '期</span>';
       html += '<span class="chip">金额 ' + planText + '</span>';
       html += '<span class="chip">3期内命中率 ' + (stats.hitRate * 100).toFixed(1) + '%</span>';
-      html += '<span class="chip">第1/2/3期中 ' + stats.first + '/' + stats.second + '/' + stats.third + '期</span>';
+      html += '<span class="chip">首次命中分布：第1期' + stats.first + ' / 第2期' + stats.second + ' / 第3期' + stats.third + '</span>';
       html += '<span class="chip" style="background:#ecfdf5;border-color:#86efac;color:#166534;font-weight:900">已结算窗口：中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗</span>';
       if (result.waiting) {
         html += '<span class="chip" style="background:#fffbeb;border-color:#fcd34d;color:#92400e;font-weight:900">等待尾' + result.waiting.tail + ' · 已等' + result.waiting.waited + '期</span>';
@@ -2095,17 +2095,17 @@
       html += '<div class="stat"><div class="stat__value">' + action.status + '</div><div class="stat__label">当前状态</div></div>';
       html += '</div>';
       html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
+      html += '<div style="font-size:11px;color:#64748b;margin:0 0 6px">中窗=3期内至少中1次；错窗=连续3期未中；首次命中分布之和=中窗数。</div>';
       html += '<div class="exec-line__scroll">';
-      html += '<div class="exec-window-card--current" data-current-window="1" style="min-width:190px;border:1px solid ' + action.color + ';border-radius:8px;padding:8px 9px;background:#f8fafc">';
-      html += '<div style="font-size:11px;font-weight:900;color:' + action.color + '">当前窗口</div>';
+      html += '<div class="exec-window-card--current" data-current-window="1" data-current-period="' + nextPeriod + '" style="min-width:190px;border:1px solid ' + action.color + ';border-radius:8px;padding:8px 9px;background:#f8fafc">';
+      html += '<div style="font-size:11px;font-weight:900;color:' + action.color + '">当前窗口 · 当下第' + nextPeriod + '期</div>';
       html += '<div style="font-size:15px;font-weight:900;color:' + action.color + ';margin-top:3px">' + action.action + (action.amount > 0 ? ' · ' + action.amount + '元' : '') + '</div>';
-      html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + ' · ' + action.status + '</div>';
       if (result.waiting) {
-        html += '<div style="font-size:11px;color:#b45309;margin-top:3px">等待开始 第' + result.waiting.fromPeriod + '期 · 等待尾<span class="exec-window-card__tail">' + result.waiting.tail + '</span> · 已等' + result.waiting.waited + '期</div>';
+        html += '<div style="font-size:11px;color:#b45309;margin-top:3px">等待开奖 · 等待尾<span class="exec-window-card__tail">' + result.waiting.tail + '</span> · 已等' + result.waiting.waited + '期</div>';
       } else if (result.active) {
-        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + (result.active.attempts || []).map(execAttemptText).join('→') + '</div>';
+        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + ' · ' + (result.active.attempts || []).map(execAttemptText).join('→') + '</div>';
       } else {
-        html += '<div style="font-size:11px;color:#475569;margin-top:3px">新窗口计划 ' + planText + '</div>';
+        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + ' · ' + action.status + ' · 计划 ' + planText + '</div>';
       }
       html += '</div>';
       var recent = result.windows.slice().sort(function (a, b) {
