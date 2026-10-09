@@ -2507,6 +2507,7 @@
   var wmFullModelCache = null;
   var wmFullPickCache = {};
   var wmWindowCache = {};
+  var wmWindowState = {};
 
   function wmFullModel() {
     if (wmFullModelCache) return wmFullModelCache;
@@ -2573,7 +2574,13 @@
       }
     }
     wmWindowCache[line.id] = rows;
+    wmWindowState[line.id] = { active: active, waiting: waiting };
     return rows;
+  }
+
+  function wmCurrentState(line) {
+    wmWindowsFor(line);
+    return wmWindowState[line.id] || { active: null, waiting: null };
   }
 
   function wmYearOf(start) {
@@ -2583,7 +2590,10 @@
 
   function wmPeriodLabel(start) {
     var row = D[start - 1];
-    return row ? row.y + "年第" + row.p + "期" : "第" + start + "期";
+    if (row) return row.y + "年第" + row.p + "期";
+    var last = D[D.length - 1];
+    if (last && start > D.length) return last.y + "年第" + (Number(last.p) + start - D.length) + "期";
+    return "第" + start + "期";
   }
 
   function wmSimulate(line, n) {
@@ -2670,7 +2680,7 @@
     }
     var item = w.attempts[index];
     var color = item.hit ? "#16a34a" : "#dc2626";
-    return '尾<b style="font-size:16px">' + item.tail + '</b><b style="color:' + color + ';margin-left:4px">' + (item.hit ? "中" : "错") + '</b>';
+    return '<div style="font-size:10px;color:#64748b">' + wmPeriodLabel(item.period) + '</div>尾<b style="font-size:16px">' + item.tail + '</b><b style="color:' + color + ';margin-left:4px">' + (item.hit ? "中" : "错") + '</b>';
   }
 
   function renderWindowMultiplierTest() {
@@ -2687,6 +2697,7 @@
     var best = robust[0] || null;
     var activeN = Number(state.windowMultN);
     var selected = simulations.filter(function (s) { return s.n === activeN; })[0] || simulations[2];
+    var liveState = wmCurrentState(line);
     var windowHitRate = selected.records.length ? ((selected.records.length - selected.missWindows) / selected.records.length) * 100 : 0;
     var missRate = selected.records.length ? (selected.missWindows / selected.records.length) * 100 : 0;
     var selectedPlanText = selected.n === 1 ? "500 / 500 / 500" : "500 / " + (500 * selected.n) + " / " + (500 * selected.n * selected.n);
@@ -2708,6 +2719,24 @@
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + missRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">三期全错率</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + selected.maxLossStreak + '窗</div><div style="font-size:11px;color:#cbd5e1">最大连续全错</div></div>';
     html += '</div><div style="font-size:12px;color:#e2e8f0;margin-top:8px">当前显示：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额 ' + selectedPlanText + '</div></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:12px;border:2px solid ' + (liveState.waiting ? "#f59e0b" : liveState.active ? "#2563eb" : "#16a34a") + '"><div style="font-size:13px;font-weight:900;margin-bottom:8px">当前窗口状态</div>';
+    if (liveState.waiting) {
+      html += '<div style="font-size:18px;font-weight:900;color:#d97706">等待尾' + liveState.waiting.tail + '重新开出</div>';
+      html += '<div style="font-size:12px;color:#475569;margin-top:5px">最后完成的窗口结束后，必须等该尾号重新开出，下一期才开新窗口。</div>';
+    } else if (liveState.active) {
+      var activeStart = liveState.active.start;
+      html += '<div style="font-size:18px;font-weight:900;color:#2563eb">窗口进行中 · 起始 ' + wmPeriodLabel(activeStart) + '</div>';
+      for (var ai = 0; ai < 3; ai++) {
+        var expectedStart = activeStart + ai;
+        var attempt = liveState.active.attempts[ai];
+        var label = attempt ? ('尾' + attempt.tail + (attempt.hit ? ' 中' : ' 错')) : (expectedStart <= latest ? "未记录" : "待开奖");
+        html += '<div style="margin-top:6px;font-size:13px;font-weight:800">第' + (ai + 1) + '期检查 · ' + wmPeriodLabel(expectedStart) + ' · <span style="color:' + (attempt && attempt.hit ? "#16a34a" : "#dc2626") + '">' + label + '</span></div>';
+      }
+    } else {
+      html += '<div style="font-size:18px;font-weight:900;color:#16a34a">当前无进行中窗口</div>';
+      html += '<div style="font-size:12px;color:#475569;margin-top:5px">下一期检查第1期。</div>';
+    }
+    html += '</div></div>';
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + line.label + '</div><div class="stat__label">当前线路</div></div>';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div class="stat__label">两段验证最优倍率</div></div>';
@@ -2804,7 +2833,7 @@
       });
     }
     html += '</div></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + [500, 500 * selected.n, 500 * selected.n * selected.n].join(" / ") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:980px"><thead><tr><th>窗口起始</th><th>第1期</th><th>第2期</th><th>第3期</th><th>结果</th><th>连续全错</th><th>本窗盈亏</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + [500, 500 * selected.n, 500 * selected.n * selected.n].join(" / ") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:980px"><thead><tr><th>窗口起始</th><th>第1期检查</th><th>第2期检查</th><th>第3期检查</th><th>结果</th><th>连续全错</th><th>本窗盈亏</th></tr></thead><tbody>';
     selected.records.slice().reverse().forEach(function (item) {
       var w = item.window;
       var resultText = w.hitIndex > 0 ? '第' + w.hitIndex + '期中' : '三期全错';
