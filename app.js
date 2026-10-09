@@ -2790,12 +2790,12 @@
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.maxLossStreak + '窗</div><div class="stat__label">历史最大连续全错</div></div>';
     html += '</div></div>';
     var consecutiveRuns = missRuns.filter(function (run) { return run.length >= 2; }).slice().reverse();
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:8px">连续2窗及以上记录</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px">';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:8px">连续2窗及以上记录 · 左右滑动查看</div><div style="display:flex;gap:8px;min-width:max-content">';
     if (!consecutiveRuns.length) {
       html += '<div style="font-size:13px;color:#64748b">没有连续2窗全错记录</div>';
     } else {
       consecutiveRuns.forEach(function (run) {
-        html += '<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:8px;padding:9px">';
+        html += '<div style="flex:0 0 230px;border:1px solid #fecaca;background:#fef2f2;border-radius:8px;padding:9px">';
         html += '<div style="font-size:15px;font-weight:900;color:#b91c1c">连续' + run.length + '窗全错</div>';
         html += '<div style="font-size:12px;color:#475569;margin-top:4px">' + wmPeriodLabel(run.start) + ' → ' + wmPeriodLabel(run.end) + '</div>';
         html += '<div style="font-size:12px;color:#475569">等待尾' + run.waitTail + '重新开出</div>';
