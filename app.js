@@ -348,6 +348,8 @@
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
     recordPage: 0,
     orderTail: lsGet("v2_order_tail", "all"),
+    windowMultLine: "tail1",
+    windowMultN: 2,
   };
 
   var TABS = [
@@ -358,6 +360,7 @@
     { id: "orderhint", label: "执行提示" },
     { id: "funds", label: "资金调度" },
     { id: "formulas", label: "公式表" },
+    { id: "windowmult", label: "窗口倍投测试" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -377,7 +380,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "chaserecommend", "orderhint", "funds", "formulas", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "chaserecommend", "orderhint", "funds", "formulas", "windowmult", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -728,6 +731,7 @@
     else if (state.tab === "orderhint") renderOrderHint();
     else if (state.tab === "funds") renderFunds();
     else if (state.tab === "formulas") renderFormulaTable();
+    else if (state.tab === "windowmult") renderWindowMultiplierTest();
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
@@ -798,6 +802,7 @@
       chaserecommend: ["三期内追推荐", "窗口内第1/2/3期分别采用当期最新推荐，号码可以每期不同；命中或三期全错后重新开窗。", "按每期最新推荐追三期时看。"],
       funds: ["资金调度", "只根据各线窗口状态、历史命中率和ROI分配下注金额；等待线强制0，当前总风险不能超过预算。", "决定今天下不下、每条线下多少时看。"],
       formulas: ["公式表", "展示14条线的阶段系数、训练/验证结果和最终下注公式，不预测号码。", "核查每条线下注公式是否通过历史验证时看。"],
+      windowmult: ["窗口倍投测试", "逐条线路列出每个窗口第1/2/3期命中或全错，并比较跨窗口1.5倍、2倍、2.5倍、3倍后的收益、回撤和最大倍率。", "检查窗口倍投规律和资金风险时看。"],
       orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
       segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
       missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖。", "找遗漏结构时看。"],
@@ -2496,6 +2501,250 @@
     });
     html += '</tbody></table></div></div>';
     html += '<p class="disclaimer">公式表只展示历史验证结果，不预测下一期，不自动下单。训练或验证任一段不能稳定盈利时整条线不配仓；金额只表示历史测试中该线路在第1、2、3期应重或应轻。</p>';
+    view.innerHTML = html;
+  }
+
+  var wmFullModelCache = null;
+  var wmFullPickCache = {};
+  var wmWindowCache = {};
+
+  function wmFullModel() {
+    if (wmFullModelCache) return wmFullModelCache;
+    var fullRaw = {};
+    D.forEach(function (row, index) {
+      var bits = Array(10).fill("0");
+      (row.nums || []).forEach(function (num) { bits[Number(num) % 10] = "1"; });
+      fullRaw[String(index + 1)] = bits.join("");
+    });
+    wmFullModelCache = window.CAISHEN_MODEL.createModel(fullRaw);
+    return wmFullModelCache;
+  }
+
+  function wmFullPick(period, stream) {
+    if (period <= 1) return null;
+    if (!wmFullPickCache[period]) wmFullPickCache[period] = wmFullModel().buildPrediction(period - 1);
+    return (wmFullPickCache[period].doubleRecommendation || [])[stream === "D1" ? 0 : 1] || null;
+  }
+
+  function wmWindowsFor(line) {
+    if (wmWindowCache[line.id]) return wmWindowCache[line.id];
+    var rows = [];
+    var active = null;
+    var waiting = null;
+    var p = line.kind === "tail" ? 1 : 31;
+    while (p <= D.length) {
+      if (waiting) {
+        var waitingRow = D[p - 1];
+        var waitingTails = waitingRow ? (waitingRow.nums || []).map(function (num) { return Number(num) % 10; }) : [];
+        if (waitingTails.indexOf(Number(waiting.tail)) >= 0) waiting = null;
+        p++;
+        continue;
+      }
+      var trigger = null;
+      if (!active) {
+        if (line.kind === "tail") trigger = { tail: line.tail };
+        else trigger = wmFullPick(p, line.stream);
+        if (!trigger) { p++; continue; }
+        active = { start: p, lockedTail: line.kind === "recommend" ? null : trigger.tail, attempts: [] };
+      }
+      var row = D[p - 1] || {};
+      var actual = (row.nums || []).map(function (num) { return Number(num) % 10; });
+      var pick = line.kind === "recommend" ? wmFullPick(p, line.stream) : { tail: active.lockedTail };
+      var tail = pick ? pick.tail : null;
+      var isHit = tail != null && actual.indexOf(Number(tail)) >= 0;
+      active.attempts.push({ period: p, tail: tail, hit: isHit });
+      if (isHit) {
+        active.hitIndex = active.attempts.length;
+        rows.push(active);
+        active = null;
+        p++;
+      } else if (active.attempts.length >= 3) {
+        active.hitIndex = 0;
+        rows.push(active);
+        var waitTail = null;
+        for (var i = active.attempts.length - 1; i >= 0; i--) {
+          if (active.attempts[i].tail != null) { waitTail = active.attempts[i].tail; break; }
+        }
+        active = null;
+        p++;
+        if (waitTail != null) waiting = { tail: waitTail };
+      } else {
+        p++;
+      }
+    }
+    wmWindowCache[line.id] = rows;
+    return rows;
+  }
+
+  function wmYearOf(start) {
+    var row = D[start - 1];
+    return row ? Number(row.y) : 0;
+  }
+
+  function wmPeriodLabel(start) {
+    var row = D[start - 1];
+    return row ? row.y + "年第" + row.p + "期" : "第" + start + "期";
+  }
+
+  function wmSimulate(line, n) {
+    var result = { windows: wmWindowsFor(line) };
+    var mult = 1;
+    var net = 0;
+    var turnover = 0;
+    var bets = 0;
+    var hits = 0;
+    var trainNet = 0;
+    var validNet = 0;
+    var hits1 = 0;
+    var hits2 = 0;
+    var hits3 = 0;
+    var missWindows = 0;
+    var maxDD = 0;
+    var equity = 0;
+    var peak = 0;
+    var maxMult = 1;
+    var maxLossStreak = 0;
+    var lossStreak = 0;
+    var maxWindowRisk = 0;
+    var records = [];
+    result.windows.forEach(function (w) {
+      var scaled = line.plan.map(function (amount) { return amount * mult; });
+      var tries = w.hitIndex === 0 ? 3 : w.hitIndex;
+      var staked = 0;
+      for (var j = 0; j < tries; j++) {
+        var amount = scaled[j] || 0;
+        if (amount > 0) {
+          staked += amount;
+          turnover += amount;
+          bets++;
+          if (w.hitIndex === j + 1) hits++;
+        }
+      }
+      var payout = w.hitIndex > 0 ? (scaled[w.hitIndex - 1] || 0) * 1.8 : 0;
+      var profit = payout - staked;
+      maxWindowRisk = Math.max(maxWindowRisk, scaled.reduce(function (a, b) { return a + b; }, 0));
+      net += profit;
+      equity += profit;
+      peak = Math.max(peak, equity);
+      maxDD = Math.max(maxDD, peak - equity);
+      if (wmYearOf(w.start) <= 2023) trainNet += profit;
+      else validNet += profit;
+      if (w.hitIndex === 1) hits1++;
+      else if (w.hitIndex === 2) hits2++;
+      else if (w.hitIndex === 3) hits3++;
+      else missWindows++;
+      var nextMult = w.hitIndex > 0 ? 1 : mult * n;
+      records.push({ window: w, mult: mult, profit: profit, staked: staked, nextMult: nextMult });
+      if (w.hitIndex > 0) {
+        mult = 1;
+        lossStreak = 0;
+      } else {
+        lossStreak++;
+        maxLossStreak = Math.max(maxLossStreak, lossStreak);
+        mult *= n;
+        maxMult = Math.max(maxMult, mult);
+      }
+    });
+    return {
+      n: n,
+      records: records,
+      net: Math.round(net),
+      turnover: turnover,
+      roi: turnover ? (net / turnover) * 100 : 0,
+      trainNet: Math.round(trainNet),
+      validNet: Math.round(validNet),
+      bets: bets,
+      hits: hits,
+      orderHit: bets ? (hits / bets) * 100 : 0,
+      hits1: hits1,
+      hits2: hits2,
+      hits3: hits3,
+      missWindows: missWindows,
+      maxDD: Math.round(maxDD),
+      maxMult: maxMult,
+      maxLossStreak: maxLossStreak,
+      maxWindowRisk: maxWindowRisk
+    };
+  }
+
+  function wmAttemptCell(w, index) {
+    if (index >= w.attempts.length) {
+      return '<span style="color:#94a3b8">命中后停止</span>';
+    }
+    var item = w.attempts[index];
+    var color = item.hit ? "#16a34a" : "#dc2626";
+    return '尾<b style="font-size:16px">' + item.tail + '</b><b style="color:' + color + ';margin-left:4px">' + (item.hit ? "中" : "错") + '</b>';
+  }
+
+  function renderWindowMultiplierTest() {
+    var line = null;
+    EXEC_LINES.forEach(function (item) {
+      if (item.id === state.windowMultLine) line = item;
+    });
+    if (!line) line = EXEC_LINES[0];
+    state.windowMultLine = line.id;
+    var ns = [1, 1.5, 2, 2.5, 3];
+    var simulations = ns.map(function (n) { return wmSimulate(line, n); });
+    var robust = simulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
+    robust.sort(function (a, b) { return b.net - a.net; });
+    var best = robust[0] || null;
+    var activeN = Number(state.windowMultN);
+    var selected = simulations.filter(function (s) { return s.n === activeN; })[0] || simulations[2];
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 逐窗逐期</h2><span class="section__hint">每个窗口中了就停；上窗三期全错，下窗才按N倍投；中一次恢复1倍</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    EXEC_LINES.forEach(function (item) {
+      html += '<button class="chip" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '">' + item.label + '</button>';
+    });
+    html += '</div></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:6px">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    ns.forEach(function (n) {
+      html += '<button class="chip" data-wm-n="' + n + '" style="' + (n === activeN ? "background:#111827;color:#fff" : "") + '">' + (n === 1 ? "不倍投" : n + "倍") + '</button>';
+    });
+    html += '</div></div></div>';
+    html += '<div class="section"><div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + line.label + '</div><div class="stat__label">当前线路</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div class="stat__label">两段验证最优倍率</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + line.plan.join(" / ") + '</div><div class="stat__label">基础公式</div></div>';
+    html += '</div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto"><table class="table" style="min-width:820px"><thead><tr><th>倍率</th><th>净收益</th><th>训练段</th><th>验证段</th><th>ROI</th><th>最大回撤</th><th>最高倍率</th><th>连续全错窗口</th></tr></thead><tbody>';
+    simulations.forEach(function (s) {
+      var isBest = best && best.n === s.n;
+      html += '<tr style="' + (isBest ? "background:#f0fdf4" : "") + '">';
+      html += '<td><b>' + (s.n === 1 ? "不倍投" : s.n + "倍") + '</b></td>';
+      html += '<td style="font-weight:900;color:' + (s.net >= 0 ? "#16a34a" : "#dc2626") + '">' + (s.net >= 0 ? "+" : "") + s.net + '</td>';
+      html += '<td>' + (s.trainNet >= 0 ? "+" : "") + s.trainNet + '</td>';
+      html += '<td>' + (s.validNet >= 0 ? "+" : "") + s.validNet + '</td>';
+      html += '<td>' + s.roi.toFixed(2) + '%</td>';
+      html += '<td>' + s.maxDD + '</td>';
+      html += '<td>' + s.maxMult.toFixed(2) + '倍</td>';
+      html += '<td>' + s.maxLossStreak + '窗</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+    html += '<div class="section"><div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value">' + selected.hits1 + ' / ' + selected.hits2 + ' / ' + selected.hits3 + '</div><div class="stat__label">第1/2/3期中</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.missWindows + '</div><div class="stat__label">三期全错窗口</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + selected.orderHit.toFixed(2) + '%</div><div class="stat__label">实际下单命中率</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + selected.maxWindowRisk + '</div><div class="stat__label">单窗最大风险（元）</div></div>';
+    html += '</div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:900px"><thead><tr><th>窗口起始</th><th>第1期</th><th>第2期</th><th>第3期</th><th>结果</th><th>本窗倍率</th><th>本窗盈亏</th><th>下窗倍率</th></tr></thead><tbody>';
+    selected.records.slice().reverse().forEach(function (item) {
+      var w = item.window;
+      var resultText = w.hitIndex > 0 ? '第' + w.hitIndex + '期中' : '三期全错';
+      var color = w.hitIndex > 0 ? "#16a34a" : "#dc2626";
+      html += '<tr>';
+      html += '<td><b>' + wmPeriodLabel(w.start) + '</b></td>';
+      html += '<td>' + wmAttemptCell(w, 0) + '</td>';
+      html += '<td>' + wmAttemptCell(w, 1) + '</td>';
+      html += '<td>' + wmAttemptCell(w, 2) + '</td>';
+      html += '<td style="color:' + color + ';font-weight:900">' + resultText + '</td>';
+      html += '<td>' + item.mult.toFixed(2) + '倍</td>';
+      html += '<td style="font-weight:900;color:' + (item.profit >= 0 ? "#16a34a" : "#dc2626") + '">' + (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</td>';
+      html += '<td>' + item.nextMult.toFixed(2) + '倍</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div></div>';
+    html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口内中了就停止；三期全错后等待最后尾号重新开出，下一期开新窗口并应用跨窗口倍率。</p>';
     view.innerHTML = html;
   }
 
@@ -4334,6 +4583,18 @@
     if (selectorHistoryBtn) {
       selectorHistoryFilter = selectorHistoryBtn.dataset.selectorHistoryFilter;
       renderSelector();
+      return;
+    }
+    var wmLineBtn = e.target.closest("[data-wm-line]");
+    if (wmLineBtn) {
+      state.windowMultLine = wmLineBtn.dataset.wmLine;
+      renderWindowMultiplierTest();
+      return;
+    }
+    var wmNBtn = e.target.closest("[data-wm-n]");
+    if (wmNBtn) {
+      state.windowMultN = Number(wmNBtn.dataset.wmN);
+      renderWindowMultiplierTest();
       return;
     }
     var orderTailBtn = e.target.closest("[data-order-tail]");
