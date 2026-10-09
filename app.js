@@ -2394,6 +2394,7 @@
       var result = buildExecWindows(line);
       var enabled = planRisk(line.plan) > 0;
       var formulaName = (EXEC_FORMULA_AUDIT[line.id] || {}).formula || "阶段公式";
+      var nextTail = line.kind === "tail" ? line.tail : (result.active && result.active.lockedTail != null ? result.active.lockedTail : (execPick(nextPeriod, line.stream) ? execPick(nextPeriod, line.stream).tail : null));
       var stage = 1;
       var action = "下注";
       var amount = Number(line.plan[0] || 0);
@@ -2426,10 +2427,26 @@
       }
       totalCurrent += amount;
       totalRisk += maxLoss;
-      return { line, formulaName, action, amount, maxLoss, stage, status, color, enabled };
+      return { line, formulaName, nextTail, action, amount, maxLoss, stage, status, color, enabled };
     });
+    var betTailMap = {};
+    rows.forEach(function (row) {
+      if (row.amount > 0 && row.nextTail != null) {
+        betTailMap[row.nextTail] = (betTailMap[row.nextTail] || 0) + row.amount;
+      }
+    });
+    var betTails = Object.keys(betTailMap).sort(function (a, b) { return Number(a) - Number(b); });
     var use = FUND_CAPITAL ? totalCurrent / FUND_CAPITAL : 0;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 直接按公式安排</h2><span class="section__hint">公式表负责定金额，资金调度只按当前窗口取第几期金额；不再另算轻重模型</span></div></div>';
+    html += '<div class="section"><div class="panel" style="background:#111827;color:#fff;border:2px solid #111827"><div style="font-size:13px;font-weight:800;color:#cbd5e1;margin-bottom:8px">当期需下注尾号</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    if (!betTails.length) {
+      html += '<div style="font-size:22px;font-weight:900">本期不下注</div>';
+    } else {
+      betTails.forEach(function (tail) {
+        html += '<div style="display:flex;align-items:baseline;gap:6px;background:#fff;color:#111827;border-radius:8px;padding:8px 12px"><span style="font-size:30px;font-weight:900">' + tail + '</span><span style="font-size:13px;font-weight:800;color:#2563eb">' + betTailMap[tail] + '元</span></div>';
+      });
+    }
+    html += '</div></div></div>';
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + FUND_CAPITAL + '</div><div class="stat__label">本金锚定（元）</div></div>';
     html += '<div class="stat"><div class="stat__value">' + totalCurrent + '</div><div class="stat__label">本期公式金额（元）</div></div>';
