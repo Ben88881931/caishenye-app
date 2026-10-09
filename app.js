@@ -2632,13 +2632,15 @@
       else if (w.hitIndex === 2) hits2++;
       else if (w.hitIndex === 3) hits3++;
       else missWindows++;
-      records.push({ window: w, profit: profit, staked: staked });
+      var missStreak = 0;
       if (w.hitIndex > 0) {
         lossStreak = 0;
       } else {
         lossStreak++;
+        missStreak = lossStreak;
         maxLossStreak = Math.max(maxLossStreak, lossStreak);
       }
+      records.push({ window: w, profit: profit, staked: staked, missStreak: missStreak });
     });
     return {
       n: n,
@@ -2736,7 +2738,25 @@
     html += '<div class="stat"><div class="stat__value">' + selected.orderHit.toFixed(2) + '%</div><div class="stat__label">实际下单命中率</div></div>';
     html += '<div class="stat"><div class="stat__value">' + selected.maxWindowRisk + '</div><div class="stat__label">单窗最大风险（元）</div></div>';
     html += '</div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + [500, 500 * selected.n, 500 * selected.n * selected.n].join(" / ") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:900px"><thead><tr><th>窗口起始</th><th>第1期</th><th>第2期</th><th>第3期</th><th>结果</th><th>本窗盈亏</th></tr></thead><tbody>';
+    var missRecords = selected.records.filter(function (item) { return item.window.hitIndex === 0; }).slice().reverse();
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">连续全错窗口记录</h2><span class="section__hint">每个全错窗口标明连错第几次、等待尾号和本窗亏损</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">';
+    if (!missRecords.length) {
+      html += '<div style="font-size:13px;color:#64748b">没有三期全错窗口</div>';
+    } else {
+      missRecords.forEach(function (item) {
+        var w = item.window;
+        var waitTail = w.attempts.length ? w.attempts[w.attempts.length - 1].tail : "-";
+        html += '<div style="border:1px solid #fecaca;background:#fef2f2;border-radius:8px;padding:9px">';
+        html += '<div style="font-size:15px;font-weight:900;color:#b91c1c">连错第' + item.missStreak + '次</div>';
+        html += '<div style="font-size:12px;color:#475569;margin-top:4px">窗口：' + wmPeriodLabel(w.start) + '</div>';
+        html += '<div style="font-size:12px;color:#475569">等待尾' + waitTail + '重新开出</div>';
+        html += '<div style="font-size:13px;font-weight:900;color:#dc2626;margin-top:4px">本窗亏损 ' + Math.round(item.profit) + '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + [500, 500 * selected.n, 500 * selected.n * selected.n].join(" / ") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:980px"><thead><tr><th>窗口起始</th><th>第1期</th><th>第2期</th><th>第3期</th><th>结果</th><th>连续全错</th><th>本窗盈亏</th></tr></thead><tbody>';
     selected.records.slice().reverse().forEach(function (item) {
       var w = item.window;
       var resultText = w.hitIndex > 0 ? '第' + w.hitIndex + '期中' : '三期全错';
@@ -2748,6 +2768,7 @@
       html += '<td>' + wmAttemptCell(w, 1) + '</td>';
       html += '<td>' + wmAttemptCell(w, 2) + '</td>';
       html += '<td style="color:' + color + ';font-weight:900">' + resultText + '</td>';
+      html += '<td style="font-weight:900;color:' + (item.missStreak ? "#dc2626" : "#94a3b8") + '">' + (item.missStreak ? "第" + item.missStreak + "次连错" : "-") + '</td>';
       html += '<td style="font-weight:900;color:' + (item.profit >= 0 ? "#16a34a" : "#dc2626") + '">' + (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</td>';
       html += '</tr>';
     });
