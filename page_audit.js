@@ -27,6 +27,7 @@ const snapshots = json("prediction_snapshots.json");
 const snapshotJs = JSON.parse(read("snapshots.js").match(/window\.APP_SNAPSHOTS\s*=\s*(\{.*\});/s)[1]);
 const indexText = read("index.html");
 const appText = read("app.js");
+const orderHintText = appText.slice(appText.indexOf("function renderOrderHint"), appText.indexOf("function renderFundsLegacy"));
 
 must(periods.length > 0 && periods[0] === 1, "原始期数从第1期开始");
 must(periods.every((p, i) => i === 0 || p === periods[i - 1] + 1), "原始期数连续");
@@ -101,8 +102,9 @@ must(appText.includes("ULT_CARD_HISTORY") && appText.includes("ULT_RECORDS_START
 must(!appText.includes("加权") && !appText.includes("weightedBounce") && !appText.includes("W1") && !appText.includes("W2"), "活动页面与代码不得再出现加权模型残留");
 must(appText.includes("function nudgeNavItem") && appText.includes("renderedTab") && appText.includes("nav-group-caret") && appText.includes("window.scrollTo"), "导航保持横向位置、当前项可见且切页回顶");
 must(appText.includes("var waiting = null") && appText.includes("waitingActual.indexOf") && appText.includes("等待尾") && appText.includes("开出后下一期重开") && appText.includes("等待开奖"), "执行提示14条线错窗后必须等待最后追的尾号开出，再下一期重开");
-must(appText.includes("function renderFunds") && appText.includes("fundsWindowPattern") && appText.includes("加仓：1.5倍") && appText.includes("重：1.0倍") && appText.includes("标准：0.75倍") && appText.includes("轻：0.5倍") && appText.includes("等待/无号：0倍") && appText.includes("锁仓 1.0倍") && appText.includes("规律分") && appText.includes("本金锚定") && appText.includes("10,000元") && appText.includes("本金占用率") && appText.includes("本窗合计风险") && appText.includes("建议计划") && appText.includes("Math.max(100"), "资金调度页必须按号码窗口规律定倍率：加仓1.5倍、重1.0倍、标准0.75倍、轻0.5倍，等待/无号0倍，1万元只作占用率参考");
-must(appText.includes("exec-line-summary") && appText.includes("exec-line__scroll") && appText.includes("exec-window-card--current") && appText.includes("data-current-window=") && appText.includes("data-current-period=") && appText.includes("当前窗口 · 当下第") && appText.includes("首次命中分布") && appText.includes("公式（元）") && !appText.includes("金额 ' + planText") && !appText.includes('class="stat__label">本期动作') && !appText.includes('class="stat__label">窗口期序') && !appText.includes('<div class="stat__label">当前状态</div>') && appText.includes("Number(b.start) - Number(a.start)") && appText.includes("scroll.scrollLeft = 0"), "执行提示14条线必须给顶部摘要卡片框，只保留当前窗口状态卡这一套动作、金额、期序和状态，禁止重复状态块和重复公式金额");
+must(appText.includes("function renderFunds") && appText.includes("直接按公式安排") && appText.includes("本期按公式金额") && appText.includes("本窗剩余风险") && appText.includes("FUND_CAPITAL = 10000") && appText.includes("无有效公式"), "资金调度页必须直接读取公式表安排本期金额和窗口风险，不得再自行计算轻重模型");
+must(appText.includes("function renderFormulaTable") && appText.includes("EXEC_FORMULA_AUDIT") && appText.includes("不配仓") && appText.includes("训练 / 验证"), "公式表页必须展示14条线路的训练/验证系数、最终公式和配仓状态");
+must(orderHintText.includes("exec-line-summary") && orderHintText.includes("exec-line__scroll") && orderHintText.includes("exec-window-card--current") && orderHintText.includes("data-current-window=") && orderHintText.includes("data-current-period=") && orderHintText.includes("当前窗口 · 当下第") && orderHintText.includes("首次命中分布") && orderHintText.includes("公式（元）") && !orderHintText.includes("金额 ' + planText") && !orderHintText.includes('class="stat__label">本期动作') && !orderHintText.includes('class="stat__label">窗口期序') && !orderHintText.includes('<div class="stat__label">当前状态</div>') && orderHintText.includes("Number(b.start) - Number(a.start)") && orderHintText.includes("scroll.scrollLeft = 0"), "执行提示14条线必须给顶部摘要卡片框，只保留当前窗口状态卡这一套动作、金额、期序和状态，禁止重复状态块和重复公式金额");
 const cssText = read("styles.css");
 must(cssText.includes("position: sticky") && cssText.includes("grid-template-columns: repeat(5") && cssText.includes("min-height: 42px"), "导航为粘性五项分段布局且触控高度合格");
 must(appText.includes("执行规则") && appText.includes("双流三期内命中结构") && !appText.includes("固定方案对照") && !appText.includes("本页子模型状态") && appText.includes("仅建议，不代替执行") && appText.includes("窗口照常记录") && appText.includes("两个原始号源") && appText.includes("不再二次筛选") && !appText.includes("仅观察候选"), "追三期使用两个原始号源且不二次筛选");
@@ -119,7 +121,7 @@ const tabsBlock = (appText.match(/var TABS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || 
 const tabIds = [...tabsBlock.matchAll(/id:\s*"([^"]+)"/g)].map((m) => m[1]);
 const missingTabs = tabIds.filter((id) => !appText.includes('state.tab === "' + id + '"') && !appText.includes("renderUltimateMode"));
 must(tabIds.length > 0 && missingTabs.length === 0, "所有导航页面都有渲染入口");
-const modelFlow = ["pick3", "chasenumber", "chaserecommend", "orderlog"];
+const modelFlow = ["pick3", "chasenumber", "chaserecommend", "orderhint", "funds", "formulas", "orderlog"];
 const flowPositions = modelFlow.map((id) => tabIds.indexOf(id));
 must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions[i - 1])), "导航按模型流程排序");
 
