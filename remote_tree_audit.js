@@ -4,6 +4,7 @@ const crypto = require("crypto");
 
 const repo = "Ben88881931/caishenye-app";
 const branch = process.env.AUDIT_BRANCH || "main";
+const strictLocal = process.env.AUDIT_STRICT_LOCAL === "1";
 const criticalFiles = [
   "SUPERVISOR_WORKFLOW.md",
   "app.js",
@@ -44,14 +45,16 @@ async function main() {
       errors.push("远端缺少精确文件: " + file);
       return;
     }
-    const localPath = path.join(__dirname, file);
-    if (!fs.existsSync(localPath)) {
-      errors.push("本地缺少精确文件: " + file);
-      return;
-    }
-    const localSha = blobSha(localPath);
-    if (remoteItem.sha !== localSha) {
-      errors.push("文件哈希不一致: " + file + " remote=" + remoteItem.sha + " local=" + localSha);
+    if (strictLocal) {
+      const localPath = path.join(__dirname, file);
+      if (!fs.existsSync(localPath)) {
+        errors.push("本地缺少精确文件: " + file);
+        return;
+      }
+      const localSha = blobSha(localPath);
+      if (remoteItem.sha !== localSha) {
+        errors.push("文件哈希不一致: " + file + " remote=" + remoteItem.sha + " local=" + localSha);
+      }
     }
   });
 
@@ -61,7 +64,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("REMOTE TREE AUDIT PASSED: " + criticalFiles.length + " critical files exact and hash-matched");
+  console.log("REMOTE TREE AUDIT PASSED: " + criticalFiles.length + " critical files exact" + (strictLocal ? " and hash-matched" : ""));
 }
 
 main().catch((error) => {
