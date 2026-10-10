@@ -687,6 +687,17 @@
     }
   }
 
+  function modelPairStrip(period) {
+    var d1 = execPick(period, "D1");
+    var d2 = execPick(period, "D2");
+    return '<div class="panel" style="margin:0 0 10px;padding:10px;border:2px solid #dbeafe;background:#eff6ff">' +
+      '<div style="font-size:13px;font-weight:900;color:#1e3a8a">D1 / D2 当前号码</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:7px">' +
+      '<span style="background:#fff;border-radius:8px;padding:7px 10px;font-weight:900;color:#1d4ed8">D1 第一推荐 尾' + (d1 ? d1.tail : "-") + '</span>' +
+      '<span style="background:#fff;border-radius:8px;padding:7px 10px;font-weight:900;color:#0f766e">D2 第二推荐 尾' + (d2 ? d2.tail : "-") + '</span>' +
+      '</div></div>';
+  }
+
   function renderHeader() {
     document.getElementById("latestPeriod").textContent = latest;
     document.getElementById("latestTails").textContent = "尾 " + tailsOf(latest).join(" ");
@@ -735,6 +746,9 @@
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
+    if (view.innerHTML && view.innerHTML.indexOf("D1 / D2 当前号码") < 0) {
+      view.innerHTML = modelPairStrip(latest + 1) + view.innerHTML;
+    }
     scrollToLatest();
     if (tabChanged) {
       renderedTab = state.tab;
@@ -2103,10 +2117,37 @@
     execPredCache = {};
     var nextPeriod = latest + 1;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">执行提示 · 14条独立线路</h2><span class="section__hint">10个尾数线只看开奖数据 · 4条推荐线只看D1/D2 · 第' + nextPeriod + '期 · 只提示，不自动下单</span></div></div>';
-    EXEC_LINES.forEach(function (line) {
+    var hintRows = EXEC_LINES.map(function (line) {
       var result = buildExecWindows(line);
+      return { line: line, result: result, action: execNextAction(line, result, nextPeriod) };
+    }).sort(function (a, b) {
+      var aBucket = a.action.amount > 0 ? 3 : a.result.waiting ? 2 : 1;
+      var bBucket = b.action.amount > 0 ? 3 : b.result.waiting ? 2 : 1;
+      return bBucket - aBucket || b.action.amount - a.action.amount || a.line.label.localeCompare(b.line.label);
+    });
+    var activeHintRows = hintRows.filter(function (row) { return row.action.amount > 0; });
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当下有仓位 · 优先显示</h2><span class="section__hint">只列本期金额大于0的线路，按金额从高到低排列</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px">';
+    if (!activeHintRows.length) {
+      html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
+    } else {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+      activeHintRows.forEach(function (row) {
+        var nextTail = row.line.kind === "tail" ? row.line.tail : (row.result.active && row.result.active.lockedTail != null ? row.result.active.lockedTail : (execPick(nextPeriod, row.line.stream) ? execPick(nextPeriod, row.line.stream).tail : null));
+        html += '<div style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:9px 12px;min-width:170px">';
+        html += '<div style="font-size:15px;font-weight:900;color:#1e3a8a">' + row.line.label + (nextTail != null ? ' · 尾' + nextTail : '') + '</div>';
+        html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.action.amount + '元</div>';
+        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + row.action.stage + ' · ' + row.action.action + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div></div>';
+    hintRows.forEach(function (row) {
+      var line = row.line;
+      var result = row.result;
       var stats = execLineStats(line, result.windows);
-      var action = execNextAction(line, result, nextPeriod);
+      var action = row.action;
       var planText = line.plan.join(" / ");
       var firstStart = result.windows.length ? result.windows[0].start : (result.active ? result.active.start : (line.kind === "tail" ? 1 : 31));
       html += '<div class="section"><div class="panel" style="padding:12px 10px">';
@@ -3116,7 +3157,7 @@
     });
     html += '</tbody></table></div></div></div>';
     html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
-    view.innerHTML = html;
+    view.innerHTML = modelPairStrip(latest + 1) + html;
   }
 
   function renderOrderLog() {
