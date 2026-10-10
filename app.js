@@ -2136,7 +2136,7 @@
     });
     var activeHintRows = hintRows.filter(function (row) { return row.action.amount > 0; });
     html += '<div class="section"><div class="section__head"><h2 class="section__title">当下有仓位 · 优先显示</h2><span class="section__hint">只列本期金额大于0的线路，按金额从高到低排列</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px">';
+    html += '<div class="section">';
     if (!activeHintRows.length) {
       html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
     } else {
@@ -2151,7 +2151,7 @@
       });
       html += '</div>';
     }
-    html += '</div></div>';
+    html += '</div>';
     hintRows.forEach(function (row) {
       var line = row.line;
       var result = row.result;
@@ -2491,7 +2491,8 @@
     });
     var use = FUND_CAPITAL ? totalCurrent / FUND_CAPITAL : 0;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 直接按公式安排</h2><span class="section__hint">公式表负责定金额，资金调度只按当前窗口取第几期金额；不再另算轻重模型</span></div></div>';
-    html += '<div class="section"><div class="panel" style="background:#111827;color:#fff;border:2px solid #111827"><div style="font-size:13px;font-weight:800;color:#cbd5e1;margin-bottom:8px">当期下注号码与金额 · 按线路单独列</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当期下注号码与金额</h2><span class="section__hint">按线路单独列，每个号码独立格子</span></div></div>';
+    html += '<div class="position-card-grid">';
     if (!betRows.length) {
       html += '<div style="font-size:22px;font-weight:900">本期不下注</div>';
     } else {
@@ -2525,13 +2526,6 @@
     });
     html += '<p class="disclaimer">资金调度只按公式表执行，不再自行计算轻重倍率。公式为0表示历史训练和验证均未通过，不配仓；等待窗口金额为0；本金1万元只作占用率参考。</p>';
     view.innerHTML = html;
-    var fundCardWrap = view.querySelector(".position-card--funds");
-    if (fundCardWrap && fundCardWrap.parentNode) {
-      fundCardWrap.parentNode.classList.add("position-card-grid");
-      fundCardWrap.parentNode.style.display = "grid";
-      fundCardWrap.parentNode.style.gridTemplateColumns = "repeat(auto-fill,minmax(168px,1fr))";
-      fundCardWrap.parentNode.style.gap = "8px";
-    }
   }
 
   function renderFormulaTable() {
@@ -2883,14 +2877,14 @@
       var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
       html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#bfdbfe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
     });
-    html += '</div></div></div>';
+    html += '</div>';
     var activePositionRows = orderedLines.map(function (item) {
       var itemBest = ytdBestByLine[item.id];
       var position = wmPositionForPlan(item, item.plan);
       return { item: item, best: itemBest, position: position, period: position.period ? wmPeriodLabel(position.period) : "-" };
     }).filter(function (row) { return row.position.amount > 0; });
     html += '<div class="section"><div class="section__head"><h2 class="section__title">当前有仓位 · 正式执行公式</h2><span class="section__hint">按公式表的正式公式计算，金额大于0的线路排在最上面</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px">';
+    html += '<div class="section">';
     if (!activePositionRows.length) {
       html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
     } else {
@@ -2905,7 +2899,7 @@
       });
       html += '</div>';
     }
-    html += '</div></div>';
+    html += '</div>';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每个号码的最优下注公式</h2><span class="section__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高</span></div></div>';
     html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">';
     orderedLines.forEach(function (item) {
