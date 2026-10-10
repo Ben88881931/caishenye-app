@@ -2699,6 +2699,44 @@
     };
   }
 
+  function wmYearStats(line, n) {
+    var sim = wmSimulate(line, n);
+    var byYear = {};
+    sim.records.forEach(function (item) {
+      var year = wmYearOf(item.window.start);
+      if (!year) return;
+      if (!byYear[year]) {
+        byYear[year] = { year: year, windows: 0, hitWindows: 0, missWindows: 0, net: 0, turnover: 0, maxDD: 0, peak: 0, equity: 0, lossStreak: 0, maxLossStreak: 0 };
+      }
+      var row = byYear[year];
+      row.windows++;
+      row.net += item.profit;
+      row.turnover += item.staked;
+      row.equity += item.profit;
+      row.peak = Math.max(row.peak, row.equity);
+      row.maxDD = Math.max(row.maxDD, row.peak - row.equity);
+      if (item.window.hitIndex > 0) {
+        row.hitWindows++;
+        row.lossStreak = 0;
+      } else {
+        row.missWindows++;
+        row.lossStreak++;
+        row.maxLossStreak = Math.max(row.maxLossStreak, row.lossStreak);
+      }
+    });
+    var years = Object.keys(byYear).map(function (key) { return byYear[key]; }).sort(function (a, b) { return a.year - b.year; });
+    years.forEach(function (row) {
+      row.hitRate = row.windows ? (row.hitWindows / row.windows) * 100 : 0;
+      row.roi = row.turnover ? (row.net / row.turnover) * 100 : 0;
+    });
+    var positiveYears = years.filter(function (row) { return row.net > 0; }).length;
+    var negativeYears = years.filter(function (row) { return row.net < 0; }).length;
+    var recent = years.slice(-3);
+    var recent3Positive = recent.filter(function (row) { return row.net > 0; }).length;
+    var stableScore = positiveYears * 100000 + recent3Positive * 10000 + sim.net - negativeYears * 50000;
+    return { years: years, positiveYears: positiveYears, negativeYears: negativeYears, recent3Positive: recent3Positive, stableScore: stableScore, net: sim.net, maxDD: sim.maxDD };
+  }
+
   function wmAttemptCell(w, index) {
     if (index >= w.attempts.length) {
       return '<span style="color:#94a3b8">命中后停止</span>';
@@ -2720,13 +2758,21 @@
     EXEC_LINES.forEach(function (item) {
       var itemSimulations = ns.map(function (n) { return wmSimulate(item, n); });
       var itemRobust = itemSimulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
-      itemRobust.sort(function (a, b) { return b.net - a.net || a.maxDD - b.maxDD; });
-      lineBest[item.id] = { best: itemRobust[0] || null, simulations: itemSimulations };
+      var itemAnnual = {};
+      itemSimulations.forEach(function (s) { itemAnnual[s.n] = wmYearStats(item, s.n); });
+      var itemStable = itemRobust.slice().sort(function (a, b) {
+        return itemAnnual[b.n].stableScore - itemAnnual[a.n].stableScore || b.net - a.net || a.maxDD - b.maxDD;
+      });
+      var itemNetBest = itemRobust.slice().sort(function (a, b) { return b.net - a.net || a.maxDD - b.maxDD; })[0] || null;
+      lineBest[item.id] = { best: itemStable[0] || null, netBest: itemNetBest, simulations: itemSimulations, annual: itemAnnual };
     });
-    var simulations = ns.map(function (n) { return wmSimulate(line, n); });
+    var simulations = lineBest[line.id].simulations;
+    var annualByN = lineBest[line.id].annual;
     var robust = simulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
-    robust.sort(function (a, b) { return b.net - a.net; });
+    robust.sort(function (a, b) { return annualByN[b.n].stableScore - annualByN[a.n].stableScore || b.net - a.net; });
     var best = robust[0] || null;
+    var netBest = lineBest[line.id].netBest;
+    var netBestText = netBest ? (netBest.n === 1 ? "不倍投" : netBest.n + "倍") : "未通过";
     var activeN = Number(state.windowMultN);
     var selected = simulations.filter(function (s) { return s.n === activeN; })[0] || simulations[2];
     var liveState = wmCurrentState(line);
@@ -2752,12 +2798,16 @@
       var itemBest = itemData.best;
       var planText = itemBest ? wmPlanText(itemBest.n) : "0 / 0 / 0";
       var bestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
+      var itemAnnualStats = itemData.annual ? itemData.annual[itemBest ? itemBest.n : activeN] : null;
       var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
       var itemPositionPeriod = itemPosition.period ? wmPeriodLabel(itemPosition.period) : "-";
       html += '<div class="panel" style="padding:10px;border:2px solid ' + (itemBest ? "#bbf7d0" : "#fecaca") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + item.label + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
       html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
       html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">当前仓位 ' + itemPosition.label + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
+      if (itemAnnualStats) {
+        html += '<div style="font-size:11px;color:#475569;margin-top:4px">年度正收益 ' + itemAnnualStats.positiveYears + '/' + itemAnnualStats.years.length + ' 年 · 最近3年 ' + itemAnnualStats.recent3Positive + '/3</div>';
+      }
       if (itemBest) {
         html += '<div style="font-size:11px;color:#475569;margin-top:5px">全周期 ' + (itemBest.net >= 0 ? "+" : "") + itemBest.net + ' · ROI ' + itemBest.roi.toFixed(2) + '%</div>';
         html += '<div style="font-size:11px;color:#475569">训练 ' + (itemBest.trainNet >= 0 ? "+" : "") + itemBest.trainNet + ' / 验证 ' + (itemBest.validNet >= 0 ? "+" : "") + itemBest.validNet + '</div>';
@@ -2768,13 +2818,38 @@
       html += '</div>';
     });
     html += '</div></div>';
+    var annualYears = (lineBest[line.id].annual[selected.n] || { years: [] }).years.map(function (row) { return row.year; });
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">14线逐年测试对比</h2><span class="section__hint">公式固定不变，逐年单算净收益/命中率；不要被某一年的高收益掩盖其他年份</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1500px"><thead><tr><th>线路</th><th>年度稳健最优</th>';
+    annualYears.forEach(function (year) { html += '<th>' + year + '年</th>'; });
+    html += '<th>正收益年</th><th>最近3年</th><th>全周期</th></tr></thead><tbody>';
+    EXEC_LINES.forEach(function (item) {
+      var itemData = lineBest[item.id] || {};
+      var itemBest = itemData.best;
+      var itemStats = itemBest && itemData.annual ? itemData.annual[itemBest.n] : null;
+      html += '<tr><td><b>' + item.label + '</b></td><td><b>' + (itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过") + '</b></td>';
+      annualYears.forEach(function (year) {
+        var row = itemStats ? itemStats.years.filter(function (y) { return y.year === year; })[0] : null;
+        if (!row) {
+          html += '<td style="color:#94a3b8">无数据</td>';
+        } else {
+          var color = row.net >= 0 ? "#16a34a" : "#dc2626";
+          html += '<td><b style="color:' + color + '">' + (row.net >= 0 ? "+" : "") + Math.round(row.net) + '</b><div style="font-size:10px;color:#64748b">中' + row.hitWindows + '/错' + row.missWindows + ' · ROI ' + row.roi.toFixed(1) + '%</div></td>';
+        }
+      });
+      html += '<td><b>' + (itemStats ? itemStats.positiveYears + '/' + itemStats.years.length : "-") + '</b></td>';
+      html += '<td><b>' + (itemStats ? itemStats.recent3Positive + '/3' : "-") + '</b></td>';
+      html += '<td style="font-weight:900;color:' + (itemStats && itemStats.net >= 0 ? "#16a34a" : "#dc2626") + '">' + (itemStats ? (itemStats.net >= 0 ? "+" : "") + itemStats.net : "-") + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:6px">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
     ns.forEach(function (n) {
       html += '<button class="chip" data-wm-n="' + n + '" style="' + (n === activeN ? "background:#111827;color:#fff" : "") + '">' + (n === 1 ? "不倍投" : n + "倍") + '</button>';
     });
     html += '</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:14px;background:#111827;color:#fff;border:0"><div style="font-size:13px;font-weight:800;color:#cbd5e1;margin-bottom:8px">核心结论 · ' + line.label + '</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div style="font-size:11px;color:#cbd5e1">历史最优倍率</div></div>';
+    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div style="font-size:11px;color:#cbd5e1">年度稳健最优</div></div>';
+    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + netBestText + '</div><div style="font-size:11px;color:#cbd5e1">全周期收益最高</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fde68a">' + selectedPosition.label + '</div><div style="font-size:11px;color:#cbd5e1">当前仓位 · ' + (selectedPosition.amount > 0 ? selectedPosition.amount + "元" : selectedPosition.status) + '</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + windowHitRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">窗口命中率</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + missRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">三期全错率</div></div>';
@@ -2802,7 +2877,7 @@
     html += '</div></div>';
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + line.label + '</div><div class="stat__label">当前线路</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div class="stat__label">两段验证最优倍率</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div class="stat__label">年度稳健最优倍率</div></div>';
     html += '<div class="stat"><div class="stat__value">' + wmPlanText(selected.n) + '</div><div class="stat__label">当前单窗金额</div></div>';
     html += '<div class="stat"><div class="stat__value">' + selected.records.length + '</div><div class="stat__label">真实窗口总数</div></div>';
     html += '<div class="stat"><div class="stat__value">' + (selected.records.length ? (((selected.records.length - selected.missWindows) / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">窗口命中率</div></div>';

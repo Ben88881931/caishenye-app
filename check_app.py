@@ -257,6 +257,10 @@ def main():
             pass_("窗口倍投测试按每条线路窗口规律标注当前仓位")
         else:
             fail("窗口倍投测试未按每条线路窗口规律标注当前仓位")
+        if "function wmYearStats" in app_text and "14线逐年测试对比" in app_text and "年度稳健最优" in app_text and "全周期收益最高" in app_text and "正收益年" in app_text and "最近3年" in app_text:
+            pass_("窗口倍投测试逐年对比14线并区分年度稳健与全周期最优")
+        else:
+            fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
