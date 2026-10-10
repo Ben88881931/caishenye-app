@@ -4444,8 +4444,9 @@
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾号性格 · 当下速览</h2><span class="section__hint">先看当前遗漏、连出和短窗热度，再查看下方明细</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>当前（漏/连）</th><th>近15期</th><th>近5期</th><th>反弹性格</th><th>连出性格</th><th>当前判定</th></tr></thead><tbody>';
     rows.forEach(function (r) {
-      var status = r.miss >= BOUNCE[r.tail] ? "临界反弹" : r.c15 >= 10 ? "热惯性" : r.c15 <= 5 ? "冷待反弹" : r.streakNow >= 3 ? "连出中" : "中";
-      var statusColor = r.miss >= BOUNCE[r.tail] ? "#dc2626" : r.c15 >= 10 ? "#16a34a" : r.c15 <= 5 ? "#2563eb" : "#6b7280";
+      var bounceLimit = MODEL.bounceCritical && MODEL.bounceCritical[r.tail] != null ? MODEL.bounceCritical[r.tail] : 2;
+      var status = r.miss >= bounceLimit ? "临界反弹" : r.c15 >= 10 ? "热惯性" : r.c15 <= 5 ? "冷待反弹" : r.streakNow >= 3 ? "连出中" : "中";
+      var statusColor = r.miss >= bounceLimit ? "#dc2626" : r.c15 >= 10 ? "#16a34a" : r.c15 <= 5 ? "#2563eb" : "#6b7280";
       html += "<tr><td>尾" + r.tail + '</td><td><b>漏' + r.miss + " · 连" + r.streakNow + "</b></td>";
       html += windowCell(r.c15, 15) + windowCell(r.c5, 5);
       html += '<td style="color:' + r.bounceGrade.color + ';font-weight:700">' + r.bounceGrade.txt + "</td>";

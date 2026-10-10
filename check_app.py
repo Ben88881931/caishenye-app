@@ -285,6 +285,10 @@ def main():
             pass_("当下窗口D1/D2仓位标注来源和对应尾号")
         else:
             fail("当下窗口D1/D2仓位缺少来源或尾号")
+        if "MODEL.bounceCritical " in app_text and "BOUNCE[" not in app_text:
+            pass_("页面运行使用MODEL.bounceCritical，无未定义BOUNCE引用")
+        else:
+            fail("页面仍引用未定义BOUNCE或未使用MODEL.bounceCritical")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
