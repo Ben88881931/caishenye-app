@@ -293,6 +293,10 @@ def main():
             pass_("当前仓位卡片使用统一尺寸样式")
         else:
             fail("当前仓位卡片未使用统一尺寸样式")
+        if "wm-line-selector" in app_text:
+            pass_("窗口倍投测试14线按钮使用响应式网格容器")
+        else:
+            fail("窗口倍投测试14线按钮未使用响应式网格容器")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:

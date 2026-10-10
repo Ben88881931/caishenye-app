@@ -2869,7 +2869,7 @@
     var selectedPositionPeriod = selectedPosition.period ? wmPeriodLabel(selectedPosition.period) : "-";
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 正式版候选</h2><span class="section__hint">真实窗口规律账本 · 100元起 · 年度稳健最优/全周期收益最高/今年最优分开标注</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px">本页作用</div><div style="font-size:12px;color:#475569;line-height:1.8">把每条线的每一个窗口拆开，逐期记录第1/2/3期尾号、命中、错误、第几期中、三期全错、等待重开和下一窗口。数据只按真实开奖结果结算，不预测、不补造、不改历史。</div></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div class="wm-line-selector">';
     orderedLines.forEach(function (item) {
       var itemBest = (lineBest[item.id] || {}).best;
       var itemBestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";

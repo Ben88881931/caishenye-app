@@ -1500,6 +1500,51 @@ body {
   color: #0f766e;
 }
 
+.wm-line-selector {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.wm-line-selector > .chip {
+  width: 100%;
+  min-width: 0 !important;
+  min-height: 72px !important;
+  padding: 6px 8px !important;
+  text-align: left;
+}
+
+.wm-line-selector > .chip span:nth-child(1) {
+  font-size: 13px !important;
+}
+
+.wm-line-selector > .chip span:nth-child(2),
+.wm-line-selector > .chip span:nth-child(3) {
+  font-size: 10px !important;
+  line-height: 1.25;
+}
+
+@media (max-width: 1100px) {
+  .wm-line-selector {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .wm-line-selector {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .wm-line-selector > .chip {
+    min-height: 78px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .wm-line-selector {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .position-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
