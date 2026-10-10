@@ -1458,6 +1458,48 @@ body {
 }
 
 /* 当前仓位卡片统一尺寸，避免号码多寡导致格子大小不一。 */
+.model-pair-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.model-pair-card {
+  min-height: 64px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 2px solid #2563eb;
+  border-radius: 8px;
+  background: #eff6ff;
+}
+
+.model-pair-card span {
+  font-size: 13px;
+  font-weight: 900;
+  color: #1e3a8a;
+}
+
+.model-pair-card b {
+  font-size: 24px;
+  line-height: 1;
+  color: #1d4ed8;
+}
+
+.model-pair-card--d2 {
+  border-color: #0f766e;
+  background: #ecfdf5;
+}
+
+.model-pair-card--d2 span,
+.model-pair-card--d2 b {
+  color: #0f766e;
+}
+
 .position-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));

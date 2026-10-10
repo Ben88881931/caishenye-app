@@ -269,10 +269,10 @@ def main():
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
             fail("窗口倍投测试缺少今年最优规律或正式版候选标注")
-        if "function modelPairStrip" in app_text and "D1 第一推荐" in app_text and "D2 第二推荐" in app_text and "modelPairStrip(latest + 1)" in app_text:
-            pass_("所有页面统一显示下一期D1第一推荐和D2第二推荐号码")
+        if "function modelPairStrip" in app_text and "model-pair-grid" in app_text and "model-pair-card--d1" in app_text and "model-pair-card--d2" in app_text and "D1 第一推荐" in app_text and "D2 第二推荐" in app_text and "modelPairStrip(latest + 1)" in app_text:
+            pass_("所有页面用独立盒子显示下一期D1和D2推荐号码")
         else:
-            fail("页面顶部缺少下一期D1/D2推荐号码")
+            fail("页面顶部缺少独立D1/D2推荐号码盒")
         if "function renderOrderHint" in app_text and "hintRows" in app_text and "activeHintRows" in app_text and "当下有仓位 · 优先显示" in app_text and "row.action.amount > 0" in app_text:
             pass_("执行提示页当下有仓位线路优先卡片显示")
         else:

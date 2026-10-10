@@ -690,12 +690,10 @@
   function modelPairStrip(period) {
     var d1 = execPick(period, "D1");
     var d2 = execPick(period, "D2");
-    return '<div class="panel" style="margin:0 0 10px;padding:10px;border:2px solid #dbeafe;background:#eff6ff">' +
-      '<div style="font-size:13px;font-weight:900;color:#1e3a8a">D1 / D2 当前号码</div>' +
-      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:7px">' +
-      '<span style="background:#fff;border-radius:8px;padding:7px 10px;font-weight:900;color:#1d4ed8">D1 第一推荐 尾' + (d1 ? d1.tail : "-") + '</span>' +
-      '<span style="background:#fff;border-radius:8px;padding:7px 10px;font-weight:900;color:#0f766e">D2 第二推荐 尾' + (d2 ? d2.tail : "-") + '</span>' +
-      '</div></div>';
+    return '<div class="model-pair-grid">' +
+      '<div class="model-pair-card model-pair-card--d1"><span>D1 第一推荐</span><b>尾' + (d1 ? d1.tail : "-") + '</b></div>' +
+      '<div class="model-pair-card model-pair-card--d2"><span>D2 第二推荐</span><b>尾' + (d2 ? d2.tail : "-") + '</b></div>' +
+      '</div>';
   }
 
   function renderHeader() {
