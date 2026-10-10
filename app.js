@@ -2635,9 +2635,8 @@
     return wmWindowState[line.id] || { active: null, waiting: null };
   }
 
-  function wmCurrentPosition(line, n) {
+  function wmPositionForPlan(line, plan) {
     var live = wmCurrentState(line);
-    var plan = wmPlanFor(n);
     if (live.waiting) {
       return { label: "等待重开", amount: 0, stage: 0, period: null, status: "等待尾" + live.waiting.tail, color: "#d97706" };
     }
@@ -2647,6 +2646,10 @@
       return { label: "第" + stage + "期仓位", amount: Number(plan[stage - 1] || 0), stage: stage, period: period, status: "窗口进行中", color: "#2563eb" };
     }
     return { label: "空仓等待", amount: 0, stage: 0, period: null, status: "无进行中窗口", color: "#16a34a" };
+  }
+
+  function wmCurrentPosition(line, n) {
+    return wmPositionForPlan(line, wmPlanFor(n));
   }
 
   function wmYearOf(start) {
@@ -2827,8 +2830,8 @@
     var orderedLines = EXEC_LINES.slice().sort(function (a, b) {
       var aBest = ytdBestByLine[a.id];
       var bBest = ytdBestByLine[b.id];
-      var aPos = wmCurrentPosition(a, aBest ? aBest.n : activeN);
-      var bPos = wmCurrentPosition(b, bBest ? bBest.n : activeN);
+      var aPos = wmPositionForPlan(a, a.plan);
+      var bPos = wmPositionForPlan(b, b.plan);
       var aBucket = aPos.amount > 0 ? 3 : aPos.label === "等待重开" ? 2 : 1;
       var bBucket = bPos.amount > 0 ? 3 : bPos.label === "等待重开" ? 2 : 1;
       return bBucket - aBucket || bPos.amount - aPos.amount || bPos.stage - aPos.stage || a.label.localeCompare(b.label);
@@ -2849,7 +2852,7 @@
     var windowHitRate = selected.records.length ? ((selected.records.length - selected.missWindows) / selected.records.length) * 100 : 0;
     var missRate = selected.records.length ? (selected.missWindows / selected.records.length) * 100 : 0;
     var selectedPlanText = wmPlanText(selected.n);
-    var selectedPosition = wmCurrentPosition(line, selected.n);
+    var selectedPosition = wmPositionForPlan(line, line.plan);
     var selectedPositionPeriod = selectedPosition.period ? wmPeriodLabel(selectedPosition.period) : "-";
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 正式版候选</h2><span class="section__hint">真实窗口规律账本 · 100元起 · 年度稳健最优/全周期收益最高/今年最优分开标注</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px">本页作用</div><div style="font-size:12px;color:#475569;line-height:1.8">把每条线的每一个窗口拆开，逐期记录第1/2/3期尾号、命中、错误、第几期中、三期全错、等待重开和下一窗口。数据只按真实开奖结果结算，不预测、不补造、不改历史。</div></div></div>';
@@ -2863,10 +2866,10 @@
     html += '</div></div></div>';
     var activePositionRows = orderedLines.map(function (item) {
       var itemBest = ytdBestByLine[item.id];
-      var position = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
+      var position = wmPositionForPlan(item, item.plan);
       return { item: item, best: itemBest, position: position, period: position.period ? wmPeriodLabel(position.period) : "-" };
     }).filter(function (row) { return row.position.amount > 0; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前有仓位 · 优先显示</h2><span class="section__hint">按今年最优公式计算，金额大于0的线路排在最上面</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前有仓位 · 正式执行公式</h2><span class="section__hint">按公式表的正式公式计算，金额大于0的线路排在最上面</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px">';
     if (!activePositionRows.length) {
       html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
@@ -2892,15 +2895,15 @@
       var itemAnnualStats = itemData.annual ? itemData.annual[itemBest ? itemBest.n : activeN] : null;
       var itemYtdBest = ytdBestByLine[item.id] || null;
       var itemYtdPosition = wmCurrentPosition(item, itemYtdBest ? itemYtdBest.n : activeN);
-      var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
+      var itemPosition = wmPositionForPlan(item, item.plan);
       var itemPositionPeriod = itemPosition.period ? wmPeriodLabel(itemPosition.period) : "-";
       html += '<div class="panel" style="padding:10px;border:2px solid ' + (itemBest ? "#bbf7d0" : "#fecaca") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + item.label + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
       html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
-      html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">当前仓位 ' + itemPosition.label + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
+      html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">正式执行仓位 ' + itemPosition.label + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
       if (itemYtdBest) {
         html += '<div style="font-size:11px;font-weight:900;color:#1d4ed8;margin-top:4px">今年最优 ' + (itemYtdBest.n === 1 ? "不倍投" : itemYtdBest.n + "倍") + ' · ' + wmPlanText(itemYtdBest.n) + '</div>';
-        html += '<div style="font-size:11px;color:' + itemYtdPosition.color + ';margin-top:2px">今年仓位 ' + itemYtdPosition.label + ' · ' + (itemYtdPosition.amount > 0 ? itemYtdPosition.amount + "元" : itemYtdPosition.status) + '</div>';
+        html += '<div style="font-size:11px;color:' + itemYtdPosition.color + ';margin-top:2px">今年测试仓位 ' + itemYtdPosition.label + ' · ' + (itemYtdPosition.amount > 0 ? itemYtdPosition.amount + "元" : itemYtdPosition.status) + '</div>';
       } else {
         html += '<div style="font-size:11px;color:#d97706;margin-top:4px">今年无可用数据</div>';
       }
@@ -2926,7 +2929,7 @@
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1120px"><thead><tr><th>名次</th><th>线路</th><th>今年最优公式</th><th>第1/2/3期仓位</th><th>今年净收益</th><th>今年ROI</th><th>命中/全错</th><th>今年当前仓位</th><th>全周期验证</th></tr></thead><tbody>';
     ytdRows.forEach(function (row, index) {
       var best = row.best;
-      var position = wmCurrentPosition(row.item, best ? best.n : activeN);
+      var position = wmPositionForPlan(row.item, row.item.plan);
       var periodText = position.period ? wmPeriodLabel(position.period) : "-";
       html += '<tr>';
       html += '<td><b>#' + (index + 1) + '</b></td>';
@@ -2937,7 +2940,7 @@
         html += '<td><b style="color:' + (best.year.net >= 0 ? "#16a34a" : "#dc2626") + '">' + (best.year.net >= 0 ? "+" : "") + Math.round(best.year.net) + '</b></td>';
         html += '<td>' + best.year.roi.toFixed(2) + '%</td>';
         html += '<td>中' + best.year.hitWindows + ' / 全错' + best.year.missWindows + '</td>';
-        html += '<td style="color:' + position.color + ';font-weight:900">' + position.label + ' · ' + (position.amount > 0 ? position.amount + "元" : position.status) + ' · ' + periodText + '</td>';
+      html += '<td style="color:' + position.color + ';font-weight:900">' + position.label + ' · ' + (position.amount > 0 ? position.amount + "元" : position.status) + ' · ' + periodText + '</td>';
         html += '<td><b style="color:' + (best.robust ? "#16a34a" : "#d97706") + '">' + (best.robust ? "通过" : "仅今年有效") + '</b></td>';
       } else {
         html += '<td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>';
@@ -2978,8 +2981,8 @@
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div style="font-size:11px;color:#cbd5e1">年度稳健最优</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + netBestText + '</div><div style="font-size:11px;color:#cbd5e1">全周期收益最高</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#bfdbfe">' + (selectedYtdBest ? (selectedYtdBest.n === 1 ? "不倍投" : selectedYtdBest.n + "倍") : "无数据") + '</div><div style="font-size:11px;color:#cbd5e1">' + currentYear + '年最优 · ' + (selectedYtdBest ? wmPlanText(selectedYtdBest.n) : "0 / 0 / 0") + '</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fde68a">' + selectedPosition.label + '</div><div style="font-size:11px;color:#cbd5e1">当前仓位 · ' + (selectedPosition.amount > 0 ? selectedPosition.amount + "元" : selectedPosition.status) + '</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fde68a">' + selectedYtdPosition.label + '</div><div style="font-size:11px;color:#cbd5e1">今年仓位 · ' + (selectedYtdPosition.amount > 0 ? selectedYtdPosition.amount + "元 · " + selectedYtdPeriod : selectedYtdPosition.status) + '</div></div>';
+    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fde68a">' + selectedPosition.label + '</div><div style="font-size:11px;color:#cbd5e1">正式执行仓位 · ' + (selectedPosition.amount > 0 ? selectedPosition.amount + "元" : selectedPosition.status) + '</div></div>';
+    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fde68a">' + selectedYtdPosition.label + '</div><div style="font-size:11px;color:#cbd5e1">今年测试仓位 · ' + (selectedYtdPosition.amount > 0 ? selectedYtdPosition.amount + "元 · " + selectedYtdPeriod : selectedYtdPosition.status) + '</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + windowHitRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">窗口命中率</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + missRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">三期全错率</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + selected.maxLossStreak + '窗</div><div style="font-size:11px;color:#cbd5e1">最大连续全错</div></div>';
