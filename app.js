@@ -2146,11 +2146,11 @@
     if (!activeHintRows.length) {
       html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
     } else {
-      html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+      html += '<div class="position-card-grid">';
       activeHintRows.forEach(function (row) {
         var sourceText = execSourceText(row.line);
         var currentTail = execCurrentTail(row.line, row.result, nextPeriod);
-        html += '<div style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:9px 12px;min-width:170px">';
+        html += '<div class="position-card position-card--execution">';
         html += '<div style="font-size:15px;font-weight:900;color:#1e3a8a">' + row.line.label + (sourceText ? ' · ' + sourceText : '') + (currentTail != null ? ' · 尾' + currentTail : '') + '</div>';
         html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.action.amount + '元</div>';
         html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + row.action.stage + ' · ' + row.action.action + '</div>';
@@ -2504,10 +2504,11 @@
     } else {
       betRows.forEach(function (row) {
         var sourceText = execSourceText(row.line);
-        if (sourceText && row.nextTail != null) {
-          html += '<div style="display:flex;align-items:center;background:#dbeafe;color:#1e3a8a;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:900">' + sourceText + ' · 尾' + row.nextTail + '</div>';
-        }
-        html += '<div style="display:flex;align-items:center;gap:8px;background:#fff;color:#111827;border-radius:8px;padding:8px 12px"><span style="font-size:30px;font-weight:900">' + row.nextTail + '</span><span style="font-size:12px;font-weight:800;color:#475569">' + row.line.label + '</span><span style="font-size:18px;font-weight:900;color:#2563eb">' + row.amount + '元</span></div>';
+        html += '<div class="position-card position-card--funds">';
+        html += '<div class="position-card__title">' + row.line.label + (sourceText ? ' · ' + sourceText : '') + '</div>';
+        html += '<div class="position-card__number">尾' + row.nextTail + '</div>';
+        html += '<div class="position-card__amount">' + row.amount + '元</div>';
+        html += '</div>';
       });
     }
     html += '</div></div></div>';
@@ -2532,6 +2533,13 @@
     });
     html += '<p class="disclaimer">资金调度只按公式表执行，不再自行计算轻重倍率。公式为0表示历史训练和验证均未通过，不配仓；等待窗口金额为0；本金1万元只作占用率参考。</p>';
     view.innerHTML = html;
+    var fundCardWrap = view.querySelector(".position-card--funds");
+    if (fundCardWrap && fundCardWrap.parentNode) {
+      fundCardWrap.parentNode.classList.add("position-card-grid");
+      fundCardWrap.parentNode.style.display = "grid";
+      fundCardWrap.parentNode.style.gridTemplateColumns = "repeat(auto-fill,minmax(190px,1fr))";
+      fundCardWrap.parentNode.style.gap = "8px";
+    }
   }
 
   function renderFormulaTable() {
@@ -2894,11 +2902,11 @@
     if (!activePositionRows.length) {
       html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
     } else {
-      html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+      html += '<div class="position-card-grid">';
       activePositionRows.forEach(function (row) {
         var sourceText = execSourceText(row.item);
         var currentTail = execCurrentTail(row.item, wmCurrentState(row.item), latest + 1);
-        html += '<div style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:9px 12px;min-width:170px">';
+        html += '<div class="position-card position-card--execution">';
         html += '<div style="font-size:15px;font-weight:900;color:#1e3a8a">' + row.item.label + (sourceText ? ' · ' + sourceText : '') + (currentTail != null ? ' · 尾' + currentTail : '') + ' · ' + row.position.label + '</div>';
         html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.position.amount + '元</div>';
         html += '<div style="font-size:11px;color:#475569;margin-top:3px">检查 ' + row.period + (row.best ? ' · ' + (row.best.n === 1 ? "不倍投" : row.best.n + "倍") : '') + '</div>';

@@ -289,6 +289,10 @@ def main():
             pass_("页面运行使用MODEL.bounceCritical，无未定义BOUNCE引用")
         else:
             fail("页面仍引用未定义BOUNCE或未使用MODEL.bounceCritical")
+        if "position-card-grid" in app_text and "position-card--funds" in app_text and "position-card--execution" in app_text:
+            pass_("当前仓位卡片使用统一尺寸样式")
+        else:
+            fail("当前仓位卡片未使用统一尺寸样式")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
