@@ -1939,6 +1939,21 @@
     return picks[stream === "D1" ? 0 : 1] || null;
   }
 
+  function execSourceText(line) {
+    if (line.stream === "D1") return "D1第一推荐";
+    if (line.stream === "D2") return "D2第二推荐";
+    return "";
+  }
+
+  function execCurrentTail(line, result, period) {
+    if (line.kind === "tail") return Number(line.tail);
+    if (result && result.active && result.active.lockedTail != null) return Number(result.active.lockedTail);
+    var pick = execPick(period, line.stream);
+    if (pick) return Number(pick.tail);
+    if (result && result.waiting) return Number(result.waiting.tail);
+    return null;
+  }
+
   function execHasTail(period, tail) {
     var d1 = execPick(period, "D1");
     var d2 = execPick(period, "D2");
@@ -2133,9 +2148,10 @@
     } else {
       html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
       activeHintRows.forEach(function (row) {
-        var nextTail = row.line.kind === "tail" ? row.line.tail : (row.result.active && row.result.active.lockedTail != null ? row.result.active.lockedTail : (execPick(nextPeriod, row.line.stream) ? execPick(nextPeriod, row.line.stream).tail : null));
+        var sourceText = execSourceText(row.line);
+        var currentTail = execCurrentTail(row.line, row.result, nextPeriod);
         html += '<div style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:9px 12px;min-width:170px">';
-        html += '<div style="font-size:15px;font-weight:900;color:#1e3a8a">' + row.line.label + (nextTail != null ? ' · 尾' + nextTail : '') + '</div>';
+        html += '<div style="font-size:15px;font-weight:900;color:#1e3a8a">' + row.line.label + (sourceText ? ' · ' + sourceText : '') + (currentTail != null ? ' · 尾' + currentTail : '') + '</div>';
         html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.action.amount + '元</div>';
         html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + row.action.stage + ' · ' + row.action.action + '</div>';
         html += '</div>';
@@ -2487,6 +2503,10 @@
       html += '<div style="font-size:22px;font-weight:900">本期不下注</div>';
     } else {
       betRows.forEach(function (row) {
+        var sourceText = execSourceText(row.line);
+        if (sourceText && row.nextTail != null) {
+          html += '<div style="display:flex;align-items:center;background:#dbeafe;color:#1e3a8a;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:900">' + sourceText + ' · 尾' + row.nextTail + '</div>';
+        }
         html += '<div style="display:flex;align-items:center;gap:8px;background:#fff;color:#111827;border-radius:8px;padding:8px 12px"><span style="font-size:30px;font-weight:900">' + row.nextTail + '</span><span style="font-size:12px;font-weight:800;color:#475569">' + row.line.label + '</span><span style="font-size:18px;font-weight:900;color:#2563eb">' + row.amount + '元</span></div>';
       });
     }
@@ -2876,8 +2896,10 @@
     } else {
       html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
       activePositionRows.forEach(function (row) {
+        var sourceText = execSourceText(row.item);
+        var currentTail = execCurrentTail(row.item, wmCurrentState(row.item), latest + 1);
         html += '<div style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:9px 12px;min-width:170px">';
-        html += '<div style="font-size:15px;font-weight:900;color:#1e3a8a">' + row.item.label + ' · ' + row.position.label + '</div>';
+        html += '<div style="font-size:15px;font-weight:900;color:#1e3a8a">' + row.item.label + (sourceText ? ' · ' + sourceText : '') + (currentTail != null ? ' · 尾' + currentTail : '') + ' · ' + row.position.label + '</div>';
         html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.position.amount + '元</div>';
         html += '<div style="font-size:11px;color:#475569;margin-top:3px">检查 ' + row.period + (row.best ? ' · ' + (row.best.n === 1 ? "不倍投" : row.best.n + "倍") : '') + '</div>';
         html += '</div>';
@@ -2896,11 +2918,13 @@
       var itemYtdBest = ytdBestByLine[item.id] || null;
       var itemYtdPosition = wmCurrentPosition(item, itemYtdBest ? itemYtdBest.n : activeN);
       var itemPosition = wmPositionForPlan(item, item.plan);
+      var itemSourceText = execSourceText(item);
+      var itemCurrentTail = execCurrentTail(item, wmCurrentState(item), latest + 1);
       var itemPositionPeriod = itemPosition.period ? wmPeriodLabel(itemPosition.period) : "-";
       html += '<div class="panel" style="padding:10px;border:2px solid ' + (itemBest ? "#bbf7d0" : "#fecaca") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + item.label + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
       html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
-      html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">正式执行仓位 ' + itemPosition.label + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
+      html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">正式执行仓位 ' + itemPosition.label + (itemSourceText ? ' · ' + itemSourceText : '') + (itemCurrentTail != null ? ' · 尾' + itemCurrentTail : '') + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
       if (itemYtdBest) {
         html += '<div style="font-size:11px;font-weight:900;color:#1d4ed8;margin-top:4px">今年最优 ' + (itemYtdBest.n === 1 ? "不倍投" : itemYtdBest.n + "倍") + ' · ' + wmPlanText(itemYtdBest.n) + '</div>';
         html += '<div style="font-size:11px;color:' + itemYtdPosition.color + ';margin-top:2px">今年测试仓位 ' + itemYtdPosition.label + ' · ' + (itemYtdPosition.amount > 0 ? itemYtdPosition.amount + "元" : itemYtdPosition.status) + '</div>';

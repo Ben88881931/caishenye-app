@@ -281,6 +281,10 @@ def main():
             pass_("正式执行仓位统一以公式表line.plan为准")
         else:
             fail("页面正式执行仓位口径不一致")
+        if "function execSourceText" in app_text and "function execCurrentTail" in app_text and "D1第一推荐" in app_text and "D2第二推荐" in app_text and "execCurrentTail(item, wmCurrentState(item), latest + 1)" in app_text and "execCurrentTail(row.line, row.result, nextPeriod)" in app_text:
+            pass_("当下窗口D1/D2仓位标注来源和对应尾号")
+        else:
+            fail("当下窗口D1/D2仓位缺少来源或尾号")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
