@@ -297,6 +297,10 @@ def main():
             pass_("窗口倍投测试14线按钮使用响应式网格容器")
         else:
             fail("窗口倍投测试14线按钮未使用响应式网格容器")
+        if "background:#2563eb;color:#fff;border-color:#1d4ed8" in app_text and "box-shadow:0 0 0 2px #bfdbfe" in app_text:
+            pass_("窗口倍投测试14线按钮选中态使用蓝色高亮")
+        else:
+            fail("窗口倍投测试14线按钮选中态仍为黑色或缺少高亮")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:

@@ -118,6 +118,7 @@ must(orderHintText.includes("exec-line-summary") && orderHintText.includes("exec
 const cssText = read("styles.css");
 must(appText.includes("position-card-grid") && appText.includes("position-card--funds") && appText.includes("position-card--execution") && cssText.includes(".position-card-grid") && cssText.includes("height: 104px"), "当前仓位卡片必须统一网格列宽和固定高度，防止格子大小不一");
 must(appText.includes("wm-line-selector") && cssText.includes(".wm-line-selector") && cssText.includes("repeat(7, minmax(0, 1fr))") && cssText.includes("repeat(5, minmax(0, 1fr))") && cssText.includes("repeat(4, minmax(0, 1fr))") && cssText.includes("repeat(3, minmax(0, 1fr))"), "窗口倍投测试14线按钮必须使用7/5/4/3列响应式网格，不能固定两列");
+must(appText.includes("background:#2563eb;color:#fff;border-color:#1d4ed8") && appText.includes("box-shadow:0 0 0 2px #bfdbfe"), "窗口倍投测试14线按钮选中态必须使用蓝色高亮，禁止黑色底");
 must(cssText.includes("position: sticky") && cssText.includes("grid-template-columns: repeat(5") && cssText.includes("min-height: 42px"), "导航为粘性五项分段布局且触控高度合格");
 must(appText.includes("执行规则") && appText.includes("双流三期内命中结构") && !appText.includes("固定方案对照") && !appText.includes("本页子模型状态") && appText.includes("仅建议，不代替执行") && appText.includes("窗口照常记录") && appText.includes("两个原始号源") && appText.includes("不再二次筛选") && !appText.includes("仅观察候选"), "追三期使用两个原始号源且不二次筛选");
 must(appText.includes("function activeSnapshotWindow") && appText.includes("当前窗口第") && appText.includes("锁定号不换") && appText.includes("下一期检查"), "追号码顶部必须显示当前锁定窗口且状态指向下一检查期");

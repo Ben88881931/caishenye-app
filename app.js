@@ -2874,7 +2874,7 @@
       var itemBest = (lineBest[item.id] || {}).best;
       var itemBestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
       var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
-      html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#bfdbfe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
+      html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#dbeafe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
     });
     html += '</div>';
     var activePositionRows = orderedLines.map(function (item) {
