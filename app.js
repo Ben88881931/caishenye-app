@@ -744,7 +744,7 @@
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
-    if (view.innerHTML && view.innerHTML.indexOf("D1 / D2 当前号码") < 0) {
+    if (view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
       view.innerHTML = modelPairStrip(latest + 1) + view.innerHTML;
     }
     scrollToLatest();
@@ -2141,8 +2141,9 @@
       html += '<div class="position-card-grid">';
       activeHintRows.forEach(function (row) {
         var currentTail = execCurrentTail(row.line, row.result, nextPeriod);
+        var cardTitle = row.line.kind === "tail" ? row.line.label : row.line.label + (currentTail != null ? ' · 尾' + currentTail : '');
         html += '<div class="position-card position-card--execution">';
-        html += '<div class="position-card__title">' + row.line.label + (currentTail != null ? ' · 尾' + currentTail : '') + '</div>';
+        html += '<div class="position-card__title">' + cardTitle + '</div>';
         html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.action.amount + '元</div>';
         html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + row.action.stage + ' · ' + row.action.action + '</div>';
         html += '</div>';
@@ -2496,7 +2497,7 @@
     } else {
       betRows.forEach(function (row) {
         html += '<div class="position-card position-card--funds">';
-        html += '<div class="position-card__title">' + row.line.label + '</div>';
+        html += '<div class="position-card__title">' + (row.line.kind === "tail" ? "尾数线" : row.line.label) + '</div>';
         html += '<div class="position-card__number">尾' + row.nextTail + '</div>';
         html += '<div class="position-card__amount">' + row.amount + '元</div>';
         html += '</div>';
@@ -2889,8 +2890,9 @@
       html += '<div class="position-card-grid">';
       activePositionRows.forEach(function (row) {
         var currentTail = execCurrentTail(row.item, wmCurrentState(row.item), latest + 1);
+        var cardTitle = row.item.kind === "tail" ? row.item.label : row.item.label + (currentTail != null ? ' · 尾' + currentTail : '');
         html += '<div class="position-card position-card--execution">';
-        html += '<div class="position-card__title">' + row.item.label + (currentTail != null ? ' · 尾' + currentTail : '') + ' · ' + row.position.label + '</div>';
+        html += '<div class="position-card__title">' + cardTitle + ' · ' + row.position.label + '</div>';
         html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.position.amount + '元</div>';
         html += '<div style="font-size:11px;color:#475569;margin-top:3px">检查 ' + row.period + (row.best ? ' · ' + (row.best.n === 1 ? "不倍投" : row.best.n + "倍") : '') + '</div>';
         html += '</div>';
@@ -2910,11 +2912,12 @@
       var itemYtdPosition = wmCurrentPosition(item, itemYtdBest ? itemYtdBest.n : activeN);
       var itemPosition = wmPositionForPlan(item, item.plan);
       var itemCurrentTail = execCurrentTail(item, wmCurrentState(item), latest + 1);
+      var itemTailText = item.kind === "tail" ? "" : (itemCurrentTail != null ? ' · 尾' + itemCurrentTail : '');
       var itemPositionPeriod = itemPosition.period ? wmPeriodLabel(itemPosition.period) : "-";
       html += '<div class="panel" style="padding:10px;border:2px solid ' + (itemBest ? "#bbf7d0" : "#fecaca") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + item.label + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
       html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
-      html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">正式执行仓位 ' + itemPosition.label + (itemCurrentTail != null ? ' · 尾' + itemCurrentTail : '') + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
+      html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">正式执行仓位 ' + itemPosition.label + itemTailText + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
       if (itemYtdBest) {
         html += '<div style="font-size:11px;font-weight:900;color:#1d4ed8;margin-top:4px">今年最优 ' + (itemYtdBest.n === 1 ? "不倍投" : itemYtdBest.n + "倍") + ' · ' + wmPlanText(itemYtdBest.n) + '</div>';
         html += '<div style="font-size:11px;color:' + itemYtdPosition.color + ';margin-top:2px">今年测试仓位 ' + itemYtdPosition.label + ' · ' + (itemYtdPosition.amount > 0 ? itemYtdPosition.amount + "元" : itemYtdPosition.status) + '</div>';
