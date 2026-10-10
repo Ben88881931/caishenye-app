@@ -350,6 +350,7 @@
     orderTail: lsGet("v2_order_tail", "all"),
     windowMultLine: "tail1",
     windowMultN: 2,
+    wmFoldOpen: {},
   };
 
   var TABS = [
@@ -2746,6 +2747,48 @@
     return '<div style="font-size:10px;color:#64748b">' + wmPeriodLabel(item.period) + '</div>尾<b style="font-size:16px">' + item.tail + '</b><b style="color:' + color + ';margin-left:4px">' + (item.hit ? "中" : "错") + '</b>';
   }
 
+  function wmApplyCardFolds(view) {
+    var scrollCard = null;
+    Array.prototype.forEach.call(view.querySelectorAll(".section"), function (card) {
+      if (card.textContent.indexOf("连续2窗及以上记录") >= 0) scrollCard = card;
+    });
+    if (!scrollCard) return;
+    var cards = [];
+    var node = scrollCard.previousElementSibling;
+    while (node) {
+      if (node.classList && node.classList.contains("section")) cards.push(node);
+      node = node.previousElementSibling;
+    }
+    cards.reverse().forEach(function (card) {
+      var titleNode = card.querySelector(".section__title") || card.querySelector("h2");
+      var hintNode = card.querySelector(".section__hint");
+      var title = titleNode ? titleNode.textContent.trim() : "更多信息";
+      if (!titleNode) {
+        if (card.querySelector("[data-wm-line]")) title = "线路选择";
+        else if (card.querySelector("[data-wm-n]")) title = "倍率选择";
+        else if (card.textContent.indexOf("核心结论") >= 0) title = "核心结论";
+        else if (card.textContent.indexOf("当前窗口状态") >= 0) title = "当前窗口状态";
+        else if (card.textContent.indexOf("累计") >= 0) title = "累计统计";
+      }
+      var defaultOpen = true;
+      var isOpen = state.wmFoldOpen[title] == null ? defaultOpen : state.wmFoldOpen[title];
+      var details = document.createElement("details");
+      details.className = "wm-fold";
+      details.open = isOpen;
+      var summary = document.createElement("summary");
+      summary.className = "wm-fold__summary";
+      summary.innerHTML = '<span>' + title + '</span><small>' + (hintNode ? hintNode.textContent.trim() : "") + '</small><b>' + (isOpen ? "收起" : "展开") + '</b>';
+      card.parentNode.insertBefore(details, card);
+      details.appendChild(summary);
+      details.appendChild(card);
+      details.addEventListener("toggle", function () {
+        state.wmFoldOpen[title] = details.open;
+        var badge = summary.querySelector("b");
+        if (badge) badge.textContent = details.open ? "收起" : "展开";
+      });
+    });
+  }
+
   function renderWindowMultiplierTest() {
     var line = null;
     EXEC_LINES.forEach(function (item) {
@@ -3029,6 +3072,7 @@
     html += '</tbody></table></div></div></div>';
     html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
     view.innerHTML = html;
+    wmApplyCardFolds(view);
   }
 
   function renderOrderLog() {

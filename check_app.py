@@ -261,6 +261,10 @@ def main():
             pass_("窗口倍投测试逐年对比14线并区分年度稳健与全周期最优")
         else:
             fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
+        if "function wmApplyCardFolds" in app_text and "wmFoldOpen" in app_text and "wm-fold__summary" in app_text and "wmApplyCardFolds(view)" in app_text and "收起" in app_text and "展开" in app_text:
+            pass_("窗口倍投测试上方卡片支持逐张展开收起并保持状态")
+        else:
+            fail("窗口倍投测试上方卡片缺少展开收起")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
