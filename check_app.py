@@ -265,6 +265,10 @@ def main():
             pass_("窗口倍投测试上方卡片支持逐张展开收起并保持状态")
         else:
             fail("窗口倍投测试上方卡片缺少展开收起")
+        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年仓位" in app_text and "全周期验证" in app_text and "正式版候选" in app_text:
+            pass_("窗口倍投测试标注今年最优规律、仓位公式和正式版候选状态")
+        else:
+            fail("窗口倍投测试缺少今年最优规律或正式版候选标注")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
