@@ -2594,6 +2594,20 @@
     return wmWindowState[line.id] || { active: null, waiting: null };
   }
 
+  function wmCurrentPosition(line, n) {
+    var live = wmCurrentState(line);
+    var plan = wmPlanFor(n);
+    if (live.waiting) {
+      return { label: "等待重开", amount: 0, stage: 0, period: null, status: "等待尾" + live.waiting.tail, color: "#d97706" };
+    }
+    if (live.active) {
+      var stage = Math.min(live.active.attempts.length + 1, 3);
+      var period = live.active.start + live.active.attempts.length;
+      return { label: "第" + stage + "期仓位", amount: Number(plan[stage - 1] || 0), stage: stage, period: period, status: "窗口进行中", color: "#2563eb" };
+    }
+    return { label: "空仓等待", amount: 0, stage: 0, period: null, status: "无进行中窗口", color: "#16a34a" };
+  }
+
   function wmYearOf(start) {
     var row = D[start - 1];
     return row ? Number(row.y) : 0;
@@ -2719,13 +2733,16 @@
     var windowHitRate = selected.records.length ? ((selected.records.length - selected.missWindows) / selected.records.length) * 100 : 0;
     var missRate = selected.records.length ? (selected.missWindows / selected.records.length) * 100 : 0;
     var selectedPlanText = wmPlanText(selected.n);
+    var selectedPosition = wmCurrentPosition(line, selected.n);
+    var selectedPositionPeriod = selectedPosition.period ? wmPeriodLabel(selectedPosition.period) : "-";
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 真实窗口规律账本</h2><span class="section__hint">逐窗逐期看真实开奖结果；每窗三期按N倍投；中了就停；下窗恢复基础金额</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px">本页作用</div><div style="font-size:12px;color:#475569;line-height:1.8">把每条线的每一个窗口拆开，逐期记录第1/2/3期尾号、命中、错误、第几期中、三期全错、等待重开和下一窗口。数据只按真实开奖结果结算，不预测、不补造、不改历史。</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:flex;flex-wrap:wrap;gap:6px">';
     EXEC_LINES.forEach(function (item) {
       var itemBest = (lineBest[item.id] || {}).best;
       var itemBestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
-      html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:118px;min-height:52px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#bfdbfe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span></button>';
+      var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
+      html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#bfdbfe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
     });
     html += '</div></div></div>';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每个号码的最优下注公式</h2><span class="section__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高</span></div></div>';
@@ -2735,9 +2752,12 @@
       var itemBest = itemData.best;
       var planText = itemBest ? wmPlanText(itemBest.n) : "0 / 0 / 0";
       var bestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
+      var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
+      var itemPositionPeriod = itemPosition.period ? wmPeriodLabel(itemPosition.period) : "-";
       html += '<div class="panel" style="padding:10px;border:2px solid ' + (itemBest ? "#bbf7d0" : "#fecaca") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + item.label + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
       html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
+      html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">当前仓位 ' + itemPosition.label + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
       if (itemBest) {
         html += '<div style="font-size:11px;color:#475569;margin-top:5px">全周期 ' + (itemBest.net >= 0 ? "+" : "") + itemBest.net + ' · ROI ' + itemBest.roi.toFixed(2) + '%</div>';
         html += '<div style="font-size:11px;color:#475569">训练 ' + (itemBest.trainNet >= 0 ? "+" : "") + itemBest.trainNet + ' / 验证 ' + (itemBest.validNet >= 0 ? "+" : "") + itemBest.validNet + '</div>';
@@ -2755,17 +2775,20 @@
     html += '</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:14px;background:#111827;color:#fff;border:0"><div style="font-size:13px;font-weight:800;color:#cbd5e1;margin-bottom:8px">核心结论 · ' + line.label + '</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div style="font-size:11px;color:#cbd5e1">历史最优倍率</div></div>';
+    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fde68a">' + selectedPosition.label + '</div><div style="font-size:11px;color:#cbd5e1">当前仓位 · ' + (selectedPosition.amount > 0 ? selectedPosition.amount + "元" : selectedPosition.status) + '</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + windowHitRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">窗口命中率</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + missRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">三期全错率</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + selected.maxLossStreak + '窗</div><div style="font-size:11px;color:#cbd5e1">最大连续全错</div></div>';
     html += '</div><div style="font-size:12px;color:#e2e8f0;margin-top:8px">当前显示：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额 ' + selectedPlanText + '</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px;border:2px solid ' + (liveState.waiting ? "#f59e0b" : liveState.active ? "#2563eb" : "#16a34a") + '"><div style="font-size:13px;font-weight:900;margin-bottom:8px">当前窗口状态</div>';
     if (liveState.waiting) {
+      html += '<div style="font-size:15px;font-weight:900;color:#92400e;margin-top:6px">当前仓位：等待重开 · 本期金额 0元 · 等待尾' + liveState.waiting.tail + '</div>';
       html += '<div style="font-size:18px;font-weight:900;color:#d97706">等待尾' + liveState.waiting.tail + '重新开出</div>';
       html += '<div style="font-size:12px;color:#475569;margin-top:5px">最后完成的窗口结束后，必须等该尾号重新开出，下一期才开新窗口。</div>';
     } else if (liveState.active) {
       var activeStart = liveState.active.start;
       html += '<div style="font-size:18px;font-weight:900;color:#2563eb">窗口进行中 · 起始 ' + wmPeriodLabel(activeStart) + '</div>';
+      html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">当前仓位：' + selectedPosition.label + ' · 本期金额 ' + selectedPosition.amount + '元 · 检查 ' + selectedPositionPeriod + '</div>';
       for (var ai = 0; ai < 3; ai++) {
         var expectedStart = activeStart + ai;
         var attempt = liveState.active.attempts[ai];
@@ -2774,7 +2797,7 @@
       }
     } else {
       html += '<div style="font-size:18px;font-weight:900;color:#16a34a">当前无进行中窗口</div>';
-      html += '<div style="font-size:12px;color:#475569;margin-top:5px">下一期检查第1期。</div>';
+      html += '<div style="font-size:12px;color:#475569;margin-top:5px">当前仓位：空仓等待 · 下一期检查第1期。</div>';
     }
     html += '</div></div>';
     html += '<div class="section"><div class="grid-3">';

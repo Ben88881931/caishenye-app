@@ -253,6 +253,10 @@ def main():
             pass_("窗口倍投测试100元起并逐线标注最优下注公式")
         else:
             fail("窗口倍投测试未按100元起或未逐线标注最优下注公式")
+        if "function wmCurrentPosition" in app_text and "当前仓位 " in app_text and "等待重开" in app_text and "空仓等待" in app_text and "当前 ' + itemPosition.label" in app_text:
+            pass_("窗口倍投测试按每条线路窗口规律标注当前仓位")
+        else:
+            fail("窗口倍投测试未按每条线路窗口规律标注当前仓位")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
