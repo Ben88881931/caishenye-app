@@ -2537,7 +2537,7 @@
     if (fundCardWrap && fundCardWrap.parentNode) {
       fundCardWrap.parentNode.classList.add("position-card-grid");
       fundCardWrap.parentNode.style.display = "grid";
-      fundCardWrap.parentNode.style.gridTemplateColumns = "repeat(auto-fill,minmax(190px,1fr))";
+      fundCardWrap.parentNode.style.gridTemplateColumns = "repeat(auto-fill,minmax(168px,1fr))";
       fundCardWrap.parentNode.style.gap = "8px";
     }
   }

@@ -1460,16 +1460,16 @@ body {
 /* 当前仓位卡片统一尺寸，避免号码多寡导致格子大小不一。 */
 .position-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: 8px;
 }
 
 .position-card-grid > .position-card {
   width: 100%;
   min-width: 0;
-  height: 128px;
-  min-height: 128px;
-  max-height: 128px;
+  height: 104px;
+  min-height: 104px;
+  max-height: 104px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -1483,19 +1483,19 @@ body {
   color: #111827;
   border: 2px solid #2563eb;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
 }
 
 .position-card--execution {
   background: #eff6ff;
   border: 2px solid #2563eb;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
 }
 
 .position-card__title {
-  min-height: 34px;
-  font-size: 13px;
+  min-height: 30px;
+  font-size: 12px;
   font-weight: 900;
   line-height: 1.35;
   color: #1e3a8a;
@@ -1503,14 +1503,14 @@ body {
 }
 
 .position-card__number {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1.1;
   color: #2563eb;
 }
 
 .position-card__amount {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 900;
   line-height: 1.1;
   color: #1d4ed8;
@@ -1522,7 +1522,9 @@ body {
     gap: 6px;
   }
   .position-card-grid > .position-card {
+    height: 104px;
     min-height: 104px;
+    max-height: 104px;
     padding: 8px;
   }
   .position-card__title {

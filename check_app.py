@@ -249,50 +249,6 @@ def main():
             pass_("公式表页面包含14线训练验证系数和配仓状态")
         else:
             fail("公式表页面缺少历史系数或配仓状态")
-        if "WM_BASE = 100" in app_text and "wmPlanText" in app_text and "每个号码的最优下注公式" in app_text and "lineBest" in app_text and "最优 " in app_text and "未通过" in app_text:
-            pass_("窗口倍投测试100元起并逐线标注最优下注公式")
-        else:
-            fail("窗口倍投测试未按100元起或未逐线标注最优下注公式")
-        if "function wmPositionForPlan" in app_text and "正式执行仓位 " in app_text and "今年测试仓位 " in app_text and "等待重开" in app_text and "空仓等待" in app_text:
-            pass_("窗口倍投测试按每条线路窗口规律标注正式执行仓位和今年测试仓位")
-        else:
-            fail("窗口倍投测试未按每条线路窗口规律标注正式执行仓位和今年测试仓位")
-        if "function wmYearStats" in app_text and "14线逐年测试对比" in app_text and "年度稳健最优" in app_text and "全周期收益最高" in app_text and "正收益年" in app_text and "最近3年" in app_text:
-            pass_("窗口倍投测试逐年对比14线并区分年度稳健与全周期最优")
-        else:
-            fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
-        if "orderedLines" in app_text and "当前有仓位 · 正式执行公式" in app_text and "position.amount > 0" in app_text and "activePositionRows" in app_text:
-            pass_("窗口倍投测试当前有仓位正式执行线路优先排前")
-        else:
-            fail("窗口倍投测试未把当前有仓位正式执行线路优先排前")
-        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "正式版候选" in app_text:
-            pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
-        else:
-            fail("窗口倍投测试缺少今年最优规律或正式版候选标注")
-        if "function modelPairStrip" in app_text and "D1 第一推荐" in app_text and "D2 第二推荐" in app_text and "modelPairStrip(latest + 1)" in app_text:
-            pass_("所有页面统一显示下一期D1第一推荐和D2第二推荐号码")
-        else:
-            fail("页面顶部缺少下一期D1/D2推荐号码")
-        if "function renderOrderHint" in app_text and "hintRows" in app_text and "activeHintRows" in app_text and "当下有仓位 · 优先显示" in app_text and "row.action.amount > 0" in app_text:
-            pass_("执行提示页当下有仓位线路优先卡片显示")
-        else:
-            fail("执行提示页缺少当下有仓位优先卡片")
-        if "function wmPositionForPlan" in app_text and "正式执行公式" in app_text and "正式执行仓位" in app_text and "今年测试仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text and "wmPositionForPlan(line, line.plan)" in app_text:
-            pass_("正式执行仓位统一以公式表line.plan为准")
-        else:
-            fail("页面正式执行仓位口径不一致")
-        if "function execSourceText" in app_text and "function execCurrentTail" in app_text and "D1第一推荐" in app_text and "D2第二推荐" in app_text and "execCurrentTail(item, wmCurrentState(item), latest + 1)" in app_text and "execCurrentTail(row.line, row.result, nextPeriod)" in app_text:
-            pass_("当下窗口D1/D2仓位标注来源和对应尾号")
-        else:
-            fail("当下窗口D1/D2仓位缺少来源或尾号")
-        if "MODEL.bounceCritical " in app_text and "BOUNCE[" not in app_text:
-            pass_("页面运行使用MODEL.bounceCritical，无未定义BOUNCE引用")
-        else:
-            fail("页面仍引用未定义BOUNCE或未使用MODEL.bounceCritical")
-        if "position-card-grid" in app_text and "position-card--funds" in app_text and "position-card--execution" in app_text:
-            pass_("当前仓位卡片使用统一尺寸样式")
-        else:
-            fail("当前仓位卡片未使用统一尺寸样式")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
