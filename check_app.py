@@ -261,10 +261,10 @@ def main():
             pass_("窗口倍投测试逐年对比14线并区分年度稳健与全周期最优")
         else:
             fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
-        if "function wmApplyCardFolds" in app_text and "wmFoldOpen" in app_text and "wm-fold__summary" in app_text and "wmApplyCardFolds(view)" in app_text and "收起" in app_text and "展开" in app_text:
-            pass_("窗口倍投测试上方卡片支持逐张展开收起并保持状态")
+        if "orderedLines" in app_text and "当前有仓位 · 优先显示" in app_text and "position.amount > 0" in app_text and "activePositionRows" in app_text:
+            pass_("窗口倍投测试当前有仓位线路优先排前")
         else:
-            fail("窗口倍投测试上方卡片缺少展开收起")
+            fail("窗口倍投测试未把当前有仓位线路优先排前")
         if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年仓位" in app_text and "全周期验证" in app_text and "正式版候选" in app_text:
             pass_("窗口倍投测试标注今年最优规律、仓位公式和正式版候选状态")
         else:

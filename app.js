@@ -350,7 +350,6 @@
     orderTail: lsGet("v2_order_tail", "all"),
     windowMultLine: "tail1",
     windowMultN: 2,
-    wmFoldOpen: {},
   };
 
   var TABS = [
@@ -2761,48 +2760,6 @@
     return '<div style="font-size:10px;color:#64748b">' + wmPeriodLabel(item.period) + '</div>尾<b style="font-size:16px">' + item.tail + '</b><b style="color:' + color + ';margin-left:4px">' + (item.hit ? "中" : "错") + '</b>';
   }
 
-  function wmApplyCardFolds(view) {
-    var scrollCard = null;
-    Array.prototype.forEach.call(view.querySelectorAll(".section"), function (card) {
-      if (card.textContent.indexOf("连续2窗及以上记录") >= 0) scrollCard = card;
-    });
-    if (!scrollCard) return;
-    var cards = [];
-    var node = scrollCard.previousElementSibling;
-    while (node) {
-      if (node.classList && node.classList.contains("section")) cards.push(node);
-      node = node.previousElementSibling;
-    }
-    cards.reverse().forEach(function (card) {
-      var titleNode = card.querySelector(".section__title") || card.querySelector("h2");
-      var hintNode = card.querySelector(".section__hint");
-      var title = titleNode ? titleNode.textContent.trim() : "更多信息";
-      if (!titleNode) {
-        if (card.querySelector("[data-wm-line]")) title = "线路选择";
-        else if (card.querySelector("[data-wm-n]")) title = "倍率选择";
-        else if (card.textContent.indexOf("核心结论") >= 0) title = "核心结论";
-        else if (card.textContent.indexOf("当前窗口状态") >= 0) title = "当前窗口状态";
-        else if (card.textContent.indexOf("累计") >= 0) title = "累计统计";
-      }
-      var defaultOpen = true;
-      var isOpen = state.wmFoldOpen[title] == null ? defaultOpen : state.wmFoldOpen[title];
-      var details = document.createElement("details");
-      details.className = "wm-fold";
-      details.open = isOpen;
-      var summary = document.createElement("summary");
-      summary.className = "wm-fold__summary";
-      summary.innerHTML = '<span>' + title + '</span><small>' + (hintNode ? hintNode.textContent.trim() : "") + '</small><b>' + (isOpen ? "收起" : "展开") + '</b>';
-      card.parentNode.insertBefore(details, card);
-      details.appendChild(summary);
-      details.appendChild(card);
-      details.addEventListener("toggle", function () {
-        state.wmFoldOpen[title] = details.open;
-        var badge = summary.querySelector("b");
-        if (badge) badge.textContent = details.open ? "收起" : "展开";
-      });
-    });
-  }
-
   function renderWindowMultiplierTest() {
     var line = null;
     EXEC_LINES.forEach(function (item) {
@@ -2826,6 +2783,15 @@
     var currentYear = Number((D[D.length - 1] || {}).y) || new Date().getFullYear();
     var ytdBestByLine = {};
     EXEC_LINES.forEach(function (item) { ytdBestByLine[item.id] = wmYearBest(lineBest[item.id], currentYear); });
+    var orderedLines = EXEC_LINES.slice().sort(function (a, b) {
+      var aBest = ytdBestByLine[a.id];
+      var bBest = ytdBestByLine[b.id];
+      var aPos = wmCurrentPosition(a, aBest ? aBest.n : activeN);
+      var bPos = wmCurrentPosition(b, bBest ? bBest.n : activeN);
+      var aBucket = aPos.amount > 0 ? 3 : aPos.label === "等待重开" ? 2 : 1;
+      var bBucket = bPos.amount > 0 ? 3 : bPos.label === "等待重开" ? 2 : 1;
+      return bBucket - aBucket || bPos.amount - aPos.amount || bPos.stage - aPos.stage || a.label.localeCompare(b.label);
+    });
     var simulations = lineBest[line.id].simulations;
     var annualByN = lineBest[line.id].annual;
     var robust = simulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
@@ -2847,16 +2813,37 @@
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 正式版候选</h2><span class="section__hint">真实窗口规律账本 · 100元起 · 年度稳健最优/全周期收益最高/今年最优分开标注</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px">本页作用</div><div style="font-size:12px;color:#475569;line-height:1.8">把每条线的每一个窗口拆开，逐期记录第1/2/3期尾号、命中、错误、第几期中、三期全错、等待重开和下一窗口。数据只按真实开奖结果结算，不预测、不补造、不改历史。</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:flex;flex-wrap:wrap;gap:6px">';
-    EXEC_LINES.forEach(function (item) {
+    orderedLines.forEach(function (item) {
       var itemBest = (lineBest[item.id] || {}).best;
       var itemBestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
       var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
       html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#bfdbfe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
     });
     html += '</div></div></div>';
+    var activePositionRows = orderedLines.map(function (item) {
+      var itemBest = ytdBestByLine[item.id];
+      var position = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
+      return { item: item, best: itemBest, position: position, period: position.period ? wmPeriodLabel(position.period) : "-" };
+    }).filter(function (row) { return row.position.amount > 0; });
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前有仓位 · 优先显示</h2><span class="section__hint">按今年最优公式计算，金额大于0的线路排在最上面</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px">';
+    if (!activePositionRows.length) {
+      html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
+    } else {
+      html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+      activePositionRows.forEach(function (row) {
+        html += '<div style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:9px 12px;min-width:170px">';
+        html += '<div style="font-size:15px;font-weight:900;color:#1e3a8a">' + row.item.label + ' · ' + row.position.label + '</div>';
+        html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.position.amount + '元</div>';
+        html += '<div style="font-size:11px;color:#475569;margin-top:3px">检查 ' + row.period + (row.best ? ' · ' + (row.best.n === 1 ? "不倍投" : row.best.n + "倍") : '') + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div></div>';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每个号码的最优下注公式</h2><span class="section__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高</span></div></div>';
     html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">';
-    EXEC_LINES.forEach(function (item) {
+    orderedLines.forEach(function (item) {
       var itemData = lineBest[item.id] || { best: null };
       var itemBest = itemData.best;
       var planText = itemBest ? wmPlanText(itemBest.n) : "0 / 0 / 0";
@@ -2922,7 +2909,7 @@
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1500px"><thead><tr><th>线路</th><th>年度稳健最优</th>';
     annualYears.forEach(function (year) { html += '<th>' + year + '年</th>'; });
     html += '<th>正收益年</th><th>最近3年</th><th>全周期</th></tr></thead><tbody>';
-    EXEC_LINES.forEach(function (item) {
+    orderedLines.forEach(function (item) {
       var itemData = lineBest[item.id] || {};
       var itemBest = itemData.best;
       var itemStats = itemBest && itemData.annual ? itemData.annual[itemBest.n] : null;
@@ -3130,7 +3117,6 @@
     html += '</tbody></table></div></div></div>';
     html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
     view.innerHTML = html;
-    wmApplyCardFolds(view);
   }
 
   function renderOrderLog() {
