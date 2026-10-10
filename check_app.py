@@ -249,6 +249,10 @@ def main():
             pass_("公式表页面包含14线训练验证系数和配仓状态")
         else:
             fail("公式表页面缺少历史系数或配仓状态")
+        if "WM_BASE = 100" in app_text and "wmPlanText" in app_text and "每个号码的最优下注公式" in app_text and "lineBest" in app_text and "最优 " in app_text and "未通过" in app_text:
+            pass_("窗口倍投测试100元起并逐线标注最优下注公式")
+        else:
+            fail("窗口倍投测试未按100元起或未逐线标注最优下注公式")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:

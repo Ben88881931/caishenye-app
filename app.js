@@ -1721,37 +1721,37 @@
   };
   var EXEC_LINES = [
     { id: "tail0", label: "尾0", kind: "tail", tail: 0, plan: [0, 0, 0] },
-    { id: "tail1", label: "尾1", kind: "tail", tail: 1, plan: [500, 1000, 2000] },
-    { id: "tail2", label: "尾2", kind: "tail", tail: 2, plan: [1500, 0, 0] },
-    { id: "tail3", label: "尾3", kind: "tail", tail: 3, plan: [0, 0, 1500] },
-    { id: "tail4", label: "尾4", kind: "tail", tail: 4, plan: [0, 0, 1500] },
-    { id: "tail5", label: "尾5", kind: "tail", tail: 5, plan: [0, 0, 1500] },
-    { id: "tail6", label: "尾6", kind: "tail", tail: 6, plan: [100, 0, 1400] },
-    { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 1500] },
-    { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 1500, 0] },
-    { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [1500, 0, 0] },
-    { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [1500, 0, 0] },
-    { id: "fixedD2", label: "追号码 D2", kind: "fixed", stream: "D2", plan: [0, 1500, 0] },
-    { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [500, 500, 500] },
-    { id: "recD2", label: "追推荐 D2", kind: "recommend", stream: "D2", plan: [0, 1500, 0] },
+    { id: "tail1", label: "尾1", kind: "tail", tail: 1, plan: [100, 200, 400] },
+    { id: "tail2", label: "尾2", kind: "tail", tail: 2, plan: [300, 0, 0] },
+    { id: "tail3", label: "尾3", kind: "tail", tail: 3, plan: [0, 0, 300] },
+    { id: "tail4", label: "尾4", kind: "tail", tail: 4, plan: [0, 0, 300] },
+    { id: "tail5", label: "尾5", kind: "tail", tail: 5, plan: [0, 0, 300] },
+    { id: "tail6", label: "尾6", kind: "tail", tail: 6, plan: [100, 0, 300] },
+    { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
+    { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
+    { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
+    { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [300, 0, 0] },
+    { id: "fixedD2", label: "追号码 D2", kind: "fixed", stream: "D2", plan: [0, 300, 0] },
+    { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [100, 100, 100] },
+    { id: "recD2", label: "追推荐 D2", kind: "recommend", stream: "D2", plan: [0, 300, 0] },
   ];
 
   // 公式来源：2021-2023训练段 + 2024-2026验证段，两段均为正的阶段系数才配仓。
   var EXEC_FORMULA_AUDIT = {
     tail0: { formula: "不配仓", train: [-0.1744, -0.1525, -0.0949], valid: [-0.1399, 0.0359, -0.0191], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 119 },
-    tail1: { formula: "双倍倍投", train: [0.0344, 0.0213, -0.0041], valid: [-0.0576, -0.0119, 0.0407], fullNet: 28400, fullRoi: 0.0264186047, trainNet: 12000, validNet: 16400, maxDrawdown: 21100, miss: 62 },
-    tail2: { formula: "阶段公式", train: [0.0929, 0.0229, 0.0095], valid: [0.0629, -0.0152, -0.0190], fullNet: 98100, fullRoi: 0.0778571429, trainNet: 58500, validNet: 39600, maxDrawdown: 25500, miss: 68 },
-    tail3: { formula: "阶段公式", train: [-0.0225, 0.0131, 0.0157], valid: [0.0378, -0.0187, 0.0124], fullNet: 16800, fullRoi: 0.0708860759, trainNet: 9000, validNet: 7800, maxDrawdown: 10800, miss: 64 },
-    tail4: { formula: "阶段公式", train: [0.0073, -0.0301, 0.0254], valid: [-0.0672, -0.0599, 0.0104], fullNet: 20700, fullRoi: 0.0779661017, trainNet: 14700, validNet: 6000, maxDrawdown: 11100, miss: 71 },
-    tail5: { formula: "阶段公式", train: [-0.0596, -0.0026, 0.0142], valid: [0.0671, -0.0343, 0.0014], fullNet: 9000, fullRoi: 0.0363636364, trainNet: 8100, validNet: 900, maxDrawdown: 10500, miss: 70 },
-    tail6: { formula: "阶段公式", train: [0.0015, 0.0075, 0.0281], valid: [0.0168, -0.0457, 0.0322], fullNet: 35200, fullRoi: 0.1111461951, trainNet: 15740, validNet: 19460, maxDrawdown: 6900, miss: 61 },
-    tail7: { formula: "阶段公式", train: [0.0142, -0.0254, 0.0294], valid: [-0.0418, -0.0020, 0.0060], fullNet: 21000, fullRoi: 0.0843373494, trainNet: 17400, validNet: 3600, maxDrawdown: 16500, miss: 66 },
-    tail8: { formula: "阶段公式", train: [0.0010, 0.0026, -0.0078], valid: [-0.0145, 0.0020, -0.0155], fullNet: 2700, fullRoi: 0.0051282051, trainNet: 1500, validNet: 1200, maxDrawdown: 26100, miss: 74 },
-    tail9: { formula: "阶段公式", train: [0.0450, -0.0419, -0.0394], valid: [0.0280, 0.0488, -0.0270], fullNet: 44100, fullRoi: 0.0361623616, trainNet: 26400, validNet: 17700, maxDrawdown: 32700, miss: 82 },
-    fixedD1: { formula: "阶段公式", train: [0.0211, 0.0090, 0.0074], valid: [0.0055, -0.0284, -0.0055], fullNet: 15300, fullRoi: 0.0130769231, trainNet: 12000, validNet: 3300, maxDrawdown: 40200, miss: 69 },
-    fixedD2: { formula: "阶段公式", train: [0.0594, 0.0198, -0.0078], valid: [-0.0599, 0.0035, 0.0079], fullNet: 13500, fullRoi: 0.0256410256, trainNet: 11400, validNet: 2100, maxDrawdown: 21900, miss: 67 },
-    recD1: { formula: "连追500", train: [0.0246, 0.0262, 0.0031], valid: [0.0378, 0.0158, 0.0014], fullNet: 22000, fullRoi: 0.0339244410, trainNet: 10500, validNet: 11500, maxDrawdown: 14900, miss: 63 },
-    recD2: { formula: "阶段公式", train: [0.1122, 0.0333, -0.0084], valid: [-0.0618, 0.0060, 0.0015], fullNet: 23700, fullRoi: 0.0456647399, trainNet: 20100, validNet: 3600, maxDrawdown: 18600, miss: 66 },
+    tail1: { formula: "双倍倍投", train: [0.0344, 0.0213, -0.0041], valid: [-0.0576, -0.0119, 0.0407], fullNet: 5680, fullRoi: 0.0264186047, trainNet: 2400, validNet: 3280, maxDrawdown: 4220, miss: 62 },
+    tail2: { formula: "阶段公式", train: [0.0929, 0.0229, 0.0095], valid: [0.0629, -0.0152, -0.0190], fullNet: 19620, fullRoi: 0.0778571429, trainNet: 11700, validNet: 7920, maxDrawdown: 5100, miss: 68 },
+    tail3: { formula: "阶段公式", train: [-0.0225, 0.0131, 0.0157], valid: [0.0378, -0.0187, 0.0124], fullNet: 3360, fullRoi: 0.0708860759, trainNet: 1800, validNet: 1560, maxDrawdown: 2160, miss: 64 },
+    tail4: { formula: "阶段公式", train: [0.0073, -0.0301, 0.0254], valid: [-0.0672, -0.0599, 0.0104], fullNet: 4140, fullRoi: 0.0779661017, trainNet: 2940, validNet: 1200, maxDrawdown: 2220, miss: 71 },
+    tail5: { formula: "阶段公式", train: [-0.0596, -0.0026, 0.0142], valid: [0.0671, -0.0343, 0.0014], fullNet: 1800, fullRoi: 0.0363636364, trainNet: 1620, validNet: 180, maxDrawdown: 2100, miss: 70 },
+    tail6: { formula: "阶段公式", train: [0.0015, 0.0075, 0.0281], valid: [0.0168, -0.0457, 0.0322], fullNet: 7040, fullRoi: 0.1111461951, trainNet: 3148, validNet: 3892, maxDrawdown: 1380, miss: 61 },
+    tail7: { formula: "阶段公式", train: [0.0142, -0.0254, 0.0294], valid: [-0.0418, -0.0020, 0.0060], fullNet: 4200, fullRoi: 0.0843373494, trainNet: 3480, validNet: 720, maxDrawdown: 3300, miss: 66 },
+    tail8: { formula: "阶段公式", train: [0.0010, 0.0026, -0.0078], valid: [-0.0145, 0.0020, -0.0155], fullNet: 540, fullRoi: 0.0051282051, trainNet: 300, validNet: 240, maxDrawdown: 5220, miss: 74 },
+    tail9: { formula: "阶段公式", train: [0.0450, -0.0419, -0.0394], valid: [0.0280, 0.0488, -0.0270], fullNet: 8820, fullRoi: 0.0361623616, trainNet: 5280, validNet: 3540, maxDrawdown: 6540, miss: 82 },
+    fixedD1: { formula: "阶段公式", train: [0.0211, 0.0090, 0.0074], valid: [0.0055, -0.0284, -0.0055], fullNet: 3060, fullRoi: 0.0130769231, trainNet: 2400, validNet: 660, maxDrawdown: 8040, miss: 69 },
+    fixedD2: { formula: "阶段公式", train: [0.0594, 0.0198, -0.0078], valid: [-0.0599, 0.0035, 0.0079], fullNet: 2700, fullRoi: 0.0256410256, trainNet: 2280, validNet: 420, maxDrawdown: 4380, miss: 67 },
+    recD1: { formula: "连追100", train: [0.0246, 0.0262, 0.0031], valid: [0.0378, 0.0158, 0.0014], fullNet: 4400, fullRoi: 0.0339244410, trainNet: 2100, validNet: 2300, maxDrawdown: 2980, miss: 63 },
+    recD2: { formula: "阶段公式", train: [0.1122, 0.0333, -0.0084], valid: [-0.0618, 0.0060, 0.0015], fullNet: 4740, fullRoi: 0.0456647399, trainNet: 4020, validNet: 720, maxDrawdown: 3720, miss: 66 },
   };
   var ORDER_PATTERNS = {
     P6: [1, 1.25, 2.8125],
@@ -2508,6 +2508,17 @@
   var wmFullPickCache = {};
   var wmWindowCache = {};
   var wmWindowState = {};
+  var WM_BASE = 100;
+
+  function wmPlanFor(n) {
+    return [WM_BASE, WM_BASE * n, WM_BASE * n * n].map(function (v) {
+      return Math.round(v);
+    });
+  }
+
+  function wmPlanText(n) {
+    return wmPlanFor(n).join(" / ");
+  }
 
   function wmFullModel() {
     if (wmFullModelCache) return wmFullModelCache;
@@ -2598,7 +2609,7 @@
 
   function wmSimulate(line, n) {
     var result = { windows: wmWindowsFor(line) };
-    var plan = [500, 500 * n, 500 * n * n];
+    var plan = wmPlanFor(n);
     var net = 0;
     var turnover = 0;
     var bets = 0;
@@ -2691,6 +2702,13 @@
     if (!line) line = EXEC_LINES[0];
     state.windowMultLine = line.id;
     var ns = [1, 1.5, 2, 2.5, 3];
+    var lineBest = {};
+    EXEC_LINES.forEach(function (item) {
+      var itemSimulations = ns.map(function (n) { return wmSimulate(item, n); });
+      var itemRobust = itemSimulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
+      itemRobust.sort(function (a, b) { return b.net - a.net || a.maxDD - b.maxDD; });
+      lineBest[item.id] = { best: itemRobust[0] || null, simulations: itemSimulations };
+    });
     var simulations = ns.map(function (n) { return wmSimulate(line, n); });
     var robust = simulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
     robust.sort(function (a, b) { return b.net - a.net; });
@@ -2700,14 +2718,36 @@
     var liveState = wmCurrentState(line);
     var windowHitRate = selected.records.length ? ((selected.records.length - selected.missWindows) / selected.records.length) * 100 : 0;
     var missRate = selected.records.length ? (selected.missWindows / selected.records.length) * 100 : 0;
-    var selectedPlanText = selected.n === 1 ? "500 / 500 / 500" : "500 / " + (500 * selected.n) + " / " + (500 * selected.n * selected.n);
+    var selectedPlanText = wmPlanText(selected.n);
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 真实窗口规律账本</h2><span class="section__hint">逐窗逐期看真实开奖结果；每窗三期按N倍投；中了就停；下窗恢复基础金额</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px">本页作用</div><div style="font-size:12px;color:#475569;line-height:1.8">把每条线的每一个窗口拆开，逐期记录第1/2/3期尾号、命中、错误、第几期中、三期全错、等待重开和下一窗口。数据只按真实开奖结果结算，不预测、不补造、不改历史。</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="display:flex;flex-wrap:wrap;gap:6px">';
     EXEC_LINES.forEach(function (item) {
-      html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:88px;min-height:44px;padding:10px 14px;font-size:15px;font-weight:900;' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '">' + item.label + '</button>';
+      var itemBest = (lineBest[item.id] || {}).best;
+      var itemBestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
+      html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:118px;min-height:52px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#111827;color:#fff" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#bfdbfe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span></button>';
     });
     html += '</div></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">每个号码的最优下注公式</h2><span class="section__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高</span></div></div>';
+    html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">';
+    EXEC_LINES.forEach(function (item) {
+      var itemData = lineBest[item.id] || { best: null };
+      var itemBest = itemData.best;
+      var planText = itemBest ? wmPlanText(itemBest.n) : "0 / 0 / 0";
+      var bestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
+      html += '<div class="panel" style="padding:10px;border:2px solid ' + (itemBest ? "#bbf7d0" : "#fecaca") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + item.label + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
+      html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
+      if (itemBest) {
+        html += '<div style="font-size:11px;color:#475569;margin-top:5px">全周期 ' + (itemBest.net >= 0 ? "+" : "") + itemBest.net + ' · ROI ' + itemBest.roi.toFixed(2) + '%</div>';
+        html += '<div style="font-size:11px;color:#475569">训练 ' + (itemBest.trainNet >= 0 ? "+" : "") + itemBest.trainNet + ' / 验证 ' + (itemBest.validNet >= 0 ? "+" : "") + itemBest.validNet + '</div>';
+        html += '<div style="font-size:11px;color:#dc2626">最大回撤 ' + itemBest.maxDD + ' · 最大连错 ' + itemBest.maxLossStreak + '窗</div>';
+      } else {
+        html += '<div style="font-size:11px;color:#dc2626;margin-top:5px">训练段或验证段未同时通过，不配仓</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:6px">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
     ns.forEach(function (n) {
       html += '<button class="chip" data-wm-n="' + n + '" style="' + (n === activeN ? "background:#111827;color:#fff" : "") + '">' + (n === 1 ? "不倍投" : n + "倍") + '</button>';
@@ -2740,7 +2780,7 @@
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + line.label + '</div><div class="stat__label">当前线路</div></div>';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div class="stat__label">两段验证最优倍率</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + (selected.n === 1 ? "500 / 500 / 500" : "500 / " + (500 * selected.n) + " / " + (500 * selected.n * selected.n)) + '</div><div class="stat__label">当前单窗金额</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + wmPlanText(selected.n) + '</div><div class="stat__label">当前单窗金额</div></div>';
     html += '<div class="stat"><div class="stat__value">' + selected.records.length + '</div><div class="stat__label">真实窗口总数</div></div>';
     html += '<div class="stat"><div class="stat__value">' + (selected.records.length ? (((selected.records.length - selected.missWindows) / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">窗口命中率</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + (selected.records.length ? ((selected.missWindows / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">三期全错率</div></div>';
@@ -2854,7 +2894,7 @@
     } else if (liveState.waiting) {
       html += '<div class="section"><div class="panel" style="padding:12px;border:2px solid #f59e0b;background:#fffbeb"><div style="font-size:15px;font-weight:900;color:#92400e">当前等待窗口 · 等尾' + liveState.waiting.tail + '重新开出</div></div></div>';
     }
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + [500, 500 * selected.n, 500 * selected.n * selected.n].join(" / ") + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:980px"><thead><tr><th>窗口起始</th><th>第1期检查</th><th>第2期检查</th><th>第3期检查</th><th>结果</th><th>连续全错</th><th>本窗盈亏</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:980px"><thead><tr><th>窗口起始</th><th>第1期检查</th><th>第2期检查</th><th>第3期检查</th><th>结果</th><th>连续全错</th><th>本窗盈亏</th></tr></thead><tbody>';
     if (liveState.active) {
       var liveWindow = liveState.active;
       html += '<tr style="background:#dbeafe;outline:2px solid #2563eb">';
