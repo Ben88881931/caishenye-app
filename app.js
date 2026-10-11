@@ -973,6 +973,34 @@
     }
   ];
 
+  var PAGE_GUIDE_BY_NAME = {};
+  PAGE_GUIDE_GROUPS.forEach(function (group) {
+    group.items.forEach(function (item) { PAGE_GUIDE_BY_NAME[item.name] = item; });
+  });
+
+  var PAGE_GUIDE_DISPLAY_GROUPS = [
+    {
+      title: "每日操作",
+      desc: "每天按这个顺序走：先选号，再看窗口和执行，最后记录下单。",
+      names: ["双号追热", "三期内追号码", "三期内追推荐", "执行提示", "资金调度", "追三期下单"]
+    },
+    {
+      title: "公式验证",
+      desc: "正式公式从哪里来，以及公式和倍率到底有没有经过历史验证。",
+      names: ["公式表", "窗口倍投测试", "策略回测"]
+    },
+    {
+      title: "数据参考",
+      desc: "这些页面只看走势、遗漏、冷热和规律，不直接决定今天下注。",
+      names: ["总览", "分段对比", "窗口分析", "号码走势", "生肖走势", "遗漏热图", "遗漏监控", "遗漏排序", "单双热图", "冷热分析", "三期规律"]
+    },
+    {
+      title: "生肖与辅助",
+      desc: "生肖专项记录和尾号性格判断，作为补充参考。",
+      names: ["生肖记录", "生肖窗口", "生肖遗漏", "尾号性格"]
+    }
+  ];
+
   var PAGE_LABEL_GUIDE = [
     {
       title: "号码和推荐",
@@ -1062,7 +1090,7 @@
 
   function pageGuideHTML() {
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">页面说明 · 大白话版</h2><span class="section__hint">每个页面是干什么的、怎么看、怎么用、数据从哪里来，都在这里说清楚</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.8">这套小程序分成四组：模型执行、数据走势、生肖专区和工具验证。先看“模型与执行”决定怎么下，再看“数据与走势”研究历史，最后用“工具与验证”检查策略和记录。</div></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.8">总览按四层理解：先看“每日操作”决定今天怎么做，再看“公式验证”确认执行依据，然后看“数据参考”研究历史，最后看“生肖与辅助”做补充判断。</div></div></div>';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">页面上的标语怎么看</h2><span class="section__hint">先看懂这些常用标签，再看每个页面的明细就不会乱</span></div></div>';
     html += '<div class="section"><div class="overview-pages-grid">';
     PAGE_LABEL_GUIDE.forEach(function (group) {
@@ -1074,10 +1102,12 @@
       html += '</article>';
     });
     html += '</div></div>';
-    PAGE_GUIDE_GROUPS.forEach(function (group) {
+    PAGE_GUIDE_DISPLAY_GROUPS.forEach(function (group) {
       html += '<div class="section"><div class="section__head"><h2 class="section__title">' + group.title + '</h2><span class="section__hint">' + group.desc + '</span></div></div>';
       html += '<div class="section"><div class="overview-pages-grid">';
-      group.items.forEach(function (item) {
+      group.names.forEach(function (name) {
+        var item = PAGE_GUIDE_BY_NAME[name];
+        if (!item) return;
         var tabId = PAGE_GUIDE_TAB_MAP[item.name] || "";
         html += '<article class="overview-page-card overview-page-card--guide" style="--guide-accent:#2563eb;--guide-soft:#eff6ff">';
         html += '<div class="overview-page-card__head"><span class="overview-page-card__group">' + group.title + '</span><h3>' + item.name + '</h3></div>';
