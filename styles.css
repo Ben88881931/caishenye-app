@@ -310,6 +310,10 @@ body {
   touch-action: pan-y;
 }
 
+.view.gesture-active {
+  user-select: none;
+}
+
 .section {
   margin-bottom: 14px;
 }

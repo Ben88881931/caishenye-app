@@ -5352,6 +5352,8 @@
     view.innerHTML = html;
   }
 
+  var SWIPE_X = 28;
+  var SWIPE_Y = 36;
   var historyPointerStart = null;
   view.addEventListener("pointerdown", function (e) {
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) {
@@ -5365,29 +5367,52 @@
     historyPointerStart = {
       x: e.clientX,
       y: e.clientY,
-      id: e.pointerId
+      id: e.pointerId,
+      handled: false
     };
+    view.classList.add("gesture-active");
   });
 
-  view.addEventListener("pointerup", function (e) {
-    if (!historyPointerStart || e.pointerId !== historyPointerStart.id) return;
+  view.addEventListener("pointermove", function (e) {
+    if (!historyPointerStart || e.pointerId !== historyPointerStart.id || historyPointerStart.handled) return;
     var dx = e.clientX - historyPointerStart.x;
     var dy = e.clientY - historyPointerStart.y;
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
-    var isVertical = absY > absX;
+    if (absX >= SWIPE_X && absX > absY * 1.05) {
+      historyPointerStart.handled = true;
+      e.preventDefault();
+      stepTabHistory(dx > 0 ? -1 : 1);
+    } else if (absY >= SWIPE_Y && absY > absX * 1.05) {
+      historyPointerStart.handled = true;
+      e.preventDefault();
+      stepGroupHistory(dy > 0 ? -1 : 1);
+    }
+  });
+
+  view.addEventListener("pointerup", function (e) {
+    if (!historyPointerStart || e.pointerId !== historyPointerStart.id) return;
+    var gesture = historyPointerStart;
     historyPointerStart = null;
+    view.classList.remove("gesture-active");
+    if (gesture.handled) return;
+    var dx = e.clientX - gesture.x;
+    var dy = e.clientY - gesture.y;
+    var absX = Math.abs(dx);
+    var absY = Math.abs(dy);
+    var isVertical = absY > absX;
     if (isVertical) {
-      if (absY < 52) return;
+      if (absY < SWIPE_Y) return;
       stepGroupHistory(dy > 0 ? -1 : 1);
       return;
     }
-    if (absX < 52 || absX < absY * 1.1) return;
+    if (absX < SWIPE_X || absX < absY * 1.1) return;
     stepTabHistory(dx > 0 ? -1 : 1);
   });
 
   view.addEventListener("pointercancel", function () {
     historyPointerStart = null;
+    view.classList.remove("gesture-active");
   });
 
   tabsEl.addEventListener("click", function (e) {
