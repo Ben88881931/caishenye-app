@@ -803,6 +803,11 @@
     return "";
   }
 
+  function isEdgeGestureStart(clientX) {
+    var edgeWidth = Math.max(44, Math.min(72, window.innerWidth * 0.16));
+    return clientX <= edgeWidth || clientX >= window.innerWidth - edgeWidth;
+  }
+
   function scrollToLatest() {
     if (state.tab === "pick3" || state.tab === "selector" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog") return;
     var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
@@ -5359,6 +5364,10 @@
       return;
     }
     if (e.target.closest("button, input, select, textarea, a")) {
+      historyPointerStart = null;
+      return;
+    }
+    if (!isEdgeGestureStart(e.clientX)) {
       historyPointerStart = null;
       return;
     }
