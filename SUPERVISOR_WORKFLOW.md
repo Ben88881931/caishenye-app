@@ -189,33 +189,9 @@ node model_supervisor.js sync
 ?v=20260922-265
 ```
 
-### 第 6 步：强制自检（按顺序，全过才能发布）
+### 第 6 步：执行端结束（不做审计）
 
-```bash
-node score_calibration.js report
-node ultimate_backtest.js
-node selector_backtest.js
-node page_audit.js
-python check_app.py
-node health_check.js
-node model_supervisor.js report
-```
-
-必须满足：
-
-- `page_audit.js` 必须全部 PASS，确认所有页面入口、数据源、快照、缓存版本和关键显示口径一致。
-- `check_app.py` 全部 PASS。
-- 最新期数正确。
-- `data.js` 与 `lottery_data.json`、`号码走势图.html` 一致。
-- `prediction_snapshots.json` 已有本期结算。
-- 下一期预测快照已生成。
-- `snapshots.js` 已更新。
-- 七个资源版本一致。
-- 五级明细包含期数、尾号、分数、等级、实际尾数、对错。
-- `ultimate_backtest.js` 能完成 D1/D2 状态回测，且只读取双号追热。
-- `ultimate_backtest.js` 的自动结算自检必须 PASS（第1期中、第2期中、三期全错、数据未齐）。
-- `selector_backtest.js` 必须输出第四套三期内必出的死磕双号、调度对比和前后段验证。
-- 历史预测、分数和对错没有被修改。
+执行端完成第1-5步后直接进入提交推送：不运行任何审计/验收脚本，不运行 `remote_tree_audit.js`，不写审计结论，不判断模型是否合格，不复核页面或模型。七项检查和最终签收由监督总裁在推送后独立完成。
 
 ### 第 7 步：检查 Git 改动
 
@@ -259,21 +235,18 @@ $env:GIT_SSH_COMMAND = 'ssh -i "$HOME\.ssh\id_ed25519" -o StrictHostKeyChecking=
 
 ---
 
-## 完成后必须回报（给用户/监督智能体）
+## 执行端完成后回报（非审计）
 
-每次更新完成后，回报以下字段：
+执行端只汇报：
 
-1. 最终 commit hash。
-2. 更新到第几期。
-3. 本期 7 个号码和实际尾数。
-4. 双号追热号码、等级、命中或未中。
-5. 五级各自的逐期对错变化。
-6. 五级累计样本、命中、未中、命中率。
-7. 双号整体至少中一结果。
-8. 等级组合命中结果。
-9. 七项检查结果：score_calibration.js、ultimate_backtest.js、selector_backtest.js、page_audit.js、check_app.py、health_check.js、model_supervisor.js report。
-10. page_audit.js 对所有页面的审计结论，包括数据源、快照、缓存版本、锁定号闸门、空快照跳过和页面渲染入口。
-11. 是否存在异常或样本不足。
+1. commit hash；
+2. 更新期数；
+3. 实际号码、尾数、生肖、二进制原始输入；
+4. 实际改动文件列表；
+5. 推送结果；
+6. 原始异常或报错信息。
+
+执行端不得汇报或生成模型命中率、页面复核结论、七项检查审计结论和最终签收意见。
 
 ---
 
