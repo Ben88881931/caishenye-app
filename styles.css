@@ -473,6 +473,35 @@ body {
   transform: none;
 }
 
+.overview-page-card--label-guide {
+  min-height: 0;
+  height: auto;
+  align-self: start;
+}
+
+.label-guide-row {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.label-guide-row:first-of-type {
+  border-top: 0;
+}
+
+.label-guide-row b {
+  color: #0f766e;
+}
+
+.label-guide-row span {
+  color: #334155;
+}
+
 .overview-page-card__head {
   display: flex;
   align-items: center;

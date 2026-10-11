@@ -1064,14 +1064,16 @@
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">页面说明 · 大白话版</h2><span class="section__hint">每个页面是干什么的、怎么看、怎么用、数据从哪里来，都在这里说清楚</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.8">这套小程序分成四组：模型执行、数据走势、生肖专区和工具验证。先看“模型与执行”决定怎么下，再看“数据与走势”研究历史，最后用“工具与验证”检查策略和记录。</div></div></div>';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">页面上的标语怎么看</h2><span class="section__hint">先看懂这些常用标签，再看每个页面的明细就不会乱</span></div></div>';
+    html += '<div class="section"><div class="overview-pages-grid">';
     PAGE_LABEL_GUIDE.forEach(function (group) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">' + group.title + '</h2></div>';
-      html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px"><thead><tr><th style="width:220px">页面上的标语</th><th>大白话解释</th></tr></thead><tbody>';
+      html += '<article class="overview-page-card overview-page-card--guide overview-page-card--label-guide" style="--guide-accent:#0f766e;--guide-soft:#ecfdf5">';
+      html += '<div class="overview-page-card__head"><span class="overview-page-card__group">标语说明</span><h3>' + group.title + '</h3></div>';
       group.rows.forEach(function (row) {
-        html += '<tr><td><b>' + row[0] + '</b></td><td style="line-height:1.7">' + row[1] + '</td></tr>';
+        html += '<div class="label-guide-row"><b>' + row[0] + '</b><span>' + row[1] + '</span></div>';
       });
-      html += '</tbody></table></div></section>';
+      html += '</article>';
     });
+    html += '</div></div>';
     PAGE_GUIDE_GROUPS.forEach(function (group) {
       html += '<div class="section"><div class="section__head"><h2 class="section__title">' + group.title + '</h2><span class="section__hint">' + group.desc + '</span></div></div>';
       html += '<div class="section"><div class="overview-pages-grid">';
@@ -1147,6 +1149,8 @@
     html += '<div class="overview-note">当前口径：双号追热只负责选号，四色状态负责预警，三期内必中只做结果账本，追三期下单只做手动记录和自动结算。任何页面都不自动替你下注。</div>';
     html += '</div></div></div>';
 
+    html += pageGuideHTML();
+
     var pageGuides = {
       overview: ["总览", "查看最新开奖、页面说明和每日操作顺序。", "每天打开小程序时先看。"],
       pick3: ["双号追热", "双号选号模型，输出 D1、D2，并显示四色风险状态和对错遗漏。", "每天第一步选号时看。"],
@@ -1215,7 +1219,6 @@
 
     html += '<p class="disclaimer">理论基准率：尾数 0 为 47.17%，尾数 1-9 为 55.39%（因为 1-49 中尾数 0 只有 4 个号，其余各有 5 个号）。差值需样本足够才有参考意义；当前多数信号都在统计噪声范围内，不应据此追号。</p>';
 
-    html += pageGuideHTML();
     view.innerHTML = html;
   }
 
