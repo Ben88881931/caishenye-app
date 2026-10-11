@@ -1091,18 +1091,7 @@
   function pageGuideHTML() {
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">页面说明 · 大白话版</h2><span class="section__hint">每个页面是干什么的、怎么看、怎么用、数据从哪里来，都在这里说清楚</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.8">总览按四层理解：先看“每日操作”决定今天怎么做，再看“公式验证”确认执行依据，然后看“数据参考”研究历史，最后看“生肖与辅助”做补充判断。</div></div></div>';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">页面上的标语怎么看</h2><span class="section__hint">先看懂这些常用标签，再看每个页面的明细就不会乱</span></div></div>';
-    html += '<div class="section"><div class="overview-pages-grid">';
-    PAGE_LABEL_GUIDE.forEach(function (group) {
-      html += '<article class="overview-page-card overview-page-card--guide overview-page-card--label-guide" style="--guide-accent:#0f766e;--guide-soft:#ecfdf5">';
-      html += '<div class="overview-page-card__head"><span class="overview-page-card__group">标语说明</span><h3>' + group.title + '</h3></div>';
-      group.rows.forEach(function (row) {
-        html += '<div class="label-guide-row"><b>' + row[0] + '</b><span>' + row[1] + '</span></div>';
-      });
-      html += '</article>';
-    });
-    html += '</div></div>';
-    PAGE_GUIDE_DISPLAY_GROUPS.forEach(function (group) {
+    function appendGuideGroup(group) {
       html += '<div class="section"><div class="section__head"><h2 class="section__title">' + group.title + '</h2><span class="section__hint">' + group.desc + '</span></div></div>';
       html += '<div class="section"><div class="overview-pages-grid">';
       group.names.forEach(function (name) {
@@ -1122,7 +1111,22 @@
         html += '</article>';
       });
       html += '</div></div>';
+    }
+
+    appendGuideGroup(PAGE_GUIDE_DISPLAY_GROUPS[0]);
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">页面上的标语怎么看</h2><span class="section__hint">先看懂这些常用标签，再看每个页面的明细就不会乱</span></div></div>';
+    html += '<div class="section"><div class="overview-pages-grid">';
+    PAGE_LABEL_GUIDE.forEach(function (group) {
+      html += '<article class="overview-page-card overview-page-card--guide overview-page-card--label-guide" style="--guide-accent:#0f766e;--guide-soft:#ecfdf5">';
+      html += '<div class="overview-page-card__head"><span class="overview-page-card__group">标语说明</span><h3>' + group.title + '</h3></div>';
+      group.rows.forEach(function (row) {
+        html += '<div class="label-guide-row"><b>' + row[0] + '</b><span>' + row[1] + '</span></div>';
+      });
+      html += '</article>';
     });
+    html += '</div></div>';
+    PAGE_GUIDE_DISPLAY_GROUPS.slice(1).forEach(appendGuideGroup);
     return html;
   }
 
