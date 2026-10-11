@@ -5354,6 +5354,7 @@
 
   var SWIPE_X = 28;
   var SWIPE_Y = 36;
+  var SWIPE_PRIMARY_X = 20;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   document.documentElement.addEventListener("pointerdown", function (e) {
@@ -5369,6 +5370,7 @@
       x: e.clientX,
       y: e.clientY,
       id: e.pointerId,
+      level: e.target.closest(".nav-groups") ? "group" : "tab",
       handled: false
     };
     document.documentElement.classList.add("gesture-active");
@@ -5380,11 +5382,14 @@
     var dy = e.clientY - historyPointerStart.y;
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
-    if (absX >= SWIPE_X && absX > absY * 1.05) {
+    var level = historyPointerStart.level;
+    var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
+    if (absX >= swipeX && absX > absY * 1.05) {
       historyPointerStart.handled = true;
       gestureClickGuard = true;
       e.preventDefault();
-      stepTabHistory(dx > 0 ? -1 : 1);
+      if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
+      else stepTabHistory(dx > 0 ? -1 : 1);
     } else if (absY >= SWIPE_Y && absY > absX * 1.05) {
       historyPointerStart.handled = true;
       gestureClickGuard = true;
@@ -5407,13 +5412,16 @@
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
     var isVertical = absY > absX;
+    var level = gesture.level;
+    var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (isVertical) {
       if (absY < SWIPE_Y) return;
       stepGroupHistory(dy > 0 ? -1 : 1);
       return;
     }
-    if (absX < SWIPE_X || absX < absY * 1.1) return;
-    stepTabHistory(dx > 0 ? -1 : 1);
+    if (absX < swipeX || absX < absY * 1.1) return;
+    if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
+    else stepTabHistory(dx > 0 ? -1 : 1);
   }, true);
 
   document.documentElement.addEventListener("pointercancel", function () {
