@@ -339,6 +339,8 @@
   var state = {
     tab: lsGet("v2_current_tab", "pick3"),
     group: lsGet("v2_nav_group", "recommend"),
+    history: [],
+    historyIndex: -1,
     window: 15,
     segWindow: 15,
     segTails: 7,
@@ -701,6 +703,53 @@
     document.getElementById("latestTails").textContent = "尾 " + tailsOf(latest).join(" ");
   }
 
+  function tabLabelById(tabId) {
+    for (var i = 0; i < TABS.length; i++) {
+      if (TABS[i].id === tabId) return TABS[i].label;
+    }
+    return tabId;
+  }
+
+  function rememberTab(tabId) {
+    if (!tabId) return;
+    var history = state.history;
+    var index = state.historyIndex;
+    if (history[index] === tabId) return;
+    history = history.slice(0, index + 1);
+    history.push(tabId);
+    if (history.length > 40) {
+      history = history.slice(history.length - 40);
+    }
+    state.history = history;
+    state.historyIndex = history.length - 1;
+  }
+
+  function stepHistory(delta) {
+    var nextIndex = state.historyIndex + delta;
+    if (nextIndex < 0 || nextIndex >= state.history.length) return;
+    state.historyIndex = nextIndex;
+    state.tab = state.history[nextIndex];
+    var group = groupForTab(state.tab);
+    if (group) state.group = group.id;
+    lsSet("v2_current_tab", state.tab);
+    lsSet(NAV_GROUP_KEY, state.group);
+    render();
+  }
+
+  function historyNavHTML() {
+    if (state.historyIndex < 0) return "";
+    var previous = state.historyIndex > 0 ? state.history[state.historyIndex - 1] : null;
+    var next = state.historyIndex < state.history.length - 1 ? state.history[state.historyIndex + 1] : null;
+    if (!previous && !next) return "";
+    var previousText = previous ? tabLabelById(previous) : "没有可返回页面";
+    var nextText = next ? tabLabelById(next) : "没有可前进页面";
+    return '<nav class="history-nav" aria-label="浏览历史">' +
+      '<button class="history-nav__btn" type="button" data-history-step="-1"' + (previous ? "" : " disabled") + '><span aria-hidden="true">&larr;</span><b>上一页</b><em>' + previousText + '</em></button>' +
+      '<span class="history-nav__current">' + tabLabelById(state.tab) + '</span>' +
+      '<button class="history-nav__btn history-nav__btn--next" type="button" data-history-step="1"' + (next ? "" : " disabled") + '><b>下一页</b><em>' + nextText + '</em><span aria-hidden="true">&rarr;</span></button>' +
+      '</nav>';
+  }
+
   function scrollToLatest() {
     if (state.tab === "pick3" || state.tab === "selector" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog") return;
     var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
@@ -744,9 +793,11 @@
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
+    var pagePrefix = historyNavHTML();
     if (view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
-      view.innerHTML = modelPairStrip(latest + 1) + view.innerHTML;
+      pagePrefix += modelPairStrip(latest + 1);
     }
+    if (pagePrefix) view.innerHTML = pagePrefix + view.innerHTML;
     scrollToLatest();
     if (tabChanged) {
       renderedTab = state.tab;
@@ -5248,6 +5299,32 @@
     view.innerHTML = html;
   }
 
+  var historyPointerStart = null;
+  view.addEventListener("pointerdown", function (e) {
+    if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) {
+      historyPointerStart = null;
+      return;
+    }
+    if (e.target.closest("button, input, select, textarea, a, .table, .trend-scroll, .heatmap, .seg-hist-scroll, .exec-line__scroll")) {
+      historyPointerStart = null;
+      return;
+    }
+    historyPointerStart = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  });
+
+  view.addEventListener("pointerup", function (e) {
+    if (!historyPointerStart || e.pointerId !== historyPointerStart.id) return;
+    var dx = e.clientX - historyPointerStart.x;
+    var dy = e.clientY - historyPointerStart.y;
+    historyPointerStart = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+    stepHistory(dx > 0 ? -1 : 1);
+  });
+
+  view.addEventListener("pointercancel", function () {
+    historyPointerStart = null;
+  });
+
   tabsEl.addEventListener("click", function (e) {
     var groupMove = e.target.closest("[data-group-move]");
     if (groupMove) {
@@ -5273,6 +5350,7 @@
       var collapsed = collapsedGroupIds().filter(function (id) { return id !== state.group; });
       lsSet(NAV_COLLAPSED_KEY, collapsed);
       state.tab = firstTabInGroup(state.group);
+      rememberTab(state.tab);
       lsSet(NAV_GROUP_KEY, state.group);
       lsSet("v2_current_tab", state.tab);
       tabSortMode = false;
@@ -5306,6 +5384,7 @@
     var btn = e.target.closest(".tab");
     if (btn && !btn.dataset.sortToggle && !btn.dataset.sortReset) {
       state.tab = btn.dataset.tab;
+      rememberTab(state.tab);
       lsSet("v2_current_tab", state.tab);
       render();
     }
@@ -5318,10 +5397,16 @@
   });
 
   view.addEventListener("click", function (e) {
+    var historyStep = e.target.closest("[data-history-step]");
+    if (historyStep) {
+      stepHistory(Number(historyStep.dataset.historyStep));
+      return;
+    }
     var overviewTab = e.target.closest("[data-overview-tab]");
     if (overviewTab) {
       var targetTab = overviewTab.dataset.overviewTab;
       state.tab = targetTab;
+      rememberTab(targetTab);
       var targetGroup = groupForTab(targetTab);
       if (targetGroup) state.group = targetGroup.id;
       lsSet("v2_current_tab", state.tab);
@@ -5530,6 +5615,7 @@
   if (validTabs.indexOf(state.tab) === -1) state.tab = firstTabInGroup(state.group);
   var currentGroup = groupForTab(state.tab) || groupById(state.group) || NAV_GROUPS[0];
   state.group = currentGroup.id;
+  rememberTab(state.tab);
   lsSet(NAV_GROUP_KEY, state.group);
   lsSet("v2_current_tab", state.tab);
   autoSettleUltimateOrders();
