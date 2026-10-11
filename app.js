@@ -339,8 +339,10 @@
   var state = {
     tab: lsGet("v2_current_tab", "pick3"),
     group: lsGet("v2_nav_group", "recommend"),
-    history: [],
-    historyIndex: -1,
+    groupHistory: [],
+    groupHistoryIndex: -1,
+    tabHistoryByGroup: {},
+    lastTabByGroup: {},
     window: 15,
     segWindow: 15,
     segTails: 7,
@@ -549,6 +551,8 @@
     saveTabOrderIds(ids);
     state.group = targetGroupId;
     state.tab = tabId;
+    rememberGroup(state.group);
+    rememberTabInGroup(state.group, state.tab);
     lsSet(NAV_GROUP_KEY, state.group);
     lsSet("v2_current_tab", state.tab);
     render();
@@ -710,44 +714,115 @@
     return tabId;
   }
 
-  function rememberTab(tabId) {
-    if (!tabId) return;
-    var history = state.history;
-    var index = state.historyIndex;
-    if (history[index] === tabId) return;
+  function groupLabelById(groupId) {
+    var group = groupById(groupId);
+    return group ? group.label : groupId;
+  }
+
+  function rememberGroup(groupId) {
+    if (!groupId) return;
+    var history = state.groupHistory;
+    var index = state.groupHistoryIndex;
+    if (history[index] === groupId) return;
     history = history.slice(0, index + 1);
-    history.push(tabId);
+    history.push(groupId);
     if (history.length > 40) {
       history = history.slice(history.length - 40);
     }
-    state.history = history;
-    state.historyIndex = history.length - 1;
+    state.groupHistory = history;
+    state.groupHistoryIndex = history.length - 1;
   }
 
-  function stepHistory(delta) {
-    var nextIndex = state.historyIndex + delta;
-    if (nextIndex < 0 || nextIndex >= state.history.length) return;
-    state.historyIndex = nextIndex;
-    state.tab = state.history[nextIndex];
-    var group = groupForTab(state.tab);
-    if (group) state.group = group.id;
+  function rememberTabInGroup(groupId, tabId) {
+    if (!groupId || !tabId) return;
+    var history = state.tabHistoryByGroup[groupId];
+    if (!history) {
+      history = { tabs: [], index: -1 };
+      state.tabHistoryByGroup[groupId] = history;
+    }
+    if (history.tabs[history.index] === tabId) {
+      state.lastTabByGroup[groupId] = tabId;
+      return;
+    }
+    var tabs = history.tabs.slice(0, history.index + 1);
+    tabs.push(tabId);
+    if (tabs.length > 40) tabs = tabs.slice(tabs.length - 40);
+    history.tabs = tabs;
+    history.index = tabs.length - 1;
+    state.lastTabByGroup[groupId] = tabId;
+  }
+
+  function orderedGroupAt(delta) {
+    var groups = getConfiguredGroups();
+    var index = -1;
+    for (var i = 0; i < groups.length; i++) {
+      if (groups[i].id === state.group) {
+        index = i;
+        break;
+      }
+    }
+    if (index < 0) return null;
+    return groups[index + delta] || null;
+  }
+
+  function orderedTabAt(delta) {
+    var tabs = getVisibleTabs(state.group);
+    var index = -1;
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].id === state.tab) {
+        index = i;
+        break;
+      }
+    }
+    if (index < 0) return null;
+    return tabs[index + delta] || null;
+  }
+
+  function stepGroupHistory(delta) {
+    var group = orderedGroupAt(delta);
+    if (!group) return;
+    state.group = group.id;
+    state.tab = firstTabInGroup(group.id);
+    rememberGroup(state.group);
+    rememberTabInGroup(state.group, state.tab);
     lsSet("v2_current_tab", state.tab);
     lsSet(NAV_GROUP_KEY, state.group);
     render();
   }
 
-  function historyNavHTML() {
-    if (state.historyIndex < 0) return "";
-    var previous = state.historyIndex > 0 ? state.history[state.historyIndex - 1] : null;
-    var next = state.historyIndex < state.history.length - 1 ? state.history[state.historyIndex + 1] : null;
-    if (!previous && !next) return "";
-    var previousText = previous ? tabLabelById(previous) : "没有可返回页面";
-    var nextText = next ? tabLabelById(next) : "没有可前进页面";
-    return '<nav class="history-nav" aria-label="浏览历史">' +
-      '<button class="history-nav__btn" type="button" data-history-step="-1"' + (previous ? "" : " disabled") + '><span aria-hidden="true">&larr;</span><b>上一页</b><em>' + previousText + '</em></button>' +
-      '<span class="history-nav__current">' + tabLabelById(state.tab) + '</span>' +
-      '<button class="history-nav__btn history-nav__btn--next" type="button" data-history-step="1"' + (next ? "" : " disabled") + '><b>下一页</b><em>' + nextText + '</em><span aria-hidden="true">&rarr;</span></button>' +
-      '</nav>';
+  function stepTabHistory(delta) {
+    var tab = orderedTabAt(delta);
+    if (!tab) return;
+    state.tab = tab.id;
+    rememberTabInGroup(state.group, state.tab);
+    lsSet("v2_current_tab", state.tab);
+    render();
+  }
+
+  function historyControlHTML(level, previousId, nextId, currentLabel) {
+    var isGroup = level === "group";
+    var levelLabel = isGroup ? "一级类目" : "二级类目";
+    var stepAttr = isGroup ? "data-group-history-step" : "data-tab-history-step";
+    var previousLabel = previousId ? (isGroup ? groupLabelById(previousId) : tabLabelById(previousId)) : "没有可返回项";
+    var nextLabel = nextId ? (isGroup ? groupLabelById(nextId) : tabLabelById(nextId)) : "没有可前进项";
+    return '<div class="history-nav-row" data-history-level="' + level + '">' +
+      '<span class="history-nav__level">' + levelLabel + '</span>' +
+      '<nav class="history-nav history-nav--' + level + '" aria-label="' + levelLabel + '浏览历史">' +
+      '<button class="history-nav__btn" type="button" ' + stepAttr + '="-1"' + (previousId ? "" : " disabled") + '><span aria-hidden="true">&larr;</span><b>上一页</b><em>' + previousLabel + '</em></button>' +
+      '<span class="history-nav__current">' + currentLabel + '</span>' +
+      '<button class="history-nav__btn history-nav__btn--next" type="button" ' + stepAttr + '="1"' + (nextId ? "" : " disabled") + '><b>下一页</b><em>' + nextLabel + '</em><span aria-hidden="true">&rarr;</span></button>' +
+      '</nav></div>';
+  }
+
+  function historyStackHTML() {
+    var previousGroup = orderedGroupAt(-1);
+    var nextGroup = orderedGroupAt(1);
+    var previousTab = orderedTabAt(-1);
+    var nextTab = orderedTabAt(1);
+    return '<div class="history-stack">' +
+      historyControlHTML("group", previousGroup ? previousGroup.id : null, nextGroup ? nextGroup.id : null, groupLabelById(state.group)) +
+      historyControlHTML("tab", previousTab ? previousTab.id : null, nextTab ? nextTab.id : null, tabLabelById(state.tab)) +
+      '</div>';
   }
 
   function scrollToLatest() {
@@ -793,7 +868,7 @@
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
-    var pagePrefix = historyNavHTML();
+    var pagePrefix = historyStackHTML();
     if (view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
       pagePrefix += modelPairStrip(latest + 1);
     }
@@ -5309,16 +5384,34 @@
       historyPointerStart = null;
       return;
     }
-    historyPointerStart = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    var historyBar = e.target.closest("[data-history-level]");
+    historyPointerStart = {
+      x: e.clientX,
+      y: e.clientY,
+      id: e.pointerId,
+      level: historyBar && historyBar.dataset.historyLevel === "group" ? "group" : "tab",
+      fromHistoryBar: !!historyBar
+    };
   });
 
   view.addEventListener("pointerup", function (e) {
     if (!historyPointerStart || e.pointerId !== historyPointerStart.id) return;
     var dx = e.clientX - historyPointerStart.x;
     var dy = e.clientY - historyPointerStart.y;
+    var absX = Math.abs(dx);
+    var absY = Math.abs(dy);
+    var isVertical = absY > absX;
+    var level = historyPointerStart.level;
+    var fromHistoryBar = historyPointerStart.fromHistoryBar;
     historyPointerStart = null;
-    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
-    stepHistory(dx > 0 ? -1 : 1);
+    if (isVertical) {
+      if (!fromHistoryBar || absY < 70) return;
+    } else if (absX < 70 || absX < absY * 1.25) {
+      return;
+    }
+    var delta = isVertical ? (dy > 0 ? -1 : 1) : (dx > 0 ? -1 : 1);
+    if (level === "group") stepGroupHistory(delta);
+    else stepTabHistory(delta);
   });
 
   view.addEventListener("pointercancel", function () {
@@ -5350,7 +5443,8 @@
       var collapsed = collapsedGroupIds().filter(function (id) { return id !== state.group; });
       lsSet(NAV_COLLAPSED_KEY, collapsed);
       state.tab = firstTabInGroup(state.group);
-      rememberTab(state.tab);
+      rememberGroup(state.group);
+      rememberTabInGroup(state.group, state.tab);
       lsSet(NAV_GROUP_KEY, state.group);
       lsSet("v2_current_tab", state.tab);
       tabSortMode = false;
@@ -5384,7 +5478,7 @@
     var btn = e.target.closest(".tab");
     if (btn && !btn.dataset.sortToggle && !btn.dataset.sortReset) {
       state.tab = btn.dataset.tab;
-      rememberTab(state.tab);
+      rememberTabInGroup(state.group, state.tab);
       lsSet("v2_current_tab", state.tab);
       render();
     }
@@ -5397,18 +5491,26 @@
   });
 
   view.addEventListener("click", function (e) {
-    var historyStep = e.target.closest("[data-history-step]");
-    if (historyStep) {
-      stepHistory(Number(historyStep.dataset.historyStep));
+    var groupHistoryStep = e.target.closest("[data-group-history-step]");
+    if (groupHistoryStep) {
+      stepGroupHistory(Number(groupHistoryStep.dataset.groupHistoryStep));
+      return;
+    }
+    var tabHistoryStep = e.target.closest("[data-tab-history-step]");
+    if (tabHistoryStep) {
+      stepTabHistory(Number(tabHistoryStep.dataset.tabHistoryStep));
       return;
     }
     var overviewTab = e.target.closest("[data-overview-tab]");
     if (overviewTab) {
       var targetTab = overviewTab.dataset.overviewTab;
       state.tab = targetTab;
-      rememberTab(targetTab);
       var targetGroup = groupForTab(targetTab);
-      if (targetGroup) state.group = targetGroup.id;
+      if (targetGroup) {
+        state.group = targetGroup.id;
+        rememberGroup(state.group);
+      }
+      rememberTabInGroup(state.group, state.tab);
       lsSet("v2_current_tab", state.tab);
       lsSet(NAV_GROUP_KEY, state.group);
       render();
@@ -5615,7 +5717,8 @@
   if (validTabs.indexOf(state.tab) === -1) state.tab = firstTabInGroup(state.group);
   var currentGroup = groupForTab(state.tab) || groupById(state.group) || NAV_GROUPS[0];
   state.group = currentGroup.id;
-  rememberTab(state.tab);
+  rememberGroup(state.group);
+  rememberTabInGroup(state.group, state.tab);
   lsSet(NAV_GROUP_KEY, state.group);
   lsSet("v2_current_tab", state.tab);
   autoSettleUltimateOrders();
