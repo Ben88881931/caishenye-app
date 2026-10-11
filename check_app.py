@@ -265,10 +265,10 @@ def main():
             pass_("窗口倍投测试逐年对比14线并区分年度稳健与全周期最优")
         else:
             fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
-        if "orderedLines" in app_text and "当前有仓位 · 正式执行公式" in app_text and "position.amount > 0" in app_text and "activePositionRows" in app_text:
-            pass_("窗口倍投测试当前有仓位正式执行线路优先排前")
+        if "var orderedLines = EXEC_LINES.slice();" in app_text and "当前有仓位 · 正式执行公式" in app_text and "按固定线路顺序显示" in app_text and "position.amount > 0" in app_text and "activePositionRows" in app_text:
+            pass_("窗口倍投测试按固定线路顺序显示正式执行仓位")
         else:
-            fail("窗口倍投测试未把当前有仓位正式执行线路优先排前")
+            fail("窗口倍投测试仍按仓位或金额重排线路")
         if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "正式版候选" in app_text:
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
@@ -277,10 +277,10 @@ def main():
             pass_("所有页面用且只用一组独立盒子显示下一期D1和D2推荐号码")
         else:
             fail("页面顶部缺少独立D1/D2推荐号码盒或存在重复插入")
-        if "function renderOrderHint" in app_text and "hintRows" in app_text and "activeHintRows" in app_text and "当下有仓位 · 优先显示" in app_text and "row.action.amount > 0" in app_text:
-            pass_("执行提示页当下有仓位线路优先卡片显示")
+        if "function renderOrderHint" in app_text and "var hintRows = EXEC_LINES.map" in app_text and "activeHintRows" in app_text and "当下有仓位" in app_text and "按固定线路顺序排列" in app_text and "row.action.amount > 0" in app_text:
+            pass_("执行提示页当下有仓位卡片按固定线路顺序显示")
         else:
-            fail("执行提示页缺少当下有仓位优先卡片")
+            fail("执行提示页仍按仓位或金额重排线路")
         if "function wmPositionForPlan" in app_text and "正式执行公式" in app_text and "正式执行仓位" in app_text and "今年测试仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text and "wmPositionForPlan(line, line.plan)" in app_text:
             pass_("正式执行仓位统一以公式表line.plan为准")
         else:

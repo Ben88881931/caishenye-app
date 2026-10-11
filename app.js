@@ -2447,13 +2447,9 @@
     var hintRows = EXEC_LINES.map(function (line) {
       var result = buildExecWindows(line);
       return { line: line, result: result, action: execNextAction(line, result, nextPeriod) };
-    }).sort(function (a, b) {
-      var aBucket = a.action.amount > 0 ? 3 : a.result.waiting ? 2 : 1;
-      var bBucket = b.action.amount > 0 ? 3 : b.result.waiting ? 2 : 1;
-      return bBucket - aBucket || b.action.amount - a.action.amount || a.line.label.localeCompare(b.line.label);
     });
     var activeHintRows = hintRows.filter(function (row) { return row.action.amount > 0; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当下有仓位 · 优先显示</h2><span class="section__hint">只列本期金额大于0的线路，按金额从高到低排列</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当下有仓位</h2><span class="section__hint">只列本期金额大于0的线路，按固定线路顺序排列</span></div></div>';
     html += '<div class="section">';
     if (!activeHintRows.length) {
       html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
@@ -2805,8 +2801,6 @@
     });
     var betRows = rows.filter(function (row) {
       return row.amount > 0 && row.nextTail != null;
-    }).sort(function (a, b) {
-      return Number(a.nextTail) - Number(b.nextTail) || a.line.label.localeCompare(b.line.label);
     });
     var use = FUND_CAPITAL ? totalCurrent / FUND_CAPITAL : 0;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 直接按公式安排</h2><span class="section__hint">公式表负责定金额，资金调度只按当前窗口取第几期金额；不再另算轻重模型</span></div></div>';
@@ -3160,15 +3154,7 @@
     var currentYear = Number((D[D.length - 1] || {}).y) || new Date().getFullYear();
     var ytdBestByLine = {};
     EXEC_LINES.forEach(function (item) { ytdBestByLine[item.id] = wmYearBest(lineBest[item.id], currentYear); });
-    var orderedLines = EXEC_LINES.slice().sort(function (a, b) {
-      var aBest = ytdBestByLine[a.id];
-      var bBest = ytdBestByLine[b.id];
-      var aPos = wmPositionForPlan(a, a.plan);
-      var bPos = wmPositionForPlan(b, b.plan);
-      var aBucket = aPos.amount > 0 ? 3 : aPos.label === "等待重开" ? 2 : 1;
-      var bBucket = bPos.amount > 0 ? 3 : bPos.label === "等待重开" ? 2 : 1;
-      return bBucket - aBucket || bPos.amount - aPos.amount || bPos.stage - aPos.stage || a.label.localeCompare(b.label);
-    });
+    var orderedLines = EXEC_LINES.slice();
     var simulations = lineBest[line.id].simulations;
     var annualByN = lineBest[line.id].annual;
     var robust = simulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
@@ -3202,7 +3188,7 @@
       var position = wmPositionForPlan(item, item.plan);
       return { item: item, best: itemBest, position: position, period: position.period ? wmPeriodLabel(position.period) : "-" };
     }).filter(function (row) { return row.position.amount > 0; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前有仓位 · 正式执行公式</h2><span class="section__hint">按公式表的正式公式计算，金额大于0的线路排在最上面</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前有仓位 · 正式执行公式</h2><span class="section__hint">按公式表的正式公式计算，有仓位线路仍按固定线路顺序显示</span></div></div>';
     html += '<div class="section">';
     if (!activePositionRows.length) {
       html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
