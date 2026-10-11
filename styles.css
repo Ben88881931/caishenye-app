@@ -463,6 +463,16 @@ body {
   box-shadow: 0 8px 20px rgba(16, 24, 40, 0.08);
 }
 
+.overview-page-card--guide {
+  min-height: 360px;
+  height: 100%;
+  align-self: stretch;
+}
+
+.overview-page-card--guide:hover {
+  transform: none;
+}
+
 .overview-page-card__head {
   display: flex;
   align-items: center;

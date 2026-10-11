@@ -968,14 +968,6 @@
           use: "比较策略长期表现和风险，不用一天的成绩下结论。",
           source: "明确标注的历史回测数据。",
           note: "回测不是实盘，历史成绩不能保证未来。"
-        },
-        {
-          name: "页面说明",
-          summary: "专门解释每个页面是干什么的、怎么看、数据从哪里来。",
-          look: ["页面用途", "主要看什么", "怎么使用", "注意事项"],
-          use: "新用户先看这一页，再进入其他页面。",
-          source: "当前系统页面和权威工作流。",
-          note: "本页只做说明，不产生选号或下单结论。"
         }
       ]
     }
@@ -1041,6 +1033,33 @@
     }
   ];
 
+  var PAGE_GUIDE_TAB_MAP = {
+    "双号追热": "pick3",
+    "三期内追号码": "chasenumber",
+    "三期内追推荐": "chaserecommend",
+    "执行提示": "orderhint",
+    "资金调度": "funds",
+    "公式表": "formulas",
+    "窗口倍投测试": "windowmult",
+    "追三期下单": "orderlog",
+    "总览": "overview",
+    "分段对比": "segments",
+    "窗口分析": "windowk",
+    "号码走势": "numtrend",
+    "生肖走势": "zodtrend",
+    "遗漏热图": "trend",
+    "遗漏监控": "miss",
+    "遗漏排序": "missorder",
+    "单双热图": "parity",
+    "冷热分析": "tails",
+    "生肖记录": "zodrecords",
+    "生肖窗口": "zodwindow",
+    "生肖遗漏": "zodmonitor",
+    "尾号性格": "personality",
+    "三期规律": "datarecord",
+    "策略回测": "backtest"
+  };
+
   function pageGuideHTML() {
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">页面说明 · 大白话版</h2><span class="section__hint">每个页面是干什么的、怎么看、怎么用、数据从哪里来，都在这里说清楚</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.8">这套小程序分成四组：模型执行、数据走势、生肖专区和工具验证。先看“模型与执行”决定怎么下，再看“数据与走势”研究历史，最后用“工具与验证”检查策略和记录。</div></div></div>';
@@ -1055,19 +1074,20 @@
     });
     PAGE_GUIDE_GROUPS.forEach(function (group) {
       html += '<div class="section"><div class="section__head"><h2 class="section__title">' + group.title + '</h2><span class="section__hint">' + group.desc + '</span></div></div>';
-      html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px">';
+      html += '<div class="section"><div class="overview-pages-grid">';
       group.items.forEach(function (item) {
-        html += '<div class="panel" style="padding:12px">';
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><h3 style="margin:0;font-size:16px">' + item.name + '</h3><span class="chip">' + group.title + '</span></div>';
-        html += '<div style="margin-top:8px;font-size:14px;font-weight:900;color:#1d4ed8">' + item.summary + '</div>';
-        html += '<div style="margin-top:8px;font-size:12px;font-weight:900;color:#475569">主要看什么</div>';
-        html += '<ul style="margin:4px 0 0 18px;padding:0;font-size:12px;color:#334155;line-height:1.7">';
+        var tabId = PAGE_GUIDE_TAB_MAP[item.name] || "";
+        html += '<article class="overview-page-card overview-page-card--guide" style="--guide-accent:#2563eb;--guide-soft:#eff6ff">';
+        html += '<div class="overview-page-card__head"><span class="overview-page-card__group">' + group.title + '</span><h3>' + item.name + '</h3></div>';
+        html += '<p class="overview-page-card__desc"><b>' + item.summary + '</b></p>';
+        html += '<div class="overview-page-card__when"><b>主要看什么</b><span><ul style="margin:2px 0 0 16px;padding:0">';
         item.look.forEach(function (line) { html += '<li>' + line + '</li>'; });
-        html += '</ul>';
-        html += '<div style="margin-top:8px;font-size:12px;color:#334155;line-height:1.7"><b>怎么用：</b>' + item.use + '</div>';
-        html += '<div style="margin-top:6px;font-size:12px;color:#334155;line-height:1.7"><b>数据来源：</b>' + item.source + '</div>';
-        html += '<div style="margin-top:6px;font-size:12px;color:#92400e;line-height:1.7"><b>注意：</b>' + item.note + '</div>';
-        html += '</div>';
+        html += '</ul></span></div>';
+        html += '<div class="overview-page-card__when"><b>怎么用</b><span>' + item.use + '</span></div>';
+        html += '<div class="overview-page-card__when"><b>数据来源</b><span>' + item.source + '</span></div>';
+        html += '<div class="overview-page-card__when" style="background:#fff7ed"><b>注意</b><span>' + item.note + '</span></div>';
+        if (tabId) html += '<button class="overview-page-card__cta" data-overview-tab="' + tabId + '">打开页面 <span aria-hidden="true">→</span></button>';
+        html += '</article>';
       });
       html += '</div></div>';
     });
@@ -1152,30 +1172,6 @@
       backtest: ["策略回测", "查看样本、命中、基准、置信区间和结论。", "检验策略效果时看。"],
       numtrend: ["号码走势", "按号码查看历史走势和期数变化。", "查看号码级走势时看。"]
     };
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">页面说明</h2><span class="section__hint">每个页面负责什么 · 点击卡片可跳转</span></div></div>';
-    var groupTheme = {
-      recommend: ["#2563eb", "#eff6ff"],
-      trends: ["#0891b2", "#ecfeff"],
-      miss: ["#d97706", "#fffbeb"],
-      zodiac: ["#c2410c", "#fff7ed"],
-      tools: ["#7c3aed", "#f5f3ff"]
-    };
-    html += '<div class="section"><div class="overview-pages-grid">';
-    NAV_GROUPS.forEach(function (group) {
-      var theme = groupTheme[group.id] || ["#64748b", "#f8fafc"];
-      group.tabs.forEach(function (id) {
-        var guide = pageGuides[id];
-        if (!guide) return;
-        html += '<article class="overview-page-card" style="--guide-accent:' + theme[0] + ';--guide-soft:' + theme[1] + '">';
-        html += '<div class="overview-page-card__head"><span class="overview-page-card__group">' + group.label + '</span><h3>' + guide[0] + '</h3></div>';
-        html += '<p class="overview-page-card__desc">' + guide[1] + '</p>';
-        html += '<div class="overview-page-card__when"><b>什么时候看</b><span>' + guide[2] + '</span></div>';
-        html += '<button class="overview-page-card__cta" data-overview-tab="' + id + '">打开页面 <span aria-hidden="true">→</span></button>';
-        html += '</article>';
-      });
-    });
-    html += '</div></div>';
-
     html += '<div class="section">';
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + latest + "</div><div class=\"stat__label\">最新期数</div></div>";

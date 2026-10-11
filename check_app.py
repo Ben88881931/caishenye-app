@@ -249,10 +249,10 @@ def main():
             pass_("公式表页面包含14线训练验证系数和配仓状态")
         else:
             fail("公式表页面缺少历史系数或配仓状态")
-        if "PAGE_GUIDE_GROUPS" in app_text and "PAGE_LABEL_GUIDE" in app_text and "function pageGuideHTML" in app_text and "页面说明 · 大白话版" in app_text and "页面上的标语怎么看" in app_text and "pageGuideHTML()" in app_text:
-            pass_("总览页包含完整的大白话页面说明和标语解释")
+        if "PAGE_GUIDE_GROUPS" in app_text and "PAGE_LABEL_GUIDE" in app_text and "PAGE_GUIDE_TAB_MAP" in app_text and "function pageGuideHTML" in app_text and "页面说明 · 大白话版" in app_text and "页面上的标语怎么看" in app_text and "overview-page-card--guide" in app_text and "data-overview-tab" in app_text and "pageGuideHTML()" in app_text:
+            pass_("总览页包含统一样式的大白话页面说明、标语解释和跳转按钮")
         else:
-            fail("总览页缺少页面说明或标语解释")
+            fail("总览页缺少统一样式的页面说明、标语解释或跳转按钮")
         if "WM_BASE = 100" in app_text and "wmPlanText" in app_text and "每个号码的最优下注公式" in app_text and "lineBest" in app_text and "最优 " in app_text and "未通过" in app_text:
             pass_("窗口倍投测试100元起并逐线标注最优下注公式")
         else:
