@@ -5355,12 +5355,13 @@
   var SWIPE_X = 28;
   var SWIPE_Y = 36;
   var historyPointerStart = null;
+  var gestureClickGuard = false;
   document.documentElement.addEventListener("pointerdown", function (e) {
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) {
       historyPointerStart = null;
       return;
     }
-    if (e.target.closest("button, input, select, textarea, a")) {
+    if (e.target.closest("input, select, textarea, a, [contenteditable='true']")) {
       historyPointerStart = null;
       return;
     }
@@ -5381,10 +5382,12 @@
     var absY = Math.abs(dy);
     if (absX >= SWIPE_X && absX > absY * 1.05) {
       historyPointerStart.handled = true;
+      gestureClickGuard = true;
       e.preventDefault();
       stepTabHistory(dx > 0 ? -1 : 1);
     } else if (absY >= SWIPE_Y && absY > absX * 1.05) {
       historyPointerStart.handled = true;
+      gestureClickGuard = true;
       e.preventDefault();
       stepGroupHistory(dy > 0 ? -1 : 1);
     }
@@ -5395,7 +5398,10 @@
     var gesture = historyPointerStart;
     historyPointerStart = null;
     document.documentElement.classList.remove("gesture-active");
-    if (gesture.handled) return;
+    if (gesture.handled) {
+      setTimeout(function () { gestureClickGuard = false; }, 400);
+      return;
+    }
     var dx = e.clientX - gesture.x;
     var dy = e.clientY - gesture.y;
     var absX = Math.abs(dx);
@@ -5412,7 +5418,15 @@
 
   document.documentElement.addEventListener("pointercancel", function () {
     historyPointerStart = null;
+    gestureClickGuard = false;
     document.documentElement.classList.remove("gesture-active");
+  }, true);
+
+  document.documentElement.addEventListener("click", function (e) {
+    if (!gestureClickGuard) return;
+    gestureClickGuard = false;
+    e.preventDefault();
+    e.stopPropagation();
   }, true);
 
   tabsEl.addEventListener("click", function (e) {
