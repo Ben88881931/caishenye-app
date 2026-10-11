@@ -799,30 +799,8 @@
     render();
   }
 
-  function historyControlHTML(level, previousId, nextId, currentLabel) {
-    var isGroup = level === "group";
-    var levelLabel = isGroup ? "一级类目" : "二级类目";
-    var stepAttr = isGroup ? "data-group-history-step" : "data-tab-history-step";
-    var previousLabel = previousId ? (isGroup ? groupLabelById(previousId) : tabLabelById(previousId)) : "没有可返回项";
-    var nextLabel = nextId ? (isGroup ? groupLabelById(nextId) : tabLabelById(nextId)) : "没有可前进项";
-    return '<div class="history-nav-row" data-history-level="' + level + '">' +
-      '<span class="history-nav__level">' + levelLabel + '</span>' +
-      '<nav class="history-nav history-nav--' + level + '" aria-label="' + levelLabel + '浏览历史">' +
-      '<button class="history-nav__btn" type="button" ' + stepAttr + '="-1"' + (previousId ? "" : " disabled") + '><span aria-hidden="true">&larr;</span><b>上一页</b><em>' + previousLabel + '</em></button>' +
-      '<span class="history-nav__current">' + currentLabel + '</span>' +
-      '<button class="history-nav__btn history-nav__btn--next" type="button" ' + stepAttr + '="1"' + (nextId ? "" : " disabled") + '><b>下一页</b><em>' + nextLabel + '</em><span aria-hidden="true">&rarr;</span></button>' +
-      '</nav></div>';
-  }
-
   function historyStackHTML() {
-    var previousGroup = orderedGroupAt(-1);
-    var nextGroup = orderedGroupAt(1);
-    var previousTab = orderedTabAt(-1);
-    var nextTab = orderedTabAt(1);
-    return '<div class="history-stack">' +
-      historyControlHTML("group", previousGroup ? previousGroup.id : null, nextGroup ? nextGroup.id : null, groupLabelById(state.group)) +
-      historyControlHTML("tab", previousTab ? previousTab.id : null, nextTab ? nextTab.id : null, tabLabelById(state.tab)) +
-      '</div>';
+    return "";
   }
 
   function scrollToLatest() {
@@ -5380,17 +5358,14 @@
       historyPointerStart = null;
       return;
     }
-    if (e.target.closest("button, input, select, textarea, a, .table, .trend-scroll, .heatmap, .seg-hist-scroll, .exec-line__scroll")) {
+    if (e.target.closest("button, input, select, textarea, a")) {
       historyPointerStart = null;
       return;
     }
-    var historyBar = e.target.closest("[data-history-level]");
     historyPointerStart = {
       x: e.clientX,
       y: e.clientY,
-      id: e.pointerId,
-      level: historyBar && historyBar.dataset.historyLevel === "group" ? "group" : "tab",
-      fromHistoryBar: !!historyBar
+      id: e.pointerId
     };
   });
 
@@ -5401,17 +5376,14 @@
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
     var isVertical = absY > absX;
-    var level = historyPointerStart.level;
-    var fromHistoryBar = historyPointerStart.fromHistoryBar;
     historyPointerStart = null;
     if (isVertical) {
-      if (!fromHistoryBar || absY < 70) return;
-    } else if (absX < 70 || absX < absY * 1.25) {
+      if (absY < 70) return;
+      stepGroupHistory(dy > 0 ? -1 : 1);
       return;
     }
-    var delta = isVertical ? (dy > 0 ? -1 : 1) : (dx > 0 ? -1 : 1);
-    if (level === "group") stepGroupHistory(delta);
-    else stepTabHistory(delta);
+    if (absX < 70 || absX < absY * 1.25) return;
+    stepTabHistory(dx > 0 ? -1 : 1);
   });
 
   view.addEventListener("pointercancel", function () {
