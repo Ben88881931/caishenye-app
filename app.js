@@ -5355,7 +5355,7 @@
   var SWIPE_X = 28;
   var SWIPE_Y = 36;
   var historyPointerStart = null;
-  view.addEventListener("pointerdown", function (e) {
+  document.documentElement.addEventListener("pointerdown", function (e) {
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) {
       historyPointerStart = null;
       return;
@@ -5370,10 +5370,10 @@
       id: e.pointerId,
       handled: false
     };
-    view.classList.add("gesture-active");
-  });
+    document.documentElement.classList.add("gesture-active");
+  }, true);
 
-  view.addEventListener("pointermove", function (e) {
+  document.documentElement.addEventListener("pointermove", function (e) {
     if (!historyPointerStart || e.pointerId !== historyPointerStart.id || historyPointerStart.handled) return;
     var dx = e.clientX - historyPointerStart.x;
     var dy = e.clientY - historyPointerStart.y;
@@ -5388,13 +5388,13 @@
       e.preventDefault();
       stepGroupHistory(dy > 0 ? -1 : 1);
     }
-  });
+  }, true);
 
-  view.addEventListener("pointerup", function (e) {
+  document.documentElement.addEventListener("pointerup", function (e) {
     if (!historyPointerStart || e.pointerId !== historyPointerStart.id) return;
     var gesture = historyPointerStart;
     historyPointerStart = null;
-    view.classList.remove("gesture-active");
+    document.documentElement.classList.remove("gesture-active");
     if (gesture.handled) return;
     var dx = e.clientX - gesture.x;
     var dy = e.clientY - gesture.y;
@@ -5408,12 +5408,12 @@
     }
     if (absX < SWIPE_X || absX < absY * 1.1) return;
     stepTabHistory(dx > 0 ? -1 : 1);
-  });
+  }, true);
 
-  view.addEventListener("pointercancel", function () {
+  document.documentElement.addEventListener("pointercancel", function () {
     historyPointerStart = null;
-    view.classList.remove("gesture-active");
-  });
+    document.documentElement.classList.remove("gesture-active");
+  }, true);
 
   tabsEl.addEventListener("click", function (e) {
     var groupMove = e.target.closest("[data-group-move]");

@@ -310,7 +310,13 @@ body {
   touch-action: pan-y;
 }
 
-.view.gesture-active {
+.view,
+.view * {
+  touch-action: pan-y;
+}
+
+html.gesture-active,
+html.gesture-active * {
   user-select: none;
 }
 
