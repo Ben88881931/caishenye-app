@@ -307,12 +307,6 @@ body {
   max-width: 720px;
   margin: 0 auto;
   padding: 12px 16px 40px;
-  touch-action: pan-y;
-}
-
-.view,
-.view * {
-  touch-action: pan-y;
 }
 
 html.gesture-active,
