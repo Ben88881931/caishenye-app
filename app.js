@@ -5428,15 +5428,13 @@
       historyPointerStart = null;
       return;
     }
-    if (isInsideHorizontalScroll(e)) {
-      historyPointerStart = null;
-      return;
-    }
+    var inHorizontalScroll = isInsideHorizontalScroll(e);
     historyPointerStart = {
       x: e.clientX,
       y: e.clientY,
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
+      inHorizontalScroll: inHorizontalScroll,
       handled: false
     };
     document.documentElement.classList.add("gesture-active");
@@ -5450,6 +5448,10 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
+    if (historyPointerStart.inHorizontalScroll &&
+        !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05)) {
+      return;
+    }
     if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05) {
       historyPointerStart.handled = true;
       gestureClickGuard = true;
@@ -5485,6 +5487,10 @@
     var level = gesture.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (isVertical) return;
+    if (gesture.inHorizontalScroll &&
+        !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05)) {
+      return;
+    }
     if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05) {
       state.tab = "directory";
       lsSet("v2_current_tab", state.tab);
