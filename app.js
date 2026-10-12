@@ -5412,7 +5412,7 @@
   var SWIPE_X = 28;
   var SWIPE_Y = 36;
   var SWIPE_PRIMARY_X = 20;
-  var RETURN_SWIPE_X = 48;
+  var RETURN_SWIPE_X = 100;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   document.documentElement.addEventListener("pointerdown", function (e) {
@@ -5514,6 +5514,40 @@
     e.preventDefault();
     e.stopPropagation();
   }, true);
+
+  var touchReturnStart = null;
+  document.documentElement.addEventListener("touchstart", function (e) {
+    if (e.touches.length !== 1 || state.tab === "directory") {
+      touchReturnStart = null;
+      return;
+    }
+    if (e.target.closest("input, select, textarea, a, [contenteditable='true']")) {
+      touchReturnStart = null;
+      return;
+    }
+    touchReturnStart = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+      returned: false
+    };
+  }, { capture: true, passive: true });
+
+  document.documentElement.addEventListener("touchmove", function (e) {
+    if (!touchReturnStart || touchReturnStart.returned || e.touches.length !== 1) return;
+    var dx = e.touches[0].clientX - touchReturnStart.x;
+    var dy = e.touches[0].clientY - touchReturnStart.y;
+    if (dx >= RETURN_SWIPE_X && Math.abs(dx) > Math.abs(dy) * 1.05) {
+      touchReturnStart.returned = true;
+      e.preventDefault();
+      state.tab = "directory";
+      lsSet("v2_current_tab", state.tab);
+      render();
+    }
+  }, { capture: true, passive: false });
+
+  document.documentElement.addEventListener("touchend", function () {
+    touchReturnStart = null;
+  }, { capture: true, passive: true });
 
   tabsEl.addEventListener("click", function (e) {
     var directoryBtn = e.target.closest("[data-directory]");
