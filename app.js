@@ -848,7 +848,10 @@
 
   function parseSearchNumbers(text, minValue, maxValue) {
     var seen = {};
-    return String(text || "").split(/[^0-9]+/).map(function (value) {
+    var rawValues = state.numSearchType === "tail"
+      ? (String(text || "").match(/[0-9]/g) || [])
+      : String(text || "").split(/[^0-9]+/);
+    return rawValues.map(function (value) {
       return Number(value);
     }).filter(function (value) {
       if (!Number.isInteger(value) || value < minValue || value > maxValue || seen[value]) return false;
@@ -912,7 +915,7 @@
     }).join("");
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">号码搜索</h2><span class="section__hint">输入号码后搜索历史开奖记录</span></div></div>';
     html += '<div class="section"><div class="panel"><div class="panel__body numsearch-toolbar">';
-    html += '<input class="numsearch-input" id="numSearchInput" data-numsearch-input="1" type="text" inputmode="numeric" placeholder="' + (state.numSearchType === "tail" ? "例如：0 3 5 9" : "例如：01 03 05 20") + '" value="' + String(state.numSearchQuery || "").replace(/"/g, "&quot;") + '">';
+    html += '<input class="numsearch-input" id="numSearchInput" data-numsearch-input="1" type="text" placeholder="' + (state.numSearchType === "tail" ? "例如：0359 或 0 3 5 9" : "例如：01 03 05 20") + '" value="' + String(state.numSearchQuery || "").replace(/"/g, "&quot;") + '">';
     html += '<button class="chip" type="button" data-numsearch-run="1">搜索</button>';
     html += '</div><div class="numsearch-modes">' + typeButtons + '</div><div class="numsearch-modes">' + modeButtons + '</div></div></div>';
     html += '<div id="numSearchResults">' + numSearchResultsHTML() + '</div>';
@@ -5725,7 +5728,7 @@
         typeButtons[ti].classList.toggle("is-active", typeButtons[ti] === searchType);
       }
       var searchInput = document.getElementById("numSearchInput");
-      if (searchInput) searchInput.placeholder = state.numSearchType === "tail" ? "例如：0 3 5 9" : "例如：01 03 05 20";
+      if (searchInput) searchInput.placeholder = state.numSearchType === "tail" ? "例如：0359 或 0 3 5 9" : "例如：01 03 05 20";
       var typeResults = document.getElementById("numSearchResults");
       if (typeResults) typeResults.innerHTML = numSearchResultsHTML();
       return;
