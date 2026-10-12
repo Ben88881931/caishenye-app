@@ -809,6 +809,20 @@
     return "";
   }
 
+  function isPointerOnScrollbar(e) {
+    var el = e.target;
+    while (el && el.nodeType === 1 && el !== document.documentElement) {
+      var style = window.getComputedStyle(el);
+      var rect = el.getBoundingClientRect();
+      var hasX = el.scrollWidth > el.clientWidth && /(auto|scroll)/.test(style.overflowX);
+      var hasY = el.scrollHeight > el.clientHeight && /(auto|scroll)/.test(style.overflowY);
+      if (hasX && e.clientY >= rect.top + el.clientHeight) return true;
+      if (hasY && e.clientX >= rect.left + el.clientWidth) return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+
   function renderDirectory() {
     var groups = getConfiguredGroups();
     var active = groupById(state.group) || groups[0];
@@ -5387,6 +5401,10 @@
       return;
     }
     if (e.target.closest("input, select, textarea, a, [contenteditable='true']")) {
+      historyPointerStart = null;
+      return;
+    }
+    if (isPointerOnScrollbar(e)) {
       historyPointerStart = null;
       return;
     }
