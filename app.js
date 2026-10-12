@@ -823,6 +823,16 @@
     return false;
   }
 
+  function isInsideHorizontalScroll(e) {
+    var el = e.target;
+    while (el && el.nodeType === 1 && el !== document.documentElement) {
+      var style = window.getComputedStyle(el);
+      if (el.scrollWidth > el.clientWidth + 1 && /(auto|scroll)/.test(style.overflowX)) return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+
   function renderDirectory() {
     var groups = getConfiguredGroups();
     var active = groupById(state.group) || groups[0];
@@ -5405,6 +5415,10 @@
       return;
     }
     if (isPointerOnScrollbar(e)) {
+      historyPointerStart = null;
+      return;
+    }
+    if (isInsideHorizontalScroll(e)) {
       historyPointerStart = null;
       return;
     }
