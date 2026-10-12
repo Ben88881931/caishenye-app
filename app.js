@@ -611,23 +611,28 @@
     var groupScroll = oldGroups ? oldGroups.scrollLeft : 0;
     var tabScroll = oldSubtabs ? oldSubtabs.scrollLeft : 0;
     var directoryActive = state.tab === "directory";
-    var groupHtml = '<button class="nav-group nav-group--directory' + (directoryActive ? " is-active" : "") + '" type="button" data-directory="1">目录</button>';
-    groupHtml += groups.map(function (g) {
-      var collapsed = isGroupCollapsed(g.id);
-      var h = '<span class="nav-group-wrap">';
-      if (tabSortMode) {
-        h += '<button class="nav-group-move" type="button" data-group-move="up" data-group-id="' + g.id + '" aria-label="' + g.label + ' 前移">↑</button>';
-      }
-      h += '<button class="nav-group' + (g.id === group.id && !directoryActive ? " is-active" : "") + (collapsed ? " is-collapsed" : "") +
-        '" type="button" data-nav-group="' + g.id + '" aria-expanded="' + (!collapsed) + '">' + g.label +
-        '<span class="nav-group-caret" aria-hidden="true">' + (collapsed ? "▸" : "▾") + '</span></button>';
-      if (tabSortMode) {
-        h += '<button class="nav-group-move" type="button" data-group-move="down" data-group-id="' + g.id + '" aria-label="' + g.label + ' 后移">↓</button>';
-      }
-      h += "</span>";
-      return h;
-    }).join("");
-    var tabs = directoryActive || isGroupCollapsed(group.id) ? [] : getVisibleTabs(group.id);
+    var groupHtml = "";
+    if (directoryActive) {
+      groupHtml = '<button class="nav-group nav-group--directory is-active" type="button" data-directory="1">目录</button>';
+      groupHtml += groups.map(function (g) {
+        var collapsed = isGroupCollapsed(g.id);
+        var h = '<span class="nav-group-wrap">';
+        if (tabSortMode) {
+          h += '<button class="nav-group-move" type="button" data-group-move="up" data-group-id="' + g.id + '" aria-label="' + g.label + ' 前移">↑</button>';
+        }
+        h += '<button class="nav-group' + (collapsed ? " is-collapsed" : "") +
+          '" type="button" data-nav-group="' + g.id + '" aria-expanded="' + (!collapsed) + '">' + g.label +
+          '<span class="nav-group-caret" aria-hidden="true">' + (collapsed ? "▸" : "▾") + '</span></button>';
+        if (tabSortMode) {
+          h += '<button class="nav-group-move" type="button" data-group-move="down" data-group-id="' + g.id + '" aria-label="' + g.label + ' 后移">↓</button>';
+        }
+        h += "</span>";
+        return h;
+      }).join("");
+    } else {
+      groupHtml = '<button class="nav-group nav-group--back" type="button" data-directory="1">← 返回目录</button>';
+    }
+    var tabs = directoryActive ? [] : getVisibleTabs(group.id);
     var tabsHtml = tabs.map(function (t) {
       if (tabSortMode) {
         var moveOptions = groups.filter(function (g) { return g.id !== state.group; }).map(function (g) {
