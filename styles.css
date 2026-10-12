@@ -579,6 +579,46 @@ html.gesture-active * {
   background: var(--guide-soft);
 }
 
+.directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.directory-card {
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.directory-card.is-active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px #bfdbfe;
+}
+
+.directory-card__index {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.directory-card b {
+  font-size: 16px;
+}
+
+.directory-card__pages {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .history-stack {
   display: grid;
   gap: 6px;

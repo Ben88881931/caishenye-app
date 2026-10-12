@@ -357,6 +357,7 @@
   };
 
   var TABS = [
+    { id: "directory", label: "目录" },
     { id: "overview", label: "总览" },
     { id: "pick3", label: "双号追热" },
     { id: "chasenumber", label: "三期内追号码" },
@@ -609,13 +610,15 @@
     var oldSubtabs = tabsEl.querySelector(".nav-subtabs");
     var groupScroll = oldGroups ? oldGroups.scrollLeft : 0;
     var tabScroll = oldSubtabs ? oldSubtabs.scrollLeft : 0;
-    var groupHtml = groups.map(function (g) {
+    var directoryActive = state.tab === "directory";
+    var groupHtml = '<button class="nav-group nav-group--directory' + (directoryActive ? " is-active" : "") + '" type="button" data-directory="1">目录</button>';
+    groupHtml += groups.map(function (g) {
       var collapsed = isGroupCollapsed(g.id);
       var h = '<span class="nav-group-wrap">';
       if (tabSortMode) {
         h += '<button class="nav-group-move" type="button" data-group-move="up" data-group-id="' + g.id + '" aria-label="' + g.label + ' 前移">↑</button>';
       }
-      h += '<button class="nav-group' + (g.id === group.id ? " is-active" : "") + (collapsed ? " is-collapsed" : "") +
+      h += '<button class="nav-group' + (g.id === group.id && !directoryActive ? " is-active" : "") + (collapsed ? " is-collapsed" : "") +
         '" type="button" data-nav-group="' + g.id + '" aria-expanded="' + (!collapsed) + '">' + g.label +
         '<span class="nav-group-caret" aria-hidden="true">' + (collapsed ? "▸" : "▾") + '</span></button>';
       if (tabSortMode) {
@@ -624,7 +627,7 @@
       h += "</span>";
       return h;
     }).join("");
-    var tabs = isGroupCollapsed(group.id) ? [] : getVisibleTabs(group.id);
+    var tabs = directoryActive || isGroupCollapsed(group.id) ? [] : getVisibleTabs(group.id);
     var tabsHtml = tabs.map(function (t) {
       if (tabSortMode) {
         var moveOptions = groups.filter(function (g) { return g.id !== state.group; }).map(function (g) {
@@ -782,15 +785,18 @@
     var group = orderedGroupAt(delta);
     if (!group) return;
     state.group = group.id;
-    state.tab = firstTabInGroup(group.id);
     rememberGroup(state.group);
-    rememberTabInGroup(state.group, state.tab);
+    if (state.tab !== "directory") {
+      state.tab = firstTabInGroup(group.id);
+      rememberTabInGroup(state.group, state.tab);
+    }
     lsSet("v2_current_tab", state.tab);
     lsSet(NAV_GROUP_KEY, state.group);
     render();
   }
 
   function stepTabHistory(delta) {
+    if (state.tab === "directory") return;
     var tab = orderedTabAt(delta);
     if (!tab) return;
     state.tab = tab.id;
@@ -801,6 +807,23 @@
 
   function historyStackHTML() {
     return "";
+  }
+
+  function renderDirectory() {
+    var groups = getConfiguredGroups();
+    var active = groupById(state.group) || groups[0];
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">目录</h2><span class="section__hint">选择一级类目，进入下面的二级页面</span></div></div>';
+    html += '<div class="directory-grid">';
+    groups.forEach(function (group, index) {
+      var tabs = getVisibleTabs(group.id);
+      html += '<button class="directory-card' + (group.id === active.id ? " is-active" : "") + '" type="button" data-directory-group="' + group.id + '">';
+      html += '<span class="directory-card__index">' + (index + 1) + '</span>';
+      html += '<b>' + group.label + '</b>';
+      html += '<span class="directory-card__pages">' + tabs.map(function (tab) { return tab.label; }).join(" · ") + '</span>';
+      html += '</button>';
+    });
+    html += '</div>';
+    view.innerHTML = html;
   }
 
   function scrollToLatest() {
@@ -818,7 +841,8 @@
     if (state.tab === "selector") state.tab = "chasenumber";
     var tabChanged = state.tab !== renderedTab;
     renderTabs();
-    if (state.tab === "overview") renderOverview();
+    if (state.tab === "directory") renderDirectory();
+    else if (state.tab === "overview") renderOverview();
     else if (state.tab === "tails") renderTails();
     else if (state.tab === "segments") renderSegments();
     else if (state.tab === "miss") renderMiss();
@@ -847,7 +871,7 @@
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
     var pagePrefix = historyStackHTML();
-    if (view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
+    if (state.tab !== "directory" && view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
       pagePrefix += modelPairStrip(latest + 1);
     }
     if (pagePrefix) view.innerHTML = pagePrefix + view.innerHTML;
@@ -5370,7 +5394,7 @@
       x: e.clientX,
       y: e.clientY,
       id: e.pointerId,
-      level: e.target.closest(".nav-groups") ? "group" : "tab",
+      level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       handled: false
     };
     document.documentElement.classList.add("gesture-active");
@@ -5390,11 +5414,6 @@
       e.preventDefault();
       if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
       else stepTabHistory(dx > 0 ? -1 : 1);
-    } else if (absY >= SWIPE_Y && absY > absX * 1.05) {
-      historyPointerStart.handled = true;
-      gestureClickGuard = true;
-      e.preventDefault();
-      stepGroupHistory(dy > 0 ? -1 : 1);
     }
   }, true);
 
@@ -5414,11 +5433,7 @@
     var isVertical = absY > absX;
     var level = gesture.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (isVertical) {
-      if (absY < SWIPE_Y) return;
-      stepGroupHistory(dy > 0 ? -1 : 1);
-      return;
-    }
+    if (isVertical) return;
     if (absX < swipeX || absX < absY * 1.1) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
     else stepTabHistory(dx > 0 ? -1 : 1);
@@ -5438,6 +5453,13 @@
   }, true);
 
   tabsEl.addEventListener("click", function (e) {
+    var directoryBtn = e.target.closest("[data-directory]");
+    if (directoryBtn) {
+      state.tab = "directory";
+      lsSet("v2_current_tab", state.tab);
+      render();
+      return;
+    }
     var groupMove = e.target.closest("[data-group-move]");
     if (groupMove) {
       moveGroup(groupMove.dataset.groupId, groupMove.dataset.groupMove);
@@ -5453,6 +5475,16 @@
     var navGroup = e.target.closest("[data-nav-group]");
     if (navGroup) {
       var nextGroup = navGroup.dataset.navGroup;
+      if (state.tab === "directory") {
+        state.group = nextGroup;
+        state.tab = state.lastTabByGroup[state.group] || firstTabInGroup(state.group);
+        rememberGroup(state.group);
+        rememberTabInGroup(state.group, state.tab);
+        lsSet(NAV_GROUP_KEY, state.group);
+        lsSet("v2_current_tab", state.tab);
+        render();
+        return;
+      }
       if (state.group === nextGroup && !tabSortMode) {
         toggleGroupCollapsed(nextGroup);
         renderTabs();
@@ -5510,6 +5542,17 @@
   });
 
   view.addEventListener("click", function (e) {
+    var directoryGroup = e.target.closest("[data-directory-group]");
+    if (directoryGroup) {
+      state.group = directoryGroup.dataset.directoryGroup;
+      state.tab = state.lastTabByGroup[state.group] || firstTabInGroup(state.group);
+      rememberGroup(state.group);
+      rememberTabInGroup(state.group, state.tab);
+      lsSet(NAV_GROUP_KEY, state.group);
+      lsSet("v2_current_tab", state.tab);
+      render();
+      return;
+    }
     var groupHistoryStep = e.target.closest("[data-group-history-step]");
     if (groupHistoryStep) {
       stepGroupHistory(Number(groupHistoryStep.dataset.groupHistoryStep));
@@ -5733,11 +5776,13 @@
   var validTabs = TABS.map(function (t) { return t.id; });
   var validGroups = NAV_GROUPS.map(function (g) { return g.id; });
   if (validGroups.indexOf(state.group) === -1) state.group = NAV_GROUPS[0].id;
-  if (validTabs.indexOf(state.tab) === -1) state.tab = firstTabInGroup(state.group);
+  state.tab = "directory";
   var currentGroup = groupForTab(state.tab) || groupById(state.group) || NAV_GROUPS[0];
   state.group = currentGroup.id;
-  rememberGroup(state.group);
-  rememberTabInGroup(state.group, state.tab);
+  if (state.tab !== "directory") {
+    rememberGroup(state.group);
+    rememberTabInGroup(state.group, state.tab);
+  }
   lsSet(NAV_GROUP_KEY, state.group);
   lsSet("v2_current_tab", state.tab);
   autoSettleUltimateOrders();
