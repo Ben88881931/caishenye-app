@@ -354,6 +354,9 @@
     orderTail: lsGet("v2_order_tail", "all"),
     windowMultLine: "tail1",
     windowMultN: 2,
+    numSearchQuery: "",
+    numSearchMode: "all",
+    numSearchType: "tail",
   };
 
   var TABS = [
@@ -382,6 +385,7 @@
     { id: "zodrecords", label: "生肖开奖" },
     { id: "backtest", label: "策略回测" },
     { id: "numtrend", label: "号码走势" },
+    { id: "numsearch", label: "号码搜索" },
   ];
 
   var NAV_GROUPS = [
@@ -389,7 +393,7 @@
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
-    { id: "tools", label: "分析工具", tabs: ["personality", "datarecord", "tails", "backtest"] },
+    { id: "tools", label: "分析工具", tabs: ["numsearch", "personality", "datarecord", "tails", "backtest"] },
   ];
 
   var view = document.getElementById("view");
@@ -842,6 +846,79 @@
     return false;
   }
 
+  function parseSearchNumbers(text, minValue, maxValue) {
+    var seen = {};
+    return String(text || "").split(/[^0-9]+/).map(function (value) {
+      return Number(value);
+    }).filter(function (value) {
+      if (!Number.isInteger(value) || value < minValue || value > maxValue || seen[value]) return false;
+      seen[value] = true;
+      return true;
+    }).sort(function (a, b) { return a - b; });
+  }
+
+  function recordSearchValues(record, type) {
+    if (type !== "tail") return (record.nums || []).slice();
+    var tails = [];
+    (record.nums || []).forEach(function (number) {
+      var tail = number % 10;
+      if (tails.indexOf(tail) < 0) tails.push(tail);
+    });
+    return tails.sort(function (a, b) { return a - b; });
+  }
+
+  function numSearchResultsHTML() {
+    var isTail = state.numSearchType === "tail";
+    var selected = parseSearchNumbers(state.numSearchQuery, isTail ? 0 : 1, isTail ? 9 : 49);
+    if (!selected.length) return '<div class="numsearch-empty">请输入 ' + (isTail ? "0-9 尾号" : "1-49 号码") + '</div>';
+    var rows = D.filter(function (record) {
+      var values = recordSearchValues(record, state.numSearchType);
+      if (state.numSearchMode === "exact") {
+        return values.length === selected.length && selected.every(function (value) { return values.indexOf(value) >= 0; });
+      }
+      if (state.numSearchMode === "any") {
+        return selected.some(function (value) { return values.indexOf(value) >= 0; });
+      }
+      return selected.every(function (value) { return values.indexOf(value) >= 0; });
+    });
+    if (!rows.length) return '<div class="numsearch-empty">没有找到相同记录</div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">搜索结果</h2><span class="section__hint">共 ' + rows.length + ' 期</span></div></div>';
+    html += '<div class="panel"><div class="panel__body numsearch-results"><table class="table"><thead><tr><th>期数</th><th>号码</th><th>命中' + (isTail ? "尾号" : "号码") + '</th><th>尾数</th><th>生肖</th></tr></thead><tbody>';
+    rows.slice().reverse().forEach(function (record) {
+      var nums = record.nums || [];
+      var zods = record.zods || [];
+      var values = recordSearchValues(record, state.numSearchType);
+      var hits = values.filter(function (value) { return selected.indexOf(value) >= 0; });
+      var tails = recordSearchValues(record, "tail");
+      html += '<tr><td><b>' + record.p + '</b></td><td>' + nums.join(" ") + '</td><td><b style="color:#2563eb">' + hits.join(" ") + '</b></td><td>' + tails.sort(function (a, b) { return a - b; }).join(" ") + '</td><td>' + zods.join(" ") + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+    return html;
+  }
+
+  function renderNumSearch() {
+    var typeButtons = [
+      ["num", "号码"],
+      ["tail", "尾号"]
+    ].map(function (item) {
+      return '<button class="chip numsearch-type' + (state.numSearchType === item[0] ? " is-active" : "") + '" type="button" data-numsearch-type="' + item[0] + '">' + item[1] + '</button>';
+    }).join("");
+    var modeButtons = [
+      ["all", "全部包含"],
+      ["any", "任意包含"],
+      ["exact", "完全一致"]
+    ].map(function (item) {
+      return '<button class="chip numsearch-mode' + (state.numSearchMode === item[0] ? " is-active" : "") + '" type="button" data-numsearch-mode="' + item[0] + '">' + item[1] + '</button>';
+    }).join("");
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">号码搜索</h2><span class="section__hint">输入号码后搜索历史开奖记录</span></div></div>';
+    html += '<div class="section"><div class="panel"><div class="panel__body numsearch-toolbar">';
+    html += '<input class="numsearch-input" id="numSearchInput" data-numsearch-input="1" type="text" inputmode="numeric" placeholder="' + (state.numSearchType === "tail" ? "例如：0 3 5 9" : "例如：01 03 05 20") + '" value="' + String(state.numSearchQuery || "").replace(/"/g, "&quot;") + '">';
+    html += '<button class="chip" type="button" data-numsearch-run="1">搜索</button>';
+    html += '</div><div class="numsearch-modes">' + typeButtons + '</div><div class="numsearch-modes">' + modeButtons + '</div></div></div>';
+    html += '<div id="numSearchResults">' + numSearchResultsHTML() + '</div>';
+    view.innerHTML = html;
+  }
+
   function renderDirectory() {
     var groups = getConfiguredGroups();
     var active = groupById(state.group) || groups[0];
@@ -903,6 +980,7 @@
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
+    else if (state.tab === "numsearch") renderNumSearch();
     var pagePrefix = historyStackHTML();
     if (state.tab !== "directory" && view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
       pagePrefix += modelPairStrip(latest + 1);
@@ -5639,6 +5717,37 @@
   });
 
   view.addEventListener("click", function (e) {
+    var searchType = e.target.closest("[data-numsearch-type]");
+    if (searchType) {
+      state.numSearchType = searchType.dataset.numsearchType;
+      var typeButtons = view.querySelectorAll("[data-numsearch-type]");
+      for (var ti = 0; ti < typeButtons.length; ti++) {
+        typeButtons[ti].classList.toggle("is-active", typeButtons[ti] === searchType);
+      }
+      var searchInput = document.getElementById("numSearchInput");
+      if (searchInput) searchInput.placeholder = state.numSearchType === "tail" ? "例如：0 3 5 9" : "例如：01 03 05 20";
+      var typeResults = document.getElementById("numSearchResults");
+      if (typeResults) typeResults.innerHTML = numSearchResultsHTML();
+      return;
+    }
+    var searchMode = e.target.closest("[data-numsearch-mode]");
+    if (searchMode) {
+      state.numSearchMode = searchMode.dataset.numsearchMode;
+      var modeButtons = view.querySelectorAll("[data-numsearch-mode]");
+      for (var mi = 0; mi < modeButtons.length; mi++) {
+        modeButtons[mi].classList.toggle("is-active", modeButtons[mi] === searchMode);
+      }
+      var modeResults = document.getElementById("numSearchResults");
+      if (modeResults) modeResults.innerHTML = numSearchResultsHTML();
+      return;
+    }
+    if (e.target.closest("[data-numsearch-run]")) {
+      var searchInput = document.getElementById("numSearchInput");
+      state.numSearchQuery = searchInput ? searchInput.value : "";
+      var searchResults = document.getElementById("numSearchResults");
+      if (searchResults) searchResults.innerHTML = numSearchResultsHTML();
+      return;
+    }
     var directoryGroup = e.target.closest("[data-directory-group]");
     if (directoryGroup) {
       state.group = directoryGroup.dataset.directoryGroup;
@@ -5850,6 +5959,13 @@
       else renderRecords();
       return;
     }
+  });
+
+  view.addEventListener("input", function (e) {
+    if (!e.target.closest("[data-numsearch-input]")) return;
+    state.numSearchQuery = e.target.value;
+    var results = document.getElementById("numSearchResults");
+    if (results) results.innerHTML = numSearchResultsHTML();
   });
 
   view.addEventListener("change", function (e) {

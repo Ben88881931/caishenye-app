@@ -613,6 +613,48 @@ html.gesture-active * {
   line-height: 1.55;
 }
 
+.numsearch-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.numsearch-input {
+  min-width: 0;
+  min-height: 38px;
+  flex: 1 1 220px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.numsearch-modes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.numsearch-mode.is-active {
+  border-color: #1d4ed8 !important;
+  background: #2563eb !important;
+  color: #fff !important;
+}
+
+.numsearch-results {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.numsearch-empty {
+  padding: 24px 12px;
+  color: #64748b;
+  text-align: center;
+}
+
 .nav-group--back {
   border-color: #2563eb !important;
   background: #eff6ff !important;
