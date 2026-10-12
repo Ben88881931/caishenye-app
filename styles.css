@@ -619,6 +619,14 @@ html.gesture-active * {
   color: #1d4ed8 !important;
 }
 
+.nav-back-tab {
+  flex: 0 0 auto;
+  border-color: #2563eb !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  font-weight: 900 !important;
+}
+
 .history-stack {
   display: grid;
   gap: 6px;

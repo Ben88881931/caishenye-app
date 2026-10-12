@@ -648,6 +648,9 @@
       return '<button class="tab ' + (state.tab === t.id ? "is-active" : "") +
         '" type="button" data-tab="' + t.id + '">' + t.label + "</button>";
     }).join("");
+    if (!directoryActive) {
+      tabsHtml = '<button class="tab nav-back-tab" type="button" data-directory="1">← 返回目录</button>' + tabsHtml;
+    }
 
     tabsHtml += '<div class="tab-sort-tail">';
     tabsHtml += '<button class="tab sort-toggle' + (tabSortMode ? " is-on" : "") + '" type="button" data-sort-toggle="1">' +
@@ -658,7 +661,8 @@
     tabsHtml += "</div>";
 
     tabsEl.classList.toggle("sorting", tabSortMode);
-    tabsEl.innerHTML = '<div class="nav-groups">' + groupHtml + '</div><div class="nav-subtabs">' + tabsHtml + "</div>";
+    tabsEl.innerHTML = (groupHtml ? '<div class="nav-groups">' + groupHtml + '</div>' : "") +
+      '<div class="nav-subtabs">' + tabsHtml + "</div>";
     var nextGroups = tabsEl.querySelector(".nav-groups");
     var nextSubtabs = tabsEl.querySelector(".nav-subtabs");
     if (nextGroups) nextGroups.scrollLeft = groupScroll;
