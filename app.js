@@ -5412,7 +5412,7 @@
   var SWIPE_X = 28;
   var SWIPE_Y = 36;
   var SWIPE_PRIMARY_X = 20;
-  var STRONG_SWIPE_X = 110;
+  var RETURN_SWIPE_X = 48;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   document.documentElement.addEventListener("pointerdown", function (e) {
@@ -5450,7 +5450,7 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (level === "tab" && absX >= STRONG_SWIPE_X && absX > absY * 1.05) {
+    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05) {
       historyPointerStart.handled = true;
       gestureClickGuard = true;
       e.preventDefault();
@@ -5485,7 +5485,7 @@
     var level = gesture.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (isVertical) return;
-    if (level === "tab" && absX >= STRONG_SWIPE_X && absX > absY * 1.05) {
+    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05) {
       state.tab = "directory";
       lsSet("v2_current_tab", state.tab);
       render();
