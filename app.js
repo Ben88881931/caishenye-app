@@ -630,7 +630,7 @@
         return h;
       }).join("");
     } else {
-      groupHtml = '<button class="nav-group nav-group--back" type="button" data-directory="1">← 返回目录</button>';
+      groupHtml = "";
     }
     var tabs = directoryActive ? [] : getVisibleTabs(group.id);
     var tabsHtml = tabs.map(function (t) {
@@ -5412,6 +5412,7 @@
   var SWIPE_X = 28;
   var SWIPE_Y = 36;
   var SWIPE_PRIMARY_X = 20;
+  var STRONG_SWIPE_X = 110;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   document.documentElement.addEventListener("pointerdown", function (e) {
@@ -5449,6 +5450,15 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
+    if (level === "tab" && absX >= STRONG_SWIPE_X && absX > absY * 1.05) {
+      historyPointerStart.handled = true;
+      gestureClickGuard = true;
+      e.preventDefault();
+      state.tab = "directory";
+      lsSet("v2_current_tab", state.tab);
+      render();
+      return;
+    }
     if (absX >= swipeX && absX > absY * 1.05) {
       historyPointerStart.handled = true;
       gestureClickGuard = true;
@@ -5475,6 +5485,12 @@
     var level = gesture.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (isVertical) return;
+    if (level === "tab" && absX >= STRONG_SWIPE_X && absX > absY * 1.05) {
+      state.tab = "directory";
+      lsSet("v2_current_tab", state.tab);
+      render();
+      return;
+    }
     if (absX < swipeX || absX < absY * 1.1) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
     else stepTabHistory(dx > 0 ? -1 : 1);
