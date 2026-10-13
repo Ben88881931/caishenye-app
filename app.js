@@ -3791,32 +3791,32 @@
     }
     html += '</div>';
     function wmWindowCard(w, isLive, item) {
-      var border = isLive ? "#2563eb" : w.hitIndex === 0 ? "#fecaca" : "#bbf7d0";
-      var bg = isLive ? "#eff6ff" : w.hitIndex === 0 ? "#fef2f2" : "#f0fdf4";
-      var card = '<div style="flex:0 0 238px;min-width:238px;border:1px solid ' + border + ';background:' + bg + ';border-radius:8px;padding:9px">';
-      card += '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">';
-      card += '<b style="font-size:13px">' + (isLive ? "当前窗口 · " : "") + wmPeriodLabel(w.start) + '</b>';
-      if (isLive) card += '<span style="font-size:11px;font-weight:900;color:#1d4ed8">进行中</span>';
-      else card += '<span style="font-size:11px;font-weight:900;color:' + (w.hitIndex > 0 ? "#16a34a" : "#dc2626") + '">' + (w.hitIndex > 0 ? "第" + w.hitIndex + "期中" : "三期全错") + '</span>';
-      card += '</div>';
+      var tone = isLive ? "#2563eb" : w.hitIndex === 0 ? "#dc2626" : "#16a34a";
+      var cls = isLive ? "live" : w.hitIndex === 0 ? "miss" : "hit";
+      var resultText = isLive
+        ? ("进行中 " + Math.min(w.attempts.length, 3) + "/3")
+        : (w.hitIndex > 0 ? "第" + w.hitIndex + "期中" : "三期全错");
+      var card = '<div class="wm-win-card wm-win-card--' + cls + '">';
+      card += '<div class="wm-win-card__start">' + (isLive ? "当前窗口 · " : "") + "起始 " + wmPeriodLabel(w.start) + '</div>';
+      card += '<div class="wm-win-card__result" style="color:' + tone + '">' + resultText + '</div>';
       for (var k = 0; k < 3; k++) {
         var cardPeriod = w.start + k;
         var att = w.attempts[k];
-        card += '<div style="display:flex;align-items:center;gap:5px;margin-top:6px;font-size:12px">';
-        card += '<span style="flex:0 0 42px;font-weight:900;color:#475569">第' + (k + 1) + '期</span>';
+        card += '<div class="wm-win-card__row">';
+        card += '<span class="wm-win-card__stage">第' + (k + 1) + '期</span>';
         if (att) {
-          card += '<span style="color:#64748b">' + wmPeriodLabel(att.period) + '</span>';
-          card += '<span style="margin-left:auto;font-weight:900">尾' + att.tail + '</span>';
-          card += '<b style="color:' + (att.hit ? "#16a34a" : "#dc2626") + '">' + (att.hit ? "中" : "错") + '</b>';
+          card += '<span class="wm-win-card__period">' + wmPeriodLabel(att.period) + '</span>';
+          card += '<span class="wm-win-card__tail">尾' + att.tail + '</span>';
+          card += '<span class="wm-win-card__state" style="color:' + (att.hit ? "#16a34a" : "#dc2626") + '">' + (att.hit ? "中" : "错") + '</span>';
         } else if (isLive) {
-          card += '<span style="color:#64748b">' + wmPeriodLabel(cardPeriod) + '</span>';
-          card += '<span style="margin-left:auto;font-weight:900;color:' + (cardPeriod <= latest ? "#94a3b8" : "#2563eb") + '">' + (cardPeriod <= latest ? "未记录" : "待开奖") + '</span>';
+          card += '<span class="wm-win-card__period">' + wmPeriodLabel(cardPeriod) + '</span>';
+          card += '<span class="wm-win-card__tail" style="color:' + (cardPeriod <= latest ? "#94a3b8" : "#2563eb") + '">' + (cardPeriod <= latest ? "未记录" : "待开奖") + '</span>';
         } else {
-          card += '<span style="color:#94a3b8;margin-left:auto">命中后停止</span>';
+          card += '<span class="wm-win-card__tail" style="color:#94a3b8">命中后停止</span>';
         }
         card += '</div>';
       }
-      card += '<div style="margin-top:7px;border-top:1px solid #e2e8f0;padding-top:6px;display:flex;align-items:center;justify-content:space-between;font-size:11px">';
+      card += '<div class="wm-win-card__foot">';
       if (isLive) {
         card += '<span style="color:#1d4ed8;font-weight:900">已检查' + w.attempts.length + '期</span>';
         card += '<span style="color:#1d4ed8;font-weight:900">下期 ' + wmPeriodLabel(w.start + w.attempts.length) + '</span>';
@@ -3824,11 +3824,10 @@
         card += '<span style="color:' + (item.missStreak ? "#dc2626" : "#94a3b8") + ';font-weight:900">' + (item.missStreak ? "第" + item.missStreak + "次连错" : "未连错") + '</span>';
         card += '<b style="color:' + (item.profit >= 0 ? "#16a34a" : "#dc2626") + '">本窗 ' + (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</b>';
       }
-      card += '</div>';
-      card += '</div>';
+      card += '</div></div>';
       return card;
     }
-    html += '<div class="wm-subhead">窗口明细 · 每个窗口的第1/2/3期分别在哪一期、尾号、中或错 · 每年从第1期重新开窗</div>';
+    html += '<div class="wm-subhead">窗口明细 · 每个窗口的第1/2/3期分别在哪一期、尾号、中或错 · 每年从第1期重新开窗 · <span style="font-weight:400;color:#64748b">新→旧 · 中=绿 错=红 进行中=蓝</span></div>';
     html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口</div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
     var detailYears = Number(state.windowMultDetailYears) || 1;

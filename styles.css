@@ -812,6 +812,85 @@ html.gesture-active * {
   white-space: nowrap;
 }
 
+.wm-win-card {
+  flex: 0 0 198px;
+  min-width: 198px;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.wm-win-card--live {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.wm-win-card--hit {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.wm-win-card--miss {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.wm-win-card__start {
+  font-size: 10px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.wm-win-card__result {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.wm-win-card__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.35;
+  color: #4b5563;
+}
+
+.wm-win-card__stage {
+  flex: 0 0 30px;
+  font-weight: 900;
+  color: #6b7280;
+}
+
+.wm-win-card__period {
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.wm-win-card__tail {
+  margin-left: auto;
+  font-weight: 900;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.wm-win-card__state {
+  font-weight: 900;
+}
+
+.wm-win-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(15, 23, 42, .08);
+  font-size: 10px;
+}
+
 .nav-group--back {
   border-color: #2563eb !important;
   background: #eff6ff !important;
