@@ -355,7 +355,7 @@
     windowMultLine: "tail1",
     windowMultN: 2,
     windowMultView: "overview",
-    windowMultDetailLimit: 30,
+    windowMultDetailYears: 1,
     numSearchQuery: "",
     numSearchMode: "all",
     numSearchType: "tail",
@@ -3180,7 +3180,15 @@
     var active = null;
     var waiting = null;
     var p = line.kind === "tail" ? 1 : 31;
+    // 每年第一期重新开窗：跨年未完成窗口作废、等待重开清零，保证每一年的窗口单独成立
+    var curYear = 0;
     while (p <= D.length) {
+      var hereYear = wmYearOf(p);
+      if (hereYear && hereYear !== curYear) {
+        curYear = hereYear;
+        active = null;
+        waiting = null;
+      }
       if (waiting) {
         var waitingRow = D[p - 1];
         var waitingTails = waitingRow ? (waitingRow.nums || []).map(function (num) { return Number(num) % 10; }) : [];
@@ -3431,9 +3439,9 @@
     var netBest = lineBest[line.id].netBest;
     var netBestText = netBest ? (netBest.n === 1 ? "不倍投" : netBest.n + "倍") : "未通过";
     var selectedYtdBest = ytdBestByLine[line.id] || null;
+    var activeN = Number(state.windowMultN);
     var selectedYtdPosition = wmCurrentPosition(line, selectedYtdBest ? selectedYtdBest.n : activeN);
     var selectedYtdPeriod = selectedYtdPosition.period ? wmPeriodLabel(selectedYtdPosition.period) : "-";
-    var activeN = Number(state.windowMultN);
     var selected = simulations.filter(function (s) { return s.n === activeN; })[0] || simulations[2];
     var liveState = wmCurrentState(line);
     var windowHitRate = selected.records.length ? ((selected.records.length - selected.missWindows) / selected.records.length) * 100 : 0;
@@ -3441,16 +3449,6 @@
     var selectedPlanText = wmPlanText(selected.n);
     var selectedPosition = wmPositionForPlan(line, line.plan);
     var selectedPositionPeriod = selectedPosition.period ? wmPeriodLabel(selectedPosition.period) : "-";
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口倍投测试 · 正式版候选</h2><span class="section__hint">真实窗口规律账本 · 100元起 · 年度稳健最优/全周期收益最高/今年最优分开标注</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px;background:#f8fafc;border:1px solid #e2e8f0"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:6px">本页作用</div><div style="font-size:12px;color:#475569;line-height:1.8">把每条线的每一个窗口拆开，逐期记录第1/2/3期尾号、命中、错误、第几期中、三期全错、等待重开和下一窗口。数据只按真实开奖结果结算，不预测、不补造、不改历史。</div></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div class="wm-line-selector">';
-    orderedLines.forEach(function (item) {
-      var itemBest = (lineBest[item.id] || {}).best;
-      var itemBestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
-      var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
-      html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#dbeafe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
-    });
-    html += '</div></div></div>';
     var wmView = state.windowMultView || "overview";
     var wmViewTabs = [
       ["overview", "总览"],
@@ -3460,10 +3458,25 @@
     ].map(function (item) {
       return '<button class="chip wm-view-tab' + (wmView === item[0] ? " is-active" : "") + '" type="button" data-wm-view="' + item[0] + '">' + item[1] + '</button>';
     }).join("");
-    html += '<div class="section"><div class="wm-view-tabs">' + wmViewTabs + '</div></div>';
+    function wmCell(label, value, sub, color) {
+      return '<div class="wm-cell"><div class="wm-cell__v"' + (color ? ' style="color:' + color + '"' : "") + '>' + value + '</div><div class="wm-cell__l">' + label + '</div>' + (sub ? '<div class="wm-cell__l" style="color:#94a3b8">' + sub + '</div>' : "") + '</div>';
+    }
+    function wmStat(label, value, color) {
+      return '<div class="wm-stat"><div style="font-size:16px;font-weight:900' + (color ? ";color:" + color : "") + '">' + value + '</div><div style="font-size:11px;color:#64748b;margin-top:2px">' + label + '</div></div>';
+    }
+    var html = '<div class="section"><div class="panel wm-card">';
+    html += '<div class="wm-card__head"><div><b class="wm-card__title">窗口倍投测试 · 正式版候选</b><span class="wm-card__hint">真实窗口规律账本 · 100元起 · 逐期记录每条线每个窗口的第1/2/3期尾号、命中或错误、第几期中、三期全错、等待重开和下一窗口；只按真实开奖结算，不预测、不补造、不改历史。</span></div></div>';
+    html += '<div class="wm-view-tabs">' + wmViewTabs + '</div>';
+    html += '<div class="wm-line-selector">';
+    orderedLines.forEach(function (item) {
+      html += '<button class="chip wm-line-btn" type="button" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '">' + item.label + '</button>';
+    });
+    html += '</div>';
+    html += '</div></div>';
     html += '<div class="wm-view-group" data-wm-group="formula">';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">每个号码的最优下注公式</h2><span class="section__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高</span></div></div>';
-    html += '<div class="section"><div class="panel wm-formula-panel">';
+    html += '<div class="section"><div class="panel wm-card">';
+    html += '<div class="wm-card__head"><b class="wm-card__title">每个号码的最优下注公式</b><span class="wm-card__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高 · 左右滑动</span></div>';
+    html += '<div class="wm-formula-panel wm-hscroll">';
     orderedLines.forEach(function (item) {
       var itemData = lineBest[item.id] || { best: null };
       var itemBest = itemData.best;
@@ -3498,7 +3511,7 @@
       }
       html += '</div>';
     });
-    html += '</div></div>';
+    html += '</div></div></div>';
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="years">';
     var ytdRows = EXEC_LINES.map(function (item) {
@@ -3506,8 +3519,10 @@
     }).sort(function (a, b) {
       return (b.best ? b.best.year.net : -Infinity) - (a.best ? a.best.year.net : -Infinity);
     });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">' + currentYear + '年最优规律排名</h2><span class="section__hint">只按今年已开奖数据对比，公式固定为100元起；同时标注是否通过全周期验证</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1120px"><thead><tr><th>名次</th><th>线路</th><th>今年最优公式</th><th>第1/2/3期仓位</th><th>今年净收益</th><th>今年ROI</th><th>命中/全错</th><th>今年当前仓位</th><th>全周期验证</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="panel wm-card">';
+    html += '<div class="wm-card__head"><b class="wm-card__title">年度测试</b><span class="wm-card__hint">' + currentYear + '年最优规律排名 + 14线逐年测试对比 · 公式固定100元起 · 左右滑动查看</span></div>';
+    html += '<div class="wm-subhead">' + currentYear + '年最优规律排名</div>';
+    html += '<div class="wm-hscroll"><table class="table" style="min-width:1120px"><thead><tr><th>名次</th><th>线路</th><th>今年最优公式</th><th>第1/2/3期仓位</th><th>今年净收益</th><th>今年ROI</th><th>命中/全错</th><th>今年当前仓位</th><th>全周期验证</th></tr></thead><tbody>';
     ytdRows.forEach(function (row, index) {
       var best = row.best;
       var position = wmPositionForPlan(row.item, row.item.plan);
@@ -3528,10 +3543,10 @@
       }
       html += '</tr>';
     });
-    html += '</tbody></table></div></div>';
+    html += '</tbody></table></div>';
     var annualYears = (lineBest[line.id].annual[selected.n] || { years: [] }).years.map(function (row) { return row.year; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">14线逐年测试对比</h2><span class="section__hint">公式固定不变，逐年单算净收益/命中率；不要被某一年的高收益掩盖其他年份</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1500px"><thead><tr><th>线路</th><th>年度稳健最优</th>';
+    html += '<div class="wm-subhead">14线逐年测试对比 <span style="font-weight:400;color:#64748b">公式固定不变，逐年单算净收益/命中率；不要被某一年的高收益掩盖其他年份</span></div>';
+    html += '<div class="wm-hscroll"><table class="table" style="min-width:1500px"><thead><tr><th>线路</th><th>年度稳健最优</th>';
     annualYears.forEach(function (year) { html += '<th>' + year + '年</th>'; });
     html += '<th>正收益年</th><th>最近3年</th><th>全周期</th></tr></thead><tbody>';
     orderedLines.forEach(function (item) {
@@ -3552,24 +3567,25 @@
       html += '<td><b>' + (itemStats ? itemStats.recent3Positive + '/3' : "-") + '</b></td>';
       html += '<td style="font-weight:900;color:' + (itemStats && itemStats.net >= 0 ? "#16a34a" : "#dc2626") + '">' + (itemStats ? (itemStats.net >= 0 ? "+" : "") + itemStats.net : "-") + '</td></tr>';
     });
-    html += '</tbody></table></div></div>';
+    html += '</tbody></table></div>';
+    html += '</div></div>';
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="overview">';
     var multiplierButtons = ns.map(function (n) {
       return '<button class="chip" data-wm-n="' + n + '" style="' + (n === activeN ? "background:#2563eb;color:#fff;border-color:#1d4ed8" : "") + '">' + (n === 1 ? "不倍投" : n + "倍") + '</button>';
     }).join("");
-    html += '<div class="section"><div class="panel" style="padding:14px;background:#111827;color:#fff;border:0"><div style="font-size:13px;font-weight:800;color:#cbd5e1;margin-bottom:8px">核心结论 · ' + line.label + '</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div style="font-size:11px;color:#cbd5e1">年度稳健最优</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + netBestText + '</div><div style="font-size:11px;color:#cbd5e1">全周期收益最高</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#bfdbfe">' + (selectedYtdBest ? (selectedYtdBest.n === 1 ? "不倍投" : selectedYtdBest.n + "倍") : "无数据") + '</div><div style="font-size:11px;color:#cbd5e1">' + currentYear + '年最优 · ' + (selectedYtdBest ? wmPlanText(selectedYtdBest.n) : "0 / 0 / 0") + '</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fde68a">' + selectedPosition.label + '</div><div style="font-size:11px;color:#cbd5e1">正式执行仓位 · ' + (selectedPosition.amount > 0 ? selectedPosition.amount + "元" : selectedPosition.status) + '</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fde68a">' + selectedYtdPosition.label + '</div><div style="font-size:11px;color:#cbd5e1">今年测试仓位 · ' + (selectedYtdPosition.amount > 0 ? selectedYtdPosition.amount + "元 · " + selectedYtdPeriod : selectedYtdPosition.status) + '</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + windowHitRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">窗口命中率</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + missRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">三期全错率</div></div>';
-    html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + selected.maxLossStreak + '窗</div><div style="font-size:11px;color:#cbd5e1">最大连续全错</div></div>';
-    html += '</div><div style="font-size:12px;color:#e2e8f0;margin-top:8px">当前显示：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额 ' + selectedPlanText + '</div>';
-    html += '<div style="border-top:1px solid rgba(255,255,255,.14);margin-top:10px;padding-top:10px"><div style="font-size:11px;font-weight:900;color:#cbd5e1;margin-bottom:6px">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + multiplierButtons + '</div></div>';
-    html += '<div style="border-top:1px solid rgba(255,255,255,.14);margin-top:10px;padding-top:10px;font-size:12px;color:#e2e8f0"><b>当前窗口状态：</b>';
+    html += '<div class="section"><div class="panel wm-card">';
+    html += '<div class="wm-card__head"><b class="wm-card__title">总览 · ' + line.label + '</b><span class="wm-card__hint">正式执行口径 = 公式表 line.plan；年度稳健最优 / 全周期收益最高 / 今年最优只作研究参考 · 左右滑动</span></div>';
+    html += '<div class="wm-subhead">核心结论</div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += wmCell("年度稳健最优", (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过"), best ? ((best.net >= 0 ? "+" : "") + best.net + " · ROI " + best.roi.toFixed(2) + "%") : "训练/验证未同时通过", "#16a34a");
+    html += wmCell("全周期收益最高", netBestText, netBest ? ((netBest.net >= 0 ? "+" : "") + netBest.net + " · ROI " + netBest.roi.toFixed(2) + "%") : "未通过", "#0f172a");
+    html += wmCell(currentYear + "年最优", (selectedYtdBest ? (selectedYtdBest.n === 1 ? "不倍投" : selectedYtdBest.n + "倍") : "无数据"), selectedYtdBest ? wmPlanText(selectedYtdBest.n) : "0 / 0 / 0", "#1d4ed8");
+    html += wmCell("正式执行仓位", selectedPosition.label, (selectedPosition.amount > 0 ? selectedPosition.amount + "元 · 检查 " + selectedPositionPeriod : selectedPosition.status), "#b45309");
+    html += wmCell("今年测试仓位", selectedYtdPosition.label, (selectedYtdPosition.amount > 0 ? selectedYtdPosition.amount + "元 · 检查 " + selectedYtdPeriod : selectedYtdPosition.status), "#b45309");
+    html += wmCell("当前倍率", (selected.n === 1 ? "不倍投" : selected.n + "倍"), "单窗金额 " + selectedPlanText, "#0f172a");
+    html += '</div>';
+    html += '<div class="wm-status"><b>当前窗口状态：</b>';
     if (liveState.waiting) {
       html += '等待重开 · 本期 0元 · 等待尾' + liveState.waiting.tail + '重新开出';
     } else if (liveState.active) {
@@ -3584,39 +3600,39 @@
     } else {
       html += '无进行中窗口 · 空仓等待';
     }
-    html += '</div></div></div>';
-    html += '<div class="section"><div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + line.label + '</div><div class="stat__label">当前线路</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div class="stat__label">年度稳健最优倍率</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + wmPlanText(selected.n) + '</div><div class="stat__label">当前单窗金额</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + selected.records.length + '</div><div class="stat__label">真实窗口总数</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + (selected.records.length ? (((selected.records.length - selected.missWindows) / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">窗口命中率</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + (selected.records.length ? ((selected.missWindows / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">三期全错率</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.maxLossStreak + '窗</div><div class="stat__label">最大连续全错</div></div>';
-    html += '</div></div>';
-    html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px">';
+    html += '</div>';
+    html += '<div class="wm-subhead">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + multiplierButtons + '</div>';
+    html += '<div class="wm-subhead">各倍率对比 <span style="font-weight:400;color:#64748b">点卡片切换当前倍率</span></div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
     simulations.forEach(function (s) {
       var isBest = best && best.n === s.n;
       var isCurrent = s.n === activeN;
-      html += '<button data-wm-n="' + s.n + '" style="text-align:left;border:2px solid ' + (isCurrent ? "#2563eb" : isBest ? "#16a34a" : "#e2e8f0") + ';background:' + (isBest ? "#f0fdf4" : "#fff") + ';border-radius:8px;padding:10px;cursor:pointer">';
-      html += '<div style="font-size:18px;font-weight:900">' + (s.n === 1 ? "不倍投" : s.n + "倍") + (isBest ? " · 最优" : "") + '</div>';
-      html += '<div style="font-size:20px;font-weight:900;color:' + (s.net >= 0 ? "#16a34a" : "#dc2626") + ';margin-top:5px">' + (s.net >= 0 ? "+" : "") + s.net + '</div>';
-      html += '<div style="font-size:11px;color:#64748b;margin-top:4px">ROI ' + s.roi.toFixed(2) + '%</div>';
-      html += '<div style="font-size:11px;color:#64748b">回撤 ' + s.maxDD + ' · 最高 ' + s.maxMult.toFixed(2) + '倍</div>';
-      html += '<div style="font-size:11px;color:#dc2626">连续全错 ' + s.maxLossStreak + ' 窗</div>';
+      html += '<button data-wm-n="' + s.n + '" style="flex:0 0 168px;min-width:168px;text-align:left;border:2px solid ' + (isCurrent ? "#2563eb" : isBest ? "#16a34a" : "#e2e8f0") + ';background:' + (isBest ? "#f0fdf4" : "#fff") + ';border-radius:8px;padding:9px;cursor:pointer">';
+      html += '<div style="font-size:15px;font-weight:900">' + (s.n === 1 ? "不倍投" : s.n + "倍") + (isCurrent ? " · 当前" : "") + (isBest ? " · 最优" : "") + '</div>';
+      html += '<div style="font-size:18px;font-weight:900;color:' + (s.net >= 0 ? "#16a34a" : "#dc2626") + ';margin-top:4px">' + (s.net >= 0 ? "+" : "") + s.net + '</div>';
+      html += '<div style="font-size:11px;color:#64748b;margin-top:3px">ROI ' + s.roi.toFixed(2) + '% · 回撤 ' + s.maxDD + '</div>';
+      html += '<div style="font-size:11px;color:#64748b">最高 ' + s.maxMult.toFixed(2) + '倍 · 连错 ' + s.maxLossStreak + '窗</div>';
       html += '</button>';
     });
-    html += '</div></div>';
-    html += '<div class="section"><div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value">' + selected.hits1 + ' · ' + (selected.records.length ? ((selected.hits1 / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">第1期中</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + selected.hits2 + ' · ' + (selected.records.length ? ((selected.hits2 / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">第2期中</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + selected.hits3 + ' · ' + (selected.records.length ? ((selected.hits3 / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">第3期中</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.missWindows + ' · ' + (selected.records.length ? ((selected.missWindows / selected.records.length) * 100).toFixed(2) + "%" : "-") + '</div><div class="stat__label">三期全错</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + selected.orderHit.toFixed(2) + '%</div><div class="stat__label">实际下单命中率</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + selected.maxWindowRisk + '</div><div class="stat__label">单窗最大风险（元）</div></div>';
+    html += '</div>';
+    html += '<div class="wm-subhead">当前倍率统计</div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += wmStat("真实窗口总数", selected.records.length);
+    html += wmStat("窗口命中率", windowHitRate.toFixed(2) + "%");
+    html += wmStat("三期全错率", missRate.toFixed(2) + "%", "#dc2626");
+    html += wmStat("最大连续全错", selected.maxLossStreak + "窗", "#dc2626");
+    html += wmStat("第1期中", selected.hits1 + " · " + (selected.records.length ? ((selected.hits1 / selected.records.length) * 100).toFixed(2) + "%" : "-"));
+    html += wmStat("第2期中", selected.hits2 + " · " + (selected.records.length ? ((selected.hits2 / selected.records.length) * 100).toFixed(2) + "%" : "-"));
+    html += wmStat("第3期中", selected.hits3 + " · " + (selected.records.length ? ((selected.hits3 / selected.records.length) * 100).toFixed(2) + "%" : "-"));
+    html += wmStat("三期全错", selected.missWindows + " · " + (selected.records.length ? ((selected.missWindows / selected.records.length) * 100).toFixed(2) + "%" : "-"), "#dc2626");
+    html += wmStat("实际下单命中率", selected.orderHit.toFixed(2) + "%");
+    html += wmStat("单窗最大风险", selected.maxWindowRisk + "元");
+    html += '</div>';
     html += '</div></div>';
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="windows">';
+    html += '<div class="section"><div class="panel wm-card">';
+    html += '<div class="wm-card__head"><b class="wm-card__title">窗口明细 · ' + line.label + '</b><span class="wm-card__hint">每个窗口的第1/2/3期分别在哪一期、尾号、中或错 · 最新在前 · 左右滑动查看</span></div>';
     var missRuns = [];
     var currentRun = null;
     selected.records.forEach(function (item) {
@@ -3657,20 +3673,19 @@
     var afterOne = continueMissRate(1);
     var afterTwo = continueMissRate(2);
     var afterThree = continueMissRate(3);
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口连续全错规律</h2><span class="section__hint">统计连续2窗、3窗、4窗以上全错，以及继续全错的概率</span></div></div>';
-    html += '<div class="section"><div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value">' + runCounts.one + '</div><div class="stat__label">单次全错次数</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#d97706">' + runCounts.two + '</div><div class="stat__label">连续2窗全错</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + runCounts.three + '</div><div class="stat__label">连续3窗全错</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#991b1b">' + runCounts.fourPlus + '</div><div class="stat__label">连续4窗及以上</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + afterOne.toFixed(2) + '%</div><div class="stat__label">1窗全错后，下窗继续错</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + afterTwo.toFixed(2) + '%</div><div class="stat__label">2窗连错后，第3窗继续错</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + afterThree.toFixed(2) + '%</div><div class="stat__label">3窗连错后，第4窗继续错</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.maxLossStreak + '窗</div><div class="stat__label">历史最大连续全错</div></div>';
-    html += '</div></div>';
+    html += '<div class="wm-subhead">连续全错规律</div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += wmStat("单次全错次数", runCounts.one);
+    html += wmStat("连续2窗全错", runCounts.two, "#d97706");
+    html += wmStat("连续3窗全错", runCounts.three, "#dc2626");
+    html += wmStat("连续4窗及以上", runCounts.fourPlus, "#991b1b");
+    html += wmStat("1窗全错后继续错", afterOne.toFixed(2) + "%");
+    html += wmStat("2窗连错后第3窗错", afterTwo.toFixed(2) + "%");
+    html += wmStat("3窗连错后第4窗错", afterThree.toFixed(2) + "%");
+    html += wmStat("历史最大连续全错", selected.maxLossStreak + "窗", "#dc2626");
+    html += '</div>';
     var consecutiveRuns = missRuns.filter(function (run) { return run.length >= 2; }).slice().reverse();
-    html += '<div class="section"><div class="panel" style="padding:10px">';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:#0f172a">连续2窗及以上全错记录</div><span style="font-size:11px;color:#64748b;flex:0 0 auto">左右滑动</span></div>';
+    html += '<div class="wm-subhead">连续2窗及以上全错记录</div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
     if (!consecutiveRuns.length) {
       html += '<div style="font-size:13px;color:#64748b">没有连续2窗全错记录</div>';
@@ -3684,7 +3699,7 @@
         html += '</div>';
       });
     }
-    html += '</div></div></div>';
+    html += '</div>';
     function wmWindowCard(w, isLive, item) {
       var border = isLive ? "#2563eb" : w.hitIndex === 0 ? "#fecaca" : "#bbf7d0";
       var bg = isLive ? "#eff6ff" : w.hitIndex === 0 ? "#fef2f2" : "#f0fdf4";
@@ -3723,31 +3738,50 @@
       card += '</div>';
       return card;
     }
-    html += '<div class="section"><div class="panel" style="padding:10px">';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:#0f172a">窗口明细 · 每个窗口的第1/2/3期分别在哪一期、尾号、中或错</div><span style="font-size:11px;color:#64748b;flex:0 0 auto">左右滑动 · 最新在前</span></div>';
+    html += '<div class="wm-subhead">窗口明细 · 每个窗口的第1/2/3期分别在哪一期、尾号、中或错 · 每年从第1期重新开窗</div>';
     html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口</div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
-    var detailLimit = Number(state.windowMultDetailLimit) || 30;
+    var detailYears = Number(state.windowMultDetailYears) || 1;
+    var allYears = [];
+    selected.records.forEach(function (r) {
+      var rYear = wmYearOf(r.window.start);
+      if (rYear && allYears.indexOf(rYear) < 0) allYears.push(rYear);
+    });
+    allYears.sort(function (a, b) { return b - a; });
+    var shownYears = allYears.slice(0, detailYears);
     var detailTotal = selected.records.length;
-    var detailRecords = selected.records.slice(Math.max(0, detailTotal - detailLimit)).reverse();
+    // 年份从新到旧排列，但每一年内部从该年第1期往后排，保证每个年度都从第1期开始看
+    var detailRecords = [];
+    shownYears.forEach(function (detailYear) {
+      selected.records.forEach(function (r) {
+        if (wmYearOf(r.window.start) === detailYear) detailRecords.push(r);
+      });
+    });
     if (liveState.active) html += wmWindowCard(liveState.active, true, null);
     if (!detailTotal && !liveState.active) {
       html += '<div style="font-size:13px;color:#64748b">暂无窗口记录</div>';
     }
+    var lastYearShown = null;
     detailRecords.forEach(function (item) {
+      var itemYear = wmYearOf(item.window.start);
+      if (itemYear !== lastYearShown) {
+        lastYearShown = itemYear;
+        html += '<div class="wm-year">' + itemYear + '年 · 从第1期起</div>';
+      }
       html += wmWindowCard(item.window, false, item);
     });
     html += '</div>';
     html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">';
-    html += '<span style="font-size:11px;color:#64748b">已显示最近 ' + detailRecords.length + ' / 共' + detailTotal + ' 个窗口</span>';
+    html += '<span style="font-size:11px;color:#64748b">已显示最近 ' + shownYears.length + ' 年 · ' + detailRecords.length + ' 个窗口 / 共' + allYears.length + ' 年、' + detailTotal + ' 个窗口</span>';
     html += '<span style="display:flex;gap:6px">';
-    if (detailRecords.length < detailTotal) {
-      html += '<button class="chip" type="button" data-wm-detail-more="30" style="font-weight:900">再显示30个</button>';
+    if (shownYears.length < allYears.length) {
+      html += '<button class="chip" type="button" data-wm-detail-more="1" style="font-weight:900">多看1年</button>';
     }
-    if (detailLimit > 30) {
-      html += '<button class="chip" type="button" data-wm-detail-reset="1" style="font-weight:900">只看最近30个</button>';
+    if (detailYears > 1) {
+      html += '<button class="chip" type="button" data-wm-detail-reset="1" style="font-weight:900">只看最近1年</button>';
     }
-    html += '</span></div></div></div>';
+    html += '</span></div>';
+    html += '</div></div>';
     html += '</div>';
     html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
@@ -5750,12 +5784,12 @@
     }
     var wmMoreBtn = e.target.closest("[data-wm-detail-more]");
     if (wmMoreBtn) {
-      state.windowMultDetailLimit = (Number(state.windowMultDetailLimit) || 30) + Number(wmMoreBtn.dataset.wmDetailMore || 30);
+      state.windowMultDetailYears = (Number(state.windowMultDetailYears) || 1) + Number(wmMoreBtn.dataset.wmDetailMore || 1);
       renderWindowMultiplierTest();
       return;
     }
     if (e.target.closest("[data-wm-detail-reset]")) {
-      state.windowMultDetailLimit = 30;
+      state.windowMultDetailYears = 1;
       renderWindowMultiplierTest();
       return;
     }
