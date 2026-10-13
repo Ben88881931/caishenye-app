@@ -645,14 +645,32 @@ html.gesture-active * {
 }
 
 .numsearch-results {
-  max-height: 520px;
-  overflow: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .numsearch-empty {
   padding: 24px 12px;
   color: #64748b;
   text-align: center;
+}
+
+.wm-formula-panel {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wm-formula-row {
+  flex: 0 0 280px;
+  padding: 12px 14px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.wm-formula-row:last-child {
+  border-right: 0;
 }
 
 .nav-group--back {

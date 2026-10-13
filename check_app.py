@@ -265,10 +265,10 @@ def main():
             pass_("窗口倍投测试逐年对比14线并区分年度稳健与全周期最优")
         else:
             fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
-        if "var orderedLines = EXEC_LINES.slice();" in app_text and "当前有仓位 · 正式执行公式" in app_text and "按固定线路顺序显示" in app_text and "position.amount > 0" in app_text and "activePositionRows" in app_text:
-            pass_("窗口倍投测试按固定线路顺序显示正式执行仓位")
+        if "var orderedLines = EXEC_LINES.slice();" in app_text and "wm-formula-panel" in app_text and "wm-formula-row" in app_text and "orderedLines.forEach" in app_text and "正式执行仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text:
+            pass_("窗口倍投测试按固定线路顺序合并显示公式和正式仓位")
         else:
-            fail("窗口倍投测试仍按仓位或金额重排线路")
+            fail("窗口倍投测试公式和仓位仍被拆成过多卡片或未按固定线路顺序显示")
         if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "正式版候选" in app_text:
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:

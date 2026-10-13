@@ -3436,31 +3436,8 @@
       html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#dbeafe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
     });
     html += '</div>';
-    var activePositionRows = orderedLines.map(function (item) {
-      var itemBest = ytdBestByLine[item.id];
-      var position = wmPositionForPlan(item, item.plan);
-      return { item: item, best: itemBest, position: position, period: position.period ? wmPeriodLabel(position.period) : "-" };
-    }).filter(function (row) { return row.position.amount > 0; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当前有仓位 · 正式执行公式</h2><span class="section__hint">按公式表的正式公式计算，有仓位线路仍按固定线路顺序显示</span></div></div>';
-    html += '<div class="section">';
-    if (!activePositionRows.length) {
-      html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
-    } else {
-      html += '<div class="position-card-grid">';
-      activePositionRows.forEach(function (row) {
-        var currentTail = execCurrentTail(row.item, wmCurrentState(row.item), latest + 1);
-        var cardTitle = row.item.kind === "tail" ? row.item.label : row.item.label + (currentTail != null ? ' · 尾' + currentTail : '');
-        html += '<div class="position-card position-card--execution">';
-        html += '<div class="position-card__title">' + cardTitle + ' · ' + row.position.label + '</div>';
-        html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.position.amount + '元</div>';
-        html += '<div style="font-size:11px;color:#475569;margin-top:3px">检查 ' + row.period + (row.best ? ' · ' + (row.best.n === 1 ? "不倍投" : row.best.n + "倍") : '') + '</div>';
-        html += '</div>';
-      });
-      html += '</div>';
-    }
-    html += '</div>';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每个号码的最优下注公式</h2><span class="section__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高</span></div></div>';
-    html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">';
+    html += '<div class="section"><div class="panel wm-formula-panel">';
     orderedLines.forEach(function (item) {
       var itemData = lineBest[item.id] || { best: null };
       var itemBest = itemData.best;
@@ -3473,7 +3450,7 @@
       var itemCurrentTail = execCurrentTail(item, wmCurrentState(item), latest + 1);
       var itemTailText = item.kind === "tail" ? "" : (itemCurrentTail != null ? ' · 尾' + itemCurrentTail : '');
       var itemPositionPeriod = itemPosition.period ? wmPeriodLabel(itemPosition.period) : "-";
-      html += '<div class="panel" style="padding:10px;border:2px solid ' + (itemBest ? "#bbf7d0" : "#fecaca") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
+      html += '<div class="wm-formula-row" style="border-left:4px solid ' + (itemBest ? "#16a34a" : "#dc2626") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + item.label + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
       html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
       html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">正式执行仓位 ' + itemPosition.label + itemTailText + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
@@ -3548,11 +3525,9 @@
       html += '<td style="font-weight:900;color:' + (itemStats && itemStats.net >= 0 ? "#16a34a" : "#dc2626") + '">' + (itemStats ? (itemStats.net >= 0 ? "+" : "") + itemStats.net : "-") + '</td></tr>';
     });
     html += '</tbody></table></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:6px">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
-    ns.forEach(function (n) {
-      html += '<button class="chip" data-wm-n="' + n + '" style="' + (n === activeN ? "background:#111827;color:#fff" : "") + '">' + (n === 1 ? "不倍投" : n + "倍") + '</button>';
-    });
-    html += '</div></div></div>';
+    var multiplierButtons = ns.map(function (n) {
+      return '<button class="chip" data-wm-n="' + n + '" style="' + (n === activeN ? "background:#2563eb;color:#fff;border-color:#1d4ed8" : "") + '">' + (n === 1 ? "不倍投" : n + "倍") + '</button>';
+    }).join("");
     html += '<div class="section"><div class="panel" style="padding:14px;background:#111827;color:#fff;border:0"><div style="font-size:13px;font-weight:800;color:#cbd5e1;margin-bottom:8px">核心结论 · ' + line.label + '</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div style="font-size:11px;color:#cbd5e1">年度稳健最优</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + netBestText + '</div><div style="font-size:11px;color:#cbd5e1">全周期收益最高</div></div>';
@@ -3562,25 +3537,22 @@
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900">' + windowHitRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">窗口命中率</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + missRate.toFixed(2) + '%</div><div style="font-size:11px;color:#cbd5e1">三期全错率</div></div>';
     html += '<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px"><div style="font-size:24px;font-weight:900;color:#fca5a5">' + selected.maxLossStreak + '窗</div><div style="font-size:11px;color:#cbd5e1">最大连续全错</div></div>';
-    html += '</div><div style="font-size:12px;color:#e2e8f0;margin-top:8px">当前显示：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额 ' + selectedPlanText + '</div></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px;border:2px solid ' + (liveState.waiting ? "#f59e0b" : liveState.active ? "#2563eb" : "#16a34a") + '"><div style="font-size:13px;font-weight:900;margin-bottom:8px">当前窗口状态</div>';
+    html += '</div><div style="font-size:12px;color:#e2e8f0;margin-top:8px">当前显示：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额 ' + selectedPlanText + '</div>';
+    html += '<div style="border-top:1px solid rgba(255,255,255,.14);margin-top:10px;padding-top:10px"><div style="font-size:11px;font-weight:900;color:#cbd5e1;margin-bottom:6px">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + multiplierButtons + '</div></div>';
+    html += '<div style="border-top:1px solid rgba(255,255,255,.14);margin-top:10px;padding-top:10px;font-size:12px;color:#e2e8f0"><b>当前窗口状态：</b>';
     if (liveState.waiting) {
-      html += '<div style="font-size:15px;font-weight:900;color:#92400e;margin-top:6px">当前仓位：等待重开 · 本期金额 0元 · 等待尾' + liveState.waiting.tail + '</div>';
-      html += '<div style="font-size:18px;font-weight:900;color:#d97706">等待尾' + liveState.waiting.tail + '重新开出</div>';
-      html += '<div style="font-size:12px;color:#475569;margin-top:5px">最后完成的窗口结束后，必须等该尾号重新开出，下一期才开新窗口。</div>';
+      html += '等待重开 · 本期 0元 · 等待尾' + liveState.waiting.tail + '重新开出';
     } else if (liveState.active) {
       var activeStart = liveState.active.start;
-      html += '<div style="font-size:18px;font-weight:900;color:#2563eb">窗口进行中 · 起始 ' + wmPeriodLabel(activeStart) + '</div>';
-      html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">当前仓位：' + selectedPosition.label + ' · 本期金额 ' + selectedPosition.amount + '元 · 检查 ' + selectedPositionPeriod + '</div>';
+      html += '窗口进行中 · 起始 ' + wmPeriodLabel(activeStart) + ' · ' + selectedPosition.label + ' · 本期 ' + selectedPosition.amount + '元 · 检查 ' + selectedPositionPeriod + ' ·';
       for (var ai = 0; ai < 3; ai++) {
         var expectedStart = activeStart + ai;
         var attempt = liveState.active.attempts[ai];
         var label = attempt ? ('尾' + attempt.tail + (attempt.hit ? ' 中' : ' 错')) : (expectedStart <= latest ? "未记录" : "待开奖");
-        html += '<div style="margin-top:6px;font-size:13px;font-weight:800">第' + (ai + 1) + '期检查 · ' + wmPeriodLabel(expectedStart) + ' · <span style="color:' + (attempt && attempt.hit ? "#16a34a" : "#dc2626") + '">' + label + '</span></div>';
+        html += ' 第' + (ai + 1) + '期 ' + wmPeriodLabel(expectedStart) + ' ' + label + (ai < 2 ? ' ·' : '');
       }
     } else {
-      html += '<div style="font-size:18px;font-weight:900;color:#16a34a">当前无进行中窗口</div>';
-      html += '<div style="font-size:12px;color:#475569;margin-top:5px">当前仓位：空仓等待 · 下一期检查第1期。</div>';
+      html += '无进行中窗口 · 空仓等待';
     }
     html += '</div></div>';
     html += '<div class="section"><div class="grid-3">';
@@ -3679,27 +3651,6 @@
       });
     }
     html += '</div></div></div>';
-    if (liveState.active) {
-      var active = liveState.active;
-      html += '<div class="section"><div class="panel" style="padding:10px;border:2px solid #2563eb;background:#eff6ff"><div style="font-size:13px;font-weight:900;color:#1d4ed8;margin-bottom:8px">当前进行中窗口 · ' + wmPeriodLabel(active.start) + '</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">';
-      for (var aj = 0; aj < 3; aj++) {
-        var expectedPeriod = active.start + aj;
-        var activeAttempt = active.attempts[aj];
-        html += '<div style="background:#fff;border-radius:8px;padding:9px">';
-        html += '<div style="font-size:12px;font-weight:900">第' + (aj + 1) + '期检查 · ' + wmPeriodLabel(expectedPeriod) + '</div>';
-        if (activeAttempt) {
-          html += '<div style="font-size:15px;font-weight:900;color:' + (activeAttempt.hit ? "#16a34a" : "#dc2626") + ';margin-top:5px">尾' + activeAttempt.tail + (activeAttempt.hit ? ' 中' : ' 错') + '</div>';
-        } else if (expectedPeriod <= latest) {
-          html += '<div style="font-size:15px;font-weight:900;color:#94a3b8;margin-top:5px">未记录</div>';
-        } else {
-          html += '<div style="font-size:15px;font-weight:900;color:#2563eb;margin-top:5px">待开奖</div>';
-        }
-        html += '</div>';
-      }
-      html += '</div></div></div>';
-    } else if (liveState.waiting) {
-      html += '<div class="section"><div class="panel" style="padding:12px;border:2px solid #f59e0b;background:#fffbeb"><div style="font-size:15px;font-weight:900;color:#92400e">当前等待窗口 · 等尾' + liveState.waiting.tail + '重新开出</div></div></div>';
-    }
     html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:980px"><thead><tr><th>窗口起始</th><th>第1期检查</th><th>第2期检查</th><th>第3期检查</th><th>结果</th><th>连续全错</th><th>本窗盈亏</th></tr></thead><tbody>';
     if (liveState.active) {
       var liveWindow = liveState.active;
