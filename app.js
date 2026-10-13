@@ -356,6 +356,7 @@
     windowMultN: 2,
     windowMultView: "overview",
     windowMultDetailYears: 1,
+    ultimateMode: "number",
     numSearchQuery: "",
     numSearchMode: "all",
     numSearchType: "tail",
@@ -365,8 +366,7 @@
     { id: "directory", label: "目录" },
     { id: "overview", label: "总览" },
     { id: "pick3", label: "双号追热" },
-    { id: "chasenumber", label: "三期内追号码" },
-    { id: "chaserecommend", label: "三期内追推荐" },
+    { id: "chasenumber", label: "三期内追号/追推荐" },
     { id: "orderhint", label: "执行提示" },
     { id: "funds", label: "资金调度" },
     { id: "formulas", label: "公式表" },
@@ -391,7 +391,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "chaserecommend", "orderhint", "funds", "formulas", "windowmult", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "orderhint", "funds", "formulas", "windowmult", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -979,6 +979,11 @@
 
   function render() {
     if (state.tab === "selector") state.tab = "chasenumber";
+    if (state.tab === "chaserecommend") {
+      state.ultimateMode = "recommend";
+      state.tab = "chasenumber";
+      lsSet("v2_current_tab", state.tab);
+    }
     var tabChanged = state.tab !== renderedTab;
     renderTabs();
     if (state.tab === "directory") renderDirectory();
@@ -1002,7 +1007,6 @@
     else if (state.tab === "pick3") renderPick3();
     else if (state.tab === "selector") renderSelector();
     else if (state.tab === "chasenumber") renderChaseNumber();
-    else if (state.tab === "chaserecommend") renderChaseRecommendation();
     else if (state.tab === "orderhint") renderOrderHint();
     else if (state.tab === "funds") renderFunds();
     else if (state.tab === "formulas") renderFormulaTable();
@@ -1037,20 +1041,12 @@
           note: "这里是选号入口，不代替下单；历史回测已经发生的成绩不能当成承诺。"
         },
         {
-          name: "三期内追号码",
-          summary: "锁定一个号码，连续跟3期，看这个号码三期内到底中不中。",
-          look: ["当前锁定的号码", "第1、2、3期分别检查哪一期", "窗口是否命中、继续或结束"],
-          use: "用来记录固定追号的真实窗口，号码锁定后不中途更换。",
-          source: "真实开奖数据、D1/D2原始窗口记录。",
-          note: "只记录真实开奖，不补造命中；观望只影响下单建议，不影响窗口记录。"
-        },
-        {
-          name: "三期内追推荐",
-          summary: "每期使用最新推荐号，分别看每期推荐在3期内是否命中。",
-          look: ["每期实际使用的推荐号码", "推荐窗口的起始期和结束期", "D1、D2各自的命中记录"],
-          use: "用来比较追推荐和追固定号码到底哪一种更稳定。",
-          source: "模型每期真实推荐、开奖前快照、真实开奖结果。",
-          note: "追推荐每期可以换号，不能把不同期的推荐号混成一个锁定窗口。"
+          name: "三期内追号/追推荐",
+          summary: "同一页切换两种追法：锁号追3期（号码锁定不换），或者每期最新推荐（每期可以换号）。",
+          look: ["当前模式：锁号追3期 / 每期最新推荐", "第1、2、3期分别检查哪一期", "D1、D2各自的真实快照命中率和对错滚动条"],
+          use: "用来记录固定追号的真实窗口，并对比追推荐和追固定号码哪一种更稳定。",
+          source: "真实开奖数据、D1/D2原始窗口记录、开奖前真实快照。",
+          note: "两种模式分别记录、不可混算；观望只影响下单建议，不影响窗口记录。"
         },
         {
           name: "执行提示",
@@ -1251,7 +1247,7 @@
     {
       title: "每日操作",
       desc: "每天按这个顺序走：先选号，再看窗口和执行，最后记录下单。",
-      names: ["双号追热", "三期内追号码", "三期内追推荐", "执行提示", "资金调度", "追三期下单"]
+      names: ["双号追热", "三期内追号/追推荐", "执行提示", "资金调度", "追三期下单"]
     },
     {
       title: "公式验证",
@@ -1332,8 +1328,7 @@
 
   var PAGE_GUIDE_TAB_MAP = {
     "双号追热": "pick3",
-    "三期内追号码": "chasenumber",
-    "三期内追推荐": "chaserecommend",
+    "三期内追号/追推荐": "chasenumber",
     "执行提示": "orderhint",
     "资金调度": "funds",
     "公式表": "formulas",
@@ -1434,8 +1429,7 @@
     var pageGuides = {
       overview: ["总览", "查看最新开奖、页面说明和每日操作顺序。", "每天打开小程序时先看。"],
       pick3: ["双号追热", "双号选号模型，输出 D1、D2，并显示四色风险状态和对错遗漏。", "每天第一步选号时看。"],
-      chasenumber: ["三期内追号码", "锁定一个推荐号连续追3期，窗口内不换号；命中或三期全错后结束，下一期重新锁定推荐号开新窗口。", "按固定号码追三期时看。"],
-      chaserecommend: ["三期内追推荐", "窗口内第1/2/3期分别采用当期最新推荐，号码可以每期不同；命中或三期全错后重新开窗。", "按每期最新推荐追三期时看。"],
+      chasenumber: ["三期内追号/追推荐", "同一页切换两种追法：锁号追3期（号码锁定不换）或每期最新推荐（每期可以换号）；命中或三期全错后重新开窗。", "按固定号码或每期最新推荐追三期时看。"],
       funds: ["资金调度", "只根据各线窗口状态、历史命中率和ROI分配下注金额；等待线强制0，当前总风险不能超过预算。", "决定今天下不下、每条线下多少时看。"],
       formulas: ["公式表", "展示14条线的阶段系数、训练/验证结果和最终下注公式，不预测号码。", "核查每条线下注公式是否通过历史验证时看。"],
       windowmult: ["14条线的数据规律正式版", "14条线各自的数据规律正式版：逐条列出每个窗口第1/2/3期命中或全错，并比较跨窗口1.5倍、2倍、2.5倍、3倍后的收益、回撤和最大倍率。", "检查14条线规律和资金风险时看。"],
@@ -3443,6 +3437,15 @@
     var ytdBestByLine = {};
     EXEC_LINES.forEach(function (item) { ytdBestByLine[item.id] = wmYearBest(lineBest[item.id], currentYear); });
     var orderedLines = EXEC_LINES.slice();
+    // 真实快照样本（只有开奖前存过快照、开奖后已结算的期才算），用于标注回测与真实口径
+    var snapDetailRows = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.detail) ? window.APP_SNAPSHOTS.detail : [];
+    var snapSettledTargets = snapDetailRows.filter(function (rec) {
+      return rec && Number.isFinite(Number(rec.target)) && Array.isArray(rec.actualTails) && rec.actualTails.length > 0;
+    }).map(function (rec) { return Number(rec.target); }).sort(function (a, b) { return a - b; });
+    var snapSampleCount = snapSettledTargets.length;
+    var snapSampleText = snapSampleCount
+      ? ("真实快照 " + snapSampleCount + " 期（第" + snapSettledTargets[0] + "期起）")
+      : "真实快照 0 期";
     var simulations = lineBest[line.id].simulations;
     var annualByN = lineBest[line.id].annual;
     var robust = simulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
@@ -3490,7 +3493,7 @@
     html += '</div></div>';
     html += '<div class="wm-view-group" data-wm-group="formula">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">每个号码的最优下注公式</b><span class="wm-card__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高 · 左右滑动</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">每个号码的最优下注公式</b><span class="wm-card__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 尾0-尾9只按真实开奖结算；4条推荐线的回测只作参考，正式口径看真实快照 · 左右滑动</span></div>';
     html += '<div class="wm-formula-panel wm-hscroll">';
     orderedLines.forEach(function (item) {
       var itemData = lineBest[item.id] || { best: null };
@@ -3523,6 +3526,9 @@
         html += '<div style="font-size:11px;color:#dc2626">最大回撤 ' + itemBest.maxDD + ' · 最大连错 ' + itemBest.maxLossStreak + '窗</div>';
       } else {
         html += '<div style="font-size:11px;color:#dc2626;margin-top:5px">训练段或验证段未同时通过，不配仓</div>';
+      }
+      if (item.kind !== "tail") {
+        html += '<div style="font-size:11px;color:#b45309;margin-top:4px">口径：回测窗口 ' + (itemBest ? itemBest.records.length : 0) + ' 个 · ' + snapSampleText + '（样本不足，暂不作正式结论）</div>';
       }
       html += '</div>';
     });
@@ -4277,11 +4283,16 @@
         : "第" + analysis.nextPeriod + "期暂不开新窗口";
     }
     var html = "";
-    if (isRecommendMode) {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追推荐。</b><br>每个3期窗口依次采用第1期、第2期、第3期当期的最新推荐号，号码可以每期不同；任意一期命中或三期全错后，该窗口结束。真实快照优先展示并实时记录；没有快照的历史窗口保留，并明确标注为历史回测。</div></div></div>';
-    } else {
-      html += '<div class="section"><div class="panel"><div class="panel__body" style="font-size:13px;line-height:1.75"><b>本页记录：三期内追号码。</b><br>窗口开始时锁定一个推荐号，连续检查3期，号码不变；任意一期命中或三期全错后结束。窗口结束后，下一期重新锁定最新推荐号开新窗口。真实快照优先展示；没有快照的历史窗口保留，并明确标注为历史回测。</div></div></div>';
-    }
+    var ultModeKey = isRecommendMode ? "recommend" : "number";
+    html += '<div class="section"><div class="panel" style="padding:12px">';
+    html += '<div class="wm-view-tabs" style="margin-bottom:8px">';
+    html += '<button class="chip wm-view-tab' + (ultModeKey === "number" ? " is-active" : "") + '" type="button" data-ult-mode="number">锁号追3期</button>';
+    html += '<button class="chip wm-view-tab' + (ultModeKey === "recommend" ? " is-active" : "") + '" type="button" data-ult-mode="recommend">每期最新推荐</button>';
+    html += '</div>';
+    html += '<div class="panel__body" style="font-size:13px;line-height:1.75">' + (isRecommendMode
+      ? '<b>当前模式：每期最新推荐。</b><br>每个3期窗口的第1期、第2期、第3期分别采用当期最新推荐号，号码可以每期不同；任意一期命中或三期全错后该窗口结束。真实快照优先展示并实时记录；没有快照的历史窗口保留，并明确标注为历史回测。'
+      : '<b>当前模式：锁号追3期。</b><br>窗口开始时锁定一个推荐号，连续检查3期，号码不变；任意一期命中或三期全错后结束。窗口结束后，下一期重新锁定最新推荐号开新窗口。真实快照优先展示；没有快照的历史窗口保留，并明确标注为历史回测。') + '</div>';
+    html += '</div></div>';
     html += '<div class="section" id="ultimateLockCard"><div class="panel" style="padding:16px 14px;border:2px solid ' + lockTone.border + ';background:' + lockTone.bg + '">';
     html += '<div style="font-size:12px;font-weight:900;color:' + lockTone.text + ';letter-spacing:.08em">' + modeLabel + ' · ' + "窗口记录" + '</div>';
     html += '<div style="font-size:40px;line-height:1.05;font-weight:900;color:' + lockTone.text + ';margin:6px 0">' + (gateBlocked ? "建议：观望" : "建议：跟双号") + '</div>';
@@ -4501,7 +4512,7 @@
   var selectorHistoryFilter = "ALL";
 
   function renderChaseNumber() {
-    renderUltimateMode("number");
+    renderUltimateMode(state.ultimateMode === "recommend" ? "recommend" : "number");
   }
 
   function renderChaseRecommendation() {
@@ -5896,6 +5907,12 @@
   });
 
   view.addEventListener("click", function (e) {
+    var ultModeBtn = e.target.closest("[data-ult-mode]");
+    if (ultModeBtn) {
+      state.ultimateMode = ultModeBtn.dataset.ultMode === "recommend" ? "recommend" : "number";
+      renderChaseNumber();
+      return;
+    }
     var wmViewBtn = e.target.closest("[data-wm-view]");
     if (wmViewBtn) {
       state.windowMultView = wmViewBtn.dataset.wmView;
