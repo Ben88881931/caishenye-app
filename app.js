@@ -1051,7 +1051,7 @@
         {
           name: "执行提示",
           summary: "告诉你每条线下期该下多少、该等还是该开窗。",
-          look: ["当下有仓位的线路", "每条线第几期、金额、状态", "当前窗口和历史对错滚动条"],
+          look: ["今日规划：今天要下的每一注", "每条线第几期、金额、状态", "今日合计、本窗最大风险、今日不下注条数"],
           use: "下单前逐条核对，有仓位线路优先看，等待线不要下。",
           source: "公式表、真实窗口、真实开奖数据。",
           note: "页面只提示，不自动下单；窗口等待和开窗等待是两种不同状态。"
@@ -1062,7 +1062,7 @@
           look: ["当期下注号码和金额", "本期公式金额、本窗最大风险", "本期不下注线路"],
           use: "按页面建议逐条下单，等待线和公式为0的线路不下。",
           source: "公式表逐线公式、当前窗口阶段和真实状态。",
-          note: "本金1万元只作占用率参考，不会自动砍线；金额最终以公式表为准。"
+          note: "不锚定本金、不设资金上限；金额完全按公式表取当前窗口第几期的数，最终以公式表为准。"
         },
         {
           name: "公式表",
@@ -2723,10 +2723,24 @@
       return { line: line, result: result, action: execNextAction(line, result, nextPeriod) };
     });
     var activeHintRows = hintRows.filter(function (row) { return row.action.amount > 0; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当下有仓位</h2><span class="section__hint">只列本期金额大于0的线路，按固定线路顺序排列</span></div></div>';
+    // 本窗剩余风险：口径与资金调度一致（进行中=从当前期起算，新窗口=整条公式，等待/不配仓=0）
+    function hintWindowRisk(row) {
+      var plan = row.line.plan || [];
+      if (planRisk(plan) <= 0) return 0;
+      if (row.result.waiting) return 0;
+      if (row.result.active) {
+        var st = Math.min(row.result.active.attempts.length + 1, 3);
+        return planRisk(plan.slice(st - 1));
+      }
+      return planRisk(plan);
+    }
+    var todayTotal = activeHintRows.reduce(function (sum, row) { return sum + Number(row.action.amount || 0); }, 0);
+    var todayRisk = hintRows.reduce(function (sum, row) { return sum + hintWindowRisk(row); }, 0);
+    var todaySkip = hintRows.filter(function (row) { return !(row.action.amount > 0); }).length;
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">今日规划</h2><span class="section__hint">今天要下的每一注：线路 + 号码 + 金额 + 第几期；按固定线路顺序排列，金额只认公式表</span></div></div>';
     html += '<div class="section">';
     if (!activeHintRows.length) {
-      html += '<div style="font-size:14px;font-weight:900;color:#64748b">当前没有金额大于0的仓位</div>';
+      html += '<div style="font-size:14px;font-weight:900;color:#64748b">今天没有金额大于0的仓位，全部空仓</div>';
     } else {
       html += '<div class="position-card-grid">';
       activeHintRows.forEach(function (row) {
@@ -2740,6 +2754,11 @@
       });
       html += '</div>';
     }
+    html += '<div class="grid-3" style="margin-top:10px">';
+    html += '<div class="stat"><div class="stat__value">' + todayTotal + '</div><div class="stat__label">今日合计（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value">' + todaySkip + '</div><div class="stat__label">今日不下注（条）</div></div>';
+    html += '</div>';
     html += '</div>';
     hintRows.forEach(function (row) {
       var line = row.line;

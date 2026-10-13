@@ -277,10 +277,10 @@ def main():
             pass_("所有页面用且只用一组独立盒子显示下一期D1和D2推荐号码")
         else:
             fail("页面顶部缺少独立D1/D2推荐号码盒或存在重复插入")
-        if "function renderOrderHint" in app_text and "var hintRows = EXEC_LINES.map" in app_text and "activeHintRows" in app_text and "当下有仓位" in app_text and "按固定线路顺序排列" in app_text and "row.action.amount > 0" in app_text:
-            pass_("执行提示页当下有仓位卡片按固定线路顺序显示")
+        if "function renderOrderHint" in app_text and "var hintRows = EXEC_LINES.map" in app_text and "activeHintRows" in app_text and "今日规划" in app_text and "按固定线路顺序排列" in app_text and "row.action.amount > 0" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:
+            pass_("执行提示页今日规划按固定线路顺序显示并汇总金额与风险")
         else:
-            fail("执行提示页仍按仓位或金额重排线路")
+            fail("执行提示页缺少今日规划汇总或未按固定线路顺序显示")
         if "function wmPositionForPlan" in app_text and "正式执行公式" in app_text and "正式执行仓位" in app_text and "今年测试仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text and "wmPositionForPlan(line, line.plan)" in app_text:
             pass_("正式执行仓位统一以公式表line.plan为准")
         else:
