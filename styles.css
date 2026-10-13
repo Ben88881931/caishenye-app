@@ -2153,3 +2153,61 @@ html.gesture-active * {
     min-height: 36px;
   }
 }
+
+/* ===== iOS 手感：跟手滑动 · 点击反馈 · 滚动吸附 ===== */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  overscroll-behavior-y: none;
+}
+
+.view {
+  backface-visibility: hidden;
+}
+
+/* 只在手势进行中提升图层：常驻 will-change 会让超长页面在手机上多占一大块显存 */
+html.gesture-active .view {
+  will-change: transform;
+}
+
+html.gesture-active,
+html.gesture-active * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button,
+.chip,
+.tab,
+.position-card,
+.directory-card,
+.numsearch-mode {
+  transition: transform .12s ease, background-color .12s ease, opacity .12s ease;
+}
+
+button:active,
+.chip:active,
+.tab:active,
+.position-card:active,
+.directory-card:active,
+.numsearch-mode:active {
+  transform: scale(.975);
+  opacity: .92;
+}
+
+.wm-hscroll,
+.exec-line__scroll,
+.seg-hist-scroll,
+.trend-scroll,
+.heatmap {
+  scroll-snap-type: x proximity;
+}
+
+.wm-hscroll > *,
+.exec-line__scroll > * {
+  scroll-snap-align: start;
+}

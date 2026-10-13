@@ -5700,6 +5700,47 @@
     if (gestureClickGuardTimer) clearTimeout(gestureClickGuardTimer);
     gestureClickGuardTimer = setTimeout(function () { gestureClickGuard = false; }, 450);
   }
+
+  // ===== iOS 式跟手滑动 + 惯性转场 =====
+  function viewMoveTo(px, animate) {
+    view.style.transition = animate ? "transform .22s cubic-bezier(.2,.8,.2,1)" : "none";
+    view.style.transform = px ? "translate3d(" + px + "px,0,0)" : "";
+  }
+  function viewReset() {
+    viewMoveTo(0, true);
+    setTimeout(function () { view.style.transition = ""; }, 240);
+  }
+  // 这个方向还有没有下一个页面（用来做边缘阻尼，滑到头就拉不动）
+  function canStep(delta) {
+    if (state.tab === "directory") return !!orderedGroupAt(delta);
+    if (state.tab === "windowmult") {
+      var wmViews = ["overview", "windows", "personality", "formula", "years"];
+      var wmIndex = wmViews.indexOf(state.windowMultView);
+      if (wmIndex < 0) wmIndex = 0;
+      if (wmIndex + delta >= 0 && wmIndex + delta < wmViews.length) return true;
+    }
+    return !!orderedTabAt(delta);
+  }
+  function doStep(delta) {
+    if (state.tab === "directory") stepGroupHistory(delta);
+    else if (state.tab === "windowmult") stepWindowMultView(delta);
+    else stepTabHistory(delta);
+  }
+  // 旧内容滑出 → 执行切换 → 新内容从另一侧滑入（delta>0 = 左滑/下一页）
+  function slideAndRun(delta, run) {
+    view.style.transition = "transform .16s ease-out";
+    view.style.transform = "translate3d(" + (delta > 0 ? -34 : 34) + "vw,0,0)";
+    setTimeout(function () {
+      run();
+      view.style.transition = "none";
+      view.style.transform = "translate3d(" + (delta > 0 ? 34 : -34) + "vw,0,0)";
+      requestAnimationFrame(function () {
+        view.style.transition = "transform .22s cubic-bezier(.2,.8,.2,1)";
+        view.style.transform = "";
+        setTimeout(function () { view.style.transition = ""; }, 240);
+      });
+    }, 155);
+  }
   document.documentElement.addEventListener("pointerdown", function (e) {
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) {
       historyPointerStart = null;
@@ -5721,6 +5762,10 @@
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: inHorizontalScroll,
       lineStrip: !!e.target.closest(".wm-line-selector"),
+      lastX: e.clientX,
+      lastT: Date.now(),
+      vx: 0,
+      preview: false,
       handled: false
     };
     document.documentElement.classList.add("gesture-active");
@@ -5732,39 +5777,22 @@
     var dy = e.clientY - historyPointerStart.y;
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
-    var level = historyPointerStart.level;
-    var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (historyPointerStart.inHorizontalScroll &&
-        !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05)) {
-      return;
+    // 采样速度，用于轻轻一甩就翻页
+    var now = Date.now();
+    var dt = now - historyPointerStart.lastT;
+    if (dt > 0) {
+      historyPointerStart.vx = (e.clientX - historyPointerStart.lastX) / dt;
+      historyPointerStart.lastX = e.clientX;
+      historyPointerStart.lastT = now;
     }
-    if (historyPointerStart.lineStrip && absX >= swipeX && absX > absY * 1.05) {
-      historyPointerStart.handled = true;
-      armGestureClickGuard();
-      e.preventDefault();
-      stepWindowMultLine(dx > 0 ? -1 : 1);
-      return;
-    }
-    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05) {
-      historyPointerStart.handled = true;
-      armGestureClickGuard();
-      e.preventDefault();
-      state.tab = "directory";
-      lsSet("v2_current_tab", state.tab);
-      render();
-      return;
-    }
-    if (level === "tab" && dx > 0 && absX > absY * 1.05 && absX < RETURN_SWIPE_X) {
-      return;
-    }
-    if (absX >= swipeX && absX > absY * 1.05) {
-      historyPointerStart.handled = true;
-      armGestureClickGuard();
-      e.preventDefault();
-      if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-      else if (state.tab === "windowmult") stepWindowMultView(dx > 0 ? -1 : 1);
-      else stepTabHistory(dx > 0 ? -1 : 1);
-    }
+    if (historyPointerStart.inHorizontalScroll) return;
+    if (absX <= 10 || absX <= absY * 1.15) return;
+    // 跟手预览：手指走多少，页面跟多少；滑到头就阻尼
+    var dirSign = dx < 0 ? 1 : -1;
+    var damp = canStep(dirSign) ? 1 : 0.28;
+    historyPointerStart.preview = true;
+    e.preventDefault();
+    viewMoveTo(dx * damp, false);
   }, true);
 
   document.documentElement.addEventListener("pointerup", function (e) {
@@ -5780,28 +5808,35 @@
     var dy = e.clientY - gesture.y;
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
-    var isVertical = absY > absX;
     var level = gesture.level;
+    if (!gesture.preview) { viewReset(); return; }
+    if (absY > absX) { viewReset(); return; }
+    var delta = dx < 0 ? 1 : -1;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (isVertical) return;
-    if (gesture.inHorizontalScroll &&
-        !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05)) {
-      return;
-    }
-    if (gesture.lineStrip && absX >= swipeX && absX > absY * 1.05) {
-      stepWindowMultLine(dx > 0 ? -1 : 1);
-      return;
-    }
+    // 右滑 ≥160px：从二级页回目录（其余位置按普通翻页）
     if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05) {
-      state.tab = "directory";
-      lsSet("v2_current_tab", state.tab);
-      render();
+      armGestureClickGuard();
+      slideAndRun(-1, function () {
+        state.tab = "directory";
+        lsSet("v2_current_tab", state.tab);
+        render();
+      });
       return;
     }
-    if (absX < swipeX || absX < absY * 1.1) return;
-    if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-    else if (state.tab === "windowmult") stepWindowMultView(dx > 0 ? -1 : 1);
-    else stepTabHistory(dx > 0 ? -1 : 1);
+    if (absX < swipeX || absX < absY * 1.05) { viewReset(); return; }
+    var fast = Math.abs(gesture.vx || 0) > 0.45;
+    var far = absX > Math.min(120, window.innerWidth * 0.28);
+    var commit = (fast || far);
+    if (gesture.lineStrip) {
+      if (!commit) { viewReset(); return; }
+      armGestureClickGuard();
+      slideAndRun(delta, function () { stepWindowMultLine(delta); });
+      return;
+    }
+    if (!canStep(delta)) { viewReset(); return; }
+    if (!commit) { viewReset(); return; }
+    armGestureClickGuard();
+    slideAndRun(delta, function () { doStep(delta); });
   }, true);
 
   document.documentElement.addEventListener("pointercancel", function () {
@@ -5837,6 +5872,7 @@
 
   document.documentElement.addEventListener("touchmove", function (e) {
     if (!touchReturnStart || touchReturnStart.returned || e.touches.length !== 1) return;
+    if (historyPointerStart) return; // 指针路径已在处理，避免同一手势触发两次
     if (touchReturnStart.onLineStrip) return;
     var dx = e.touches[0].clientX - touchReturnStart.x;
     var dy = e.touches[0].clientY - touchReturnStart.y;
