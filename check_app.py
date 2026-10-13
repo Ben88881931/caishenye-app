@@ -269,7 +269,7 @@ def main():
             pass_("窗口倍投测试按固定线路顺序合并显示公式和正式仓位")
         else:
             fail("窗口倍投测试公式和仓位仍被拆成过多卡片或未按固定线路顺序显示")
-        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "正式版候选" in app_text:
+        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "14条线的数据规律" in app_text and "正式版" in app_text:
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
             fail("窗口倍投测试缺少今年最优规律或正式版候选标注")

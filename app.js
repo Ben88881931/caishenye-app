@@ -370,7 +370,7 @@
     { id: "orderhint", label: "执行提示" },
     { id: "funds", label: "资金调度" },
     { id: "formulas", label: "公式表" },
-    { id: "windowmult", label: "窗口倍投测试" },
+    { id: "windowmult", label: "14条线的数据规律正式版" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -1077,8 +1077,8 @@
           note: "公式表目前是稳定版本，不会每天自动改；今年最优只作参考，不能冒充正式公式。"
         },
         {
-          name: "窗口倍投测试",
-          summary: "按每条线自己的窗口规律，测试不同倍率的收益、风险和逐年表现。",
+          name: "14条线的数据规律正式版",
+          summary: "14条线各自的数据规律正式版：逐条列出每个窗口第1/2/3期的命中或全错，并比较不同倍率的收益、风险和逐年表现。",
           look: ["当前有仓位的正式执行线路", "今年最优、年度稳健最优", "逐年收益、全错窗口和连续全错概率"],
           use: "研究公式有没有优化空间，比较不同年份是否稳定。",
           source: "真实窗口、真实开奖结果、公式表正式线计划。",
@@ -1256,7 +1256,7 @@
     {
       title: "公式验证",
       desc: "正式公式从哪里来，以及公式和倍率到底有没有经过历史验证。",
-      names: ["公式表", "窗口倍投测试", "策略回测"]
+      names: ["公式表", "14条线的数据规律正式版", "策略回测"]
     },
     {
       title: "数据参考",
@@ -1337,7 +1337,7 @@
     "执行提示": "orderhint",
     "资金调度": "funds",
     "公式表": "formulas",
-    "窗口倍投测试": "windowmult",
+    "14条线的数据规律正式版": "windowmult",
     "追三期下单": "orderlog",
     "总览": "overview",
     "分段对比": "segments",
@@ -1438,7 +1438,7 @@
       chaserecommend: ["三期内追推荐", "窗口内第1/2/3期分别采用当期最新推荐，号码可以每期不同；命中或三期全错后重新开窗。", "按每期最新推荐追三期时看。"],
       funds: ["资金调度", "只根据各线窗口状态、历史命中率和ROI分配下注金额；等待线强制0，当前总风险不能超过预算。", "决定今天下不下、每条线下多少时看。"],
       formulas: ["公式表", "展示14条线的阶段系数、训练/验证结果和最终下注公式，不预测号码。", "核查每条线下注公式是否通过历史验证时看。"],
-      windowmult: ["窗口倍投测试", "逐条线路列出每个窗口第1/2/3期命中或全错，并比较跨窗口1.5倍、2倍、2.5倍、3倍后的收益、回撤和最大倍率。", "检查窗口倍投规律和资金风险时看。"],
+      windowmult: ["14条线的数据规律正式版", "14条线各自的数据规律正式版：逐条列出每个窗口第1/2/3期命中或全错，并比较跨窗口1.5倍、2倍、2.5倍、3倍后的收益、回撤和最大倍率。", "检查14条线规律和资金风险时看。"],
       orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
       segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
       missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖。", "找遗漏结构时看。"],
@@ -3477,7 +3477,7 @@
       return '<div class="wm-stat"><div style="font-size:16px;font-weight:900' + (color ? ";color:" + color : "") + '">' + value + '</div><div style="font-size:11px;color:#64748b;margin-top:2px">' + label + '</div></div>';
     }
     var html = '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><div><b class="wm-card__title">窗口倍投测试 · 正式版候选</b><span class="wm-card__hint">真实窗口规律账本 · 100元起 · 逐期记录每条线每个窗口的第1/2/3期尾号、命中或错误、第几期中、三期全错、等待重开和下一窗口；只按真实开奖结算，不预测、不补造、不改历史。</span></div></div>';
+    html += '<div class="wm-card__head"><div><b class="wm-card__title">14条线的数据规律 · 正式版</b><span class="wm-card__hint">真实窗口规律账本 · 100元起 · 逐期记录每条线每个窗口的第1/2/3期尾号、命中或错误、第几期中、三期全错、等待重开和下一窗口；只按真实开奖结算，不预测、不补造、不改历史。</span></div></div>';
     html += '<div class="wm-view-tabs">' + wmViewTabs + '</div>';
     html += '<div class="wm-line-selector">';
     orderedLines.forEach(function (item) {
@@ -3869,7 +3869,7 @@
     html += '</span></div>';
     html += '</div></div>';
     html += '</div>';
-    html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
+    html += '<p class="disclaimer">本页是14条线的数据规律正式版，只做历史窗口规律测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
     Array.prototype.forEach.call(view.querySelectorAll(".wm-view-group"), function (group) {
       if (group.getAttribute("data-wm-group") !== wmView) group.style.display = "none";
