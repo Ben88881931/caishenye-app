@@ -2785,16 +2785,37 @@
       html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
       html += '<div style="font-size:11px;color:#64748b;margin:0 0 6px">中窗=3期内至少中1次；错窗=连续3期未中；首次命中分布之和=中窗数。</div>';
       html += '<div class="exec-line__scroll">';
-      html += '<div class="exec-window-card--current" data-current-window="1" data-current-period="' + nextPeriod + '" style="min-width:190px;border:1px solid ' + action.color + ';border-radius:8px;padding:8px 9px;background:#f8fafc">';
+      html += '<div class="exec-window-card--current" data-current-window="1" data-current-period="' + nextPeriod + '" style="min-width:236px;border:1px solid ' + action.color + ';border-radius:8px;padding:8px 9px;background:#f8fafc">';
       html += '<div style="font-size:11px;font-weight:900;color:' + action.color + '">当前窗口 · 当下第' + nextPeriod + '期</div>';
       html += '<div style="font-size:15px;font-weight:900;color:' + action.color + ';margin-top:3px">' + action.action + (action.amount > 0 ? ' · ' + action.amount + '元' : '') + '</div>';
       if (result.waiting) {
         html += '<div style="font-size:11px;color:#b45309;margin-top:3px">等待开奖 · 等待尾<span class="exec-window-card__tail">' + result.waiting.tail + '</span> · 已等' + result.waiting.waited + '期</div>';
-      } else if (result.active) {
-        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + ' · ' + (result.active.attempts || []).map(execAttemptText).join('→') + '</div>';
+        html += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">尾' + result.waiting.tail + '重新开出后，下一期才开新窗口，新窗口的第1/2/3期会逐期登记</div>';
       } else {
-        var extraStatus = action.status === "可开新窗口" ? "" : " · " + action.status;
-        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + action.stage + extraStatus + ' · 计划 ' + planText + '</div>';
+        var curStart = result.active ? Number(result.active.start) : nextPeriod;
+        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">窗口起始 第' + curStart + '期 · ' + (result.active ? "锁定号不换" : "新窗口") + ' · 计划 ' + planText + '</div>';
+        for (var pk = 0; pk < 3; pk++) {
+          var periodK = curStart + pk;
+          var attK = (result.active && result.active.attempts) ? result.active.attempts[pk] : null;
+          var tailK = attK && attK.tail != null ? attK.tail
+            : (result.active && result.active.lockedTail != null) ? result.active.lockedTail
+            : line.kind === "tail" ? line.tail
+            : line.kind === "fixed" ? execCurrentTail(line, result, nextPeriod)
+            : pk === 0 ? execCurrentTail(line, result, nextPeriod) : null;
+          var textK, toneK;
+          if (attK) { textK = attK.hit ? "中" : "错"; toneK = attK.hit ? "#16a34a" : "#dc2626"; }
+          else if (periodK <= latest) { textK = "未记录"; toneK = "#94a3b8"; }
+          else { textK = "待开奖"; toneK = "#2563eb"; }
+          html += '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:11px">';
+          html += '<span style="flex:0 0 34px;font-weight:900;color:#475569">第' + (pk + 1) + '期</span>';
+          html += '<span style="color:#6b7280">第' + periodK + '期</span>';
+          html += '<span style="margin-left:auto;font-weight:900">' + (tailK != null ? "尾" + tailK : "待定") + '</span>';
+          html += '<b style="flex:0 0 46px;text-align:right;color:' + toneK + '">' + textK + '</b>';
+          html += '</div>';
+        }
+        if (action.status && action.status !== "可开新窗口") {
+          html += '<div style="font-size:10px;color:#94a3b8;margin-top:4px">' + action.status + '</div>';
+        }
       }
       html += '</div>';
       var recent = result.windows.slice().sort(function (a, b) {
