@@ -4115,6 +4115,35 @@
     return { rows: rows, pending: pending };
   }
 
+  // 滚动条统一记录口径：每个窗口把第1/2/3期分别列出（期号 + 尾号 + 中/错/待开奖；未产生写待定）
+  function threeRowsHTML(batch, isRecommendMode, rowFontSize) {
+    var out = '';
+    var fs = rowFontSize || 11;
+    for (var k = 0; k < 3; k++) {
+      var periodK = Number(batch.startPeriod) + k;
+      var attK = (batch.attempts || [])[k] || null;
+      var tailK = attK && attK.tail != null ? attK.tail
+        : isRecommendMode ? null
+        : (batch.tail != null ? batch.tail : null);
+      var textK, toneK;
+      if (attK) {
+        textK = attK.hit === true ? "中" : attK.hit === false ? "错" : "待开奖";
+        toneK = attK.hit === true ? "#16a34a" : attK.hit === false ? "#dc2626" : "#2563eb";
+      } else if (periodK <= latest) {
+        textK = "未记录"; toneK = "#94a3b8";
+      } else {
+        textK = "待开奖"; toneK = "#2563eb";
+      }
+      out += '<div style="display:flex;align-items:center;gap:5px;margin-top:3px;font-size:' + fs + 'px">';
+      out += '<span style="flex:0 0 32px;font-weight:900;color:#475569">第' + (k + 1) + '期</span>';
+      out += '<span style="color:#6b7280">第' + periodK + '期</span>';
+      out += '<span style="margin-left:auto;font-weight:900">' + (tailK != null ? "尾" + tailK : "待定") + '</span>';
+      out += '<b style="flex:0 0 42px;text-align:right;color:' + toneK + '">' + textK + '</b>';
+      out += '</div>';
+    }
+    return out;
+  }
+
   function buildThreePeriodCorrectScrollHTML(streamThree, isRecommendMode) {
     var html = '';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内对错滚动条</h2><span class="section__hint">D1/D2 独立线 · 新→旧 · 中=绿 错=红 进行中=蓝</span></div></div>';
@@ -4144,10 +4173,11 @@
           var mainText = isRecommendMode
             ? "推荐 " + (batch.attempts || []).map(function (a) { return a.tail == null ? "空" : "尾" + a.tail; }).join("→")
             : "锁定 尾" + batch.tail;
-          html += '<div style="min-width:96px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + '">';
+          html += '<div style="min-width:212px;border:1px solid ' + border + ';border-radius:8px;padding:6px 8px;background:' + bg + '">';
           html += '<div style="font-size:10px;color:#6b7280">起始 第' + batch.startPeriod + '期</div>';
           html += '<div style="font-size:13px;font-weight:900;color:' + tone + ';margin-top:2px">' + resultText + '</div>';
-          html += '<div style="font-size:10px;color:#6b7280;margin-top:3px;white-space:nowrap">' + mainText + '</div>';
+          html += '<div style="font-size:10px;color:#6b7280;margin-top:2px;white-space:nowrap">' + mainText + '</div>';
+          html += threeRowsHTML(batch, isRecommendMode, 10);
           html += '</div>';
         });
       }
@@ -4468,18 +4498,14 @@
       var isHit = !isPending && batch.status !== "miss" && batch.hitIndex >= 1 && batch.hitIndex <= 3;
       var endPeriod = batch.attempts && batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
       var sourceText = isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "snapshot+live" ? "快照+当前" : batch.sourceKind === "live" ? "当前窗口" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : (batch.sourceKind === "snapshot" ? "真实快照" : "历史回测");
-      var h = '<div style="width:156px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
+      var h = '<div style="width:214px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
       h += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
       h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期 · ' + sourceText + '</div>';
       var batchMain = isRecommendMode
         ? '推荐序列 ' + (batch.attempts || []).map(function (a) { return a.tail == null ? '空' : '尾' + a.tail; }).join('→')
         : '原始号 尾' + batch.tail;
       h += '<div style="font-size:16px;font-weight:900;margin:4px 0">' + batchMain + '</div>';
-      (batch.attempts || []).forEach(function (a) {
-        var tone = a.hit === true ? "#16a34a" : a.hit === false ? "#dc2626" : "#2563eb";
-        var mark = a.hit === true ? "中" : a.hit === false ? "错" : "待开奖";
-        h += '<div style="font-size:11px;color:' + tone + '">第' + a.period + '期 · ' + (isRecommendMode ? '当期推荐' : '锁定号') + ' 尾' + a.tail + ' · ' + mark + '</div>';
-      });
+      h += threeRowsHTML(batch, isRecommendMode, 11);
       var expectedEnd = batch.startPeriod + 2;
       if (isPending) {
         var nextCheckPeriod = batch.attempts && batch.attempts.length
