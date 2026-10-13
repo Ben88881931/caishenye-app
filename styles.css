@@ -683,14 +683,14 @@ html.gesture-active * {
 
 .wm-view-tabs > .wm-view-tab {
   flex: 0 0 auto;
-  min-width: 104px;
-  min-height: 40px;
-  padding: 8px 14px;
+  min-width: 78px;
+  min-height: 32px;
+  padding: 5px 10px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #f1f5f9;
   color: #334155;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
 }
 
@@ -1922,18 +1922,23 @@ html.gesture-active * {
 .wm-line-selector > .chip {
   width: 100%;
   min-width: 0 !important;
-  min-height: 72px !important;
+  min-height: 46px !important;
   padding: 6px 8px !important;
-  text-align: left;
+  text-align: center;
 }
 
-.wm-line-selector > .chip span:nth-child(1) {
-  font-size: 13px !important;
+.wm-line-selector > .chip .wm-line-btn__name {
+  display: block;
+  font-size: 14px !important;
+  font-weight: 900;
+  line-height: 1.2;
 }
 
-.wm-line-selector > .chip span:nth-child(2),
-.wm-line-selector > .chip span:nth-child(3) {
+.wm-line-selector > .chip .wm-line-btn__rate {
+  display: block;
+  margin-top: 2px;
   font-size: 10px !important;
+  font-weight: 800;
   line-height: 1.25;
 }
 
@@ -1948,7 +1953,7 @@ html.gesture-active * {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .wm-line-selector > .chip {
-    min-height: 78px !important;
+    min-height: 50px !important;
   }
 }
 

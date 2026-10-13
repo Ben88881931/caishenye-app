@@ -3469,7 +3469,10 @@
     html += '<div class="wm-view-tabs">' + wmViewTabs + '</div>';
     html += '<div class="wm-line-selector">';
     orderedLines.forEach(function (item) {
-      html += '<button class="chip wm-line-btn" type="button" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '">' + item.label + '</button>';
+      var itemData = lineBest[item.id] || {};
+      var itemSim = itemData.best || (itemData.simulations || []).filter(function (s) { return s.n === activeN; })[0] || null;
+      var itemRate = itemSim && itemSim.records.length ? (((itemSim.records.length - itemSim.missWindows) / itemSim.records.length) * 100).toFixed(1) + "%" : "-";
+      html += '<button class="chip wm-line-btn" type="button" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '"><span class="wm-line-btn__name">' + item.label + '</span><span class="wm-line-btn__rate">窗口命中 ' + itemRate + '</span></button>';
     });
     html += '</div>';
     html += '</div></div>';
@@ -3673,6 +3676,29 @@
     var afterOne = continueMissRate(1);
     var afterTwo = continueMissRate(2);
     var afterThree = continueMissRate(3);
+    var hitRuns = [];
+    var currentHitRun = null;
+    selected.records.forEach(function (item) {
+      if (item.window.hitIndex > 0) {
+        if (!currentHitRun) {
+          currentHitRun = { length: 0, start: item.window.start, end: item.window.start, profit: 0 };
+          hitRuns.push(currentHitRun);
+        }
+        currentHitRun.length++;
+        currentHitRun.end = item.window.start;
+        currentHitRun.profit += item.profit;
+      } else {
+        currentHitRun = null;
+      }
+    });
+    var hitRunCounts = { two: 0, three: 0, fourPlus: 0 };
+    var maxHitStreak = 0;
+    hitRuns.forEach(function (run) {
+      maxHitStreak = Math.max(maxHitStreak, run.length);
+      if (run.length === 2) hitRunCounts.two++;
+      else if (run.length === 3) hitRunCounts.three++;
+      else if (run.length >= 4) hitRunCounts.fourPlus++;
+    });
     html += '<div class="wm-subhead">连续全错规律</div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
     html += wmStat("单次全错次数", runCounts.one);
@@ -3683,6 +3709,29 @@
     html += wmStat("2窗连错后第3窗错", afterTwo.toFixed(2) + "%");
     html += wmStat("3窗连错后第4窗错", afterThree.toFixed(2) + "%");
     html += wmStat("历史最大连续全错", selected.maxLossStreak + "窗", "#dc2626");
+    html += '</div>';
+    html += '<div class="wm-subhead">连续命中规律</div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += wmStat("历史最大连续命中", maxHitStreak + "窗", "#16a34a");
+    html += wmStat("连续2窗命中", hitRunCounts.two, "#16a34a");
+    html += wmStat("连续3窗命中", hitRunCounts.three, "#16a34a");
+    html += wmStat("连续4窗及以上命中", hitRunCounts.fourPlus, "#16a34a");
+    html += wmStat("命中窗总数", selected.records.length - selected.missWindows, "#16a34a");
+    html += '</div>';
+    var consecutiveHits = hitRuns.filter(function (run) { return run.length >= 2; }).slice().reverse();
+    html += '<div class="wm-subhead">连续2窗及以上命中记录</div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    if (!consecutiveHits.length) {
+      html += '<div style="font-size:13px;color:#64748b">没有连续2窗命中记录</div>';
+    } else {
+      consecutiveHits.forEach(function (run) {
+        html += '<div style="flex:0 0 230px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;padding:9px">';
+        html += '<div style="font-size:15px;font-weight:900;color:#15803d">连续' + run.length + '窗命中</div>';
+        html += '<div style="font-size:12px;color:#475569;margin-top:4px">' + wmPeriodLabel(run.start) + ' → ' + wmPeriodLabel(run.end) + '</div>';
+        html += '<div style="font-size:13px;font-weight:900;color:#16a34a;margin-top:4px">累计盈利 +' + Math.round(run.profit) + '</div>';
+        html += '</div>';
+      });
+    }
     html += '</div>';
     var consecutiveRuns = missRuns.filter(function (run) { return run.length >= 2; }).slice().reverse();
     html += '<div class="wm-subhead">连续2窗及以上全错记录</div>';
@@ -3750,13 +3799,10 @@
     allYears.sort(function (a, b) { return b - a; });
     var shownYears = allYears.slice(0, detailYears);
     var detailTotal = selected.records.length;
-    // 年份从新到旧排列，但每一年内部从该年第1期往后排，保证每个年度都从第1期开始看
-    var detailRecords = [];
-    shownYears.forEach(function (detailYear) {
-      selected.records.forEach(function (r) {
-        if (wmYearOf(r.window.start) === detailYear) detailRecords.push(r);
-      });
-    });
+    // 整条统一按时间倒序：最新在左，越往右越旧，中途不反转
+    var detailRecords = selected.records.filter(function (r) {
+      return shownYears.indexOf(wmYearOf(r.window.start)) >= 0;
+    }).reverse();
     if (liveState.active) html += wmWindowCard(liveState.active, true, null);
     if (!detailTotal && !liveState.active) {
       html += '<div style="font-size:13px;color:#64748b">暂无窗口记录</div>';
@@ -3766,7 +3812,7 @@
       var itemYear = wmYearOf(item.window.start);
       if (itemYear !== lastYearShown) {
         lastYearShown = itemYear;
-        html += '<div class="wm-year">' + itemYear + '年 · 从第1期起</div>';
+        html += '<div class="wm-year">' + itemYear + '年</div>';
       }
       html += wmWindowCard(item.window, false, item);
     });
