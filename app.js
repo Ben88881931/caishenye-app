@@ -354,6 +354,7 @@
     orderTail: lsGet("v2_order_tail", "all"),
     windowMultLine: "tail1",
     windowMultN: 2,
+    windowMultView: "overview",
     numSearchQuery: "",
     numSearchMode: "all",
     numSearchType: "tail",
@@ -792,6 +793,19 @@
     }
     if (index < 0) return null;
     return tabs[index + delta] || null;
+  }
+
+  function stepWindowMultView(delta) {
+    var views = ["overview", "formula", "years", "windows"];
+    var index = views.indexOf(state.windowMultView);
+    if (index < 0) index = 0;
+    var next = index + delta;
+    if (next < 0 || next >= views.length) {
+      stepTabHistory(delta);
+      return;
+    }
+    state.windowMultView = views[next];
+    renderWindowMultiplierTest();
   }
 
   function stepGroupHistory(delta) {
@@ -3436,6 +3450,17 @@
       html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#dbeafe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
     });
     html += '</div>';
+    var wmView = state.windowMultView || "overview";
+    var wmViewTabs = [
+      ["overview", "总览"],
+      ["formula", "公式与仓位"],
+      ["years", "年度测试"],
+      ["windows", "窗口明细"]
+    ].map(function (item) {
+      return '<button class="chip wm-view-tab' + (wmView === item[0] ? " is-active" : "") + '" type="button" data-wm-view="' + item[0] + '">' + item[1] + '</button>';
+    }).join("");
+    html += '<div class="section"><div class="wm-view-tabs">' + wmViewTabs + '</div></div>';
+    html += '<div class="wm-view-group" data-wm-group="formula">';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每个号码的最优下注公式</h2><span class="section__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 全周期净收益最高</span></div></div>';
     html += '<div class="section"><div class="panel wm-formula-panel">';
     orderedLines.forEach(function (item) {
@@ -3473,6 +3498,8 @@
       html += '</div>';
     });
     html += '</div></div>';
+    html += '</div>';
+    html += '<div class="wm-view-group" data-wm-group="years">';
     var ytdRows = EXEC_LINES.map(function (item) {
       return { item: item, best: ytdBestByLine[item.id] || null };
     }).sort(function (a, b) {
@@ -3525,6 +3552,8 @@
       html += '<td style="font-weight:900;color:' + (itemStats && itemStats.net >= 0 ? "#16a34a" : "#dc2626") + '">' + (itemStats ? (itemStats.net >= 0 ? "+" : "") + itemStats.net : "-") + '</td></tr>';
     });
     html += '</tbody></table></div></div>';
+    html += '</div>';
+    html += '<div class="wm-view-group" data-wm-group="overview">';
     var multiplierButtons = ns.map(function (n) {
       return '<button class="chip" data-wm-n="' + n + '" style="' + (n === activeN ? "background:#2563eb;color:#fff;border-color:#1d4ed8" : "") + '">' + (n === 1 ? "不倍投" : n + "倍") + '</button>';
     }).join("");
@@ -3585,6 +3614,8 @@
     html += '<div class="stat"><div class="stat__value">' + selected.orderHit.toFixed(2) + '%</div><div class="stat__label">实际下单命中率</div></div>';
     html += '<div class="stat"><div class="stat__value">' + selected.maxWindowRisk + '</div><div class="stat__label">单窗最大风险（元）</div></div>';
     html += '</div></div>';
+    html += '</div>';
+    html += '<div class="wm-view-group" data-wm-group="windows">';
     var missRuns = [];
     var currentRun = null;
     selected.records.forEach(function (item) {
@@ -3686,8 +3717,12 @@
       html += '</tr>';
     });
     html += '</tbody></table></div></div></div>';
+    html += '</div>';
     html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
+    Array.prototype.forEach.call(view.querySelectorAll(".wm-view-group"), function (group) {
+      if (group.getAttribute("data-wm-group") !== wmView) group.style.display = "none";
+    });
   }
 
   function renderOrderLog() {
@@ -5501,6 +5536,7 @@
       gestureClickGuard = true;
       e.preventDefault();
       if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
+      else if (state.tab === "windowmult") stepWindowMultView(dx > 0 ? -1 : 1);
       else stepTabHistory(dx > 0 ? -1 : 1);
     }
   }, true);
@@ -5534,6 +5570,7 @@
     }
     if (absX < swipeX || absX < absY * 1.1) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
+    else if (state.tab === "windowmult") stepWindowMultView(dx > 0 ? -1 : 1);
     else stepTabHistory(dx > 0 ? -1 : 1);
   }, true);
 
@@ -5674,6 +5711,12 @@
   });
 
   view.addEventListener("click", function (e) {
+    var wmViewBtn = e.target.closest("[data-wm-view]");
+    if (wmViewBtn) {
+      state.windowMultView = wmViewBtn.dataset.wmView;
+      renderWindowMultiplierTest();
+      return;
+    }
     var searchType = e.target.closest("[data-numsearch-type]");
     if (searchType) {
       state.numSearchType = searchType.dataset.numsearchType;
