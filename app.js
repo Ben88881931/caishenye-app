@@ -411,6 +411,22 @@
     return (x * 100).toFixed(digits == null ? 1 : digits) + "%";
   }
 
+  // ===== 性能：长表默认只上最近 60 期/窗，数据不删，点“显示全部”再全量渲染 =====
+  var PERF_ROWS = 60;
+  var perfExpandAll = {};
+  function perfRows(key, list, keep) {
+    var n = keep || PERF_ROWS;
+    if (perfExpandAll[key] || list.length <= n) return list;
+    return list.slice(list.length - n);
+  }
+  function perfMoreBtn(key, total, shown, unit) {
+    if (perfExpandAll[key] || total <= shown) return "";
+    return '<div class="perf-more-row"><button class="perf-more" type="button" data-perf-more="' + key + '">显示全部 ' + total + (unit || "期") + " · 当前只渲染最近 " + shown + (unit || "期") + "</button></div>";
+  }
+  function perfResetAll() {
+    perfExpandAll = {};
+  }
+
   // ===== 导航自定义排序 =====
   var TAB_ORDER_KEY = "v2_tab_order";
   var NAV_GROUP_KEY = "v2_nav_group";
@@ -1611,7 +1627,8 @@
     });
     html += "</tr></thead><tbody>";
 
-    periods.forEach(function (p) {
+    var shownPeriodsMissOrder = perfRows("missorder", periods);
+    shownPeriodsMissOrder.forEach(function (p) {
       var drawn = tailsOf(p);
       html += '<tr><td class="row-label">' + p + '</td><td class="open-tails">' + drawn.join(" ") + '</td><td class="open-count">' + drawn.length + "</td>";
       order.forEach(function (d) {
@@ -1628,6 +1645,7 @@
     });
 
     html += "</tbody></table></div></div>";
+    html += perfMoreBtn("missorder", periods.length, shownPeriodsMissOrder.length);
     html += '<p class="disclaimer">排序规则：按每个尾数最近一次遗漏满 3 期及以上的时间排序，旧的放左、最新的放右；正在遗漏满 3 期及以上的放在最后。</p>';
     return html;
   }
@@ -1648,7 +1666,8 @@
     });
     html += "</tr></thead><tbody>";
 
-    periods.forEach(function (p) {
+    var shownPeriodsParity = perfRows("parity", periods);
+    shownPeriodsParity.forEach(function (p) {
       var drawn = tailsOf(p);
       html += '<tr><td class="row-label">' + p + '</td><td class="open-tails">' + drawn.join(" ") + '</td><td class="open-count">' + drawn.length + "</td>";
       order.forEach(function (d, i) {
@@ -1666,12 +1685,13 @@
     });
 
     html += "</tbody></table></div></div>";
+    html += perfMoreBtn("parity", periods.length, shownPeriodsParity.length);
     html += '<p class="disclaimer">单数尾数放左、双数尾数放右；左右两侧内部都按最近一次遗漏满 3 期及以上的时间排序，最新放最右。</p>';
     return html;
   }
 
   function renderTrend() {
-    var heatPeriods = periods;
+    var heatPeriods = perfRows("trend", periods);
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
@@ -1692,6 +1712,7 @@
       html += "</tr>";
     });
     html += "</tbody></table></div></div></div>";
+    html += perfMoreBtn("trend", periods.length, heatPeriods.length);
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">' + state.rollWindow + ' 期窗口 · 红点 = 开出</span></div>';
     html += '<div class="chips" style="margin-bottom:8px">';
@@ -2821,6 +2842,9 @@
       var recent = result.windows.slice().sort(function (a, b) {
         return Number(b.start) - Number(a.start);
       });
+      var recentTotal = recent.length;
+      var recentKey = "execline:" + line.id;
+      if (recentTotal > 20 && !perfExpandAll[recentKey]) recent = recent.slice(0, 20);
       if (!recent.length) {
         html += '<span style="font-size:12px;color:#9ca3af">暂无已结束窗口</span>';
       } else {
@@ -2828,13 +2852,14 @@
           var tone = w.status === "hit" ? "#16a34a" : "#dc2626";
           var bg = w.status === "hit" ? "#f0fdf4" : "#fef2f2";
           var border = w.status === "hit" ? "#bbf7d0" : "#fecaca";
-          html += '<div style="min-width:150px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + '">';
+          html += '<div class="exec-hist-card" style="min-width:150px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + '">';
           html += '<div style="font-size:10px;color:#6b7280">起始 第' + w.start + '期</div>';
           html += '<div style="font-size:12px;font-weight:900;color:' + tone + ';margin-top:2px">' + execWindowText(w) + '</div>';
           html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (w.attempts || []).map(execAttemptText).join("→") + '</div>';
           html += '</div>';
         });
       }
+      html += perfMoreBtn(recentKey, recentTotal, recent.length, "窗");
       html += '</div></div></div>';
     });
     html += '<p class="disclaimer">尾0–尾9只读取各自开奖结果，完全不读取D1/D2；追号码D1/D2和追推荐D1/D2各自只读取对应模型信号。本页只做执行提示和线路对错记录，不自动下单；历史公式仍需时间外验证。</p>';
@@ -4153,6 +4178,9 @@
       var batches = (result.batches || []).slice().sort(function (a, b) {
         return Number(b.startPeriod) - Number(a.startPeriod);
       });
+      var corrTotal = batches.length;
+      var corrKey = "corrscroll:" + key + (isRecommendMode ? ":rec" : ":num");
+      if (corrTotal > 60 && !perfExpandAll[corrKey]) batches = batches.slice(0, 60);
       html += '<div id="threeCorrectScroll' + key + '"' + (key === "D1" ? ' style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e5e7eb"' : '') + '>';
       html += '<div style="font-size:12px;font-weight:900;color:' + (key === "D1" ? "#16a34a" : "#2563eb") + ';margin-bottom:6px">' + key + ' ' + result.label + '</div>';
       html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">';
@@ -4182,6 +4210,7 @@
         });
       }
       html += '</div></div></div>';
+      html += perfMoreBtn(corrKey, corrTotal, batches.length, "窗");
     });
     html += '</div></div>';
     return html;
@@ -4522,6 +4551,9 @@
     ["D1", "D2"].forEach(function (key) {
       var streamResult = streamThree[key] || { label: key, batches: [] };
       var batches = (streamResult.batches || []).slice().sort(function (a, b) { return b.startPeriod - a.startPeriod; });
+      var batchTotal = batches.length;
+      var batchKey = "ultroll:" + key + (isRecommendMode ? ":rec" : ":num");
+      if (batchTotal > 60 && !perfExpandAll[batchKey]) batches = batches.slice(0, 60);
       var streamName = key + " " + streamResult.label + (key === "D1" ? " · 首推" : " · 备选");
       html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内滚动记录 · ' + streamName + '</h2><span class="section__hint">' + streamName + '独立滚动条 · 新→旧</span></div></div>';
       html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
@@ -4529,6 +4561,7 @@
       batches.forEach(function (batch) { html += renderBatchCard(batch); });
       if (!batches.length) html += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
       html += '</div></div>';
+      html += perfMoreBtn(batchKey, batchTotal, batches.length, "窗");
     });
 
     html += '<!--ULT_RECORDS_END-->';
@@ -5038,7 +5071,9 @@
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序，最新在上）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
     html += '<div class="panel">';
-    for (var ri = hist.length - 1; ri >= 0; ri--) {
+    var histShown = perfExpandAll["pick3hist"] ? hist.length : Math.min(hist.length, 60);
+    var histFloor = hist.length - histShown;
+    for (var ri = hist.length - 1; ri >= histFloor; ri--) {
       var r = hist[ri];
       html += '<div class="record">';
       html += '<div class="record__top">';
@@ -5082,6 +5117,7 @@
       html += '</div>';
     }
     html += '</div>';
+    html += perfMoreBtn("pick3hist", hist.length, histShown, "期");
 
     html += '<p class="disclaimer">双号追热基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     view.innerHTML = html;
@@ -5451,7 +5487,8 @@
       html += '<th><div class="numhdr">' + (n < 10 ? "0" + n : n) + '</div><div class="zodhdr">' + (zmap[n] || "-") + "</div></th>";
     }
     html += "</tr></thead><tbody>";
-    arr.forEach(function (r) {
+    var shownNumTrend = perfRows("numtrend", arr);
+    shownNumTrend.forEach(function (r) {
       var info = {};
       for (var j = 0; j < r.nums.length; j++) info[r.nums[j]] = { c: numberColorOf(r.nums[j]), z: r.zods[j] };
       html += '<tr><td class="period">' + r.p + "</td>";
@@ -5465,6 +5502,7 @@
       html += "</tr>";
     });
     html += "</tbody></table></div></div></div>";
+    html += perfMoreBtn("numtrend", arr.length, shownNumTrend.length);
     view.innerHTML = html;
     var ntsc = view.querySelector(".trend-scroll");
     if (ntsc) ntsc.scrollTop = ntsc.scrollHeight;
@@ -5518,7 +5556,10 @@
       nmap[z].forEach(function (n) { html += '<th><div class="numhdr">' + (n < 10 ? "0" + n : n) + "</div></th>"; });
     });
     html += "</tr></thead><tbody>";
-    arr.forEach(function (r, i) {
+    var shownZodTrend = perfRows("zodtrend", arr);
+    var zodTrendStart = arr.length - shownZodTrend.length;
+    shownZodTrend.forEach(function (r, k) {
+      var i = zodTrendStart + k;
       var nc = {};
       for (var j = 0; j < r.nums.length; j++) nc[r.nums[j]] = numberColorOf(r.nums[j]);
       html += '<tr><td class="period">' + r.p + "</td>";
@@ -5543,6 +5584,7 @@
       html += "</tr>";
     });
     html += "</tbody></table></div></div></div>";
+    html += perfMoreBtn("zodtrend", arr.length, shownZodTrend.length);
     html += '<p class="disclaimer">生肖字格：开出写生肖名，蓝=遗漏1期、绿=遗漏2期、黄=遗漏3期及以上并写期数；号码球红/蓝/绿为号码颜色分类。</p>';
     view.innerHTML = html;
     var ztsc = view.querySelector(".trend-scroll");
@@ -5965,6 +6007,7 @@
     }
     var btn = e.target.closest(".tab");
     if (btn && !btn.dataset.sortToggle && !btn.dataset.sortReset) {
+      perfResetAll();
       state.tab = btn.dataset.tab;
       rememberTabInGroup(state.group, state.tab);
       lsSet("v2_current_tab", state.tab);
@@ -5979,6 +6022,12 @@
   });
 
   view.addEventListener("click", function (e) {
+    var perfMore = e.target.closest("[data-perf-more]");
+    if (perfMore) {
+      perfExpandAll[perfMore.dataset.perfMore] = true;
+      render();
+      return;
+    }
     var ultModeBtn = e.target.closest("[data-ult-mode]");
     if (ultModeBtn) {
       state.ultimateMode = ultModeBtn.dataset.ultMode === "recommend" ? "recommend" : "number";

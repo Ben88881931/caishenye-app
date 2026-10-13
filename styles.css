@@ -2165,13 +2165,10 @@ body {
   overscroll-behavior-y: none;
 }
 
-.view {
-  backface-visibility: hidden;
-}
-
-/* 只在手势进行中提升图层：常驻 will-change 会让超长页面在手机上多占一大块显存 */
+/* 只在手势进行中提升图层：常驻 will-change / backface-visibility 会让超长页面在手机上多占一大块显存并拖慢滚动 */
 html.gesture-active .view {
   will-change: transform;
+  backface-visibility: hidden;
 }
 
 html.gesture-active,
@@ -2180,34 +2177,45 @@ html.gesture-active * {
   user-select: none;
 }
 
-button,
-.chip,
-.tab,
+/* 按下反馈只给会点的方块，且不做常驻 transition：几千个 chip 一起挂 transition 会拖慢样式重算 */
 .position-card,
 .directory-card,
 .numsearch-mode {
-  transition: transform .12s ease, background-color .12s ease, opacity .12s ease;
+  transition: transform .1s ease-out;
 }
 
-button:active,
-.chip:active,
-.tab:active,
 .position-card:active,
 .directory-card:active,
 .numsearch-mode:active {
   transform: scale(.975);
-  opacity: .92;
 }
 
-.wm-hscroll,
-.exec-line__scroll,
-.seg-hist-scroll,
-.trend-scroll,
-.heatmap {
-  scroll-snap-type: x proximity;
+/* 长列表默认只上最近 60 期/窗，点按钮再全量渲染 */
+.perf-more-row {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 4px;
 }
 
-.wm-hscroll > *,
-.exec-line__scroll > * {
-  scroll-snap-align: start;
+.perf-more {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* 离屏的历史卡片跳过布局与绘制：长记录页滚动和翻页都不再整屏重排 */
+.wm-win-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 220px;
+}
+
+.exec-hist-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 88px;
 }
