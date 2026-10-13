@@ -241,7 +241,7 @@ def main():
             pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和14条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
-        if "function renderFunds" in app_text and "直接按公式安排" in app_text and "本期按公式金额" in app_text and "本窗剩余风险" in app_text and "FUND_CAPITAL = 10000" in app_text and "无有效公式" in app_text:
+        if "function renderFunds" in app_text and "直接按公式安排" in app_text and "本期按公式金额" in app_text and "本窗剩余风险" in app_text and "不锚定本金" in app_text and "本期不下注线路" in app_text and "无有效公式" in app_text and "FUND_CAPITAL" not in app_text and "本金锚定" not in app_text and "本金占用率" not in app_text:
             pass_("资金调度页面直接按公式表读取本期金额和窗口风险")
         else:
             fail("资金调度页面未按公式表直接安排资金")
