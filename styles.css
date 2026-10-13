@@ -2165,12 +2165,6 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* 只在手势进行中提升图层：常驻 will-change / backface-visibility 会让超长页面在手机上多占一大块显存并拖慢滚动 */
-html.gesture-active .view {
-  will-change: transform;
-  backface-visibility: hidden;
-}
-
 html.gesture-active,
 html.gesture-active * {
   -webkit-user-select: none;
@@ -2209,13 +2203,3 @@ html.gesture-active * {
   cursor: pointer;
 }
 
-/* 离屏的历史卡片跳过布局与绘制：长记录页滚动和翻页都不再整屏重排 */
-.wm-win-card {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 220px;
-}
-
-.exec-hist-card {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 88px;
-}
