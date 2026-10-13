@@ -4064,25 +4064,38 @@
     return html;
   }
 
-  function threePeriodRealtimeSnapshotRows(streamThree) {
+  // 真实快照命中率按“每一期”统计：该期开奖前已存快照、开奖后已结算就立刻计入；
+  // 不再等整个三期窗口结束，避免进行中的窗口把已结算的最新期（例如285）挡住。
+  function threePeriodRealtimeSnapshotRows() {
+    var detail = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.detail) ? window.APP_SNAPSHOTS.detail : [];
     var rows = [];
     var pending = [];
-    ["D1", "D2"].forEach(function (key) {
-      var batches = (streamThree[key] && streamThree[key].batches) || [];
-      batches.forEach(function (batch) {
-        if (batch.status === "pending" || batch.hitIndex == null) {
-          if (batch.status === "pending") pending.push({ stream: key, period: batch.startPeriod });
-          return;
-        }
-        if (batch.sourceKind !== "snapshot") return;
-        var attempts = batch.attempts || [];
+    var maxTarget = null;
+    var pendingTarget = null;
+    detail.forEach(function (rec) {
+      if (!rec || !Number.isFinite(Number(rec.target))) return;
+      var target = Number(rec.target);
+      if (maxTarget == null || target > maxTarget) maxTarget = target;
+      var picks = Array.isArray(rec.picks) ? rec.picks : [];
+      var actual = Array.isArray(rec.actualTails) ? rec.actualTails : [];
+      if (!actual.length) {
+        if (pendingTarget == null || target > pendingTarget) pendingTarget = target;
+        return;
+      }
+      ["D1", "D2"].forEach(function (key, index) {
+        var pick = picks[index];
+        if (!pick || pick.tail == null) return;
         rows.push({
-          period: attempts.length ? attempts[attempts.length - 1].period : batch.startPeriod,
-          hit: batch.status === "hit" || (batch.hitIndex >= 1 && batch.hitIndex <= 3),
+          period: target,
+          hit: pick.hit === true || actual.indexOf(pick.tail) >= 0,
           stream: key
         });
       });
     });
+    var nextPeriod = pendingTarget != null ? pendingTarget : (maxTarget != null ? maxTarget + 1 : null);
+    if (nextPeriod != null) {
+      ["D1", "D2"].forEach(function (key) { pending.push({ stream: key, period: nextPeriod }); });
+    }
     return { rows: rows, pending: pending };
   }
 
@@ -4381,13 +4394,13 @@
       streamThree[key].missRate = n2 ? counts2.miss / n2 : 0;
     });
     html += '<!--ULT_RECORDS_START-->';
-    var realtimeThree = threePeriodRealtimeSnapshotRows(streamThree);
+    var realtimeThree = threePeriodRealtimeSnapshotRows();
     var realtimePendingByStream = {};
     realtimeThree.pending.forEach(function (p) {
       realtimePendingByStream[p.stream] = "第" + p.period + "期";
     });
     html += buildRealtimeSnapshotRateHTML({
-      hint: (isRecommendMode ? "三期内追推荐" : "三期内追号码") + " · 只统计真实快照已结算窗口；进行中窗口不计入",
+      hint: (isRecommendMode ? "三期内追推荐" : "三期内追号码") + " · 每一期真实快照独立统计，开奖后立即更新；未开奖不计入",
       groups: [
         {
           label: "第一推荐 D1",
