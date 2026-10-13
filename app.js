@@ -5493,7 +5493,7 @@
   var SWIPE_X = 28;
   var SWIPE_Y = 36;
   var SWIPE_PRIMARY_X = 20;
-  var RETURN_SWIPE_X = 100;
+  var RETURN_SWIPE_X = 160;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   document.documentElement.addEventListener("pointerdown", function (e) {
@@ -5540,6 +5540,9 @@
       state.tab = "directory";
       lsSet("v2_current_tab", state.tab);
       render();
+      return;
+    }
+    if (level === "tab" && dx > 0 && absX > absY * 1.05 && absX < RETURN_SWIPE_X) {
       return;
     }
     if (absX >= swipeX && absX > absY * 1.05) {
