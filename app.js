@@ -3914,10 +3914,18 @@
       var curState = prevStateOf(lastRec);
       var curBucket = buckets[curState];
       var curRate = bRate(curBucket);
-      var nature = natHit >= 0.9 ? "稳" : "均衡";
-      if (buckets.miss1.n >= 5 && bRate(buckets.miss1) - natHit >= 0.08) nature = "连错反弹型";
-      else if (buckets.miss2.n >= 3 && natHit - bRate(buckets.miss2) >= 0.2) nature = "连错走弱型";
-      else if (buckets.hit.n >= 5 && bRate(buckets.hit) - natHit >= 0.05) nature = "连中延续型";
+      // 性格判定：和该线自己的平均命中率比，而不是用绝对线
+      var natB1 = bRate(buckets.miss1);
+      var nature = "均衡";
+      if (buckets.miss1.n >= 20 && natB1 >= natHit + 0.01) nature = "连错反弹型";
+      else if ((buckets.miss1.n >= 20 && natB1 <= natHit - 0.03) || (buckets.miss2.n >= 3 && bRate(buckets.miss2) <= natHit - 0.10)) nature = "连错走弱型";
+      else if (buckets.hit.n >= 20 && bRate(buckets.hit) >= natHit + 0.04) nature = "连中延续型";
+      else if (natHit >= 0.9 && sim.maxLossStreak <= 2) nature = "稳";
+      var natureNote = nature === "连错反弹型" ? "连错之后反而更容易命中，可以照追"
+        : nature === "连错走弱型" ? "连错之后命中率逐级下降，连错2次以上要减仓或停追"
+        : nature === "连中延续型" ? "命中之后容易接着命中，命中状态下正常追"
+        : nature === "稳" ? "很少连错，按公式稳定执行"
+        : "前后窗差别不大，按公式执行";
       var natPlan = item.plan || [0, 0, 0];
       var playStyle = (natPlan[0] === 0 && natPlan[1] === 0 && natPlan[2] === 0) ? "不配仓"
         : (natPlan[0] > 0 && natPlan[1] > natPlan[0] && natPlan[2] > natPlan[1]) ? "倍投型"
@@ -3968,6 +3976,7 @@
       html += '<div class="wm-nat-card">';
       html += '<div><span class="wm-nat-card__name">' + item.label + '</span><span class="wm-nat-card__tag" style="color:' + (playStyle === "不配仓" ? "#dc2626" : "#16a34a") + '">' + playStyle + '</span></div>';
       html += '<div class="wm-nat-card__row"><span>性格</span><b style="color:#0f172a">' + nature + '</b></div>';
+      html += '<div style="font-size:10px;color:#64748b;margin-top:2px;line-height:1.5">规律结论：' + natureNote + '</div>';
       html += '<div class="wm-nat-card__row"><span>窗口总数 / 命中 / 全错</span><b>' + n + '窗 · ' + (natHit * 100).toFixed(1) + '% · ' + (natPm * 100).toFixed(1) + '%</b></div>';
       html += '<div class="wm-nat-card__row"><span>窗口内第1/2/3期中</span><b>' + (natP1 * 100).toFixed(1) + '% / ' + (natP2 * 100).toFixed(1) + '% / ' + (natP3 * 100).toFixed(1) + '%</b></div>';
       html += '<div class="wm-nat-card__row"><span>最大连错</span><b>' + sim.maxLossStreak + ' 窗</b></div>';
