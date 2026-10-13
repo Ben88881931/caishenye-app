@@ -355,6 +355,7 @@
     windowMultLine: "tail1",
     windowMultN: 2,
     windowMultView: "overview",
+    windowMultDetailLimit: 30,
     numSearchQuery: "",
     numSearchMode: "all",
     numSearchType: "tail",
@@ -3449,7 +3450,7 @@
       var itemPosition = wmCurrentPosition(item, itemBest ? itemBest.n : activeN);
       html += '<button class="chip" data-wm-line="' + item.id + '" style="min-width:132px;min-height:68px;padding:9px 12px;font-size:14px;font-weight:900;text-align:left;' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '"><span style="display:block;font-size:15px">' + item.label + '</span><span style="display:block;font-size:11px;font-weight:800;color:' + (item.id === line.id ? "#dbeafe" : itemBest ? "#16a34a" : "#dc2626") + '">最优 ' + itemBestText + '</span><span style="display:block;font-size:11px;font-weight:900;color:' + (item.id === line.id ? "#fde68a" : itemPosition.color) + '">当前 ' + itemPosition.label + '</span></button>';
     });
-    html += '</div>';
+    html += '</div></div></div>';
     var wmView = state.windowMultView || "overview";
     var wmViewTabs = [
       ["overview", "总览"],
@@ -3583,7 +3584,7 @@
     } else {
       html += '无进行中窗口 · 空仓等待';
     }
-    html += '</div></div>';
+    html += '</div></div></div>';
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + line.label + '</div><div class="stat__label">当前线路</div></div>';
     html += '<div class="stat"><div class="stat__value" style="font-size:18px">' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过") + '</div><div class="stat__label">年度稳健最优倍率</div></div>';
@@ -3668,7 +3669,9 @@
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + selected.maxLossStreak + '窗</div><div class="stat__label">历史最大连续全错</div></div>';
     html += '</div></div>';
     var consecutiveRuns = missRuns.filter(function (run) { return run.length >= 2; }).slice().reverse();
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="font-size:13px;font-weight:900;color:#0f172a;margin-bottom:8px">连续2窗及以上记录 · 左右滑动查看</div><div style="display:flex;gap:8px;min-width:max-content">';
+    html += '<div class="section"><div class="panel" style="padding:10px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:#0f172a">连续2窗及以上全错记录</div><span style="font-size:11px;color:#64748b;flex:0 0 auto">左右滑动</span></div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
     if (!consecutiveRuns.length) {
       html += '<div style="font-size:13px;color:#64748b">没有连续2窗全错记录</div>';
     } else {
@@ -3682,41 +3685,69 @@
       });
     }
     html += '</div></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:12px;color:#64748b;margin-bottom:8px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口 · 最新在前</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:980px"><thead><tr><th>窗口起始</th><th>第1期检查</th><th>第2期检查</th><th>第3期检查</th><th>结果</th><th>连续全错</th><th>本窗盈亏</th></tr></thead><tbody>';
-    if (liveState.active) {
-      var liveWindow = liveState.active;
-      html += '<tr style="background:#dbeafe;outline:2px solid #2563eb">';
-      html += '<td><b>当前窗口 · ' + wmPeriodLabel(liveWindow.start) + '</b></td>';
-      for (var lj = 0; lj < 3; lj++) {
-        var livePeriod = liveWindow.start + lj;
-        if (lj < liveWindow.attempts.length) {
-          html += '<td>' + wmAttemptCell(liveWindow, lj) + '</td>';
-        } else if (livePeriod <= latest) {
-          html += '<td><span style="color:#94a3b8">未记录</span></td>';
+    function wmWindowCard(w, isLive, item) {
+      var border = isLive ? "#2563eb" : w.hitIndex === 0 ? "#fecaca" : "#bbf7d0";
+      var bg = isLive ? "#eff6ff" : w.hitIndex === 0 ? "#fef2f2" : "#f0fdf4";
+      var card = '<div style="flex:0 0 238px;min-width:238px;border:1px solid ' + border + ';background:' + bg + ';border-radius:8px;padding:9px">';
+      card += '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">';
+      card += '<b style="font-size:13px">' + (isLive ? "当前窗口 · " : "") + wmPeriodLabel(w.start) + '</b>';
+      if (isLive) card += '<span style="font-size:11px;font-weight:900;color:#1d4ed8">进行中</span>';
+      else card += '<span style="font-size:11px;font-weight:900;color:' + (w.hitIndex > 0 ? "#16a34a" : "#dc2626") + '">' + (w.hitIndex > 0 ? "第" + w.hitIndex + "期中" : "三期全错") + '</span>';
+      card += '</div>';
+      for (var k = 0; k < 3; k++) {
+        var cardPeriod = w.start + k;
+        var att = w.attempts[k];
+        card += '<div style="display:flex;align-items:center;gap:5px;margin-top:6px;font-size:12px">';
+        card += '<span style="flex:0 0 42px;font-weight:900;color:#475569">第' + (k + 1) + '期</span>';
+        if (att) {
+          card += '<span style="color:#64748b">' + wmPeriodLabel(att.period) + '</span>';
+          card += '<span style="margin-left:auto;font-weight:900">尾' + att.tail + '</span>';
+          card += '<b style="color:' + (att.hit ? "#16a34a" : "#dc2626") + '">' + (att.hit ? "中" : "错") + '</b>';
+        } else if (isLive) {
+          card += '<span style="color:#64748b">' + wmPeriodLabel(cardPeriod) + '</span>';
+          card += '<span style="margin-left:auto;font-weight:900;color:' + (cardPeriod <= latest ? "#94a3b8" : "#2563eb") + '">' + (cardPeriod <= latest ? "未记录" : "待开奖") + '</span>';
         } else {
-          html += '<td><span style="color:#2563eb;font-weight:900">待开奖</span></td>';
+          card += '<span style="color:#94a3b8;margin-left:auto">命中后停止</span>';
         }
+        card += '</div>';
       }
-      html += '<td style="color:#1d4ed8;font-weight:900">进行中 · 已检查' + liveWindow.attempts.length + '期</td>';
-      html += '<td>-</td><td>--</td>';
-      html += '</tr>';
+      card += '<div style="margin-top:7px;border-top:1px solid #e2e8f0;padding-top:6px;display:flex;align-items:center;justify-content:space-between;font-size:11px">';
+      if (isLive) {
+        card += '<span style="color:#1d4ed8;font-weight:900">已检查' + w.attempts.length + '期</span>';
+        card += '<span style="color:#1d4ed8;font-weight:900">下期 ' + wmPeriodLabel(w.start + w.attempts.length) + '</span>';
+      } else {
+        card += '<span style="color:' + (item.missStreak ? "#dc2626" : "#94a3b8") + ';font-weight:900">' + (item.missStreak ? "第" + item.missStreak + "次连错" : "未连错") + '</span>';
+        card += '<b style="color:' + (item.profit >= 0 ? "#16a34a" : "#dc2626") + '">本窗 ' + (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</b>';
+      }
+      card += '</div>';
+      card += '</div>';
+      return card;
     }
-    selected.records.slice().reverse().forEach(function (item) {
-      var w = item.window;
-      var resultText = w.hitIndex > 0 ? '第' + w.hitIndex + '期中' : '三期全错';
-      var color = w.hitIndex > 0 ? "#16a34a" : "#dc2626";
-      var rowBg = w.hitIndex === 0 ? "#fef2f2" : w.hitIndex === 3 ? "#fffbeb" : w.hitIndex === 2 ? "#eff6ff" : "#f0fdf4";
-      html += '<tr style="background:' + rowBg + '">';
-      html += '<td><b>' + wmPeriodLabel(w.start) + '</b></td>';
-      html += '<td>' + wmAttemptCell(w, 0) + '</td>';
-      html += '<td>' + wmAttemptCell(w, 1) + '</td>';
-      html += '<td>' + wmAttemptCell(w, 2) + '</td>';
-      html += '<td style="color:' + color + ';font-weight:900">' + resultText + '</td>';
-      html += '<td style="font-weight:900;color:' + (item.missStreak ? "#dc2626" : "#94a3b8") + '">' + (item.missStreak ? "第" + item.missStreak + "次连错" : "-") + '</td>';
-      html += '<td style="font-weight:900;color:' + (item.profit >= 0 ? "#16a34a" : "#dc2626") + '">' + (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</td>';
-      html += '</tr>';
+    html += '<div class="section"><div class="panel" style="padding:10px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><div style="font-size:13px;font-weight:900;color:#0f172a">窗口明细 · 每个窗口的第1/2/3期分别在哪一期、尾号、中或错</div><span style="font-size:11px;color:#64748b;flex:0 0 auto">左右滑动 · 最新在前</span></div>';
+    html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口</div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    var detailLimit = Number(state.windowMultDetailLimit) || 30;
+    var detailTotal = selected.records.length;
+    var detailRecords = selected.records.slice(Math.max(0, detailTotal - detailLimit)).reverse();
+    if (liveState.active) html += wmWindowCard(liveState.active, true, null);
+    if (!detailTotal && !liveState.active) {
+      html += '<div style="font-size:13px;color:#64748b">暂无窗口记录</div>';
+    }
+    detailRecords.forEach(function (item) {
+      html += wmWindowCard(item.window, false, item);
     });
-    html += '</tbody></table></div></div></div>';
+    html += '</div>';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">';
+    html += '<span style="font-size:11px;color:#64748b">已显示最近 ' + detailRecords.length + ' / 共' + detailTotal + ' 个窗口</span>';
+    html += '<span style="display:flex;gap:6px">';
+    if (detailRecords.length < detailTotal) {
+      html += '<button class="chip" type="button" data-wm-detail-more="30" style="font-weight:900">再显示30个</button>';
+    }
+    if (detailLimit > 30) {
+      html += '<button class="chip" type="button" data-wm-detail-reset="1" style="font-weight:900">只看最近30个</button>';
+    }
+    html += '</span></div></div></div>';
     html += '</div>';
     html += '<p class="disclaimer">页面只做历史窗口倍投测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
@@ -5714,6 +5745,17 @@
     var wmViewBtn = e.target.closest("[data-wm-view]");
     if (wmViewBtn) {
       state.windowMultView = wmViewBtn.dataset.wmView;
+      renderWindowMultiplierTest();
+      return;
+    }
+    var wmMoreBtn = e.target.closest("[data-wm-detail-more]");
+    if (wmMoreBtn) {
+      state.windowMultDetailLimit = (Number(state.windowMultDetailLimit) || 30) + Number(wmMoreBtn.dataset.wmDetailMore || 30);
+      renderWindowMultiplierTest();
+      return;
+    }
+    if (e.target.closest("[data-wm-detail-reset]")) {
+      state.windowMultDetailLimit = 30;
       renderWindowMultiplierTest();
       return;
     }
