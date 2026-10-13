@@ -797,7 +797,7 @@
   }
 
   function stepWindowMultView(delta) {
-    var views = ["overview", "windows", "formula", "years"];
+    var views = ["overview", "windows", "personality", "formula", "years"];
     var index = views.indexOf(state.windowMultView);
     if (index < 0) index = 0;
     var next = index + delta;
@@ -3468,6 +3468,7 @@
     var wmViewTabs = [
       ["overview", "总览"],
       ["windows", "窗口明细"],
+      ["personality", "14线性格"],
       ["formula", "公式与仓位"],
       ["years", "年度测试"]
     ].map(function (item) {
@@ -3873,6 +3874,64 @@
       html += '<button class="chip" type="button" data-wm-detail-reset="1" style="font-weight:900">只看最近1年</button>';
     }
     html += '</span></div>';
+    html += '</div></div>';
+    html += '</div>';
+    html += '<div class="wm-view-group" data-wm-group="personality">';
+    html += '<div class="section"><div class="panel wm-card">';
+    html += '<div class="wm-card__head"><b class="wm-card__title">14线性格规律 · 当下建议</b><span class="wm-card__hint">按每条线自己的历史窗口分布判断性格，再结合当下窗口位置给参考建议；金额只认公式表 line.plan，这里只作研究参考 · 左右滑动</span></div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    orderedLines.forEach(function (item) {
+      var itemSims = (lineBest[item.id] || {}).simulations;
+      var sim = itemSims ? itemSims[0] : null;
+      if (!sim) return;
+      var n = sim.records.length || 0;
+      var natP1 = n ? sim.hits1 / n : 0;
+      var natP2 = n ? sim.hits2 / n : 0;
+      var natP3 = n ? sim.hits3 / n : 0;
+      var natPm = n ? sim.missWindows / n : 0;
+      var natHit = n ? (n - sim.missWindows) / n : 0;
+      var traits = [];
+      if (natHit >= 0.9) traits.push("稳");
+      if (natP1 >= 0.4) traits.push("抢首期");
+      if (natP3 >= 0.25) traits.push("熬尾期");
+      if (natPm >= 0.2) traits.push("易连错");
+      var nature = traits.length ? traits.join(" + ") : "均衡";
+      var natPlan = item.plan || [0, 0, 0];
+      var playStyle = (natPlan[0] === 0 && natPlan[1] === 0 && natPlan[2] === 0) ? "不配仓"
+        : (natPlan[0] > 0 && natPlan[1] > natPlan[0] && natPlan[2] > natPlan[1]) ? "倍投型"
+        : (natPlan[0] > 0 && natPlan[1] === 0 && natPlan[2] === 0) ? "首期一击"
+        : (natPlan[0] === 0 && natPlan[1] > 0 && natPlan[2] === 0) ? "第二期一击"
+        : (natPlan[0] === 0 && natPlan[1] === 0 && natPlan[2] > 0) ? "尾期一击"
+        : "分段型";
+      var natPos = wmPositionForPlan(item, natPlan);
+      var stageRate = natPos.stage === 1 ? natP1 : natPos.stage === 2 ? natP2 : natPos.stage === 3 ? natP3 : 0;
+      var advise = "不下";
+      var adviseTone = "#6b7280";
+      var adviseWhy = "公式这一期金额为0，先等有金额的期数";
+      if (natPos.label === "等待重开") {
+        advise = "不下";
+        adviseTone = "#d97706";
+        adviseWhy = "上一窗口三期全错，等最后追的尾号重新开出再开新窗口";
+      } else if (natPos.amount > 0) {
+        if (stageRate >= 0.45) { advise = "可重投"; adviseTone = "#16a34a"; }
+        else if (stageRate >= 0.30) { advise = "标准"; adviseTone = "#2563eb"; }
+        else { advise = "轻仓"; adviseTone = "#d97706"; }
+        adviseWhy = "该线第" + natPos.stage + "期历史命中 " + (stageRate * 100).toFixed(1) + "%（共" + n + "个窗口）";
+      }
+      html += '<div class="wm-nat-card">';
+      html += '<div><span class="wm-nat-card__name">' + item.label + '</span><span class="wm-nat-card__tag" style="color:' + (playStyle === "不配仓" ? "#dc2626" : "#16a34a") + '">' + playStyle + '</span></div>';
+      html += '<div class="wm-nat-card__row"><span>性格</span><b style="color:#0f172a">' + nature + '</b></div>';
+      html += '<div class="wm-nat-card__row"><span>第1/2/3期中</span><b>' + (natP1 * 100).toFixed(1) + '% / ' + (natP2 * 100).toFixed(1) + '% / ' + (natP3 * 100).toFixed(1) + '%</b></div>';
+      html += '<div class="wm-nat-card__row"><span>命中 / 全错 / 最大连错</span><b>' + (natHit * 100).toFixed(1) + '% / ' + (natPm * 100).toFixed(1) + '% / ' + sim.maxLossStreak + '窗</b></div>';
+      html += '<div class="wm-nat-card__row"><span>窗口总数</span><b>' + n + ' 窗</b></div>';
+      html += '<div class="wm-nat-card__advice">';
+      html += '<div class="wm-nat-card__row"><span>当下状态</span><b>' + natPos.label + (natPos.amount > 0 ? ' · ' + natPos.amount + '元' : '') + '</b></div>';
+      html += '<div class="wm-nat-card__row"><span>参考建议</span><b style="color:' + adviseTone + '">' + advise + '</b></div>';
+      html += '<div style="font-size:10px;color:#64748b;margin-top:3px;line-height:1.5">' + adviseWhy + '</div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+    html += '<p class="disclaimer" style="margin-top:8px">性格规律只按该线自己的历史窗口分布统计；建议等级（可重投/标准/轻仓/不下）只作研究参考，正式下注金额只认公式表 line.plan。</p>';
     html += '</div></div>';
     html += '</div>';
     html += '<p class="disclaimer">本页是14条线的数据规律正式版，只做历史窗口规律测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
