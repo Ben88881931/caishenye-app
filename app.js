@@ -809,6 +809,18 @@
     renderWindowMultiplierTest();
   }
 
+  // 在14线按钮上左右滑动即可翻到上一条/下一条线，到两端循环
+  function stepWindowMultLine(delta) {
+    var index = -1;
+    for (var i = 0; i < EXEC_LINES.length; i++) {
+      if (EXEC_LINES[i].id === state.windowMultLine) { index = i; break; }
+    }
+    if (index < 0) index = 0;
+    var next = (index + delta + EXEC_LINES.length) % EXEC_LINES.length;
+    state.windowMultLine = EXEC_LINES[next].id;
+    renderWindowMultiplierTest();
+  }
+
   function stepGroupHistory(delta) {
     var group = orderedGroupAt(delta);
     if (!group) return;
@@ -5622,6 +5634,13 @@
   var RETURN_SWIPE_X = 160;
   var historyPointerStart = null;
   var gestureClickGuard = false;
+  var gestureClickGuardTimer = null;
+  // 滑动后页面会整块重渲染，pointerup 可能丢失；用定时器兜底，避免下一次点击被吞掉
+  function armGestureClickGuard() {
+    gestureClickGuard = true;
+    if (gestureClickGuardTimer) clearTimeout(gestureClickGuardTimer);
+    gestureClickGuardTimer = setTimeout(function () { gestureClickGuard = false; }, 450);
+  }
   document.documentElement.addEventListener("pointerdown", function (e) {
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) {
       historyPointerStart = null;
@@ -5642,6 +5661,7 @@
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: inHorizontalScroll,
+      lineStrip: !!e.target.closest(".wm-line-selector"),
       handled: false
     };
     document.documentElement.classList.add("gesture-active");
@@ -5659,9 +5679,16 @@
         !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05)) {
       return;
     }
+    if (historyPointerStart.lineStrip && absX >= swipeX && absX > absY * 1.05) {
+      historyPointerStart.handled = true;
+      armGestureClickGuard();
+      e.preventDefault();
+      stepWindowMultLine(dx > 0 ? -1 : 1);
+      return;
+    }
     if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05) {
       historyPointerStart.handled = true;
-      gestureClickGuard = true;
+      armGestureClickGuard();
       e.preventDefault();
       state.tab = "directory";
       lsSet("v2_current_tab", state.tab);
@@ -5673,7 +5700,7 @@
     }
     if (absX >= swipeX && absX > absY * 1.05) {
       historyPointerStart.handled = true;
-      gestureClickGuard = true;
+      armGestureClickGuard();
       e.preventDefault();
       if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
       else if (state.tab === "windowmult") stepWindowMultView(dx > 0 ? -1 : 1);
@@ -5700,6 +5727,10 @@
     if (isVertical) return;
     if (gesture.inHorizontalScroll &&
         !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05)) {
+      return;
+    }
+    if (gesture.lineStrip && absX >= swipeX && absX > absY * 1.05) {
+      stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
     if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.05) {
@@ -5740,12 +5771,14 @@
     touchReturnStart = {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY,
+      onLineStrip: !!e.target.closest(".wm-line-selector"),
       returned: false
     };
   }, { capture: true, passive: true });
 
   document.documentElement.addEventListener("touchmove", function (e) {
     if (!touchReturnStart || touchReturnStart.returned || e.touches.length !== 1) return;
+    if (touchReturnStart.onLineStrip) return;
     var dx = e.touches[0].clientX - touchReturnStart.x;
     var dy = e.touches[0].clientY - touchReturnStart.y;
     if (dx >= RETURN_SWIPE_X && Math.abs(dx) > Math.abs(dy) * 1.05) {
