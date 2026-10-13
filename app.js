@@ -797,7 +797,7 @@
   }
 
   function stepWindowMultView(delta) {
-    var views = ["overview", "formula", "years", "windows"];
+    var views = ["overview", "windows", "formula", "years"];
     var index = views.indexOf(state.windowMultView);
     if (index < 0) index = 0;
     var next = index + delta;
@@ -3452,9 +3452,9 @@
     var wmView = state.windowMultView || "overview";
     var wmViewTabs = [
       ["overview", "总览"],
+      ["windows", "窗口明细"],
       ["formula", "公式与仓位"],
-      ["years", "年度测试"],
-      ["windows", "窗口明细"]
+      ["years", "年度测试"]
     ].map(function (item) {
       return '<button class="chip wm-view-tab' + (wmView === item[0] ? " is-active" : "") + '" type="button" data-wm-view="' + item[0] + '">' + item[1] + '</button>';
     }).join("");
@@ -3630,6 +3630,35 @@
     html += wmStat("三期全错", selected.missWindows + " · " + (selected.records.length ? ((selected.missWindows / selected.records.length) * 100).toFixed(2) + "%" : "-"), "#dc2626");
     html += wmStat("实际下单命中率", selected.orderHit.toFixed(2) + "%");
     html += wmStat("单窗最大风险", selected.maxWindowRisk + "元");
+    html += '</div>';
+    var yearlyStage = {};
+    selected.records.forEach(function (r) {
+      var rYear = wmYearOf(r.window.start);
+      if (!rYear) return;
+      if (!yearlyStage[rYear]) yearlyStage[rYear] = { h1: 0, h2: 0, h3: 0 };
+      if (r.window.hitIndex === 1) yearlyStage[rYear].h1++;
+      else if (r.window.hitIndex === 2) yearlyStage[rYear].h2++;
+      else if (r.window.hitIndex === 3) yearlyStage[rYear].h3++;
+    });
+    var selectedAnnual = (annualByN[selected.n] || { years: [] }).years.slice().sort(function (a, b) { return b.year - a.year; });
+    html += '<div class="wm-subhead">当前倍率逐年统计 <span style="font-weight:400;color:#64748b">每年单独算，最新在左</span></div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    if (!selectedAnnual.length) {
+      html += '<div style="font-size:13px;color:#64748b">当前倍率没有可用的年度数据</div>';
+    } else {
+      selectedAnnual.forEach(function (row) {
+        var yHit = row.windows ? (row.hitWindows / row.windows) * 100 : 0;
+        var yMiss = row.windows ? (row.missWindows / row.windows) * 100 : 0;
+        var stage = yearlyStage[row.year] || { h1: 0, h2: 0, h3: 0 };
+        html += '<div class="wm-cell" style="flex:0 0 182px;min-width:182px">';
+        html += '<div class="wm-cell__v">' + row.year + '年</div>';
+        html += '<div class="wm-cell__l">窗口 ' + row.windows + ' · 中' + row.hitWindows + ' / 错' + row.missWindows + '</div>';
+        html += '<div class="wm-cell__l">命中率 ' + yHit.toFixed(1) + '% · 全错率 ' + yMiss.toFixed(1) + '%</div>';
+        html += '<div class="wm-cell__l">第1/2/3期中 ' + stage.h1 + ' / ' + stage.h2 + ' / ' + stage.h3 + '</div>';
+        html += '<div class="wm-cell__l" style="color:' + (row.net >= 0 ? "#16a34a" : "#dc2626") + '">净收益 ' + (row.net >= 0 ? "+" : "") + Math.round(row.net) + ' · ROI ' + row.roi.toFixed(2) + '%</div>';
+        html += '</div>';
+      });
+    }
     html += '</div>';
     html += '</div></div>';
     html += '</div>';
