@@ -360,6 +360,8 @@
     numSearchQuery: "",
     numSearchMode: "all",
     numSearchType: "tail",
+    betPlanMode: "two",
+    betShowAll: false,
   };
 
   var TABS = [
@@ -369,6 +371,7 @@
     { id: "chasenumber", label: "三期内追号/追推荐" },
     { id: "orderhint", label: "执行提示" },
     { id: "funds", label: "资金调度" },
+    { id: "betexec", label: "下注执行表" },
     { id: "formulas", label: "公式表" },
     { id: "windowmult", label: "14线规律中心" },
     { id: "orderlog", label: "追三期下单" },
@@ -391,7 +394,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "orderhint", "funds", "formulas", "windowmult", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "orderhint", "funds", "betexec", "formulas", "windowmult", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -1025,6 +1028,7 @@
     else if (state.tab === "chasenumber") renderChaseNumber();
     else if (state.tab === "orderhint") renderOrderHint();
     else if (state.tab === "funds") renderFunds();
+    else if (state.tab === "betexec") renderBetExec();
     else if (state.tab === "formulas") renderFormulaTable();
     else if (state.tab === "windowmult") renderWindowMultiplierTest();
     else if (state.tab === "orderlog") renderOrderLog();
@@ -3017,6 +3021,195 @@
     view.innerHTML = html;
   }
 
+  // ===== 下注执行表：1:7:15 两套方案（只做两期 / 三期全打），逐期提醒每条线下多少 =====
+  var BET_STAKES = [100, 700, 1500];
+  var BET_ODDS = 1.8;
+  // 2026年验证为正的线路（两期方案和三期方案各自算）；其余线路本方案不配仓，仍可切“显示全部14条”查看
+  var BET_POSITIVE = {
+    two: ["tail0", "tail1", "tail6", "tail8", "tail9", "fixedD1", "fixedD2", "recD1", "recD2"],
+    three: ["tail0", "tail1", "tail4", "tail6", "tail7", "tail9", "fixedD1", "fixedD2", "recD2"],
+  };
+  function betPositiveLines(maxStage) {
+    return BET_POSITIVE[maxStage >= 3 ? "three" : "two"];
+  }
+
+  function betMaxStage() {
+    return state.betPlanMode === "three" ? 3 : 2;
+  }
+
+  function betWindowRow(w, maxStage) {
+    var att = w.attempts || [];
+    var cost = 0;
+    for (var k = 0; k < att.length; k++) cost += BET_STAKES[k] || 0;
+    var hitAt = (w.hitIndex > 0 && w.hitIndex <= maxStage) ? w.hitIndex : 0;
+    var back = hitAt ? BET_STAKES[hitAt - 1] * BET_ODDS : 0;
+    return { cost: cost, back: back, net: back - cost, hitAt: hitAt };
+  }
+
+  function betLineAccount(line, maxStage, year) {
+    var rows = wmWindowsForStage(line, maxStage);
+    var acc = { windows: 0, hit: 0, miss: 0, cost: 0, back: 0, net: 0, roi: 0, firstHit: [0, 0, 0] };
+    rows.forEach(function (w) {
+      if (year && wmYearOf(w.start) !== year) return;
+      var r = betWindowRow(w, maxStage);
+      acc.windows++; acc.cost += r.cost; acc.back += r.back;
+      if (r.hitAt) { acc.hit++; acc.firstHit[r.hitAt - 1]++; } else { acc.miss++; }
+    });
+    acc.net = acc.back - acc.cost;
+    acc.roi = acc.cost ? acc.net / acc.cost : 0;
+    return acc;
+  }
+
+  function betLiveInfo(line, maxStage) {
+    var st = wmStageNow(line, maxStage);
+    if (st.waiting) return { waiting: st.waiting, active: null, stage: 0, stake: 0, risk: 0 };
+    if (!st.active) return { waiting: null, active: null, stage: 0, stake: 0, risk: 0 };
+    var stage = (st.active.attempts || []).length + 1;
+    var stake = stage <= maxStage ? BET_STAKES[stage - 1] : 0;
+    var risk = 0;
+    for (var k = stage - 1; k < maxStage; k++) risk += BET_STAKES[k];
+    return { waiting: null, active: st.active, stage: stage, stake: stake, risk: risk };
+  }
+
+  function betWindowRowsHTML(line, w, maxStage) {
+    var out = "";
+    for (var k = 0; k < 3; k++) {
+      var period = Number(w.start) + k;
+      var at = (w.attempts || [])[k] || null;
+      var tail = at && at.tail != null ? at.tail : wmLiveTailFor(line, w, period);
+      var stateText = at ? (at.hit ? "中" : "错") : (period <= latest ? "未记录" : "待开奖");
+      var tone = at ? (at.hit ? "#16a34a" : "#dc2626") : "#2563eb";
+      var inPlan = k + 1 <= maxStage;
+      out += '<div style="display:flex;align-items:center;gap:6px;margin-top:3px;font-size:11px' + (inPlan ? "" : ";opacity:.45") + '">';
+      out += '<span style="flex:0 0 34px;font-weight:900;color:#475569">第' + (k + 1) + '期</span>';
+      out += '<span style="color:#6b7280">第' + period + '期</span>';
+      out += '<span style="margin-left:auto;font-weight:900">' + (tail != null ? "尾" + tail : "待定") + "</span>";
+      out += '<span style="flex:0 0 30px;text-align:right;font-weight:900;color:' + tone + '">' + stateText + "</span>";
+      out += '<span style="flex:0 0 56px;text-align:right;color:#64748b">' + (inPlan ? BET_STAKES[k] + "元" : "本方案不打") + "</span>";
+      out += "</div>";
+    }
+    return out;
+  }
+
+  function renderBetExec() {
+    var maxStage = betMaxStage();
+    var modeLabel = maxStage === 2 ? "只做两期（100 / 700）" : "三期全打（100 / 700 / 1500）";
+    var year = 2026;
+    var positiveLines = betPositiveLines(maxStage);
+    var lines = EXEC_LINES.filter(function (l) {
+      return state.betShowAll || positiveLines.indexOf(l.id) >= 0;
+    });
+    var plan = [];
+    lines.forEach(function (line) {
+      plan.push({ line: line, live: betLiveInfo(line, maxStage), acc: betLineAccount(line, maxStage, year), all: betLineAccount(line, maxStage, null) });
+    });
+    var todayTotal = plan.reduce(function (s, r) { return s + r.live.stake; }, 0);
+    var todayRisk = plan.reduce(function (s, r) { return s + r.live.risk; }, 0);
+    var skipCount = plan.filter(function (r) { return !(r.live.stake > 0); }).length;
+    var yearNet = plan.reduce(function (s, r) { return s + r.acc.net; }, 0);
+    var yearCost = plan.reduce(function (s, r) { return s + r.acc.cost; }, 0);
+
+    var modeShort = maxStage === 2 ? "只做两期" : "三期全打";
+    var html = '';
+    // 和追号码/追推荐同一个交互：一个页面，上面两个按钮点一下切换
+    html += '<div class="section"><div class="panel" style="padding:12px">';
+    html += '<div class="wm-view-tabs" style="margin-bottom:8px">';
+    html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-bet-mode="two">只做两期</button>';
+    html += '<button class="chip wm-view-tab' + (maxStage === 3 ? " is-active" : "") + '" type="button" data-bet-mode="three">三期全打</button>';
+    html += '</div>';
+    html += '<div class="panel__body" style="font-size:13px;line-height:1.75">当前方案：<b>' + modeLabel + '</b>。<br>';
+    if (maxStage === 2) {
+      html += "一个窗口最多做到第2期：第1期100元、第2期700元；两期都没中就结束这个窗口，第3期不打，等锁定号重新开出后再开新窗口。";
+    } else {
+      html += "一个窗口做到第3期：第1期100元、第2期700元、第3期1500元；任意一期命中或三期全错就结束窗口，全错后等锁定号重新开出再开新窗口。";
+    }
+    html += '<br>赔率 ' + BET_ODDS + '（打平线 ' + (100 / BET_ODDS).toFixed(2) + '%）· 第1期中 +80 / 第2期中 +460' + (maxStage === 3 ? " / 第3期中 +400 / 三期全错 -2300" : " / 两期没中 -800") + ' · 窗口由真实开奖算出。</div>';
+    html += '</div></div>';
+
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">下注执行表 · ' + modeShort + '</h2><span class="section__hint">每一期提醒每条线下多少 · 固定线路顺序 · 只提示，不自动下单</span></div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+    html += '<button class="chip ' + (state.betShowAll ? "is-active" : "") + '" data-bet-lines="all">显示全部14条</button>';
+    html += '<button class="chip ' + (state.betShowAll ? "" : "is-active") + '" data-bet-lines="positive">只做9条正线</button>';
+    html += '</div>';
+    html += '<div class="grid-3">';
+    html += '<div class="stat"><div class="stat__value" style="color:#1d4ed8">' + todayTotal + '</div><div class="stat__label">本期合计（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (yearNet >= 0 ? "#16a34a" : "#dc2626") + '">' + (yearNet >= 0 ? "+" : "") + Math.round(yearNet) + '</div><div class="stat__label">2026年净收益（元）· ROI ' + (yearCost ? (yearNet / yearCost * 100).toFixed(1) : "0.0") + '%</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + skipCount + '</div><div class="stat__label">本期不下注（条）</div></div>';
+    var totalWin = plan.reduce(function (s, r) { return s + r.acc.windows; }, 0);
+    var totalHit = plan.reduce(function (s, r) { return s + r.acc.hit; }, 0);
+    html += '<div class="stat"><div class="stat__value" style="color:#0f172a">' + (totalWin ? (totalHit / totalWin * 100).toFixed(1) : "0.0") + '%</div><div class="stat__label">2026年窗命中率 · 中' + totalHit + '/共' + totalWin + '窗</div></div>';
+    var loseCount = plan.filter(function (r) { return r.acc.net < 0; }).length;
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + loseCount + '</div><div class="stat__label">亏损线（红卡）· 赚线 ' + (plan.length - loseCount) + ' 条</div></div>';
+    html += '</div></div>';
+
+    plan.forEach(function (row) {
+      var line = row.line;
+      var live = row.live;
+      var stakeColor = live.stake > 0 ? "#1d4ed8" : "#6b7280";
+      // 亏钱的线单独配色：红边+红底+红标签，赚钱的绿边
+      var losing = row.acc.net < 0;
+      var lineTone = losing ? "#dc2626" : "#16a34a";
+      var stateText = live.waiting ? ("等待重开 · 等尾" + live.waiting.tail + "开出")
+        : (live.active ? ("窗口第" + live.stage + "期" + (live.stake > 0 ? " · 本期下 " + live.stake + "元" : " · 本方案不打"))
+          : "空仓等待新窗口");
+      html += '<div class="section"><div class="panel" style="padding:12px 10px;border-left:6px solid ' + lineTone + ';background:' + (losing ? "#fef2f2" : "#fff") + '">';
+      html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+      html += '<b class="exec-line__label' + (line.kind === "tail" ? " exec-line__label--tail" : "") + '" style="' + (losing ? "color:#b91c1c" : "") + '">' + line.label + "</b>";
+      if (losing) {
+        html += '<span class="chip" style="background:#fee2e2;border-color:#fca5a5;color:#991b1b;font-weight:900">亏线 · 本方案2026年为亏 ' + Math.round(row.acc.net) + '元</span>';
+      } else {
+        html += '<span class="chip" style="background:#f0fdf4;border-color:#86efac;color:#166534;font-weight:900">赚线 · 本方案2026年 ' + (row.acc.net >= 0 ? "+" : "") + Math.round(row.acc.net) + '元</span>';
+      }
+      html += '<span class="chip" style="font-weight:900;color:' + stakeColor + '">本期 ' + (live.stake > 0 ? live.stake + "元" : "-") + "</span>";
+      html += '<span class="chip">' + stateText + "</span>";
+      html += '<span class="chip">方案 ' + BET_STAKES.slice(0, maxStage).join(" / ") + "</span>";
+      html += '<span class="chip">本窗剩余风险 ' + (live.risk > 0 ? live.risk + "元" : "-") + "</span>";
+      html += '<span class="chip" style="background:' + (row.acc.net >= 0 ? "#f0fdf4" : "#fef2f2") + ';border-color:' + (row.acc.net >= 0 ? "#86efac" : "#fecaca") + ';color:' + (row.acc.net >= 0 ? "#166534" : "#b91c1c") + ';font-weight:900">2026年 ' + (row.acc.net >= 0 ? "+" : "") + Math.round(row.acc.net) + '元 · ROI ' + (row.acc.roi * 100).toFixed(1) + '%</span>';
+      html += '<span class="chip">2026窗 ' + row.acc.windows + " · 中" + row.acc.hit + " / 错" + row.acc.miss + "</span>";
+      html += '<span class="chip" style="font-weight:900">命中率 ' + (row.acc.windows ? (row.acc.hit / row.acc.windows * 100).toFixed(1) : "0.0") + '%</span>';
+      if (positiveLines.indexOf(line.id) < 0) {
+        html += '<span class="chip" style="background:#f1f5f9;color:#64748b;font-weight:900">本方案不配仓</span>';
+      }
+      html += "</div>";
+
+      if (live.active) {
+        html += '<div style="margin-top:9px;padding-top:8px;border-top:1px solid #e5e7eb">';
+        html += '<div style="font-size:11px;font-weight:900;color:#475569">当前窗口 · 起始 第' + live.active.start + '期 · ' + (live.active.lockedTail != null ? "锁定尾" + live.active.lockedTail : "每期最新推荐") + "</div>";
+        html += betWindowRowsHTML(line, live.active, maxStage);
+        html += "</div>";
+      } else if (live.waiting) {
+        html += '<div style="margin-top:9px;padding-top:8px;border-top:1px solid #e5e7eb;font-size:11px;color:#b45309;font-weight:800">上窗三期全错 · 等尾' + live.waiting.tail + " 重新开出后再开新窗口（本期不下）</div>";
+      }
+
+      var rows = wmWindowsForStage(line, maxStage).slice();
+      var allCount = rows.length;
+      var showCount = perfExpandAll["betexec:" + line.id] ? allCount : Math.min(allCount, 12);
+      rows = rows.slice(allCount - showCount).reverse();
+      html += '<div style="margin-top:10px;font-size:11px;font-weight:900;color:#6b7280">对错滚动记录 · 新→旧 · 已结算 ' + allCount + ' 窗 · ' + modeLabel + '</div>';
+      html += '<div class="exec-line__scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
+      html += '<div style="display:flex;gap:6px;min-width:max-content">';
+      rows.forEach(function (w) {
+        var r = betWindowRow(w, maxStage);
+        var tone = r.hitAt ? "#16a34a" : "#dc2626";
+        var bg = r.hitAt ? "#f0fdf4" : "#fef2f2";
+        var border = r.hitAt ? "#bbf7d0" : "#fecaca";
+        html += '<div class="exec-hist-card" style="min-width:186px;border:1px solid ' + border + ';border-radius:8px;padding:7px 8px;background:' + bg + '">';
+        html += '<div style="font-size:10px;color:#6b7280">起始 第' + w.start + '期</div>';
+        html += '<div style="font-size:12px;font-weight:900;color:' + tone + ';margin-top:2px">' + (r.hitAt ? "第" + r.hitAt + "期中" : (w.hitIndex > 0 && w.hitIndex > maxStage ? "第" + w.hitIndex + "期中（超出本方案）" : "本方案内未中")) + '</div>';
+        html += betWindowRowsHTML(line, w, maxStage);
+        html += '<div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px"><span style="color:#64748b">投入 ' + r.cost + '</span><b style="color:' + tone + '">本窗 ' + (r.net >= 0 ? "+" : "") + Math.round(r.net) + '</b></div>';
+        html += "</div>";
+      });
+      html += "</div></div>";
+      html += perfMoreBtn("betexec:" + line.id, allCount, showCount, "窗");
+      html += "</div></div>";
+    });
+
+    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。10条尾号线的窗口由真实开奖算出；4条模型线（追号码/追推荐 D1/D2）的历史部分为模型逐期喂数据的口径，开奖前保存的真实快照只覆盖 262 期之后。只做9条正线是按 2026 年验证结果筛选，属事后选线，跨年是否成立需继续观察。</p>';
+    view.innerHTML = html;
+  }
+
   function renderFormulaTable() {
     var enabled = EXEC_LINES.filter(function (line) { return planRisk(line.plan) > 0; }).length;
     var disabled = EXEC_LINES.length - enabled;
@@ -3154,6 +3347,88 @@
   function wmCurrentState(line) {
     wmWindowsFor(line);
     return wmWindowState[line.id] || { active: null, waiting: null };
+  }
+
+  // 按“窗口最多检查几期”出窗口：2期方案做2期窗口，3期方案做3期窗口，其余规则完全一致
+  var wmStageCache = {};
+  var wmStageState = {};
+  function wmWindowsForStage(line, maxStage) {
+    var cap = maxStage >= 3 ? 3 : 2;
+    if (cap === 3) {
+      var rows3 = wmWindowsFor(line);
+      wmStageCache[line.id + ":3"] = rows3;
+      wmStageState[line.id + ":3"] = wmWindowState[line.id] || { active: null, waiting: null };
+      return rows3;
+    }
+    var key = line.id + ":2";
+    if (wmStageCache[key]) return wmStageCache[key];
+    var rows = [];
+    var active = null;
+    var waiting = null;
+    var p = line.kind === "tail" ? 1 : 31;
+    var curYear = 0;
+    while (p <= D.length + 1) {
+      if (p > D.length) {
+        if (!active && !waiting) {
+          var nextTrigger = line.kind === "tail" ? { tail: line.tail } : wmFullPick(p, line.stream);
+          if (nextTrigger) active = { start: p, lockedTail: line.kind === "recommend" ? null : nextTrigger.tail, attempts: [] };
+        }
+        break;
+      }
+      var hereYear = wmYearOf(p);
+      if (hereYear && hereYear !== curYear) {
+        curYear = hereYear;
+        active = null;
+        waiting = null;
+      }
+      if (waiting) {
+        var waitRow = D[p - 1];
+        var waitTails = waitRow ? (waitRow.nums || []).map(function (num) { return Number(num) % 10; }) : [];
+        if (waitTails.indexOf(Number(waiting.tail)) >= 0) waiting = null;
+        p++;
+        continue;
+      }
+      var trigger = null;
+      if (!active) {
+        if (line.kind === "tail") trigger = { tail: line.tail };
+        else trigger = wmFullPick(p, line.stream);
+        if (!trigger) { p++; continue; }
+        active = { start: p, lockedTail: line.kind === "recommend" ? null : trigger.tail, attempts: [] };
+      }
+      var row = D[p - 1] || {};
+      var actual = (row.nums || []).map(function (num) { return Number(num) % 10; });
+      var pick = line.kind === "recommend" ? wmFullPick(p, line.stream) : { tail: active.lockedTail };
+      var tail = pick ? pick.tail : null;
+      var isHit = tail != null && actual.indexOf(Number(tail)) >= 0;
+      active.attempts.push({ period: p, tail: tail, hit: isHit });
+      if (isHit) {
+        active.hitIndex = active.attempts.length;
+        rows.push(active);
+        active = null;
+        p++;
+      } else if (active.attempts.length >= 2) {
+        active.hitIndex = 0;
+        rows.push(active);
+        var waitTail = null;
+        for (var wi = active.attempts.length - 1; wi >= 0; wi--) {
+          if (active.attempts[wi].tail != null) { waitTail = active.attempts[wi].tail; break; }
+        }
+        active = null;
+        p++;
+        if (waitTail != null) waiting = { tail: waitTail };
+      } else {
+        p++;
+      }
+    }
+    wmStageCache[key] = rows;
+    wmStageState[key] = { active: active, waiting: waiting };
+    return rows;
+  }
+
+  function wmStageNow(line, maxStage) {
+    var cap = maxStage >= 3 ? 3 : 2;
+    wmWindowsForStage(line, cap);
+    return wmStageState[line.id + ":" + cap] || { active: null, waiting: null };
   }
 
   // 当期号码已知就写出来：已记录取记录，未开奖取锁定号 / 当期推荐号
@@ -6024,6 +6299,18 @@
     if (perfMore) {
       perfExpandAll[perfMore.dataset.perfMore] = true;
       render();
+      return;
+    }
+    var betMode = e.target.closest("[data-bet-mode]");
+    if (betMode) {
+      state.betPlanMode = betMode.dataset.betMode === "three" ? "three" : "two";
+      renderBetExec();
+      return;
+    }
+    var betLines = e.target.closest("[data-bet-lines]");
+    if (betLines) {
+      state.betShowAll = betLines.dataset.betLines === "all";
+      renderBetExec();
       return;
     }
     var ultModeBtn = e.target.closest("[data-ult-mode]");

@@ -1,0 +1,102 @@
+// 下注执行表页面回归：两期/三期窗口分开、命中率、逐条金额、无报错
+const { spawn } = require("child_process");
+const path = require("path"); const fs = require("fs");
+const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const CDP = 9451, HTTP = 8191;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeout(3000) }); return r.json(); }
+(async () => {
+  const server = spawn("python", ["-m", "http.server", String(HTTP), "--bind", "127.0.0.1"], { cwd: process.cwd(), stdio: "ignore" });
+  await sleep(1200);
+  const userDir = path.join(process.cwd(), ".chrome-bet-" + Date.now());
+  const chrome = spawn(CHROME, ["--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run", "--remote-debugging-port=" + CDP,
+    "--user-data-dir=" + userDir, "--window-size=393,852", "about:blank"], { stdio: "ignore" });
+  let target = null;
+  for (let i = 0; i < 40; i++) { try { const l = await getJSON("http://127.0.0.1:" + CDP + "/json/list"); target = (l || []).find((t) => t.type === "page"); if (target) break; } catch (e) {} await sleep(400); }
+  const ws = new WebSocket(target.webSocketDebuggerUrl); const pend = new Map(); let id = 0; const errs = [];
+  ws.addEventListener("message", (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m.id && pend.has(m.id)) { pend.get(m.id)(m); pend.delete(m.id); } if (m.method === "Runtime.exceptionThrown") errs.push((m.params.exceptionDetails || {}).text || "exception"); });
+  await new Promise((r) => ws.addEventListener("open", r));
+  const send = (method, params) => new Promise((res) => { const i = ++id; pend.set(i, res); ws.send(JSON.stringify({ id: i, method, params: params || {} })); });
+  const ev = async (x) => { const r = await send("Runtime.evaluate", { expression: x, returnByValue: true, awaitPromise: true }); if (r.result && r.result.exceptionDetails) throw new Error(JSON.stringify(r.result.exceptionDetails).slice(0, 300)); return r.result && r.result.result ? r.result.result.value : undefined; };
+  await send("Page.enable"); await send("Runtime.enable");
+  await send("Page.navigate", { url: "http://127.0.0.1:" + HTTP + "/index.html" });
+  for (let i = 0; i < 30; i++) { if (await ev("!!document.querySelector('.directory-card')")) break; await sleep(400); }
+  const fails = [];
+  const check = (ok, label, extra) => { console.log((ok ? "PASS: " : "FAIL: ") + label + (extra ? "  [" + extra + "]" : "")); if (!ok) fails.push(label); };
+
+  await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
+  const hasTab = await ev("!!document.querySelector('.tab[data-tab=\"betexec\"]')");
+  check(hasTab, "导航出现「下注执行表」入口");
+  await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(1500);
+
+  const read = () => ev(`(function () {
+    var cards = [].map.call(document.querySelectorAll('#view .panel'), function (p) {
+      var label = (p.querySelector('.exec-line__label') || {}).innerText || '';
+      var chips = [].map.call(p.querySelectorAll('.chip'), function (c) { return c.innerText.replace(/\\n/g, ' '); });
+      return { label: label.trim(), chips: chips };
+    });
+    var top = (document.querySelector('#view .section') || {}).innerText || '';
+    return JSON.stringify({ cards: cards.filter(function (c) { return c.label; }), top: top });
+  })()`);
+
+  let d = JSON.parse(await read());
+  check(d.cards.length === 9, "默认只列9条正线", String(d.cards.length));
+  const withRate = d.cards.filter((c) => c.chips.some((x) => x.indexOf("命中率") >= 0));
+  check(withRate.length === 9, "每条线都标了命中率", withRate.length + "/9");
+  const withStake = d.cards.filter((c) => c.chips.some((x) => /本期 (\d+元|-)/.test(x)));
+  check(withStake.length === 9, "每条线都标了本期下多少", withStake.length + "/9");
+  const withRoll = await ev("document.querySelectorAll('#view .exec-line__scroll').length");
+  check(withRoll >= 9, "每条线都有对错滚动条", String(withRoll));
+
+  const twoCounts = d.cards.map((c) => (c.chips.find((x) => x.indexOf("2026窗") >= 0) || ""));
+  await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(1600);
+  let d3 = JSON.parse(await read());
+  const threeCounts = d3.cards.map((c) => (c.chips.find((x) => x.indexOf("2026窗") >= 0) || ""));
+  const w2 = twoCounts.map((s) => Number((/2026窗 (\d+)/.exec(s) || [])[1] || 0));
+  const w3 = threeCounts.map((s) => Number((/2026窗 (\d+)/.exec(s) || [])[1] || 0));
+  check(w2.some((n, i) => n !== w3[i]), "两期窗口与三期窗口分开算（各线独立，窗数对比）", "两期 " + w2.join(",") + " / 三期 " + w3.join(","));
+
+  // 三期模式：滚动记录里应该有“第3期中”，不该出现“本方案不打”
+  const text3 = await ev("document.querySelector('#view').innerText");
+  check(/第3期中/.test(text3) && !/本方案不打/.test(text3), "三期方案窗口做到第3期");
+
+  // 两期模式：滚动记录应标注第3期不打，且不该有第3期中
+  await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1500);
+  const text2 = await ev("document.querySelector('#view').innerText");
+  check(/本方案不打/.test(text2) && !/第3期中/.test(text2), "两期方案窗口只做两期，第3期标注不打");
+
+  await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1800);
+  d = JSON.parse(await read());
+  check(d.cards.length === 14, "可切换显示全部14条", String(d.cards.length));
+  const noBet = d.cards.filter((c) => c.chips.some((x) => x.indexOf("本方案不配仓") >= 0));
+  check(noBet.length === 5, "被剔除的5条线标注「本方案不配仓」", noBet.map((c) => c.label).join(","));
+
+  // 切换到只做9条正线，三种状态下都应恰好9条
+  await ev("var b=document.querySelector('[data-bet-lines=\"positive\"]'); if(b)b.click(); true"); await sleep(1500);
+  const nine = JSON.parse(await read());
+  const nineLabels = nine.cards.map((c) => c.label).join(",");
+  check(nine.cards.length === 9, "三期方案下只做9条正线", nineLabels);
+
+  const txt = await ev("document.querySelector('#view').innerText");
+  check(/命中率/.test(txt) && /本期合计/.test(txt), "页面显示命中率与本期合计");
+
+  // 打印两套方案下 14 条线的账，用来核对“正线”名单
+  for (const mode of ["two", "three"]) {
+    await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1200);
+    await ev("var b=document.querySelector('[data-bet-mode=\"" + mode + "\"]'); if(b)b.click(); true"); await sleep(1500);
+    const dd = JSON.parse(await read());
+    console.log("--- " + (mode === "two" ? "只做两期" : "三期全打") + " ---");
+    dd.cards.forEach((c) => {
+      const win = (c.chips.find((x) => x.indexOf("2026窗") >= 0) || "").replace(/\s+/g, " ");
+      const net = (c.chips.find((x) => /2026年 /.test(x)) || "").replace(/\s+/g, " ");
+      const rate = (c.chips.find((x) => x.indexOf("命中率") >= 0) || "").replace(/\s+/g, " ");
+      const stake = (c.chips.find((x) => x.indexOf("本期 ") >= 0) || "").replace(/\s+/g, " ");
+      console.log("  " + c.label.padEnd(10) + stake.padEnd(12) + rate.padEnd(14) + win.padEnd(26) + net);
+    });
+  }
+  check(errs.length === 0, "无 console 报错", errs.slice(0, 3).join(","));
+  console.log("RESULT: " + (fails.length ? "FAILED " + fails.length : "ALL PASS"));
+  ws.close(); chrome.kill(); server.kill(); await sleep(300);
+  try { fs.rmSync(userDir, { recursive: true, force: true }); } catch (e) {}
+  process.exit(fails.length ? 1 : 0);
+})();
