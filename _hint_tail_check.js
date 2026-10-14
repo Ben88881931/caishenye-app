@@ -71,7 +71,8 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     const pending = (flat.match(/待开奖/g) || []).length;
     lineChecks.push({ lineId, flat, tails, pending });
   }
-  const badLine = lineChecks.filter((c) => c.tails < 2 || c.pending < 2);
+  // 三期行都要写出尾号；待开奖行数随窗口走到第几期而变（至少1行）
+  const badLine = lineChecks.filter((c) => c.tails < 3 || c.pending < 1);
   check(badLine.length === 0, "14线规律中心：当前窗口待开奖行写出尾号", lineChecks.map((c) => c.lineId + " 尾号" + c.tails + "个/待开奖" + c.pending).join(" ; "));
 
   check(errs.length === 0, "无 console 报错", errs.slice(0, 3).join(","));
