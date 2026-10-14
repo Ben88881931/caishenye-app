@@ -361,7 +361,7 @@
     numSearchMode: "all",
     numSearchType: "tail",
     betPlanMode: "two",
-    betLineMode: "rotate5",
+    betLineMode: "win5",
   };
 
   var TABS = [
@@ -3173,7 +3173,11 @@
     var lines;
     if (state.betLineMode === "all") lines = EXEC_LINES.slice();
     else if (state.betLineMode === "positive") lines = EXEC_LINES.filter(function (l) { return positiveLines.indexOf(l.id) >= 0; });
-    else lines = EXEC_LINES.filter(function (l) { return topFiveIds.indexOf(l.id) >= 0; });
+    else if (state.betLineMode === "rotate5") lines = EXEC_LINES.filter(function (l) { return topFiveIds.indexOf(l.id) >= 0; });
+    else lines = EXEC_LINES.filter(function (l) {
+      var rr = ranked.filter(function (x) { return x.line.id === l.id; })[0];
+      return rr && rr.rg && rr.rg.state === 1;
+    }).slice(0, 5);
     var plan = [];
     lines.forEach(function (line) {
       plan.push({
@@ -3206,11 +3210,13 @@
     }
     html += '<br>赔率 ' + BET_ODDS + '（打平线 ' + (100 / BET_ODDS).toFixed(2) + '%）· 第1期中 +80 / 第2期中 +460' + (maxStage === 3 ? " / 第3期中 +400 / 三期全错 -2300" : " / 两期没中 -800") + ' · 窗口由真实开奖算出。</div>';
     html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:6px">性格规律提示：把最近5个窗口的累计盈亏当作“当前状态”，看它已经持续了几个窗口，再跟这条线自己过去6年的状态段长度比——亏损状态超过 p75（约7窗）提示准备减仓，超过 p90（三期约10窗 / 两期约11窗）提示停这条线观察；盈利状态超过 p75 提示注意见顶。<b>点上面两个按钮切换方案时，性格提示会跟着用对应方案的窗口和阈值重算。</b></div>';
+    html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:4px">走步回测（2021-2026，无未来数据）：<b>只做盈利状态（≤5条）在两期方案下是唯一五年回测为正的组合</b>（+15,540 / ROI 0.8%，投入202万），比全做14条（-0.9%）和固定9条（0.0%）都好；三期方案下轮动反而更差，所以三期更该少换线。</div>';
     html += '</div></div>';
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">下注执行表 · ' + modeShort + '</h2><span class="section__hint">每一期提醒每条线下多少 · 固定线路顺序 · 只提示，不自动下单</span></div>';
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
-    html += '<button class="chip ' + (state.betLineMode === "rotate5" ? "is-active" : "") + '" data-bet-lines="rotate5">规律轮动 · 当下最优5条</button>';
+    html += '<button class="chip ' + (state.betLineMode === "win5" ? "is-active" : "") + '" data-bet-lines="win5">只做盈利状态（≤5条）</button>';
+    html += '<button class="chip ' + (state.betLineMode === "rotate5" ? "is-active" : "") + '" data-bet-lines="rotate5">规律轮动 · 前5条（含亏损补位）</button>';
     html += '<button class="chip ' + (state.betLineMode === "positive" ? "is-active" : "") + '" data-bet-lines="positive">只做9条正线</button>';
     html += '<button class="chip ' + (state.betLineMode === "all" ? "is-active" : "") + '" data-bet-lines="all">显示全部14条</button>';
     html += '</div>';
@@ -6463,7 +6469,7 @@
     var betLines = e.target.closest("[data-bet-lines]");
     if (betLines) {
       var blMode = betLines.dataset.betLines;
-      state.betLineMode = blMode === "all" ? "all" : (blMode === "positive" ? "positive" : "rotate5");
+      state.betLineMode = blMode === "all" ? "all" : (blMode === "positive" ? "positive" : (blMode === "rotate5" ? "rotate5" : "win5"));
       renderBetExec();
       return;
     }
