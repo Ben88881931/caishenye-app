@@ -2818,11 +2818,13 @@
         for (var pk = 0; pk < 3; pk++) {
           var periodK = curStart + pk;
           var attK = (result.active && result.active.attempts) ? result.active.attempts[pk] : null;
+          // 当期号码要写出来：已记录用记录的尾号；未开奖的当期用锁定号/当期推荐号；真未来期才留空
           var tailK = attK && attK.tail != null ? attK.tail
-            : (result.active && result.active.lockedTail != null) ? result.active.lockedTail
             : line.kind === "tail" ? line.tail
+            : (result.active && result.active.lockedTail != null) ? result.active.lockedTail
             : line.kind === "fixed" ? execCurrentTail(line, result, nextPeriod)
-            : pk === 0 ? execCurrentTail(line, result, nextPeriod) : null;
+            : periodK <= nextPeriod ? execCurrentTail(line, result, periodK)
+            : null;
           var textK, toneK;
           if (attK) { textK = attK.hit ? "中" : "错"; toneK = attK.hit ? "#16a34a" : "#dc2626"; }
           else if (periodK <= latest) { textK = "未记录"; toneK = "#94a3b8"; }
@@ -4147,8 +4149,14 @@
     for (var k = 0; k < 3; k++) {
       var periodK = Number(batch.startPeriod) + k;
       var attK = (batch.attempts || [])[k] || null;
+      // 每期最新推荐模式：还没开奖的当期，用当期推荐号补上（真未来期没有推荐号才留空）
+      var recTail = null;
+      if (isRecommendMode && !attK && periodK > latest && batch.stream) {
+        var pendingPick = execPick(periodK, batch.stream);
+        if (pendingPick && pendingPick.tail != null) recTail = pendingPick.tail;
+      }
       var tailK = attK && attK.tail != null ? attK.tail
-        : isRecommendMode ? null
+        : isRecommendMode ? recTail
         : (batch.tail != null ? batch.tail : null);
       var textK, toneK;
       if (attK) {
