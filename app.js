@@ -3033,6 +3033,18 @@
     return BET_POSITIVE[maxStage >= 3 ? "three" : "two"];
   }
 
+  // 每年最优5条：按该年净收益从高到低取前5（跑出来给页面看，用来分年对比）
+  function betYearTop5(maxStage, year) {
+    var rows = EXEC_LINES.map(function (line) {
+      var acc = betLineAccount(line, maxStage, year);
+      return { id: line.id, label: line.label, net: acc.net, windows: acc.windows, roi: acc.roi };
+    });
+    rows.sort(function (a, b) { return b.net - a.net; });
+    return { top: rows.slice(0, 5), bottom: rows.slice(-5), all: rows,
+      sum: rows.slice(0, 5).reduce(function (s, r) { return s + r.net; }, 0),
+      bottomSum: rows.slice(-5).reduce(function (s, r) { return s + r.net; }, 0) };
+  }
+
   // 规律轮动排队：盈利状态优先（离均值越远越好=状态越新），其次亏损但没超退出线的（越接近历史翻转点越好），超过p90的排最后
   function betRankLines(maxStage) {
     var rank = EXEC_LINES.map(function (line) {
@@ -3170,10 +3182,14 @@
     var ranked = betRankLines(maxStage);
     var rankedIds = ranked.map(function (r) { return r.line.id; });
     var topFiveIds = ranked.slice(0, 5).map(function (r) { return r.line.id; });
+    var yearTop = {};
+    [2021, 2022, 2023, 2024, 2025, 2026].forEach(function (y) { yearTop[y] = betYearTop5(maxStage, y); });
+    var lastYearTopIds = (yearTop[2025] || { top: [] }).top.map(function (r) { return r.id; });
     var lines;
     if (state.betLineMode === "all") lines = EXEC_LINES.slice();
     else if (state.betLineMode === "positive") lines = EXEC_LINES.filter(function (l) { return positiveLines.indexOf(l.id) >= 0; });
     else if (state.betLineMode === "rotate5") lines = EXEC_LINES.filter(function (l) { return topFiveIds.indexOf(l.id) >= 0; });
+    else if (state.betLineMode === "lastyear") lines = EXEC_LINES.filter(function (l) { return lastYearTopIds.indexOf(l.id) >= 0; });
     else lines = EXEC_LINES.filter(function (l) {
       var rr = ranked.filter(function (x) { return x.line.id === l.id; })[0];
       return rr && rr.rg && rr.rg.state === 1;
@@ -3217,6 +3233,7 @@
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
     html += '<button class="chip ' + (state.betLineMode === "win5" ? "is-active" : "") + '" data-bet-lines="win5">只做盈利状态（≤5条）</button>';
     html += '<button class="chip ' + (state.betLineMode === "rotate5" ? "is-active" : "") + '" data-bet-lines="rotate5">规律轮动 · 前5条（含亏损补位）</button>';
+    html += '<button class="chip ' + (state.betLineMode === "lastyear" ? "is-active" : "") + '" data-bet-lines="lastyear">去年最优5条（走步）</button>';
     html += '<button class="chip ' + (state.betLineMode === "positive" ? "is-active" : "") + '" data-bet-lines="positive">只做9条正线</button>';
     html += '<button class="chip ' + (state.betLineMode === "all" ? "is-active" : "") + '" data-bet-lines="all">显示全部14条</button>';
     html += '</div>';
@@ -3229,6 +3246,20 @@
       html += '<div style="min-width:176px;border:2px solid ' + tone + ';border-radius:8px;padding:7px 9px;background:' + (inGroup ? "#f0fdf4" : "#fff") + '">';
       html += '<div style="font-size:12px;font-weight:900;color:' + tone + '">#' + (i + 1) + (inGroup ? " · 当前组" : (inSecond ? " · 第二组" : " · 待观察")) + " " + r.line.label + "</div>";
       html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + r.note + "</div>";
+      html += "</div>";
+    });
+    html += "</div>";
+    // 年度最优5条：每年一组，分开看
+    html += '<div class="wm-subhead">年度最优5条 · 每年一组（走步可执行的只有“上一年”那一组）</div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px;padding-bottom:4px">';
+    [2021, 2022, 2023, 2024, 2025, 2026].forEach(function (y) {
+      var t = yearTop[y];
+      var used = (state.betLineMode === "lastyear" && y === 2025) || (state.betLineMode === "win5" && y === 2026);
+      html += '<div style="min-width:216px;border:2px solid ' + (used ? "#16a34a" : "#e2e8f0") + ';border-radius:8px;padding:8px 9px;background:' + (used ? "#f0fdf4" : "#fff") + '">';
+      html += '<div style="font-size:12px;font-weight:900;color:#0f172a">' + y + "年最优5条" + (used ? " · 当前在用" : "") + "</div>";
+      html += '<div style="font-size:11px;color:#475569;margin-top:4px;line-height:1.7">' +
+        t.top.map(function (r) { return r.label + " " + (r.net >= 0 ? "+" : "") + Math.round(r.net); }).join("<br>") + "</div>";
+      html += '<div style="font-size:11px;font-weight:900;color:' + (t.sum >= 0 ? "#166534" : "#b91c1c") + ';margin-top:4px">这5条合计 ' + (t.sum >= 0 ? "+" : "") + Math.round(t.sum) + " 元</div>";
       html += "</div>";
     });
     html += "</div>";
@@ -6469,7 +6500,10 @@
     var betLines = e.target.closest("[data-bet-lines]");
     if (betLines) {
       var blMode = betLines.dataset.betLines;
-      state.betLineMode = blMode === "all" ? "all" : (blMode === "positive" ? "positive" : (blMode === "rotate5" ? "rotate5" : "win5"));
+      state.betLineMode = blMode === "all" ? "all"
+        : (blMode === "positive" ? "positive"
+          : (blMode === "rotate5" ? "rotate5"
+            : (blMode === "lastyear" ? "lastyear" : "win5")));
       renderBetExec();
       return;
     }

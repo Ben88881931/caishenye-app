@@ -41,8 +41,15 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
 
   let d = JSON.parse(await read());
   check(d.cards.length === 5, "默认按规律轮动只列当前最优5条线", String(d.cards.length));
-  const rankCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }))`));
+  const rankCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }).filter(function (t) { return /^#\\d+/.test(t); }))`));
   check(rankCards.length === 14 && rankCards.slice(0, 5).every((t) => /当前组/.test(t)), "规律排队列出14条并标出当前组5条", rankCards.slice(0, 6).join(" | "));
+  const yearCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }).filter(function (t) { return /年最优5条/.test(t); }))`));
+  check(yearCards.length === 6 && yearCards.every((t) => (t.match(/尾\d|追号码|追推荐/g) || []).length >= 5),
+    "年度最优5条按年分开列出（6年×5条）", yearCards.map((t) => t.slice(0, 4)).join(" | "));
+  await ev("var b=document.querySelector('[data-bet-lines=\"lastyear\"]'); if(b)b.click(); true"); await sleep(1500);
+  const ly = JSON.parse(await read());
+  check(ly.cards.length > 0 && ly.cards.length <= 5, "切成“去年最优5条”后只列该组线路", ly.cards.map((c) => c.label).join(","));
+  await ev("var b=document.querySelector('[data-bet-lines=\"win5\"]'); if(b)b.click(); true"); await sleep(1500);
   const withRate = d.cards.filter((c) => c.chips.some((x) => x.indexOf("命中率") >= 0));
   check(withRate.length === 5, "每条线都标了命中率", withRate.length + "/5");
   const withStake = d.cards.filter((c) => c.chips.some((x) => /本期 (\d+元|-)/.test(x)));
