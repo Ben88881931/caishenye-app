@@ -40,11 +40,16 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   })()`);
 
   let d = JSON.parse(await read());
-  check(d.cards.length === 14, "默认“窗口体检下单”列出全部14条并给体检结论", String(d.cards.length));
+  check(d.cards.length === 14, "默认按 1:7:15 全做14条（研究模式已收起）", String(d.cards.length));
+  const planBtns = await ev("!!document.querySelector('[data-bet-mode=\"two\"]') && !!document.querySelector('[data-bet-mode=\"three\"]')");
+  check(planBtns, "顶部保留“只做两期 / 三期全打”两个切换按钮");
+  const research = await ev("!!document.querySelector('#view details summary')");
+  check(research, "研究性筛选收进折叠区（默认不显示）");
+  await ev("var sm=document.querySelector('#view details > summary'); if(sm)sm.click(); true"); await sleep(700);
+  await ev("var b=document.querySelector('[data-bet-lines=\"verdict\"]'); if(b)b.click(); true"); await sleep(1600);
   const verdicts = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/窗口体检 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
-  check(/窗口体检 · (正常下注|轻仓|不下|停|样本不足)/.test(verdicts), "每条线都有窗口体检结论（该下/轻仓/不下/停）", verdicts.slice(0, 200));
-  const todayCards0 = await ev("document.querySelectorAll('#view .position-card--execution').length");
-  check(todayCards0 > 0 && todayCards0 < 14, "今日规划只列体检通过要下的线（不是14条全下）", String(todayCards0));
+  check(/窗口体检 · (正常下注|轻仓|不下|停|样本不足)/.test(verdicts), "切到体检模式后每条线有体检结论", verdicts.slice(0, 120));
+  await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1500);
   const rankCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }).filter(function (t) { return /^#\\d+/.test(t); }))`));
   check(rankCards.length === 14 && rankCards.slice(0, 5).every((t) => /当前组/.test(t)), "规律排队列出14条并标出当前组5条", rankCards.slice(0, 6).join(" | "));
   const yearCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }).filter(function (t) { return /年最优5条/.test(t); }))`));

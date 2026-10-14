@@ -361,7 +361,8 @@
     numSearchMode: "all",
     numSearchType: "tail",
     betPlanMode: "two",
-    betLineMode: "verdict",
+    betLineMode: "all",
+    betResearchOpen: false,
   };
 
   var TABS = [
@@ -3283,6 +3284,7 @@
     html += '</div></div>';
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">下注执行表 · ' + modeShort + '</h2><span class="section__hint">每一期提醒每条线下多少 · 固定线路顺序 · 只提示，不自动下单</span></div>';
+    html += '<details' + (state.betResearchOpen ? " open" : "") + ' style="margin:4px 0 10px"><summary style="font-size:12px;font-weight:800;color:#475569;cursor:pointer">更多筛选 / 研究对照（默认不用 · 当前按 1:7:15 全做）</summary>';
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
     html += '<button class="chip ' + (state.betLineMode === "verdict" ? "is-active" : "") + '" data-bet-lines="verdict">窗口体检下单（该下才下）</button>';
     html += '<button class="chip ' + (state.betLineMode === "win5" ? "is-active" : "") + '" data-bet-lines="win5">只做盈利状态（≤5条）</button>';
@@ -3317,6 +3319,7 @@
       html += "</div>";
     });
     html += "</div>";
+    html += "</details>";
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="color:#1d4ed8">' + todayTotal + '</div><div class="stat__label">本期合计（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
@@ -6558,6 +6561,11 @@
     if (betMode) {
       state.betPlanMode = betMode.dataset.betMode === "three" ? "three" : "two";
       renderBetExec();
+      return;
+    }
+    var betResearch = e.target.closest("#view details > summary");
+    if (betResearch && betResearch.parentElement) {
+      state.betResearchOpen = !betResearch.parentElement.open;
       return;
     }
     var betLines = e.target.closest("[data-bet-lines]");
