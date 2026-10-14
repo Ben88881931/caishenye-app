@@ -3143,6 +3143,35 @@
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + loseCount + '</div><div class="stat__label">亏损线（红卡）· 赚线 ' + (plan.length - loseCount) + ' 条</div></div>';
     html += '</div></div>';
 
+    // 今日规划：只列今天真要下的线路，号码 + 金额 + 第几期
+    var betToday = plan.filter(function (r) { return r.live.stake > 0; });
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">今日规划 · 第' + (latest + 1) + '期</h2><span class="section__hint">今天要下的每一注：线路 + 尾号 + 金额 + 第几期；按固定线路顺序排列，金额只按当前方案</span></div>';
+    if (!betToday.length) {
+      html += '<div style="font-size:14px;font-weight:900;color:#64748b">今天没有金额大于0的仓位，全部空仓</div>';
+    } else {
+      html += '<div class="position-card-grid">';
+      betToday.forEach(function (r) {
+        var line = r.line;
+        var live = r.live;
+        var tail = null;
+        if (line.kind === "tail") tail = line.tail;
+        else if (live.active && live.active.lockedTail != null) tail = live.active.lockedTail;
+        else if (live.active) tail = wmLiveTailFor(line, live.active, latest + 1);
+        var title = line.label + (tail != null ? " · 尾" + tail : "");
+        html += '<div class="position-card position-card--execution">';
+        html += '<div class="position-card__title">' + title + "</div>";
+        html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + live.stake + "元</div>";
+        html += '<div style="font-size:11px;color:#475569;margin-top:3px">第' + live.stage + "期 · " + (r.acc.net >= 0 ? "赚线" : "亏线") + "</div>";
+        html += "</div>";
+      });
+      html += "</div>";
+    }
+    html += '<div class="grid-3" style="margin-top:10px">';
+    html += '<div class="stat"><div class="stat__value" style="color:#1d4ed8">' + todayTotal + '</div><div class="stat__label">今日合计（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + skipCount + '</div><div class="stat__label">今日不下注（条）</div></div>';
+    html += '</div></div>';
+
     plan.forEach(function (row) {
       var line = row.line;
       var live = row.live;

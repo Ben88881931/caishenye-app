@@ -48,6 +48,19 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const withRoll = await ev("document.querySelectorAll('#view .exec-line__scroll').length");
   check(withRoll >= 9, "每条线都有对错滚动条", String(withRoll));
 
+  // 今日规划：每条要下的线都要有 尾号 + 金额，且条数与“本期>0”的线数一致
+  const todayCards = JSON.parse(await ev(`(function () {
+    var cards = [].map.call(document.querySelectorAll('#view .position-card--execution'), function (c) { return c.innerText.replace(/\\n+/g, ' '); });
+    var betLines = [].filter.call(document.querySelectorAll('#view .panel'), function (p) {
+      var chips = [].map.call(p.querySelectorAll('.chip'), function (x) { return x.innerText; });
+      return chips.some(function (t) { return /本期 \\d+元/.test(t); });
+    }).length;
+    return JSON.stringify({ cards: cards, betLines: betLines });
+  })()`));
+  const cardsOk = todayCards.cards.length > 0 && todayCards.cards.every((t) => /尾\d/.test(t) && /\d+元/.test(t) && /第\d期/.test(t));
+  check(cardsOk, "今日规划每条线都有尾号+金额+第几期", todayCards.cards.join(" | "));
+  check(todayCards.cards.length === todayCards.betLines, "今日规划条数 = 本期要下的线数", todayCards.cards.length + " vs " + todayCards.betLines);
+
   const twoCounts = d.cards.map((c) => (c.chips.find((x) => x.indexOf("2026窗") >= 0) || ""));
   await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(1600);
   let d3 = JSON.parse(await read());
