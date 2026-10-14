@@ -93,6 +93,15 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
       const stake = (c.chips.find((x) => x.indexOf("本期 ") >= 0) || "").replace(/\s+/g, " ");
       console.log("  " + c.label.padEnd(10) + stake.padEnd(12) + rate.padEnd(14) + win.padEnd(26) + net);
     });
+    // 切回只做正线，打印顶部汇总（本期合计 / 本窗最大风险 / 命中率 / 亏损线）
+    await ev("var b=document.querySelector('[data-bet-lines=\"positive\"]'); if(b)b.click(); true"); await sleep(1400);
+    const top = await ev(`(function () {
+      var stats = [].map.call(document.querySelectorAll('#view .stat'), function (s) {
+        return ((s.querySelector('.stat__label') || {}).innerText || '').replace(/\\n/g, ' ') + '=' + ((s.querySelector('.stat__value') || {}).innerText || '');
+      });
+      return stats.join(' | ');
+    })()`);
+    console.log("  顶部汇总（只做正线）：" + top);
   }
   check(errs.length === 0, "无 console 报错", errs.slice(0, 3).join(","));
   console.log("RESULT: " + (fails.length ? "FAILED " + fails.length : "ALL PASS"));
