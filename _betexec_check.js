@@ -40,13 +40,15 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   })()`);
 
   let d = JSON.parse(await read());
-  check(d.cards.length === 9, "默认只列9条正线", String(d.cards.length));
+  check(d.cards.length === 5, "默认按规律轮动只列当前最优5条线", String(d.cards.length));
+  const rankCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }))`));
+  check(rankCards.length === 14 && rankCards.slice(0, 5).every((t) => /当前组/.test(t)), "规律排队列出14条并标出当前组5条", rankCards.slice(0, 6).join(" | "));
   const withRate = d.cards.filter((c) => c.chips.some((x) => x.indexOf("命中率") >= 0));
-  check(withRate.length === 9, "每条线都标了命中率", withRate.length + "/9");
+  check(withRate.length === 5, "每条线都标了命中率", withRate.length + "/5");
   const withStake = d.cards.filter((c) => c.chips.some((x) => /本期 (\d+元|-)/.test(x)));
-  check(withStake.length === 9, "每条线都标了本期下多少", withStake.length + "/9");
+  check(withStake.length === 5, "每条线都标了本期下多少", withStake.length + "/5");
   const withRoll = await ev("document.querySelectorAll('#view .exec-line__scroll').length");
-  check(withRoll >= 9, "每条线都有对错滚动条", String(withRoll));
+  check(withRoll >= 5, "每条线都有对错滚动条", String(withRoll));
 
   // 今日规划：每条要下的线都要有 尾号 + 金额，且条数与“本期>0”的线数一致
   const todayCards = JSON.parse(await ev(`(function () {
@@ -60,6 +62,14 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const cardsOk = todayCards.cards.length > 0 && todayCards.cards.every((t) => /尾\d/.test(t) && /\d+元/.test(t) && /第\d期/.test(t));
   check(cardsOk, "今日规划每条线都有尾号+金额+第几期", todayCards.cards.join(" | "));
   check(todayCards.cards.length === todayCards.betLines, "今日规划条数 = 本期要下的线数", todayCards.cards.length + " vs " + todayCards.betLines);
+
+  // 性格规律提示：每条线都有，且随方案切换而变
+  const regime2 = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/性格规律 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
+  check(/性格规律 · (盈利状态|亏损状态|状态样本不足)/.test(regime2), "每条线都有性格规律提示", regime2.slice(0, 160));
+  await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(1600);
+  const regime3 = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/性格规律 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
+  check(regime3 !== regime2, "切换方案后性格规律提示跟着重算", "两期: " + (regime2.match(/第\d+窗/g) || []).join(",") + " / 三期: " + (regime3.match(/第\d+窗/g) || []).join(","));
+  await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1500);
 
   const twoCounts = d.cards.map((c) => (c.chips.find((x) => x.indexOf("2026窗") >= 0) || ""));
   await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(1600);
@@ -81,8 +91,10 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1800);
   d = JSON.parse(await read());
   check(d.cards.length === 14, "可切换显示全部14条", String(d.cards.length));
-  const noBet = d.cards.filter((c) => c.chips.some((x) => x.indexOf("本方案不配仓") >= 0));
-  check(noBet.length === 5, "被剔除的5条线标注「本方案不配仓」", noBet.map((c) => c.label).join(","));
+  // 回到“只做9条正线”，确认只渲染9条（被剔除的线不进场）
+  await ev("var b=document.querySelector('[data-bet-lines=\"positive\"]'); if(b)b.click(); true"); await sleep(1500);
+  const dp = JSON.parse(await read());
+  check(dp.cards.length === 9, "只做正线模式只渲染9条（亏损线不进场）", dp.cards.map((c) => c.label).join(","));
 
   // 切换到只做9条正线，三种状态下都应恰好9条
   await ev("var b=document.querySelector('[data-bet-lines=\"positive\"]'); if(b)b.click(); true"); await sleep(1500);

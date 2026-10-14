@@ -361,7 +361,7 @@
     numSearchMode: "all",
     numSearchType: "tail",
     betPlanMode: "two",
-    betShowAll: false,
+    betLineMode: "rotate5",
   };
 
   var TABS = [
@@ -3033,6 +3033,32 @@
     return BET_POSITIVE[maxStage >= 3 ? "three" : "two"];
   }
 
+  // 规律轮动排队：盈利状态优先（离均值越远越好=状态越新），其次亏损但没超退出线的（越接近历史翻转点越好），超过p90的排最后
+  function betRankLines(maxStage) {
+    var rank = EXEC_LINES.map(function (line) {
+      var rg = betRegimeFor(line, maxStage);
+      var tier, score, note;
+      if (!rg || !rg.state) {
+        tier = 3; score = -1e6; note = "样本不足";
+      } else if (rg.state === 1) {
+        tier = 0; score = (rg.winAvg || 0) - rg.len;
+        note = "盈利状态第" + rg.len + "窗 · 均值" + (rg.winAvg || 0).toFixed(1) + "窗";
+      } else if (rg.loseP90 && rg.len > rg.loseP90) {
+        tier = 3; score = -1e6;
+        note = "亏损第" + rg.len + "窗 · 已超p90(" + rg.loseP90 + "窗)·退出观察";
+      } else {
+        tier = 1; score = -Math.abs((rg.loseAvg || 0) - rg.len);
+        note = "亏损第" + rg.len + "窗 · 均值" + (rg.loseAvg || 0).toFixed(1) + "窗";
+      }
+      return { line: line, rg: rg, tier: tier, score: score, note: note };
+    });
+    rank.sort(function (a, b) {
+      if (a.tier !== b.tier) return a.tier - b.tier;
+      return b.score - a.score;
+    });
+    return rank;
+  }
+
   function betMaxStage() {
     return state.betPlanMode === "three" ? 3 : 2;
   }
@@ -3058,6 +3084,51 @@
     acc.net = acc.back - acc.cost;
     acc.roi = acc.cost ? acc.net / acc.cost : 0;
     return acc;
+  }
+
+  // 性格规律提示：当前盈亏状态（最近5窗累计）已持续多少窗，对照该线历史亏损段分位线
+  function betRegimeFor(line, maxStage) {
+    var rows = wmWindowsForStage(line, maxStage);
+    var byYear = {};
+    var order = [];
+    rows.forEach(function (w) {
+      var y = wmYearOf(w.start);
+      if (!byYear[y]) { byYear[y] = []; order.push(y); }
+      byYear[y].push(betWindowRow(w, maxStage).net);
+    });
+    function rollOf(nets) {
+      var roll = [];
+      for (var i = 4; i < nets.length; i++) {
+        var s = 0;
+        for (var j = i - 4; j <= i; j++) s += nets[j];
+        roll.push(s >= 0 ? 1 : -1);
+      }
+      return roll;
+    }
+    var runs = [];
+    order.forEach(function (y) {
+      var roll = rollOf(byYear[y]);
+      var cur = null;
+      roll.forEach(function (sg) { if (!cur || cur.sign !== sg) { cur = { sign: sg, len: 1 }; runs.push(cur); } else cur.len++; });
+    });
+    if (runs.length > 1) runs.shift();
+    if (runs.length && runs[runs.length - 1].len < 5) runs.pop();
+    var loseRuns = runs.filter(function (r) { return r.sign === -1; }).map(function (r) { return r.len; }).sort(function (a, b) { return a - b; });
+    var winRuns = runs.filter(function (r) { return r.sign === 1; }).map(function (r) { return r.len; }).sort(function (a, b) { return a - b; });
+    function avg(a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : 0; }
+    function q(a, p) { return a.length ? a[Math.min(a.length - 1, Math.floor(a.length * p))] : 0; }
+    var lastYear = order[order.length - 1];
+    var curRoll = lastYear ? rollOf(byYear[lastYear]) : [];
+    if (!curRoll.length) return { state: 0, len: 0 };
+    var state = curRoll[curRoll.length - 1];
+    var len = 1;
+    for (var k = curRoll.length - 2; k >= 0 && curRoll[k] === state; k--) len++;
+    return {
+      state: state, len: len,
+      loseAvg: avg(loseRuns), loseP75: q(loseRuns, 0.75), loseP90: q(loseRuns, 0.9),
+      winAvg: avg(winRuns), winP75: q(winRuns, 0.75),
+      samples: runs.length,
+    };
   }
 
   function betLiveInfo(line, maxStage) {
@@ -3096,12 +3167,22 @@
     var modeLabel = maxStage === 2 ? "只做两期（100 / 700）" : "三期全打（100 / 700 / 1500）";
     var year = 2026;
     var positiveLines = betPositiveLines(maxStage);
-    var lines = EXEC_LINES.filter(function (l) {
-      return state.betShowAll || positiveLines.indexOf(l.id) >= 0;
-    });
+    var ranked = betRankLines(maxStage);
+    var rankedIds = ranked.map(function (r) { return r.line.id; });
+    var topFiveIds = ranked.slice(0, 5).map(function (r) { return r.line.id; });
+    var lines;
+    if (state.betLineMode === "all") lines = EXEC_LINES.slice();
+    else if (state.betLineMode === "positive") lines = EXEC_LINES.filter(function (l) { return positiveLines.indexOf(l.id) >= 0; });
+    else lines = EXEC_LINES.filter(function (l) { return topFiveIds.indexOf(l.id) >= 0; });
     var plan = [];
     lines.forEach(function (line) {
-      plan.push({ line: line, live: betLiveInfo(line, maxStage), acc: betLineAccount(line, maxStage, year), all: betLineAccount(line, maxStage, null) });
+      plan.push({
+        line: line,
+        live: betLiveInfo(line, maxStage),
+        acc: betLineAccount(line, maxStage, year),
+        all: betLineAccount(line, maxStage, null),
+        regime: betRegimeFor(line, maxStage),
+      });
     });
     var todayTotal = plan.reduce(function (s, r) { return s + r.live.stake; }, 0);
     var todayRisk = plan.reduce(function (s, r) { return s + r.live.risk; }, 0);
@@ -3124,13 +3205,27 @@
       html += "一个窗口做到第3期：第1期100元、第2期700元、第3期1500元；任意一期命中或三期全错就结束窗口，全错后等锁定号重新开出再开新窗口。";
     }
     html += '<br>赔率 ' + BET_ODDS + '（打平线 ' + (100 / BET_ODDS).toFixed(2) + '%）· 第1期中 +80 / 第2期中 +460' + (maxStage === 3 ? " / 第3期中 +400 / 三期全错 -2300" : " / 两期没中 -800") + ' · 窗口由真实开奖算出。</div>';
+    html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:6px">性格规律提示：把最近5个窗口的累计盈亏当作“当前状态”，看它已经持续了几个窗口，再跟这条线自己过去6年的状态段长度比——亏损状态超过 p75（约7窗）提示准备减仓，超过 p90（三期约10窗 / 两期约11窗）提示停这条线观察；盈利状态超过 p75 提示注意见顶。<b>点上面两个按钮切换方案时，性格提示会跟着用对应方案的窗口和阈值重算。</b></div>';
     html += '</div></div>';
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">下注执行表 · ' + modeShort + '</h2><span class="section__hint">每一期提醒每条线下多少 · 固定线路顺序 · 只提示，不自动下单</span></div>';
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
-    html += '<button class="chip ' + (state.betShowAll ? "is-active" : "") + '" data-bet-lines="all">显示全部14条</button>';
-    html += '<button class="chip ' + (state.betShowAll ? "" : "is-active") + '" data-bet-lines="positive">只做9条正线</button>';
+    html += '<button class="chip ' + (state.betLineMode === "rotate5" ? "is-active" : "") + '" data-bet-lines="rotate5">规律轮动 · 当下最优5条</button>';
+    html += '<button class="chip ' + (state.betLineMode === "positive" ? "is-active" : "") + '" data-bet-lines="positive">只做9条正线</button>';
+    html += '<button class="chip ' + (state.betLineMode === "all" ? "is-active" : "") + '" data-bet-lines="all">显示全部14条</button>';
     html += '</div>';
+    // 规律排队：谁该在下注组里，一眼看完
+    html += '<div class="wm-subhead">规律排队 · 1-5 当前组 / 6-10 第二组 / 11-14 待观察</div>';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px;padding-bottom:4px">';
+    ranked.forEach(function (r, i) {
+      var inGroup = i < 5, inSecond = i >= 5 && i < 10;
+      var tone = inGroup ? "#16a34a" : (inSecond ? "#2563eb" : "#cbd5e1");
+      html += '<div style="min-width:176px;border:2px solid ' + tone + ';border-radius:8px;padding:7px 9px;background:' + (inGroup ? "#f0fdf4" : "#fff") + '">';
+      html += '<div style="font-size:12px;font-weight:900;color:' + tone + '">#' + (i + 1) + (inGroup ? " · 当前组" : (inSecond ? " · 第二组" : " · 待观察")) + " " + r.line.label + "</div>";
+      html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + r.note + "</div>";
+      html += "</div>";
+    });
+    html += "</div>";
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="color:#1d4ed8">' + todayTotal + '</div><div class="stat__label">本期合计（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
@@ -3141,6 +3236,10 @@
     html += '<div class="stat"><div class="stat__value" style="color:#0f172a">' + (totalWin ? (totalHit / totalWin * 100).toFixed(1) : "0.0") + '%</div><div class="stat__label">2026年窗命中率 · 中' + totalHit + '/共' + totalWin + '窗</div></div>';
     var loseCount = plan.filter(function (r) { return r.acc.net < 0; }).length;
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + loseCount + '</div><div class="stat__label">亏损线（红卡）· 赚线 ' + (plan.length - loseCount) + ' 条</div></div>';
+    var winStateCount = plan.filter(function (r) { return r.regime.state === 1; }).length;
+    var loseStateCount = plan.filter(function (r) { return r.regime.state === -1; }).length;
+    var overLine = plan.filter(function (r) { return r.regime.state === -1 && r.regime.loseP90 && r.regime.len > r.regime.loseP90; }).length;
+    html += '<div class="stat"><div class="stat__value" style="color:#0f172a">' + winStateCount + " / " + loseStateCount + '</div><div class="stat__label">当前盈利状态 / 亏损状态 · 越退出线 ' + overLine + ' 条</div></div>';
     html += '</div></div>';
 
     // 今日规划：只列今天真要下的线路，号码 + 金额 + 第几期
@@ -3197,10 +3296,35 @@
       html += '<span class="chip" style="background:' + (row.acc.net >= 0 ? "#f0fdf4" : "#fef2f2") + ';border-color:' + (row.acc.net >= 0 ? "#86efac" : "#fecaca") + ';color:' + (row.acc.net >= 0 ? "#166534" : "#b91c1c") + ';font-weight:900">2026年 ' + (row.acc.net >= 0 ? "+" : "") + Math.round(row.acc.net) + '元 · ROI ' + (row.acc.roi * 100).toFixed(1) + '%</span>';
       html += '<span class="chip">2026窗 ' + row.acc.windows + " · 中" + row.acc.hit + " / 错" + row.acc.miss + "</span>";
       html += '<span class="chip" style="font-weight:900">命中率 ' + (row.acc.windows ? (row.acc.hit / row.acc.windows * 100).toFixed(1) : "0.0") + '%</span>';
-      if (positiveLines.indexOf(line.id) < 0) {
+      var rankNo = rankedIds.indexOf(line.id) + 1;
+      if (state.betLineMode === "rotate5" && rankNo > 5) {
+        html += '<span class="chip" style="background:#f1f5f9;color:#64748b;font-weight:900">不在当前组 · 规律排队 #' + rankNo + "</span>";
+      } else if (state.betLineMode === "positive" && positiveLines.indexOf(line.id) < 0) {
         html += '<span class="chip" style="background:#f1f5f9;color:#64748b;font-weight:900">本方案不配仓</span>';
       }
       html += "</div>";
+
+      // 性格规律提示：当前盈亏状态还能走多久，随方案切换自动变
+      var rg = row.regime;
+      var rgText, rgColor, rgBg;
+      if (!rg || !rg.state) {
+        rgText = "状态样本不足（本年窗口还没攒够5个）";
+        rgColor = "#64748b"; rgBg = "#f1f5f9";
+      } else if (rg.state === 1) {
+        var overWin = rg.winP75 && rg.len > rg.winP75;
+        rgText = "盈利状态第" + rg.len + "窗 · 历史盈利段均值 " + rg.winAvg.toFixed(1) + " 窗" + (overWin ? " · 已超75%分位，注意见顶" : " · 正常");
+        rgColor = overWin ? "#b45309" : "#166534"; rgBg = overWin ? "#fffbeb" : "#f0fdf4";
+      } else if (rg.loseP90 && rg.len > rg.loseP90) {
+        rgText = "亏损状态第" + rg.len + "窗 · 已超历史p90（" + rg.loseP90 + "窗）→ 建议停这条线观察";
+        rgColor = "#991b1b"; rgBg = "#fee2e2";
+      } else if (rg.loseP75 && rg.len > rg.loseP75) {
+        rgText = "亏损状态第" + rg.len + "窗 · 超75%分位（" + rg.loseP75 + "窗）· 准备减仓";
+        rgColor = "#b45309"; rgBg = "#fffbeb";
+      } else {
+        rgText = "亏损状态第" + rg.len + "窗 · 历史亏损段均值 " + rg.loseAvg.toFixed(1) + " 窗 · 还在正常范围（离退出线 " + Math.max(0, (rg.loseP90 || 0) - rg.len) + " 窗）";
+        rgColor = "#166534"; rgBg = "#f0fdf4";
+      }
+      html += '<div style="margin-top:8px;padding:7px 9px;border-radius:8px;background:' + rgBg + ';color:' + rgColor + ';font-size:12px;font-weight:900">性格规律 · ' + rgText + "</div>";
 
       if (live.active) {
         html += '<div style="margin-top:9px;padding-top:8px;border-top:1px solid #e5e7eb">';
@@ -6338,7 +6462,8 @@
     }
     var betLines = e.target.closest("[data-bet-lines]");
     if (betLines) {
-      state.betShowAll = betLines.dataset.betLines === "all";
+      var blMode = betLines.dataset.betLines;
+      state.betLineMode = blMode === "all" ? "all" : (blMode === "positive" ? "positive" : "rotate5");
       renderBetExec();
       return;
     }
