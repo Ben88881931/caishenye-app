@@ -53,6 +53,27 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const pendingRow = /第\d期\|第(\d{3,4})期\|(尾\d|待定)\|待开奖/.exec(recFlat);
   check(!!pendingRow && pendingRow[2] !== "待定", "三期内追推荐：待检查当期也写出尾号", pendingRow ? pendingRow[0] : "未找到待开奖行");
 
+  // 双号追热：连错遗漏记录里的当期也要写尾号
+  await ev("document.querySelector('.tab[data-tab=\"pick3\"]').click(); true"); await sleep(1100);
+  const pick3Text = await ev("document.querySelector('#view').innerText");
+  const liveCell = /①尾\d/.test(pick3Text) && /②尾\d/.test(pick3Text);
+  check(liveCell, "双号追热：连错遗漏记录当期写尾号而不是①待②待", (/[①②][^\n]{0,4}/.exec(pick3Text) || [""])[0]);
+
+  // 14线规律中心：窗口明细的当前窗口也要写尾号
+  await ev("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
+  await ev("var b=document.querySelector('.wm-view-tab[data-wm-view=\"windows\"]'); if(b)b.click(); true"); await sleep(900);
+  const lineChecks = [];
+  for (const lineId of ["fixedD2", "recD2", "tail1"]) {
+    await ev("var l=document.querySelector('.wm-line-selector [data-wm-line=\"" + lineId + "\"]'); if(l)l.click(); true"); await sleep(900);
+    const card = await ev("(document.querySelector('#view .wm-win-card--live')||{}).innerText || ''");
+    const flat = String(card).replace(/\n+/g, "|");
+    const tails = (flat.match(/尾\d/g) || []).length;
+    const pending = (flat.match(/待开奖/g) || []).length;
+    lineChecks.push({ lineId, flat, tails, pending });
+  }
+  const badLine = lineChecks.filter((c) => c.tails < 2 || c.pending < 2);
+  check(badLine.length === 0, "14线规律中心：当前窗口待开奖行写出尾号", lineChecks.map((c) => c.lineId + " 尾号" + c.tails + "个/待开奖" + c.pending).join(" ; "));
+
   check(errs.length === 0, "无 console 报错", errs.slice(0, 3).join(","));
   console.log("RESULT: " + (fails.length ? "FAILED " + fails.length : "ALL PASS"));
   ws.close(); chrome.kill(); server.kill(); await sleep(300);

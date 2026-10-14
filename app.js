@@ -3156,6 +3156,23 @@
     return wmWindowState[line.id] || { active: null, waiting: null };
   }
 
+  // 当期号码已知就写出来：已记录取记录，未开奖取锁定号 / 当期推荐号
+  function wmLiveTailFor(line, w, period) {
+    if (!w) return null;
+    var attempts = w.attempts || [];
+    for (var i = 0; i < attempts.length; i++) {
+      var at = attempts[i];
+      if (at && Number(at.period) === Number(period) && at.tail != null) return at.tail;
+    }
+    if (line.kind === "tail") return line.tail;
+    if (w.lockedTail != null) return w.lockedTail;
+    if (line.kind === "recommend") {
+      var pick = wmFullPick(period, line.stream);
+      if (pick && pick.tail != null) return pick.tail;
+    }
+    return null;
+  }
+
   function wmPositionForPlan(line, plan) {
     var live = wmCurrentState(line);
     if (live.waiting) {
@@ -3528,7 +3545,9 @@
       for (var ai = 0; ai < 3; ai++) {
         var expectedStart = activeStart + ai;
         var attempt = liveState.active.attempts[ai];
-        var label = attempt ? ('尾' + attempt.tail + (attempt.hit ? ' 中' : ' 错')) : (expectedStart <= latest ? "未记录" : "待开奖");
+        var liveTail = attempt ? attempt.tail : wmLiveTailFor(line, liveState.active, expectedStart);
+        var stateText = attempt ? (attempt.hit ? " 中" : " 错") : (expectedStart <= latest ? " 未记录" : " 待开奖");
+        var label = liveTail != null ? ('尾' + liveTail + stateText) : stateText.trim();
         html += ' 第' + (ai + 1) + '期 ' + wmPeriodLabel(expectedStart) + ' ' + label + (ai < 2 ? ' ·' : '');
       }
     } else {
@@ -3728,8 +3747,12 @@
           card += '<span class="wm-win-card__tail">尾' + att.tail + '</span>';
           card += '<span class="wm-win-card__state" style="color:' + (att.hit ? "#16a34a" : "#dc2626") + '">' + (att.hit ? "中" : "错") + '</span>';
         } else if (isLive) {
+          var liveTail = wmLiveTailFor(line, w, cardPeriod);
           card += '<span class="wm-win-card__period">' + wmPeriodLabel(cardPeriod) + '</span>';
-          card += '<span class="wm-win-card__tail" style="color:' + (cardPeriod <= latest ? "#94a3b8" : "#2563eb") + '">' + (cardPeriod <= latest ? "未记录" : "待开奖") + '</span>';
+          card += '<span class="wm-win-card__tail" style="color:' + (cardPeriod <= latest ? "#94a3b8" : "#2563eb") + '">' + (liveTail != null ? "尾" + liveTail : (cardPeriod <= latest ? "未记录" : "待开奖")) + '</span>';
+          if (liveTail != null) {
+            card += '<span class="wm-win-card__state" style="color:' + (cardPeriod <= latest ? "#94a3b8" : "#2563eb") + '">' + (cardPeriod <= latest ? "未记录" : "待开奖") + '</span>';
+          }
         } else {
           card += '<span class="wm-win-card__tail" style="color:#94a3b8">命中后停止</span>';
         }
@@ -4700,8 +4723,9 @@
       if (picks.length > 1 && actual.length && !q.live) sh = actual.indexOf(picks[1]) >= 0;
       var c1, c2;
       if (q.live) {
-        c1 = '<span style="color:#2563eb">①待</span>';
-        c2 = '<span style="color:#2563eb">②待</span>';
+        // 待开奖当期号码已确定，直接写尾号
+        c1 = (picks.length && picks[0] != null) ? '<span style="color:#2563eb">①尾' + picks[0] + '</span>' : '<span style="color:#2563eb">①待</span>';
+        c2 = (picks.length > 1 && picks[1] != null) ? '<span style="color:#2563eb">②尾' + picks[1] + '</span>' : '<span style="color:#2563eb">②待</span>';
       } else if (fh === null) {
         c1 = '<span style="color:#9ca3af">①空</span>';
         c2 = '<span style="color:#9ca3af">②空</span>';
