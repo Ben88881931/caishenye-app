@@ -40,7 +40,11 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   })()`);
 
   let d = JSON.parse(await read());
-  check(d.cards.length === 5, "默认按规律轮动只列当前最优5条线", String(d.cards.length));
+  check(d.cards.length === 14, "默认“窗口体检下单”列出全部14条并给体检结论", String(d.cards.length));
+  const verdicts = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/窗口体检 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
+  check(/窗口体检 · (正常下注|轻仓|不下|停|样本不足)/.test(verdicts), "每条线都有窗口体检结论（该下/轻仓/不下/停）", verdicts.slice(0, 200));
+  const todayCards0 = await ev("document.querySelectorAll('#view .position-card--execution').length");
+  check(todayCards0 > 0 && todayCards0 < 14, "今日规划只列体检通过要下的线（不是14条全下）", String(todayCards0));
   const rankCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }).filter(function (t) { return /^#\\d+/.test(t); }))`));
   check(rankCards.length === 14 && rankCards.slice(0, 5).every((t) => /当前组/.test(t)), "规律排队列出14条并标出当前组5条", rankCards.slice(0, 6).join(" | "));
   const yearCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }).filter(function (t) { return /年最优5条/.test(t); }))`));
@@ -50,12 +54,21 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const ly = JSON.parse(await read());
   check(ly.cards.length > 0 && ly.cards.length <= 5, "切成“去年最优5条”后只列该组线路", ly.cards.map((c) => c.label).join(","));
   await ev("var b=document.querySelector('[data-bet-lines=\"win5\"]'); if(b)b.click(); true"); await sleep(1500);
+  // 后面的滚动条/命中率断言要在“体检下单(全14条)”模式下看，切回来
+  await ev("var b=document.querySelector('[data-bet-lines=\"verdict\"]'); if(b)b.click(); true"); await sleep(1600);
   const withRate = d.cards.filter((c) => c.chips.some((x) => x.indexOf("命中率") >= 0));
-  check(withRate.length === 5, "每条线都标了命中率", withRate.length + "/5");
+  check(withRate.length === d.cards.length, "每条线都标了命中率", withRate.length + "/" + d.cards.length);
   const withStake = d.cards.filter((c) => c.chips.some((x) => /本期 (\d+元|-)/.test(x)));
-  check(withStake.length === 5, "每条线都标了本期下多少", withStake.length + "/5");
+  check(withStake.length === d.cards.length, "每条线都标了本期下多少", withStake.length + "/" + d.cards.length);
   const withRoll = await ev("document.querySelectorAll('#view .exec-line__scroll').length");
-  check(withRoll >= 5, "每条线都有对错滚动条", String(withRoll));
+  if (withRoll < d.cards.length) {
+    const diag = await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .panel'), function (p) {
+      var lb = (p.querySelector('.exec-line__label') || {}).innerText || '';
+      return lb.trim() + ':' + (p.querySelector('.exec-line__scroll') ? 'hasScroll' : 'noScroll');
+    }))`);
+    console.log("  DIAG panels=" + JSON.stringify(JSON.parse(diag)));
+  }
+  check(withRoll >= d.cards.length, "每条线都有对错滚动条", String(withRoll));
 
   // 今日规划：每条要下的线都要有 尾号 + 金额，且条数与“本期>0”的线数一致
   const todayCards = JSON.parse(await ev(`(function () {

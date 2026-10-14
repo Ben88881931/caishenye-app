@@ -361,7 +361,7 @@
     numSearchMode: "all",
     numSearchType: "tail",
     betPlanMode: "two",
-    betLineMode: "win5",
+    betLineMode: "verdict",
   };
 
   var TABS = [
@@ -3023,6 +3023,7 @@
 
   // ===== 下注执行表：1:7:15 两套方案（只做两期 / 三期全打），逐期提醒每条线下多少 =====
   var BET_STAKES = [100, 700, 1500];
+  var BET_HALF = [100, 300, 700];
   var BET_ODDS = 1.8;
   // 2026年验证为正的线路（两期方案和三期方案各自算）；其余线路本方案不配仓，仍可切“显示全部14条”查看
   var BET_POSITIVE = {
@@ -3034,6 +3035,43 @@
   }
 
   // 每年最优5条：按该年净收益从高到低取前5（跑出来给页面看，用来分年对比）
+  // 窗口体检：这个窗口该不该下、下多重（只看该窗口之前已结算的窗口，和回测同一套规则）
+  function betVerdictFor(line, maxStage) {
+    var rows = wmWindowsForStage(line, maxStage);
+    var nets = rows.map(function (w) { return betWindowRow(w, maxStage).net; });
+    var roll = [];
+    for (var i = 4; i < nets.length; i++) {
+      var s = 0;
+      for (var j = i - 4; j <= i; j++) s += nets[j];
+      roll.push(s >= 0 ? 1 : -1);
+    }
+    if (!roll.length) return { verdict: "样本不足", stakes: null, reason: "窗口还不够5个，暂时按原额" };
+    var state = roll[roll.length - 1], len = 1;
+    for (var k = roll.length - 2; k >= 0 && roll[k] === state; k--) len++;
+    var winRuns = [], loseRuns = [], cur = null;
+    roll.forEach(function (sg) {
+      if (!cur || cur.sign !== sg) { cur = { sign: sg, len: 1 }; (sg === 1 ? winRuns : loseRuns).push(cur); }
+      else cur.len++;
+    });
+    var winLens = winRuns.map(function (r) { return r.len; }).sort(function (a, b) { return a - b; });
+    var loseLens = loseRuns.map(function (r) { return r.len; }).sort(function (a, b) { return a - b; });
+    function q(a, p) { return a.length ? a[Math.min(a.length - 1, Math.floor(a.length * p))] : 0; }
+    if (state === 1) {
+      if (winLens.length < 4 || len <= q(winLens, 0.75)) {
+        return { verdict: "正常下注", stakes: BET_STAKES.slice(0, maxStage), state: 1, len: len, reason: "盈利状态第" + len + "窗 · 在p75(" + q(winLens, 0.75) + "窗)内" };
+      }
+      return { verdict: "轻仓·怕见顶", stakes: BET_HALF.slice(0, maxStage), state: 1, len: len, reason: "盈利状态第" + len + "窗 · 已超p75(" + q(winLens, 0.75) + "窗)" };
+    }
+    var l75 = q(loseLens, 0.75), l90 = q(loseLens, 0.9);
+    if (loseLens.length >= 4 && len > l90) {
+      return { verdict: "停 · 退出观察", stakes: null, state: -1, len: len, reason: "亏损状态第" + len + "窗 · 超退出线(p90=" + l90 + "窗)" };
+    }
+    if (loseLens.length >= 4 && len > l75) {
+      return { verdict: "轻仓·试单", stakes: BET_HALF.slice(0, maxStage), state: -1, len: len, reason: "亏损状态第" + len + "窗 · 接近历史翻转点(p75=" + l75 + "窗)" };
+    }
+    return { verdict: "不下 · 亏损期", stakes: null, state: -1, len: len, reason: "亏损状态第" + len + "窗 · 还在亏损期(p75=" + l75 + "窗)" };
+  }
+
   function betYearTop5(maxStage, year) {
     var rows = EXEC_LINES.map(function (line) {
       var acc = betLineAccount(line, maxStage, year);
@@ -3186,7 +3224,8 @@
     [2021, 2022, 2023, 2024, 2025, 2026].forEach(function (y) { yearTop[y] = betYearTop5(maxStage, y); });
     var lastYearTopIds = (yearTop[2025] || { top: [] }).top.map(function (r) { return r.id; });
     var lines;
-    if (state.betLineMode === "all") lines = EXEC_LINES.slice();
+    if (state.betLineMode === "verdict") lines = EXEC_LINES.slice();
+    else if (state.betLineMode === "all") lines = EXEC_LINES.slice();
     else if (state.betLineMode === "positive") lines = EXEC_LINES.filter(function (l) { return positiveLines.indexOf(l.id) >= 0; });
     else if (state.betLineMode === "rotate5") lines = EXEC_LINES.filter(function (l) { return topFiveIds.indexOf(l.id) >= 0; });
     else if (state.betLineMode === "lastyear") lines = EXEC_LINES.filter(function (l) { return lastYearTopIds.indexOf(l.id) >= 0; });
@@ -3196,17 +3235,30 @@
     }).slice(0, 5);
     var plan = [];
     lines.forEach(function (line) {
+      var live = betLiveInfo(line, maxStage);
+      var v = state.betLineMode === "verdict" ? betVerdictFor(line, maxStage) : null;
+      var betStake = live.stake, risk = live.risk;
+      if (v) {
+        if (v.stakes) {
+          betStake = live.stage >= 1 && live.stage <= maxStage ? (v.stakes[live.stage - 1] || 0) : 0;
+          risk = 0;
+          for (var vk = live.stage - 1; vk < maxStage; vk++) risk += v.stakes[vk] || 0;
+        } else { betStake = 0; risk = 0; }
+      }
       plan.push({
         line: line,
-        live: betLiveInfo(line, maxStage),
+        live: live,
+        betStake: betStake,
+        risk: risk,
+        v: v,
         acc: betLineAccount(line, maxStage, year),
         all: betLineAccount(line, maxStage, null),
         regime: betRegimeFor(line, maxStage),
       });
     });
-    var todayTotal = plan.reduce(function (s, r) { return s + r.live.stake; }, 0);
-    var todayRisk = plan.reduce(function (s, r) { return s + r.live.risk; }, 0);
-    var skipCount = plan.filter(function (r) { return !(r.live.stake > 0); }).length;
+    var todayTotal = plan.reduce(function (s, r) { return s + r.betStake; }, 0);
+    var todayRisk = plan.reduce(function (s, r) { return s + r.risk; }, 0);
+    var skipCount = plan.filter(function (r) { return !(r.betStake > 0); }).length;
     var yearNet = plan.reduce(function (s, r) { return s + r.acc.net; }, 0);
     var yearCost = plan.reduce(function (s, r) { return s + r.acc.cost; }, 0);
 
@@ -3227,10 +3279,12 @@
     html += '<br>赔率 ' + BET_ODDS + '（打平线 ' + (100 / BET_ODDS).toFixed(2) + '%）· 第1期中 +80 / 第2期中 +460' + (maxStage === 3 ? " / 第3期中 +400 / 三期全错 -2300" : " / 两期没中 -800") + ' · 窗口由真实开奖算出。</div>';
     html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:6px">性格规律提示：把最近5个窗口的累计盈亏当作“当前状态”，看它已经持续了几个窗口，再跟这条线自己过去6年的状态段长度比——亏损状态超过 p75（约7窗）提示准备减仓，超过 p90（三期约10窗 / 两期约11窗）提示停这条线观察；盈利状态超过 p75 提示注意见顶。<b>点上面两个按钮切换方案时，性格提示会跟着用对应方案的窗口和阈值重算。</b></div>';
     html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:4px">走步回测（2021-2026，无未来数据）：<b>只做盈利状态（≤5条）在两期方案下是唯一五年回测为正的组合</b>（+15,540 / ROI 0.8%，投入202万），比全做14条（-0.9%）和固定9条（0.0%）都好；三期方案下轮动反而更差，所以三期更该少换线。</div>';
+    html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:4px"><b>窗口体检</b>：热（盈利状态）就下、冷（亏损状态）就不下——盈利超 p75 转轻仓、亏损在 p75~p90 轻仓试、亏损超 p90 直接停。走步回测：两期方案 +11,260 / ROI 0.5%（下注 5,895 窗、跳过 5,219 窗，跳过约 47%）；三期方案体检反而变差（-0.5%），三期不建议用体检。</div>';
     html += '</div></div>';
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">下注执行表 · ' + modeShort + '</h2><span class="section__hint">每一期提醒每条线下多少 · 固定线路顺序 · 只提示，不自动下单</span></div>';
     html += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+    html += '<button class="chip ' + (state.betLineMode === "verdict" ? "is-active" : "") + '" data-bet-lines="verdict">窗口体检下单（该下才下）</button>';
     html += '<button class="chip ' + (state.betLineMode === "win5" ? "is-active" : "") + '" data-bet-lines="win5">只做盈利状态（≤5条）</button>';
     html += '<button class="chip ' + (state.betLineMode === "rotate5" ? "is-active" : "") + '" data-bet-lines="rotate5">规律轮动 · 前5条（含亏损补位）</button>';
     html += '<button class="chip ' + (state.betLineMode === "lastyear" ? "is-active" : "") + '" data-bet-lines="lastyear">去年最优5条（走步）</button>';
@@ -3280,7 +3334,7 @@
     html += '</div></div>';
 
     // 今日规划：只列今天真要下的线路，号码 + 金额 + 第几期
-    var betToday = plan.filter(function (r) { return r.live.stake > 0; });
+    var betToday = plan.filter(function (r) { return r.betStake > 0; });
     html += '<div class="section"><div class="section__head"><h2 class="section__title">今日规划 · 第' + (latest + 1) + '期</h2><span class="section__hint">今天要下的每一注：线路 + 尾号 + 金额 + 第几期；按固定线路顺序排列，金额只按当前方案</span></div>';
     if (!betToday.length) {
       html += '<div style="font-size:14px;font-weight:900;color:#64748b">今天没有金额大于0的仓位，全部空仓</div>';
@@ -3296,7 +3350,7 @@
         var title = line.label + (tail != null ? " · 尾" + tail : "");
         html += '<div class="position-card position-card--execution">';
         html += '<div class="position-card__title">' + title + "</div>";
-        html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + live.stake + "元</div>";
+        html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + r.betStake + "元</div>";
         html += '<div style="font-size:11px;color:#475569;margin-top:3px">第' + live.stage + "期 · " + (r.acc.net >= 0 ? "赚线" : "亏线") + "</div>";
         html += "</div>";
       });
@@ -3311,12 +3365,12 @@
     plan.forEach(function (row) {
       var line = row.line;
       var live = row.live;
-      var stakeColor = live.stake > 0 ? "#1d4ed8" : "#6b7280";
+      var stakeColor = row.betStake > 0 ? "#1d4ed8" : "#6b7280";
       // 亏钱的线单独配色：红边+红底+红标签，赚钱的绿边
       var losing = row.acc.net < 0;
       var lineTone = losing ? "#dc2626" : "#16a34a";
       var stateText = live.waiting ? ("等待重开 · 等尾" + live.waiting.tail + "开出")
-        : (live.active ? ("窗口第" + live.stage + "期" + (live.stake > 0 ? " · 本期下 " + live.stake + "元" : " · 本方案不打"))
+        : (live.active ? ("窗口第" + live.stage + "期" + (row.betStake > 0 ? " · 本期下 " + row.betStake + "元" : " · 本期不下"))
           : "空仓等待新窗口");
       html += '<div class="section"><div class="panel" style="padding:12px 10px;border-left:6px solid ' + lineTone + ';background:' + (losing ? "#fef2f2" : "#fff") + '">';
       html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
@@ -3326,10 +3380,10 @@
       } else {
         html += '<span class="chip" style="background:#f0fdf4;border-color:#86efac;color:#166534;font-weight:900">赚线 · 本方案2026年 ' + (row.acc.net >= 0 ? "+" : "") + Math.round(row.acc.net) + '元</span>';
       }
-      html += '<span class="chip" style="font-weight:900;color:' + stakeColor + '">本期 ' + (live.stake > 0 ? live.stake + "元" : "-") + "</span>";
+      html += '<span class="chip" style="font-weight:900;color:' + stakeColor + '">本期 ' + (row.betStake > 0 ? row.betStake + "元" : "-") + "</span>";
       html += '<span class="chip">' + stateText + "</span>";
       html += '<span class="chip">方案 ' + BET_STAKES.slice(0, maxStage).join(" / ") + "</span>";
-      html += '<span class="chip">本窗剩余风险 ' + (live.risk > 0 ? live.risk + "元" : "-") + "</span>";
+      html += '<span class="chip">本窗剩余风险 ' + (row.risk > 0 ? row.risk + "元" : "-") + "</span>";
       html += '<span class="chip" style="background:' + (row.acc.net >= 0 ? "#f0fdf4" : "#fef2f2") + ';border-color:' + (row.acc.net >= 0 ? "#86efac" : "#fecaca") + ';color:' + (row.acc.net >= 0 ? "#166534" : "#b91c1c") + ';font-weight:900">2026年 ' + (row.acc.net >= 0 ? "+" : "") + Math.round(row.acc.net) + '元 · ROI ' + (row.acc.roi * 100).toFixed(1) + '%</span>';
       html += '<span class="chip">2026窗 ' + row.acc.windows + " · 中" + row.acc.hit + " / 错" + row.acc.miss + "</span>";
       html += '<span class="chip" style="font-weight:900">命中率 ' + (row.acc.windows ? (row.acc.hit / row.acc.windows * 100).toFixed(1) : "0.0") + '%</span>';
@@ -3362,6 +3416,15 @@
         rgColor = "#166534"; rgBg = "#f0fdf4";
       }
       html += '<div style="margin-top:8px;padding:7px 9px;border-radius:8px;background:' + rgBg + ';color:' + rgColor + ';font-size:12px;font-weight:900">性格规律 · ' + rgText + "</div>";
+      if (row.v) {
+        var isOk = row.v.verdict.indexOf("正常") >= 0;
+        var isStop = row.v.verdict.indexOf("停") >= 0;
+        var isHalf = row.v.verdict.indexOf("轻仓") >= 0;
+        var vTone = isOk ? "#166534" : (isStop ? "#991b1b" : (isHalf ? "#b45309" : "#475569"));
+        var vBg = isOk ? "#f0fdf4" : (isStop ? "#fee2e2" : (isHalf ? "#fffbeb" : "#f1f5f9"));
+        html += '<div style="margin-top:6px;padding:7px 9px;border-radius:8px;background:' + vBg + ';color:' + vTone + ';font-size:12px;font-weight:900">窗口体检 · ' +
+          row.v.verdict + " ｜ " + row.v.reason + " ｜ 本期 " + (row.betStake > 0 ? row.betStake + "元" : "0元（不下）") + "</div>";
+      }
 
       if (live.active) {
         html += '<div style="margin-top:9px;padding-top:8px;border-top:1px solid #e5e7eb">';
@@ -6503,7 +6566,8 @@
       state.betLineMode = blMode === "all" ? "all"
         : (blMode === "positive" ? "positive"
           : (blMode === "rotate5" ? "rotate5"
-            : (blMode === "lastyear" ? "lastyear" : "win5")));
+            : (blMode === "lastyear" ? "lastyear"
+              : (blMode === "win5" ? "win5" : "verdict"))));
       renderBetExec();
       return;
     }
