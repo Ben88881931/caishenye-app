@@ -163,6 +163,7 @@ must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions
 
 const workflowText = read("SUPERVISOR_WORKFLOW.md");
 must(workflowText.includes("五道闸门") && workflowText.includes("不得事后补造快照") && workflowText.includes("资金调度只做倍率"), "权威工作流必须包含数据真实性五道闸门和资金调度只做倍率规则");
+must(workflowText.includes("停止模型探索") && workflowText.includes("未来模型训练门槛") && workflowText.includes("只准用真实快照当训练集") && workflowText.includes("≥ 400 期") && workflowText.includes("55.56%") && workflowText.includes("锁定段在模型定稿前") && workflowText.includes("262 期起"), "权威工作流必须锁定：停止模型探索、只用真实快照训练、单线样本≥400期、时间切分锁定段、打平线55.56%");
 must(workflowText.includes("第 6 步：执行端结束（不做审计）") && workflowText.includes("执行端不得汇报或生成模型命中率"), "权威工作流必须禁止执行端运行审计、汇报审计结论或生成最终签收意见");
 must(!/mock|demo|sampleData|假数据|模拟数据/i.test(appText), "所有页面都不得内置伪造、演示或模拟数据");
 
