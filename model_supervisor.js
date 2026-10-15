@@ -416,7 +416,14 @@ function report() {
   }).length;
 
   console.log("===== 真实预测快照报告 =====");
-  console.log(`双号至少中一：${d.hits}/${d.settled} = ${(d.rate * 100).toFixed(1)}%`);
+  // 唯一认可口径：三期窗口命中（窗口=短期策略单元）。每期两号口径已退役，不再输出。
+  const srcWins = Array.isArray(snapshots.sourceWindows) ? snapshots.sourceWindows : [];
+  ["D1", "D2"].forEach((sk) => {
+    const mine = srcWins.filter((w) => w.stream === sk && w.status !== "pending");
+    const hitW = mine.filter((w) => w.status === "hit").length;
+    const pendW = srcWins.filter((w) => w.stream === sk && w.status === "pending").length;
+    console.log(`三期窗口·${sk === "D1" ? "首推" : "备选"}：中${hitW}窗 / 错${mine.length - hitW}窗 · 窗口命中率 ${mine.length ? ((hitW / mine.length) * 100).toFixed(1) : "-"}% · 进行中${pendW}窗`);
+  });
   console.log(`双号首推：${firstHit("doubleRecommendation", 0)}/${d.settled}`);
   const threeRecords = Array.isArray(snapshots.threePeriodRecords) ? snapshots.threePeriodRecords : [];
   const threeActed = threeRecords.filter((r) => r.tail != null && r.action !== "观望");

@@ -109,9 +109,16 @@ console.log('已开奖 ' + liveSettled.length + ' 期, 命中 ' + live.hits + '/
 console.log('待开奖 ' + livePending.length + ' 期');
 console.log('当前连续未中 ' + missStreak + ' 期');
 
-console.log('\n--- 真实快照账（开奖前保存，开奖后结算）---');
-console.log('双号至少中一: ' + snapDouble.hits + '/' + snapDouble.n + ' = ' + pct(snapDouble.rate));
-console.log('待开奖: ' + snapPending + ' 期');
+console.log('\n--- 三期窗口账（唯一口径：窗口=短期策略单元）---');
+const snapshotDoc = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+const srcWindows = Array.isArray(snapshotDoc.sourceWindows) ? snapshotDoc.sourceWindows : [];
+["D1", "D2"].forEach((sk) => {
+  const mine = srcWindows.filter((w) => w.stream === sk && w.status !== "pending");
+  const hit = mine.filter((w) => w.status === "hit").length;
+  console.log('  ' + (sk === "D1" ? "首推 D1" : "备选 D2") + '：中' + hit + '窗 / 错' + (mine.length - hit) + '窗 · 窗口命中率 ' +
+    (mine.length ? pct(hit / mine.length) : "-"));
+});
+console.log('  进行中窗口: ' + srcWindows.filter((w) => w.status === "pending").length + ' 个（下一期待开奖 ' + snapPending + ' 期）');
 
 // 预警判断（实盘样本不足时不作结论）
 const ALERT_THRESHOLD = 0.65;
@@ -126,4 +133,9 @@ if (liveSettled.length < 10) {
   console.log('✅ 状态正常：实盘 ' + pct(live.rate) + '，回测 ' + pct(bt['命中率'] || 0));
 }
 
-console.log('\n【健康检查结果】回测 ' + pct(bt['命中率'] || 0) + '，旧实盘 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期），真实快照双号至少中一 ' + snapDouble.hits + '/' + snapDouble.n);
+const winD1 = srcWindows.filter((w) => w.stream === "D1" && w.status !== "pending");
+const winD2 = srcWindows.filter((w) => w.stream === "D2" && w.status !== "pending");
+const winD1Hit = winD1.filter((w) => w.status === "hit").length;
+const winD2Hit = winD2.filter((w) => w.status === "hit").length;
+console.log('\n【健康检查结果】回测 ' + pct(bt['命中率'] || 0) + '，旧实盘 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期），三期窗口命中 D1 ' +
+  winD1Hit + '/' + winD1.length + '、D2 ' + winD2Hit + '/' + winD2.length);

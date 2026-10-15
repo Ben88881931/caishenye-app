@@ -116,9 +116,8 @@ function report() {
         hit: actualTails.includes(p.tail)
       }));
     }
-    const atLeastOne = perPick.some((p) => p.hit);
     console.log(
-      `第${rec.target}期 | 双号[${fmtPerPick(perPick)}] | 实际[${actualTails.join(",")}] | 单尾 ${fmtHit(perPick)} | 至少中一${atLeastOne ? "✓" : "✗"} | 结算 ${rec.settledAt || "-"}`
+      `第${rec.target}期 | 双号[${fmtPerPick(perPick)}] | 实际[${actualTails.join(",")}] | 单尾 ${fmtHit(perPick)} | 结算 ${rec.settledAt || "-"}`
     );
   }
   console.log("");
@@ -176,24 +175,18 @@ function report() {
   }
   console.log("");
 
-  console.log("--- 双号整体至少中一（不分等级）---");
-  console.log(
-    `样本${overall.n}期 命中${overall.hits} 未中${overall.n - overall.hits} 命中率${rateText(overall.n, overall.hits)}`
-  );
-  console.log("");
-
-  console.log("--- 等级组合至少中一 ---");
-  const comboKeys = Object.keys(combos).sort((a, b) => combos[b].n - combos[a].n);
-  if (!comboKeys.length) {
-    console.log("（暂无组合样本）");
-  } else {
-    for (const ck of comboKeys) {
-      const c = combos[ck];
-      console.log(
-        `${ck}：样本${c.n} 命中${c.hits} 未中${c.n - c.hits} 命中率${rateText(c.n, c.hits)}`
-      );
-    }
+  // 唯一认可口径：三期窗口命中（窗口=短期策略单元）。每期两号口径已退役，不再输出。
+  console.log("--- 三期窗口命中（唯一口径）---");
+  const snapDoc = JSON.parse(fs.readFileSync("prediction_snapshots.json", "utf8"));
+  const srcWins = Array.isArray(snapDoc.sourceWindows) ? snapDoc.sourceWindows : [];
+  for (const sk of ["D1", "D2"]) {
+    const mine = srcWins.filter((w) => w.stream === sk && w.status !== "pending");
+    const hit = mine.filter((w) => w.status === "hit").length;
+    console.log(
+      `${sk === "D1" ? "首推" : "备选"}：中${hit}窗 / 错${mine.length - hit}窗 · 窗口命中率${mine.length ? ((hit / mine.length) * 100).toFixed(1) + "%" : "-"}`
+    );
   }
+  console.log("");
 
   console.log("");
   console.log("--- 分数细分（1分一档，单尾口径，基准55.39%）---");
