@@ -16,7 +16,9 @@
     hotStreakLimit: 5,
     minDoubleScore: 93.9,
     missSwitchLimit: 3,
-    minEdge: -0.01
+    minEdge: -0.01,
+    alpha: 5,                    // 条件概率表的贝叶斯平滑强度（显式化，便于做权重消融；默认5=原行为）
+    baseEligibleEnabled: true    // 基准率不足是否避开（默认true=原行为）
   };
 
   function clamp(value, lo, hi) {
@@ -244,7 +246,7 @@
     }
     var key = correctnessKey(state);
     var bucket = tableInfo.table[key] || { n: 0, h: 0 };
-    var alpha = 5;
+    var alpha = (opts.alpha != null) ? Number(opts.alpha) : 5;
     var pState = (bucket.h + priorP * alpha) / (bucket.n + alpha);
     var recentP = state.recentN ? state.recentHitRate : priorP;
     var pCorrect = pState;
@@ -257,7 +259,7 @@
       band = "避开";
       action = "避让";
     }
-    if (!baseEligible && pCorrect < 0.65) {
+    if (opts.baseEligibleEnabled !== false && !baseEligible && pCorrect < 0.65) {
       band = "避开";
       action = "避让";
     }
