@@ -1,4 +1,4 @@
-// 同一条线在不同页面的“当前窗口”是否一致：执行提示 / 下注执行表 / 14线规律中心
+// 同一条线在不同页面的“当前窗口”是否一致：下注执行表 / 14线规律中心
 const { spawn } = require("child_process");
 const path = require("path"); const fs = require("fs");
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
@@ -22,22 +22,6 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   await send("Page.navigate", { url: "http://127.0.0.1:" + HTTP + "/index.html" });
   for (let i = 0; i < 30; i++) { if (await ev("!!document.querySelector('.directory-card')")) break; await sleep(400); }
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
-
-  // 执行提示
-  await ev("document.querySelector('.tab[data-tab=\"orderhint\"]').click(); true"); await sleep(1500);
-  const hint = JSON.parse(await ev(`(function () {
-    var out = {};
-    var labels = [].map.call(document.querySelectorAll('#view .exec-line__label'), function (e) { return e.innerText.trim(); });
-    var cards = [].map.call(document.querySelectorAll('#view .exec-window-card--current'), function (c) { return c.innerText.replace(/\\n+/g, '|'); });
-    cards.forEach(function (t, i) {
-      if (/等待开奖 · 等待尾/.test(t)) { out[labels[i]] = '等待重开'; return; }
-      var start = (/窗口起始 第(\\d+)期/.exec(t) || [])[1];
-      var rows = [...t.matchAll(/第(\\d)期\\|第(\\d+)期\\|(尾\\d|待定)\\|(中|错|未记录|待开奖)/g)];
-      var done = rows.filter(function (r) { return r[4] === '中' || r[4] === '错'; }).length;
-      out[labels[i]] = (start || '-') + '期/第' + (done + 1) + '期/尾' + ((rows[0] || [])[3] || '-').replace('尾','');
-    });
-    return JSON.stringify(out);
-  })()`));
 
   // 下注执行表（全14条模式）
   await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(1800);
@@ -75,14 +59,15 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     wm[lineLabels[i]] = t ? (start + '期/第' + (done + 1) + '期/' + firstTail) : '等待重开/无窗口';
   }
 
-  console.log("线条 | 执行提示 | 下注执行表 | 14线规律中心");
-  console.log("---|---|---|---");
+  console.log("线条 | 下注执行表 | 14线规律中心");
+  console.log("---|---|---");
   let mismatch = 0;
   lineLabels.forEach((lb) => {
-    const a = hint[lb] || '-', b = bet[lb] || '-', c = wm[lb] || '-';
-    const same = (a === b) && (lb.indexOf("尾") === 0 ? (a.split('/')[0] === (c.split('/')[0] || c)) : true);
+    const a = bet[lb] || '-', c = wm[lb] || '-';
+    // 只比“同一窗口”：起始期号相同（等待重开时两边都必须写等待重开）
+    const same = a !== '-' && c !== '-' && a.split('/')[0] === c.split('/')[0];
     if (!same) mismatch++;
-    console.log(lb + " | " + a + " | " + b + " | " + c + (same ? "" : "  ← 不一致"));
+    console.log(lb + " | " + a + " | " + c + (same ? "" : "  ← 不一致"));
   });
   console.log("\n不一致条数：" + mismatch + " / 14");
   ws.close(); chrome.kill(); server.kill(); await sleep(300);

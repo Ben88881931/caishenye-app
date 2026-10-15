@@ -25,16 +25,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const fails = [];
   const check = (ok, label, extra) => { console.log((ok ? "PASS: " : "FAIL: ") + label + (extra ? "  [" + extra + "]" : "")); if (!ok) fails.push(label); };
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
-  // 执行提示：每条线记录头部写着“已结算 N 窗”，N 必须是当年窗数（2026 ≤ 300），不是五六年累积（会 >600）
-  await ev("document.querySelector('.tab[data-tab=\"orderhint\"]').click(); true"); await sleep(1800);
-  const hintCounts = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .exec-line-summary, #view .panel'), function (x) {
-    var m = x.innerText.match(/已结算窗口：中(\\d+)窗 \\/ 错(\\d+)窗|已结算中(\\d+)窗 \\/ 错(\\d+)窗/);
-    if (!m) return 0;
-    return Number(m[1]||m[3]) + Number(m[2]||m[4]);
-  }).filter(function (x) { return x > 0; }))`));
-  const hintMax = hintCounts.length ? Math.max(...hintCounts) : 0;
-  check(hintCounts.length >= 10 && hintMax <= 400, "执行提示：每条线已结算窗数=当年（≤400），没累积五六年", "最大 " + hintMax + " 窗 / 共 " + hintCounts.length + " 条");
-  // 下注执行表：记录头部“已结算 N 窗”
+  // 下注执行表（执行提示/资金调度已并入本页）：记录头部“已结算 N 窗”必须是当年窗数，不是五六年累积
   await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(2200);
   const betCounts = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .panel'), function (p) {
     var m = p.innerText.match(/对错滚动记录 · 新→旧 · 已结算 (\\d+) 窗/);

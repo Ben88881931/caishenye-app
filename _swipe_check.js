@@ -55,6 +55,11 @@ async function main() {
   await evalJS("document.querySelector('[data-directory-group=\"recommend\"]').click(); true");
   await sleep(700);
 
+  // 0) 执行提示/资金调度必须已从导航撤掉（并入下注执行表）
+  const navLabels = await evalJS("[].map.call(document.querySelectorAll('#tabs .tab'),function(t){return (t.innerText||'').trim();}).join(',')");
+  const hasMerged = navLabels.indexOf("执行提示") < 0 && navLabels.indexOf("资金调度") < 0 && navLabels.indexOf("下注执行表") >= 0;
+  check(hasMerged, "导航已无「执行提示 / 资金调度」，只留下注执行表", navLabels);
+
   // 1) 短距离左滑就该翻页（原阈值 28px）
   const before1 = await activeTab();
   await gesture("#view .section__title", [-10, -30, -50], null, 20);
@@ -89,7 +94,7 @@ async function main() {
 
   // 5) 横向滚动条内滑动不翻页
   await evalJS("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
-  await evalJS("document.querySelector('.tab[data-tab=\"orderhint\"]').click(); true"); await sleep(900);
+  await evalJS("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(1800);
   const before5 = await activeTab();
   await gesture(".exec-line__scroll", [-40, -90], null, 20);
   await sleep(500);

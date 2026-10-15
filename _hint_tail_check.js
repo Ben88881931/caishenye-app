@@ -25,25 +25,32 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const check = (ok, label, extra) => { console.log((ok ? "PASS: " : "FAIL: ") + label + (extra ? "  [" + extra + "]" : "")); if (!ok) fails.push(label); };
 
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
-  await ev("document.querySelector('.tab[data-tab=\"orderhint\"]').click(); true"); await sleep(1200);
+  // 执行提示/资金调度已并入下注执行表，这里改为核查主页面
+  await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(2200);
   const data = JSON.parse(await ev(`(function () {
     var out = [];
-    [].forEach.call(document.querySelectorAll('#view .exec-window-card--current'), function (card, idx) {
-      var labels = [].map.call(document.querySelectorAll('#view .exec-line__label'), function (e) { return e.innerText.trim(); });
-      out.push({ idx: idx, label: labels[idx] || ('#' + idx), text: card.innerText.replace(/\\n+/g, '|') });
+    var latestP = (function () { var a = window.APP_DATA.d; var r = a[a.length - 1]; return Number(r.p); })();
+    [].forEach.call(document.querySelectorAll('#view .panel'), function (p) {
+      var lb = ((p.querySelector('.exec-line__label') || {}).innerText || '').trim();
+      if (!lb) return;
+      var t = p.innerText.replace(/\\n+/g, '|');
+      var rows = [...t.matchAll(/第(\\d)期\\|第(\\d+)期\\|(尾\\d|待定)\\|(中|错|待开奖|未记录)/g)]
+        .map(function (m) { return m[1] + ',' + m[2] + ',' + m[3] + ',' + m[4]; });
+      if (!rows.length) return;
+      out.push({ label: lb, text: rows.join(' | ') });
     });
-    return JSON.stringify({ next: document.querySelector('#view .exec-window-card--current').dataset.currentPeriod, out: out });
+    return JSON.stringify({ next: latestP + 1, out: out });
   })()`));
   let bad = 0, rowsTotal = 0;
   if (process.argv[2] === "debug") data.out.forEach((c) => console.log("--- " + c.label + " ---\n" + c.text));
   data.out.forEach((c) => {
-    const rows = [...c.text.matchAll(/第(\d{3,4})期\|(尾\d|待定)\|(中|错|未记录|待开奖)/g)];
+    const rows = c.text.split(" | ").map((s) => s.split(","));
     rows.forEach((m) => {
       rowsTotal++;
       if (Number(m[1]) <= Number(data.next) && m[2] === "待定") { bad++; console.log("  当期缺尾号: " + c.label + " 第" + m[1] + "期"); }
     });
   });
-  check(bad === 0, "执行提示：当期（第" + data.next + "期及以前）必须写出尾号，不能待定", rowsTotal + " 行，缺号 " + bad + " 行");
+  check(rowsTotal > 0 && bad === 0, "下注执行表：当期（第" + data.next + "期及以前）必须写出尾号，不能待定", rowsTotal + " 行，缺号 " + bad + " 行");
 
   // 三期内追推荐：待检查的那一期也要有尾号
   await ev("document.querySelector('.tab[data-tab=\"chasenumber\"]').click(); true"); await sleep(900);
