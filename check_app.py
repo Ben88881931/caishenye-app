@@ -237,14 +237,14 @@ def main():
             pass_("三期内记录与调度记录均紧接卡片下方展示")
         else:
             fail("三期内记录未紧接卡片下方展示")
-        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "EXEC_LINES" in app_text and "14条独立线路" in app_text and "3期内命中率" in app_text and "首次命中分布" in app_text and "已结算窗口：中" in app_text and "窗 / 错" in app_text and "对错滚动记录" in app_text and "对错滚动记录 · 从第" in app_text and "exec-line-summary" in app_text and "data-current-window=" in app_text and "data-current-period=" in app_text and "当前窗口 · 当下第" in app_text and "exec-line__scroll" in app_text and "exec-window-card--current" in app_text and "Number(b.start) - Number(a.start)" in app_text and "scroll.scrollLeft = 0" in app_text and "公式（元）" in app_text and "金额 ' + planText" not in app_text and "waiting" in app_text and "等待尾" in app_text and "开出后下一期重开" in app_text and "slice(-30).reverse()" not in app_text:
+        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "EXEC_LINES" in app_text and "14条独立线路" in app_text and "3期内命中率" in app_text and "首次命中分布" in app_text and "对错滚动记录 · 新→旧 · 已结算" in app_text and "exec-line__scroll" in app_text and "公式（元）" in app_text and "等待尾" in app_text and "重新开出后再开新窗口" in app_text and "金额 ' + planText" not in app_text and "slice(-30).reverse()" not in app_text and "function renderOrderHint" not in app_text and "function renderFunds" not in app_text:
             pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和14条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
-        if "function renderFunds" in app_text and "直接按公式安排" in app_text and "本期按公式金额" in app_text and "本窗剩余风险" in app_text and "不锚定本金" in app_text and "本期不下注线路" in app_text and "无有效公式" in app_text and "FUND_CAPITAL" not in app_text and "本金锚定" not in app_text and "本金占用率" not in app_text:
-            pass_("资金调度页面直接按公式表读取本期金额和窗口风险")
+        if "function renderFunds" not in app_text and "function renderOrderHint" not in app_text and "buildExecWindows" not in app_text and "FUND_CAPITAL" not in app_text and "本金锚定" not in app_text and "本金占用率" not in app_text and "本窗剩余风险" in app_text and "本期不下注（条）" in app_text:
+            pass_("执行提示/资金调度两页已彻底删除（连代码一起删），金额与风险只保留下注执行表")
         else:
-            fail("资金调度页面未按公式表直接安排资金")
+            fail("执行提示/资金调度仍有残留代码或主页面缺少金额与风险")
         if "function renderFormulaTable" in app_text and "EXEC_FORMULA_AUDIT" in app_text and "训练 / 验证" in app_text and "不配仓" in app_text:
             pass_("公式表页面包含14线训练验证系数和配仓状态")
         else:
@@ -277,10 +277,10 @@ def main():
             pass_("所有页面用且只用一组独立盒子显示下一期D1和D2推荐号码")
         else:
             fail("页面顶部缺少独立D1/D2推荐号码盒或存在重复插入")
-        if "function renderOrderHint" in app_text and "var hintRows = EXEC_LINES.map" in app_text and "activeHintRows" in app_text and "今日规划" in app_text and "按固定线路顺序排列" in app_text and "row.action.amount > 0" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:
-            pass_("执行提示页今日规划按固定线路顺序显示并汇总金额与风险")
+        if "function renderBetExec" in app_text and "今日规划 · 第" in app_text and "按固定线路顺序排列" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:
+            pass_("下注执行表今日规划按固定线路顺序显示并汇总金额与风险")
         else:
-            fail("执行提示页缺少今日规划汇总或未按固定线路顺序显示")
+            fail("下注执行表缺少今日规划汇总或未按固定线路顺序显示")
         if "function wmPositionForPlan" in app_text and "正式执行公式" in app_text and "正式执行仓位" in app_text and "今年测试仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text and "wmPositionForPlan(line, line.plan)" in app_text:
             pass_("正式执行仓位统一以公式表line.plan为准")
         else:
@@ -293,7 +293,7 @@ def main():
             pass_("页面运行使用MODEL.bounceCritical，无未定义BOUNCE引用")
         else:
             fail("页面仍引用未定义BOUNCE或未使用MODEL.bounceCritical")
-        if "position-card-grid" in app_text and "position-card--funds" in app_text and "position-card--execution" in app_text:
+        if "position-card-grid" in app_text and "position-card--execution" in app_text and "position-card--funds" not in app_text:
             pass_("当前仓位卡片使用统一尺寸样式")
         else:
             fail("当前仓位卡片未使用统一尺寸样式")

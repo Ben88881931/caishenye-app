@@ -2099,14 +2099,6 @@ html.gesture-active * {
   overflow: hidden;
 }
 
-.position-card--funds {
-  background: #fff;
-  color: #111827;
-  border: 2px solid #2563eb;
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-
 .position-card--execution {
   background: #eff6ff;
   border: 2px solid #2563eb;

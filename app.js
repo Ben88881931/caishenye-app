@@ -1030,8 +1030,6 @@
     else if (state.tab === "pick3") renderPick3();
     else if (state.tab === "selector") renderSelector();
     else if (state.tab === "chasenumber") renderChaseNumber();
-    else if (state.tab === "orderhint") renderOrderHint();
-    else if (state.tab === "funds") renderFunds();
     else if (state.tab === "betexec") renderBetExec();
     else if (state.tab === "formulas") renderFormulaTable();
     else if (state.tab === "windowmult") renderWindowMultiplierTest();
@@ -1075,7 +1073,7 @@
         {
           name: "下注执行表",
           summary: "原来的「执行提示」和「资金调度」已经并进这一页：一条节奏链条走完，① 选方向 ② 选号 ③ 定轻重。",
-          look: ["节奏链条：① 线方向（性格）→ ② 窗口选号 → ③ 第几期定轻重", "选号参考表：14条线一屏对比，自己挑2-3条下", "今日规划：今天每一注的线路+尾号+金额+第几期", "每条线当前窗口第1/2/3期明细 + 对错滚动记录"],
+          look: ["节奏链条：① 线方向（性格）→ ② 窗口选号 → ③ 第几期定轻重", "选号参考表：14条独立线路一屏对比，自己挑2-3条下", "今日规划：今天每一注的线路+尾号+金额+第几期", "每条线当前窗口第1/2/3期明细 + 对错滚动记录"],
           use: "下单前只看这一页：先按性格挑线，再看窗口锁尾号，最后按方案金额下单。",
           source: "公式表逐线公式、真实开奖窗口、开奖前真实快照。",
           note: "只提示不自动下单；不锚定本金，金额按公式表取当前窗口第几期；窗口等待和开窗等待是两种不同状态。"
@@ -2575,495 +2573,10 @@
     return null;
   }
 
-  function execHasTail(period, tail) {
-    var d1 = execPick(period, "D1");
-    var d2 = execPick(period, "D2");
-    return !!(d1 && Number(d1.tail) === Number(tail)) || !!(d2 && Number(d2.tail) === Number(tail));
-  }
-
-  function buildExecWindows(line) {
-    // 统一口径：10 条尾号线直接复用「14线规律中心」的窗口引擎（每年第1期重开 + 错窗等号重开），
-    // 保证同一条线在 执行提示 / 资金调度 / 下注执行表 / 14线规律中心 显示的是同一个窗口、同一期序。
-    if (line.kind === "tail") {
-      var wmRows = wmWindowsFor(line);
-      var wmState = wmCurrentState(line);
-      // 记录只展示最近一年（当年）的窗口，不把往年累积在一起
-      var thisYear = (D[D.length - 1] || {}).y;
-      wmRows = wmRows.filter(function (w) { return wmYearOf(w.start) === thisYear; });
-      // 14线引擎跑在“全表序号”上，执行页用的是“当年第几期”，这里统一换算（2026 年 1 期 = 全表第 234 期）
-      function toPeriodNo(g) {
-        var row = D[Number(g) - 1];
-        if (row) return Number(row.p);
-        var lastRow = D[D.length - 1];
-        return lastRow ? Number(lastRow.p) + (Number(g) - D.length) : Number(g);
-      }
-      function mapWin(w) {
-        return {
-          start: toPeriodNo(w.start),
-          lockedTail: w.lockedTail,
-          attempts: (w.attempts || []).map(function (a) { return { period: toPeriodNo(a.period), tail: a.tail, hit: a.hit }; }),
-          hitIndex: w.hitIndex,
-          status: w.hitIndex > 0 ? "hit" : "miss"
-        };
-      }
-      var activeNow = (wmState.active && wmYearOf(wmState.active.start) === thisYear) ? wmState.active : null;
-      return {
-        windows: wmRows.map(mapWin),
-        active: activeNow ? mapWin(activeNow) : null,
-        waiting: wmState.waiting ? { tail: wmState.waiting.tail } : null
-      };
-    }
-    var windows = [];
-    var active = null;
-    var waiting = null;
-    var p = line.kind === "tail" ? 1 : 31;
-    while (p <= latest) {
-      if (waiting) {
-        var waitingActual = MODEL.tailsOf(p);
-        if (waitingActual.indexOf(Number(waiting.tail)) >= 0) {
-          waiting = null;
-        }
-        p++;
-        continue;
-      }
-      var trigger = null;
-      if (!active) {
-        if (line.kind === "tail") {
-          trigger = { tail: line.tail };
-        } else {
-          trigger = execPick(p, line.stream);
-        }
-        if (!trigger) { p++; continue; }
-        active = {
-          start: p,
-          lockedTail: line.kind === "recommend" ? null : trigger.tail,
-          attempts: []
-        };
-      }
-      var actual = MODEL.tailsOf(p);
-      var pick = line.kind === "recommend" ? execPick(p, line.stream) : { tail: active.lockedTail };
-      var tail = pick ? pick.tail : null;
-      var hit = tail != null && actual.indexOf(Number(tail)) >= 0;
-      active.attempts.push({ period: p, tail: tail, hit: hit });
-      if (hit) {
-        active.hitIndex = active.attempts.length;
-        active.status = "hit";
-        windows.push(active);
-        active = null;
-        p++;
-      } else if (active.attempts.length >= 3) {
-        active.hitIndex = 0;
-        active.status = "miss";
-        windows.push(active);
-        var waitTail = null;
-        for (var wi = active.attempts.length - 1; wi >= 0; wi--) {
-          if (active.attempts[wi].tail != null) {
-            waitTail = active.attempts[wi].tail;
-            break;
-          }
-        }
-        active = null;
-        p++;
-        if (waitTail != null) {
-          waiting = { tail: waitTail, fromPeriod: p };
-        }
-      } else {
-        p++;
-      }
-    }
-    return {
-      windows: windows,
-      active: active,
-      waiting: waiting ? {
-        tail: waiting.tail,
-        fromPeriod: waiting.fromPeriod,
-        waited: latest >= waiting.fromPeriod ? latest - waiting.fromPeriod + 1 : 0
-      } : null
-    };
-  }
-
-  function execWindowProfit(line, windowRow) {
-    var plan = line.plan;
-    if (windowRow.hitIndex === 1) return +(plan[0] * 0.8).toFixed(2);
-    if (windowRow.hitIndex === 2) return +(-plan[0] + plan[1] * 0.8).toFixed(2);
-    if (windowRow.hitIndex === 3) return +(-plan[0] - plan[1] + plan[2] * 0.8).toFixed(2);
-    return +(-plan[0] - plan[1] - plan[2]).toFixed(2);
-  }
-
-  function execLineStats(line, windows) {
-    var settled = windows.filter(function (w) { return w.status !== "pending"; });
-    var turnover = 0;
-    var net = 0;
-    var first = 0, second = 0, third = 0, miss = 0;
-    windows.forEach(function (w) {
-      var attempts = w.hitIndex === 1 ? 1 : w.hitIndex === 2 ? 2 : 3;
-      turnover += line.plan[0] + (attempts > 1 ? line.plan[1] : 0) + (attempts > 2 ? line.plan[2] : 0);
-    });
-    settled.forEach(function (w) {
-      net += execWindowProfit(line, w);
-      if (w.hitIndex === 1) first++;
-      else if (w.hitIndex === 2) second++;
-      else if (w.hitIndex === 3) third++;
-      else miss++;
-    });
-    var hits = first + second + third;
-    return {
-      turnover: turnover,
-      net: +net.toFixed(2),
-      roi: turnover ? net / turnover : 0,
-      settled: settled.length,
-      first: first,
-      second: second,
-      third: third,
-      miss: miss,
-      hitWindows: hits,
-      missWindows: miss,
-      hitRate: settled.length ? hits / settled.length : 0
-    };
-  }
-
-  function execWindowText(windowRow) {
-    if (windowRow.status === "hit") {
-      var tail = windowRow.attempts[windowRow.hitIndex - 1].tail;
-      return "第" + windowRow.start + "期 · 尾<span class=\"exec-window-card__tail\">" + tail + "</span> · 第" + windowRow.hitIndex + "期中";
-    }
-    return "第" + windowRow.start + "期 · 连续3期未中 · 本窗口结束";
-  }
-
-  function execAttemptText(attempt) {
-    return "尾<span class=\"exec-window-card__tail\">" + attempt.tail + "</span>" + (attempt.hit ? "中" : "错");
-  }
-
-  function execNextAction(line, result, nextPeriod) {
-    if (planRisk(line.plan) <= 0) {
-      return {
-        action: "不配仓",
-        amount: 0,
-        stage: "-",
-        status: line.hold ? line.hold : "历史阶段系数未通过",
-        color: line.hold ? "#d97706" : "#dc2626"
-      };
-    }
-    if (result.waiting) {
-      return {
-        action: "等待",
-        amount: 0,
-        stage: "等待开奖",
-        status: "尾" + result.waiting.tail + "开出后下一期重开",
-        color: "#d97706"
-      };
-    }
-    if (result.active) {
-      var attempts = result.active.attempts.length;
-      var expected = Number(result.active.start) + attempts;
-      if (expected === nextPeriod && attempts < 3) {
-        return {
-          action: line.plan[attempts] > 0 ? "下注" : "等待",
-          amount: Number(line.plan[attempts] || 0),
-          stage: "第" + (attempts + 1) + "期",
-          status: "窗口进行中",
-          color: line.plan[attempts] > 0 ? "#16a34a" : "#2563eb"
-        };
-      }
-      return { action: "检查", amount: 0, stage: "-", status: "窗口状态不连续", color: "#dc2626" };
-    }
-    var willTrigger = line.kind === "tail" ? true : !!execPick(nextPeriod, line.stream);
-    if (willTrigger) {
-      return {
-        action: line.plan[0] > 0 ? "下注" : "开窗等待",
-        amount: Number(line.plan[0] || 0),
-        stage: "第1期",
-        status: "可开新窗口",
-        color: line.plan[0] > 0 ? "#16a34a" : "#2563eb"
-      };
-    }
-    return { action: "不下", amount: 0, stage: "-", status: "等待重新推荐", color: "#6b7280" };
-  }
-
-  function renderOrderHint() {
-    execPredCache = {};
-    var nextPeriod = latest + 1;
-    // 节奏链条与“下注执行表”用同一个三期主口径（本页固定 1:7:15 三期）
-    var chainStage = 3;
-    var chainRefs = betPickRefRows(chainStage);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">执行提示 · 14条独立线路</h2><span class="section__hint">10个尾数线只看开奖数据 · 4条推荐线只看D1/D2 · 第' + nextPeriod + '期 · 只提示，不自动下单</span></div></div>';
-    var hintRows = EXEC_LINES.map(function (line) {
-      var result = buildExecWindows(line);
-      return { line: line, result: result, action: execNextAction(line, result, nextPeriod) };
-    });
-    var activeHintRows = hintRows.filter(function (row) { return row.action.amount > 0; });
-    // 本窗剩余风险：口径与资金调度一致（进行中=从当前期起算，新窗口=整条公式，等待/不配仓=0）
-    function hintWindowRisk(row) {
-      var plan = row.line.plan || [];
-      if (planRisk(plan) <= 0) return 0;
-      if (row.result.waiting) return 0;
-      if (row.result.active) {
-        var st = Math.min(row.result.active.attempts.length + 1, 3);
-        return planRisk(plan.slice(st - 1));
-      }
-      return planRisk(plan);
-    }
-    var todayTotal = activeHintRows.reduce(function (sum, row) { return sum + Number(row.action.amount || 0); }, 0);
-    var todayRisk = hintRows.reduce(function (sum, row) { return sum + hintWindowRisk(row); }, 0);
-    var todaySkip = hintRows.filter(function (row) { return !(row.action.amount > 0); }).length;
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">今日规划</h2><span class="section__hint">今天要下的每一注：线路 + 号码 + 金额 + 第几期；按固定线路顺序排列，金额只认公式表</span></div></div>';
-    html += '<div class="section">';
-    if (!activeHintRows.length) {
-      html += '<div style="font-size:14px;font-weight:900;color:#64748b">今天没有金额大于0的仓位，全部空仓</div>';
-    } else {
-      html += '<div class="position-card-grid">';
-      activeHintRows.forEach(function (row) {
-        var currentTail = execCurrentTail(row.line, row.result, nextPeriod);
-        var cardTitle = row.line.kind === "tail" ? row.line.label : row.line.label + (currentTail != null ? ' · 尾' + currentTail : '');
-        html += '<div class="position-card position-card--execution">';
-        html += '<div class="position-card__title">' + cardTitle + '</div>';
-        html += '<div style="font-size:18px;font-weight:900;color:#2563eb;margin-top:3px">' + row.action.amount + '元</div>';
-        html += '<div style="font-size:11px;color:#475569;margin-top:3px">' + row.action.stage + ' · ' + row.action.action + '</div>';
-        html += '</div>';
-      });
-      html += '</div>';
-    }
-    html += '<div class="grid-3" style="margin-top:10px">';
-    html += '<div class="stat"><div class="stat__value">' + todayTotal + '</div><div class="stat__label">今日合计（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + todaySkip + '</div><div class="stat__label">今日不下注（条）</div></div>';
-    html += '</div>';
-    html += '</div>';
-    hintRows.forEach(function (row) {
-      var line = row.line;
-      var result = row.result;
-      var stats = execLineStats(line, result.windows);
-      var action = row.action;
-      var planText = line.plan.join(" / ");
-      var firstStart = result.windows.length ? result.windows[0].start
-        : (result.active ? result.active.start : (line.kind === "tail" ? 1 : 31));
-      html += '<div class="section"><div class="panel" style="padding:12px 10px">';
-      html += '<div class="exec-line-summary">';
-      html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
-      html += '<b class="exec-line__label' + (line.kind === "tail" ? " exec-line__label--tail" : "") + '">' + line.label + '</b>';
-      html += '<span class="chip">公式（元） ' + line.plan.join(":") + '</span>';
-      html += '<span class="chip" style="background:#ecfdf5;border-color:#86efac;color:#166534;font-weight:900">已结算窗口：中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗</span>';
-      html += '<span style="font-size:11px;color:#94a3b8">本期金额、性格规律、逐年明细统一看「下注执行表」· 本页只保留执行提示与对错记录</span>';
-      html += '</div>';
-      html += betChainHTML(line, chainStage, null, chainRefs[line.id], action.amount);
-      html += '</div>';
-      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
-      html += '<div style="font-size:11px;color:#64748b;margin:0 0 6px">中窗=窗口3期内命中过；错窗=3期连续未中；首次命中分布之和=中窗数。</div>';
-      html += '<div class="exec-line__scroll">';
-      html += '<div class="exec-window-card--current" data-current-window="1" data-current-period="' + nextPeriod + '" style="min-width:236px;border:1px solid ' + action.color + ';border-radius:8px;padding:8px 9px;background:#f8fafc">';
-      html += '<div style="font-size:11px;font-weight:900;color:' + action.color + '">当前窗口 · 当下第' + nextPeriod + '期</div>';
-      html += '<div style="font-size:15px;font-weight:900;color:' + action.color + ';margin-top:3px">' + action.action + (action.amount > 0 ? ' · ' + action.amount + '元' : '') + '</div>';
-      if (result.waiting) {
-        html += '<div style="font-size:11px;color:#b45309;margin-top:3px">等待开奖 · 等待尾<span class="exec-window-card__tail">' + result.waiting.tail + '</span> · 已等' + result.waiting.waited + '期</div>';
-        html += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">尾' + result.waiting.tail + '重新开出后，下一期才开新窗口，新窗口的第1/2/3期会逐期登记</div>';
-      } else {
-        var curStart = result.active ? Number(result.active.start) : nextPeriod;
-        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">窗口起始 第' + curStart + '期 · ' + (result.active ? "锁定号不换" : "新窗口") + ' · 计划 ' + planText + '</div>';
-        for (var pk = 0; pk < 3; pk++) {
-          var periodK = curStart + pk;
-          var attK = (result.active && result.active.attempts) ? result.active.attempts[pk] : null;
-          // 当期号码要写出来：已记录用记录的尾号；未开奖的当期用锁定号/当期推荐号；真未来期才留空
-          var tailK = attK && attK.tail != null ? attK.tail
-            : line.kind === "tail" ? line.tail
-            : (result.active && result.active.lockedTail != null) ? result.active.lockedTail
-            : line.kind === "fixed" ? execCurrentTail(line, result, nextPeriod)
-            : periodK <= nextPeriod ? execCurrentTail(line, result, periodK)
-            : null;
-          var textK, toneK;
-          if (attK) { textK = attK.hit ? "中" : "错"; toneK = attK.hit ? "#16a34a" : "#dc2626"; }
-          else if (periodK <= latest) { textK = "未记录"; toneK = "#94a3b8"; }
-          else { textK = "待开奖"; toneK = "#2563eb"; }
-          html += '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:11px">';
-          html += '<span style="flex:0 0 34px;font-weight:900;color:#475569">第' + (pk + 1) + '期</span>';
-          html += '<span style="color:#6b7280">第' + periodK + '期</span>';
-          html += '<span style="margin-left:auto;font-weight:900">' + (tailK != null ? "尾" + tailK : "待定") + '</span>';
-          html += '<b style="flex:0 0 46px;text-align:right;color:' + toneK + '">' + textK + '</b>';
-          html += '</div>';
-        }
-        if (action.status && action.status !== "可开新窗口") {
-          html += '<div style="font-size:10px;color:#94a3b8;margin-top:4px">' + action.status + '</div>';
-        }
-      }
-      html += '</div>';
-      var recent = result.windows.slice().sort(function (a, b) {
-        return Number(b.start) - Number(a.start);
-      });
-      var recentTotal = recent.length;
-      var recentKey = "execline:" + line.id;
-      if (recentTotal > 20 && !perfExpandAll[recentKey]) recent = recent.slice(0, 20);
-      if (!recent.length) {
-        html += '<span style="font-size:12px;color:#9ca3af">暂无已结束窗口</span>';
-      } else {
-        recent.forEach(function (w) {
-          var tone = w.status === "hit" ? "#16a34a" : "#dc2626";
-          var bg = w.status === "hit" ? "#f0fdf4" : "#fef2f2";
-          var border = w.status === "hit" ? "#bbf7d0" : "#fecaca";
-          html += '<div class="exec-hist-card" style="min-width:150px;border:1px solid ' + border + ';border-radius:8px;padding:6px 7px;background:' + bg + '">';
-          html += '<div style="font-size:10px;color:#6b7280">起始 第' + w.start + '期</div>';
-          html += '<div style="font-size:12px;font-weight:900;color:' + tone + ';margin-top:2px">' + execWindowText(w) + '</div>';
-          html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">' + (w.attempts || []).map(execAttemptText).join("→") + '</div>';
-          html += '</div>';
-        });
-      }
-      html += perfMoreBtn(recentKey, recentTotal, recent.length, "窗");
-      html += '</div></div></div>';
-    });
-    html += '<p class="disclaimer">尾0–尾9只读取各自开奖结果，完全不读取D1/D2；追号码D1/D2和追推荐D1/D2各自只读取对应模型信号。本页只做执行提示和线路对错记录，不自动下单；历史公式仍需时间外验证。</p>';
-    view.innerHTML = html;
-    requestAnimationFrame(function () {
-      Array.prototype.forEach.call(view.querySelectorAll(".exec-line__scroll"), function (scroll) {
-        scroll.scrollLeft = 0;
-      });
-    });
-  }
-
-  function fundsWindowPattern(line, result, stats, nextPeriod) {
-    if (result.waiting) {
-      return { label: "等待 0倍", weight: 0, color: "#d97706", score: 0, reason: "错窗等待中，等确认尾号开出" };
-    }
-    var target = null;
-    if (line.kind === "tail") target = line.tail;
-    else if (result.active && result.active.lockedTail != null) target = result.active.lockedTail;
-    else {
-      var nextPick = execPick(nextPeriod, line.stream);
-      target = nextPick ? nextPick.tail : null;
-    }
-    if (target == null) {
-      return { label: "无号 0倍", weight: 0, color: "#dc2626", score: 0, reason: "当前没有可用推荐号" };
-    }
-    var count5 = 0;
-    var count10 = 0;
-    for (var p = Math.max(1, latest - 9); p <= latest; p++) {
-      if (MODEL.tailsOf(p).indexOf(Number(target)) >= 0) {
-        count10++;
-        if (p >= latest - 4) count5++;
-      }
-    }
-    var omission = 0;
-    for (var q = latest; q >= 1; q--) {
-      if (MODEL.tailsOf(q).indexOf(Number(target)) >= 0) break;
-      omission++;
-    }
-    var hitWindows = stats.first + stats.second + stats.third;
-    var firstShare = hitWindows ? stats.first / hitWindows : 0;
-    var thirdShare = hitWindows ? stats.third / hitWindows : 0;
-    var stage = result.active ? result.active.attempts.length + 1 : 1;
-    var score = 50;
-    score += (stats.hitRate - 0.90) * 120;
-    score += (firstShare - 0.55) * 70;
-    score -= thirdShare * 20;
-    score += (count5 / 5 - 0.55) * 30;
-    score += (count10 / 10 - 0.55) * 15;
-    score += Math.max(-6, Math.min(8, (6 - omission) * 1.2));
-    if (stage === 2) score += stats.second > stats.third ? 4 : -4;
-    if (stage === 3) score -= 6;
-    score = Math.max(0, Math.min(100, score));
-    var reason = "规律分" + score.toFixed(0) + " · 1期中率" + (firstShare * 100).toFixed(1) + "% · 3期中率" + (stats.hitRate * 100).toFixed(1) + "% · 第3期占比" + (thirdShare * 100).toFixed(1) + "% · 近5期" + count5 + "次 · 遗漏" + omission;
-    if (score >= 78) return { label: "加仓 1.5倍", weight: 1.5, color: "#dc2626", score: score, reason: reason + " · 窗口规律强" };
-    if (score >= 65) return { label: "重 1.0倍", weight: 1, color: "#16a34a", score: score, reason: reason + " · 窗口规律较好" };
-    if (score >= 52) return { label: "标准 0.75倍", weight: 0.75, color: "#2563eb", score: score, reason: reason + " · 窗口规律一般" };
-    return { label: "轻 0.5倍", weight: 0.5, color: "#d97706", score: score, reason: reason + " · 窗口规律偏弱，仍轻仓" };
-  }
-
-  function scaleFundPlan(plan, weight) {
-    return plan.map(function (amount) {
-      if (!amount || weight <= 0) return 0;
-      return Math.max(100, Math.round(amount * weight / 100) * 100);
-    });
-  }
-
   function planRisk(plan) {
     return plan.reduce(function (sum, amount) { return sum + Number(amount || 0); }, 0);
   }
 
-
-  function renderFunds() {
-    var nextPeriod = latest + 1;
-    // 本页只算钱：公式金额 + 本窗剩余风险；窗口状态/性格/对错记录不在这里重复，统一看「下注执行表」
-    var chainStage = 3;
-    var fundRefs = betPickRefRows(chainStage);
-    var totalCurrent = 0;
-    var totalRisk = 0;
-    var rows = EXEC_LINES.map(function (line) {
-      var result = buildExecWindows(line);
-      var enabled = planRisk(line.plan) > 0;
-      var formulaName = (EXEC_FORMULA_AUDIT[line.id] || {}).formula || "阶段公式";
-      var nextTail = line.kind === "tail" ? line.tail : (result.active && result.active.lockedTail != null ? result.active.lockedTail : (execPick(nextPeriod, line.stream) ? execPick(nextPeriod, line.stream).tail : null));
-      var stage = 1;
-      var action = "下注";
-      var amount = Number(line.plan[0] || 0);
-      var maxLoss = planRisk(line.plan);
-      var status = "新窗口";
-      var color = "#16a34a";
-      if (!enabled) {
-        action = "无有效公式";
-        amount = 0;
-        maxLoss = 0;
-        status = line.hold ? line.hold : "历史阶段系数未通过";
-        color = line.hold ? "#d97706" : "#dc2626";
-      } else if (result.waiting) {
-        action = "等待";
-        amount = 0;
-        maxLoss = 0;
-        status = "等尾" + result.waiting.tail + "开出 · 已等" + result.waiting.waited + "期";
-        color = "#d97706";
-      } else if (result.active) {
-        stage = result.active.attempts.length + 1;
-        amount = Number(line.plan[stage - 1] || 0);
-        action = amount > 0 ? "续追" : "本期等待";
-        maxLoss = planRisk(line.plan.slice(stage - 1));
-        status = "窗口第" + stage + "期";
-        color = amount > 0 ? "#2563eb" : "#6b7280";
-      } else {
-        action = amount > 0 ? "新窗口下注" : "开窗等待";
-        status = "窗口第1期";
-        color = amount > 0 ? "#16a34a" : "#6b7280";
-      }
-      totalCurrent += amount;
-      totalRisk += maxLoss;
-      return { line, formulaName, nextTail, action, amount, maxLoss, stage, status, color, enabled };
-    });
-    var betRows = rows.filter(function (row) {
-      return row.amount > 0 && row.nextTail != null;
-    });
-    var notBetCount = rows.filter(function (r) { return r.amount <= 0; }).length;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">资金调度 · 直接按公式安排</h2><span class="section__hint">不锚定本金，也不设资金上限；金额完全按公式表取当前窗口第几期的数，不再另算轻重模型</span></div></div>';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">当期下注号码与金额</h2><span class="section__hint">按线路单独列，每个号码独立格子</span></div></div>';
-    html += '<div class="position-card-grid">';
-    if (!betRows.length) {
-      html += '<div style="font-size:22px;font-weight:900">本期不下注</div>';
-    } else {
-      betRows.forEach(function (row) {
-        html += '<div class="position-card position-card--funds">';
-        html += '<div class="position-card__title">' + (row.line.kind === "tail" ? "尾数线" : row.line.label) + '</div>';
-        html += '<div class="position-card__number">尾' + row.nextTail + '</div>';
-        html += '<div class="position-card__amount">' + row.amount + '元</div>';
-        html += '</div>';
-      });
-    }
-    html += '</div></div></div>';
-    html += '<div class="section"><div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value">' + totalCurrent + '</div><div class="stat__label">本期公式金额（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + totalRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + notBetCount + '</div><div class="stat__label">本期不下注线路</div></div>';
-    html += '</div></div>';
-    rows.forEach(function (row) {
-      var liveFund = betLiveInfo(row.line, chainStage);
-      html += '<div class="section"><div class="panel fund-line" style="border-left-color:' + row.color + '">';
-      html += '<div class="exec-line__head"><b class="exec-line__label' + (row.line.kind === "tail" ? " exec-line__label--tail" : "") + '">' + row.line.label + '</b>';
-      html += '<span class="chip">公式（元） ' + row.formulaName + ' · ' + row.line.plan.join(":") + '</span>';
-      html += '<span class="chip" style="color:' + row.color + ';font-weight:900">' + row.action + '</span></div>';
-      html += '<div class="exec-line__metrics">';
-      html += '<div class="stat" style="background:#eff6ff;border:2px solid #2563eb;border-radius:8px;padding:8px"><div class="stat__value" style="font-size:26px;color:#1d4ed8">' + (row.amount > 0 ? row.amount + "元" : "-") + '</div><div class="stat__label">当期资金 · 本期按公式金额</div></div>';
-      html += '<div class="stat"><div class="stat__value">' + (row.maxLoss > 0 ? row.maxLoss + "元" : "-") + '</div><div class="stat__label">本窗剩余风险</div></div>';
-      html += '</div>';
-      html += betChainHTML(row.line, chainStage, liveFund, fundRefs[row.line.id], row.amount);
-      html += '<div style="font-size:11px;color:#94a3b8;margin-top:6px">窗口第1/2/3期明细、对错滚动记录、性格与逐年收益统一看「下注执行表」，本页不重复</div>';
-      html += '</div></div>';
-    });
-    html += '<p class="disclaimer">资金调度只按公式表执行，不再自行计算轻重倍率，也不锚定本金、不设资金上限。公式为0表示历史训练和验证均未通过，不配仓；等待窗口金额为0；本期公式金额就是各条线当期金额直接相加，本窗最大风险就是各条线公式三段相加的最大值。</p>';
-    view.innerHTML = html;
-  }
 
   // ===== 下注执行表：1:7:15 两套方案（只做两期 / 三期全打），逐期提醒每条线下多少 =====
   var BET_STAKES = [100, 700, 1500];
@@ -3325,43 +2838,28 @@
 
   // 性格规律提示：当前盈亏状态（最近5窗累计）已持续多少窗，对照该线历史亏损段分位线
   function betRegimeFor(line, maxStage) {
-    var rows = wmWindowsForStage(line, maxStage);
-    var byYear = {};
-    var order = [];
-    rows.forEach(function (w) {
-      var y = wmYearOf(w.start);
-      if (!byYear[y]) { byYear[y] = []; order.push(y); }
-      byYear[y].push(betWindowRow(w, maxStage).net);
-    });
-    function rollOf(nets) {
-      var roll = [];
-      for (var i = 4; i < nets.length; i++) {
-        var s = 0;
-        for (var j = i - 4; j <= i; j++) s += nets[j];
-        roll.push(s >= 0 ? 1 : -1);
-      }
-      return roll;
-    }
+    // 统一口径（唯一来源）：状态 = 本窗口之前最近 5 个已结算窗口的累计盈亏，≥0 记“稳定(盈利段)”，<0 记“动荡(亏损段)”，
+    // 年初重新起算；len = 这个状态已经连续持续了几个窗口。逐窗标记(稳N/动荡N)、选号参考表、性格规律提示必须全部读这一套，禁止各算一套。
+    var ps = betPersonalitySeries(line, maxStage);
+    var states = ps.states;
     var runs = [];
-    order.forEach(function (y) {
-      var roll = rollOf(byYear[y]);
-      var cur = null;
-      roll.forEach(function (sg) { if (!cur || cur.sign !== sg) { cur = { sign: sg, len: 1 }; runs.push(cur); } else cur.len++; });
+    var cur = null;
+    states.forEach(function (s) {
+      if (!s.state) return;
+      if (!cur || cur.sign !== s.state) { cur = { sign: s.state, len: 1 }; runs.push(cur); }
+      else cur.len++;
     });
-    if (runs.length > 1) runs.shift();
-    if (runs.length && runs[runs.length - 1].len < 5) runs.pop();
     var loseRuns = runs.filter(function (r) { return r.sign === -1; }).map(function (r) { return r.len; }).sort(function (a, b) { return a - b; });
     var winRuns = runs.filter(function (r) { return r.sign === 1; }).map(function (r) { return r.len; }).sort(function (a, b) { return a - b; });
     function avg(a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : 0; }
     function q(a, p) { return a.length ? a[Math.min(a.length - 1, Math.floor(a.length * p))] : 0; }
-    var lastYear = order[order.length - 1];
-    var curRoll = lastYear ? rollOf(byYear[lastYear]) : [];
-    if (!curRoll.length) return { state: 0, len: 0 };
-    var state = curRoll[curRoll.length - 1];
-    var len = 1;
-    for (var k = curRoll.length - 2; k >= 0 && curRoll[k] === state; k--) len++;
+    var last = null;
+    for (var i = states.length - 1; i >= 0; i--) {
+      if (states[i].state) { last = states[i]; break; }
+    }
+    if (!last) return { state: 0, len: 0, samples: runs.length };
     return {
-      state: state, len: len,
+      state: last.state, len: last.len,
       loseAvg: avg(loseRuns), loseP75: q(loseRuns, 0.75), loseP90: q(loseRuns, 0.9),
       winAvg: avg(winRuns), winP75: q(winRuns, 0.75),
       samples: runs.length,
@@ -3402,6 +2900,7 @@
 
   function renderBetExec() {
     var maxStage = betMaxStage();
+    execPredCache = {};
     var modeLabel = maxStage === 2 ? "只做两期（100 / 700）" : "三期全打（100 / 700 / 1500）";
     var year = 2026;
     var positiveLines = betPositiveLines(maxStage);
@@ -3600,7 +3099,7 @@
       }
       html += '<span class="chip" style="font-weight:900;color:' + stakeColor + '">本期 ' + (row.betStake > 0 ? row.betStake + "元" : "-") + "</span>";
       html += '<span class="chip">' + stateText + "</span>";
-      html += '<span class="chip">方案 ' + BET_STAKES.slice(0, maxStage).join(" / ") + "</span>";
+      html += '<span class="chip">公式（元） ' + BET_STAKES.slice(0, maxStage).join(" / ") + "</span>";
       html += '<span class="chip">本窗剩余风险 ' + (row.risk > 0 ? row.risk + "元" : "-") + "</span>";
       html += '<span class="chip" style="background:' + (row.acc.net >= 0 ? "#f0fdf4" : "#fef2f2") + ';border-color:' + (row.acc.net >= 0 ? "#86efac" : "#fecaca") + ';color:' + (row.acc.net >= 0 ? "#166534" : "#b91c1c") + ';font-weight:900">2026年 ' + (row.acc.net >= 0 ? "+" : "") + Math.round(row.acc.net) + '元 · ROI ' + (row.acc.roi * 100).toFixed(1) + '%</span>';
       html += '<span class="chip">2026窗 ' + row.acc.windows + " · 中" + row.acc.hit + " / 错" + row.acc.miss + "</span>";
@@ -6901,12 +6400,6 @@
       state.orderTail = orderTailBtn.dataset.orderTail;
       lsSet("v2_order_tail", state.orderTail);
       renderOrderLog();
-      return;
-    }
-    var hintOpen = e.target.closest("[data-hint-open]");
-    if (hintOpen) {
-      attachSimpleWindow(Number(hintOpen.dataset.hintOpen), latest + 1);
-      renderOrderHint();
       return;
     }
     var soDel = e.target.closest("[data-so-del]");
