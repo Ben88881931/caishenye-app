@@ -89,15 +89,18 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   check(todayCards.cards.length === todayCards.betLines, "今日规划条数 = 本期要下的线数", todayCards.cards.length + " vs " + todayCards.betLines);
 
   // 性格规律提示：每条线都有，且随方案切换而变
+  // 默认已是三期，先明确切到两期再读，才能比较两种方案下的提示差异
+  await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1800);
   const regime2 = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/性格规律 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
   check(/性格规律 · (盈利状态|亏损状态|状态样本不足)/.test(regime2), "每条线都有性格规律提示", regime2.slice(0, 160));
   await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(1600);
   const regime3 = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/性格规律 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
   check(regime3 !== regime2, "切换方案后性格规律提示跟着重算", "两期: " + (regime2.match(/第\d+窗/g) || []).join(",") + " / 三期: " + (regime3.match(/第\d+窗/g) || []).join(","));
-  await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1500);
-
-  const twoCounts = d.cards.map((c) => (c.chips.find((x) => x.indexOf("2026窗") >= 0) || ""));
-  await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(1600);
+  // 重新切到两期并读一次，再切三期读一次（不能用前面的旧 d.cards）
+  await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1800);
+  const d2 = JSON.parse(await read());
+  const twoCounts = d2.cards.map((c) => (c.chips.find((x) => x.indexOf("2026窗") >= 0) || ""));
+  await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(2000);
   let d3 = JSON.parse(await read());
   const threeCounts = d3.cards.map((c) => (c.chips.find((x) => x.indexOf("2026窗") >= 0) || ""));
   const w2 = twoCounts.map((s) => Number((/2026窗 (\d+)/.exec(s) || [])[1] || 0));
@@ -116,24 +119,24 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1800);
   d = JSON.parse(await read());
   check(d.cards.length === 14, "可切换显示全部14条", String(d.cards.length));
-  // 回到“只做9条正线”，确认只渲染9条（被剔除的线不进场）
+  // 回到“只做验证为正的线”，确认只渲染正线条数（D1已剔除，不进场）
   await ev("var b=document.querySelector('[data-bet-lines=\"positive\"]'); if(b)b.click(); true"); await sleep(1500);
   const dp = JSON.parse(await read());
-  check(dp.cards.length === 9, "只做正线模式只渲染9条（亏损线不进场）", dp.cards.map((c) => c.label).join(","));
+  check(dp.cards.length === 7 && !dp.cards.some((c) => /D1/.test(c.label)), "只做正线模式只渲染7条（亏损线+D1不进场）", dp.cards.map((c) => c.label).join(","));
 
-  // 切换到只做9条正线，三种状态下都应恰好9条
+  // 切换到只做正线，两种方案下都应把 D1 排除
   await ev("var b=document.querySelector('[data-bet-lines=\"positive\"]'); if(b)b.click(); true"); await sleep(1500);
   const nine = JSON.parse(await read());
   const nineLabels = nine.cards.map((c) => c.label).join(",");
-  check(nine.cards.length === 9, "三期方案下只做9条正线", nineLabels);
+  check(nine.cards.length === 7 && !/D1/.test(nineLabels), "正线模式已剔除 D1", nineLabels);
 
   const txt = await ev("document.querySelector('#view').innerText");
   check(/命中率/.test(txt) && /本期合计/.test(txt), "页面显示命中率与本期合计");
 
   // 打印两套方案下 14 条线的账，用来核对“正线”名单
   for (const mode of ["two", "three"]) {
-    await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1200);
-    await ev("var b=document.querySelector('[data-bet-mode=\"" + mode + "\"]'); if(b)b.click(); true"); await sleep(1500);
+    await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1800);
+    await ev("var b=document.querySelector('[data-bet-mode=\"" + mode + "\"]'); if(b)b.click(); true"); await sleep(2200);
     const dd = JSON.parse(await read());
     console.log("--- " + (mode === "two" ? "只做两期" : "三期全打") + " ---");
     dd.cards.forEach((c) => {

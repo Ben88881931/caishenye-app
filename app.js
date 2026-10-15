@@ -360,7 +360,7 @@
     numSearchQuery: "",
     numSearchMode: "all",
     numSearchType: "tail",
-    betPlanMode: "two",
+    betPlanMode: "three",
     betLineMode: "all",
     betResearchOpen: false,
   };
@@ -2362,9 +2362,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
-    { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [300, 0, 0] },
+    { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [0, 0, 0], hold: "首推(D1)近期失效：27期37%(随机53%)、p=0.01，暂停建仓观察" },
     { id: "fixedD2", label: "追号码 D2", kind: "fixed", stream: "D2", plan: [0, 300, 0] },
-    { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [100, 100, 100] },
+    { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [0, 0, 0], hold: "首推(D1)近期失效：27期37%(随机53%)、p=0.01，暂停建仓观察" },
     { id: "recD2", label: "追推荐 D2", kind: "recommend", stream: "D2", plan: [0, 300, 0] },
   ];
 
@@ -2746,8 +2746,8 @@
         action: "不配仓",
         amount: 0,
         stage: "-",
-        status: "历史阶段系数未通过",
-        color: "#dc2626"
+        status: line.hold ? line.hold : "历史阶段系数未通过",
+        color: line.hold ? "#d97706" : "#dc2626"
       };
     }
     if (result.waiting) {
@@ -3004,8 +3004,8 @@
         action = "无有效公式";
         amount = 0;
         maxLoss = 0;
-        status = "历史阶段系数未通过";
-        color = "#dc2626";
+        status = line.hold ? line.hold : "历史阶段系数未通过";
+        color = line.hold ? "#d97706" : "#dc2626";
       } else if (result.waiting) {
         action = "等待";
         amount = 0;
@@ -3082,8 +3082,9 @@
   var BET_ODDS = 1.8;
   // 2026年验证为正的线路（两期方案和三期方案各自算）；其余线路本方案不配仓，仍可切“显示全部14条”查看
   var BET_POSITIVE = {
-    two: ["tail0", "tail1", "tail6", "tail8", "tail9", "fixedD1", "fixedD2", "recD1", "recD2"],
-    three: ["tail0", "tail1", "tail4", "tail6", "tail7", "tail9", "fixedD1", "fixedD2", "recD2"],
+    // 追号码D1 / 追推荐D1 已暂停建仓（首推近期失效），不再出现在任何下注组合里
+    two: ["tail0", "tail1", "tail6", "tail8", "tail9", "fixedD2", "recD2"],
+    three: ["tail0", "tail1", "tail4", "tail6", "tail7", "tail9", "fixedD2", "recD2"],
   };
   function betPositiveLines(maxStage) {
     return BET_POSITIVE[maxStage >= 3 ? "three" : "two"];
@@ -3294,7 +3295,10 @@
       var live = betLiveInfo(line, maxStage);
       var v = state.betLineMode === "verdict" ? betVerdictFor(line, maxStage) : null;
       var betStake = live.stake, risk = live.risk;
-      if (v) {
+      if (line.hold) {
+        // 暂停建仓的线：仓位一律归零，但窗口和对错记录照常跑
+        betStake = 0; risk = 0;
+      } else if (v) {
         if (v.stakes) {
           betStake = live.stage >= 1 && live.stage <= maxStage ? (v.stakes[live.stage - 1] || 0) : 0;
           risk = 0;
@@ -3323,8 +3327,8 @@
     // 和追号码/追推荐同一个交互：一个页面，上面两个按钮点一下切换
     html += '<div class="section"><div class="panel" style="padding:12px">';
     html += '<div class="wm-view-tabs" style="margin-bottom:8px">';
-    html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-bet-mode="two">只做两期</button>';
-    html += '<button class="chip wm-view-tab' + (maxStage === 3 ? " is-active" : "") + '" type="button" data-bet-mode="three">三期全打</button>';
+    html += '<button class="chip wm-view-tab' + (maxStage === 3 ? " is-active" : "") + '" type="button" data-bet-mode="three">三期窗口（下单主口径）</button>';
+    html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-bet-mode="two">两期窗口（仅研究对照）</button>';
     html += '</div>';
     html += '<div class="panel__body" style="font-size:13px;line-height:1.75">当前方案：<b>' + modeLabel + '</b>。<br>';
     if (maxStage === 2) {
@@ -3345,7 +3349,7 @@
     html += '<button class="chip ' + (state.betLineMode === "win5" ? "is-active" : "") + '" data-bet-lines="win5">只做盈利状态（≤5条）</button>';
     html += '<button class="chip ' + (state.betLineMode === "rotate5" ? "is-active" : "") + '" data-bet-lines="rotate5">规律轮动 · 前5条（含亏损补位）</button>';
     html += '<button class="chip ' + (state.betLineMode === "lastyear" ? "is-active" : "") + '" data-bet-lines="lastyear">去年最优5条（走步）</button>';
-    html += '<button class="chip ' + (state.betLineMode === "positive" ? "is-active" : "") + '" data-bet-lines="positive">只做9条正线</button>';
+    html += '<button class="chip ' + (state.betLineMode === "positive" ? "is-active" : "") + '" data-bet-lines="positive">只做验证为正的线（D1已剔除）</button>';
     html += '<button class="chip ' + (state.betLineMode === "all" ? "is-active" : "") + '" data-bet-lines="all">显示全部14条</button>';
     html += '</div>';
     // 规律排队：谁该在下注组里，一眼看完
@@ -3446,6 +3450,9 @@
       html += '<span class="chip">2026窗 ' + row.acc.windows + " · 中" + row.acc.hit + " / 错" + row.acc.miss + "</span>";
       html += '<span class="chip" style="font-weight:900">命中率 ' + (row.acc.windows ? (row.acc.hit / row.acc.windows * 100).toFixed(1) : "0.0") + '%</span>';
       var rankNo = rankedIds.indexOf(line.id) + 1;
+      if (line.hold) {
+        html += '<span class="chip" style="background:#fee2e2;border-color:#fca5a5;color:#991b1b;font-weight:900">暂停建仓 · ' + line.hold + "</span>";
+      }
       if (state.betLineMode === "rotate5" && rankNo > 5) {
         html += '<span class="chip" style="background:#f1f5f9;color:#64748b;font-weight:900">不在当前组 · 规律排队 #' + rankNo + "</span>";
       } else if (state.betLineMode === "positive" && positiveLines.indexOf(line.id) < 0) {
@@ -3519,7 +3526,7 @@
       html += "</div></div>";
     });
 
-    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。10条尾号线的窗口由真实开奖算出；4条模型线（追号码/追推荐 D1/D2）的历史部分为模型逐期喂数据的口径，开奖前保存的真实快照只覆盖 262 期之后。只做9条正线是按 2026 年验证结果筛选，属事后选线，跨年是否成立需继续观察。</p>';
+    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。下单主口径=三期窗口（三期命中或三期全错才关窗）。10条尾号线的窗口由真实开奖算出；模型线的窗口/锁定号在 262 期之后取开奖前保存的真实快照。追号码D1、追推荐D1 暂停建仓（首推近期失效：27期37%、p=0.01），仓位一律为0，但窗口与对错记录照常跑，用于观察。正线筛选属按 2026 年结果事后选线，跨年是否成立需继续观察。</p>';
     view.innerHTML = html;
   }
 
@@ -3546,7 +3553,9 @@
       html += '<td>' + (audit.trainNet >= 0 ? "+" : "") + audit.trainNet + ' / ' + (audit.validNet >= 0 ? "+" : "") + audit.validNet + '</td>';
       html += '<td>' + audit.maxDrawdown + '</td>';
       html += '<td>' + audit.miss + '</td>';
-      html += '<td><b style="color:' + (enabledLine ? "#16a34a" : "#dc2626") + '">' + (enabledLine ? "配仓" : "不配仓") + '</b></td>';
+      html += '<td><b style="color:' + (line.hold ? "#d97706" : (enabledLine ? "#16a34a" : "#dc2626")) + '">' +
+        (line.hold ? "暂停建仓·观察" : (enabledLine ? "配仓" : "不配仓")) + "</b>" +
+        (line.hold ? '<div style="font-size:10px;color:#92400e;margin-top:2px">' + line.hold + "</div>" : "") + "</td>";
       html += '</tr>';
     });
     html += '</tbody></table></div></div>';
@@ -3755,6 +3764,10 @@
     if (line.kind === "tail") return line.tail;
     if (w.lockedTail != null) return w.lockedTail;
     if (line.kind === "recommend") {
+      // 每期最新推荐：只有“下一期（还没开奖的那期）”的推荐号是已经产生的；
+      // 更未来的期次还没生成推荐，必须留空让页面写“待定”，绝不拿模型重算冒充未来数据
+      // 注意：这里 period 是“全表序号”，下一期 = D.length + 1（当年第几期的换算在页面层做）
+      if (Number(period) > D.length + 1) return null;
       var pick = wmFullPick(period, line.stream);
       if (pick && pick.tail != null) return pick.tail;
     }
