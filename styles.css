@@ -2203,3 +2203,53 @@ html.gesture-active * {
   cursor: pointer;
 }
 
+/* 节奏链条：① 线方向（性格）→ ② 窗口选号 → ③ 第几期定轻重；执行提示/资金调度/下注执行表共用同一套 */
+.bet-chain {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0 4px;
+  touch-action: pan-x;
+}
+
+.bet-chain__step {
+  flex: 0 0 auto;
+  min-width: 212px;
+  max-width: 260px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #f8fafc;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #334155;
+}
+
+.bet-chain__step b {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.bet-chain__step span {
+  display: block;
+}
+
+.bet-chain__step--dir {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.bet-chain__step--pick {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.bet-chain__step--stake {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
