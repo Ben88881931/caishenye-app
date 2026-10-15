@@ -148,6 +148,8 @@ must(appText.includes("buildRealtimeSnapshotRateHTML") && appText.includes("真�
 must(appText.includes("真实快照命中率按") && appText.includes("APP_SNAPSHOTS.detail") && appText.includes("每一期真实快照独立统计") && !appText.includes("只统计真实快照已结算窗口"), "真实快照命中率必须按每一期结算（开奖后立即入账），禁止等三期窗口结束后才更新");
 must(!appText.includes("D1+D2 合计") && !appText.includes("双号合计 · 至少中一"), "实时命中率只保留 D1/D2 独立记录，不做合计");
 must(!appText.includes("至少中一") && !appText.includes("至少中1"), "禁止再出现「每期两号至少中一」口径：唯一认可的是「三期窗口命中」（窗口=短期策略单元）");
+must(appText.includes("if (waiting) {") && appText.includes("waiting = null") && appText.includes("等待重开") && appText.includes("等尾") && appText.includes("重新开出"),
+  "窗口引擎必须保持「三期全错 → 等该号重新开出 → 才开新窗」（用户规则，已验证：比立刻重开少亏67%、回撤小15%）");
 must(!appText.includes('id: "orderfollow"') && !appText.includes("下单追投"), "不存在已废弃的下单追投入口");
 
 const tabsBlock = (appText.match(/var TABS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || "";
