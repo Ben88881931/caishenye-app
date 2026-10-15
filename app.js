@@ -3112,13 +3112,25 @@
       // 记录只展示最近一年（当年）的窗口
       var curYear = (D[D.length - 1] || {}).y;
       var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
-      // 窗口对错序列 + 连中/连错段长分布（只看对错，不看金额）
-      var seqWin = [], seqLose = [], seqSeg = null;
-      rows.forEach(function (w) {
+      // 窗口对错序列 + 连中/连错段长分布（只看对错，不看金额；不看金额也不只看最长，必须带出现频率）
+      // 段长统计用全历史（多少年才出现一次才算得出频率），序列条只显示当年
+      var allRows = wmWindowsForStage(line, maxStage);
+      var yrSet = {};
+      allRows.forEach(function (w) { yrSet[wmYearOf(w.start)] = 1; });
+      var yearCount = Object.keys(yrSet).length || 1;
+      var allWin = [], allLose = [], allSeg = null;
+      allRows.forEach(function (w) {
         var v = w.hitIndex > 0 ? 1 : 0;
-        if (!seqSeg || seqSeg.sign !== v) { seqSeg = { sign: v, len: 1 }; (v ? seqWin : seqLose).push(seqSeg); }
-        else seqSeg.len++;
+        if (!allSeg || allSeg.sign !== v) { allSeg = { sign: v, len: 1 }; (v ? allWin : allLose).push(allSeg); }
+        else allSeg.len++;
       });
+      var freqText = function (n) {
+        if (!n) return "";
+        var perYear = n / yearCount;
+        if (perYear >= 1) return "约每年 " + (Math.round(perYear * 10) / 10) + " 次";
+        var every = yearCount / n;
+        return "约 " + (every >= 1.5 ? Math.round(every) : (Math.round(every * 10) / 10)) + " 年 1 次";
+      };
       var runBrief = function (runs) {
         if (!runs.length) return "暂无";
         var lens = runs.map(function (r) { return r.len; });
@@ -3126,7 +3138,7 @@
         var maxLen = Math.max.apply(null, lens);
         var dist = {};
         lens.forEach(function (L) { var k = L >= 4 ? "4+" : String(L); dist[k] = (dist[k] || 0) + 1; });
-        return "均值 " + (sum / lens.length).toFixed(1) + " 窗 · 最长 " + maxLen + " 窗 · 长度分布 " + ["1", "2", "3", "4+"].filter(function (k) { return dist[k]; }).map(function (k) { return k + "窗×" + dist[k]; }).join(" / ");
+        return "全历史 " + yearCount + " 年共 " + runs.length + " 段 · 均值 " + (sum / lens.length).toFixed(1) + " 窗 · 最长 " + maxLen + " 窗 · 长度出现频率 " + ["1", "2", "3", "4+"].filter(function (k) { return dist[k]; }).map(function (k) { return k + "窗×" + dist[k] + "次（" + freqText(dist[k]) + "）"; }).join(" / ");
       };
       var seqHit = rows.filter(function (w) { return w.hitIndex > 0; }).length;
       html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #e5e7eb">';
@@ -3137,7 +3149,7 @@
         html += '<div class="exec-seq__cell ' + (hit ? "is-hit" : "is-miss") + '"><b>' + betLocalPeriod(w.start) + '</b><span>' + (hit ? "中" : "错") + '</span></div>';
       });
       html += "</div>";
-      html += '<div style="font-size:11px;color:#334155;line-height:1.75"><b style="color:#16a34a">连中段</b>（连中几个窗口会断开）：' + runBrief(seqWin) + '<br><b style="color:#dc2626">连错段</b>（错的时候连错几个窗口）：' + runBrief(seqLose) + '</div>';
+      html += '<div style="font-size:11px;color:#334155;line-height:1.75"><b style="color:#16a34a">连中段</b>（连中几个窗口会断开）：' + runBrief(allWin) + '<br><b style="color:#dc2626">连错段</b>（错的时候连错几个窗口）：' + runBrief(allLose) + '<br><span style="color:#64748b">看危险不要只看最长：必须连频率一起看（多少年才出现一次）。</span></div>';
       html += "</div>";
       var allCount = rows.length;
       var showCount = perfExpandAll["betexec:" + line.id] ? allCount : Math.min(allCount, 12);
