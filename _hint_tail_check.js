@@ -69,10 +69,12 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     const flat = String(card).replace(/\n+/g, "|");
     const tails = (flat.match(/尾\d/g) || []).length;
     const pending = (flat.match(/待开奖/g) || []).length;
-    lineChecks.push({ lineId, flat, tails, pending });
+    // 该线处于“等待重开”时本来就没有进行中的窗口，属正常状态
+    const waiting = !card && /等待重开|等尾\d/.test(await ev("(document.querySelector('#view').innerText||'')"));
+    lineChecks.push({ lineId, flat, tails, pending, waiting });
   }
-  // 三期行都要写出尾号；待开奖行数随窗口走到第几期而变（至少1行）
-  const badLine = lineChecks.filter((c) => c.tails < 3 || c.pending < 1);
+  // 有进行中窗口时：三期行都要写出尾号且至少1行待开奖；等待重开的线不要求
+  const badLine = lineChecks.filter((c) => !c.waiting && (c.tails < 3 || c.pending < 1));
   check(badLine.length === 0, "14线规律中心：当前窗口待开奖行写出尾号", lineChecks.map((c) => c.lineId + " 尾号" + c.tails + "个/待开奖" + c.pending).join(" ; "));
 
   check(errs.length === 0, "无 console 报错", errs.slice(0, 3).join(","));

@@ -2552,9 +2552,24 @@
 
   function execPick(period, stream) {
     if (period <= 1) return null;
+    // 统一口径：已开奖的期次一律用「开奖前保存的真实快照」推荐，没快照的老期次才回落到模型重算
+    var snap = execSnapshotPick(period, stream);
+    if (snap) return snap;
     var prediction = execPrediction(period);
     var picks = prediction.doubleRecommendation || [];
     return picks[stream === "D1" ? 0 : 1] || null;
+  }
+
+  // 从 window.APP_SNAPSHOTS.detail（真实快照逐期记录）取该期该流的推荐号
+  function execSnapshotPick(period, stream) {
+    var detail = (window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.detail)) ? window.APP_SNAPSHOTS.detail : [];
+    for (var i = detail.length - 1; i >= 0; i--) {
+      var rec = detail[i];
+      if (!rec || Number(rec.target) !== Number(period) || !Array.isArray(rec.picks)) continue;
+      var p = rec.picks[stream === "D1" ? 0 : 1];
+      return p ? { tail: p.tail, score: p.score, grade: p.grade, tag: p.tag, bucket: p.bucket, fromSnapshot: true } : null;
+    }
+    return null;
   }
 
   function execCurrentTail(line, result, period) {
@@ -2573,6 +2588,37 @@
   }
 
   function buildExecWindows(line) {
+    // 统一口径：10 条尾号线直接复用「14线规律中心」的窗口引擎（每年第1期重开 + 错窗等号重开），
+    // 保证同一条线在 执行提示 / 资金调度 / 下注执行表 / 14线规律中心 显示的是同一个窗口、同一期序。
+    if (line.kind === "tail") {
+      var wmRows = wmWindowsFor(line);
+      var wmState = wmCurrentState(line);
+      // 记录只展示最近一年（当年）的窗口，不把往年累积在一起
+      var thisYear = (D[D.length - 1] || {}).y;
+      wmRows = wmRows.filter(function (w) { return wmYearOf(w.start) === thisYear; });
+      // 14线引擎跑在“全表序号”上，执行页用的是“当年第几期”，这里统一换算（2026 年 1 期 = 全表第 234 期）
+      function toPeriodNo(g) {
+        var row = D[Number(g) - 1];
+        if (row) return Number(row.p);
+        var lastRow = D[D.length - 1];
+        return lastRow ? Number(lastRow.p) + (Number(g) - D.length) : Number(g);
+      }
+      function mapWin(w) {
+        return {
+          start: toPeriodNo(w.start),
+          lockedTail: w.lockedTail,
+          attempts: (w.attempts || []).map(function (a) { return { period: toPeriodNo(a.period), tail: a.tail, hit: a.hit }; }),
+          hitIndex: w.hitIndex,
+          status: w.hitIndex > 0 ? "hit" : "miss"
+        };
+      }
+      var activeNow = (wmState.active && wmYearOf(wmState.active.start) === thisYear) ? wmState.active : null;
+      return {
+        windows: wmRows.map(mapWin),
+        active: activeNow ? mapWin(activeNow) : null,
+        waiting: wmState.waiting ? { tail: wmState.waiting.tail } : null
+      };
+    }
     var windows = [];
     var active = null;
     var waiting = null;
@@ -2792,7 +2838,8 @@
       var stats = execLineStats(line, result.windows);
       var action = row.action;
       var planText = line.plan.join(" / ");
-      var firstStart = result.windows.length ? result.windows[0].start : (result.active ? result.active.start : (line.kind === "tail" ? 1 : 31));
+      var firstStart = result.windows.length ? result.windows[0].start
+        : (result.active ? result.active.start : (line.kind === "tail" ? 1 : 31));
       html += '<div class="section"><div class="panel" style="padding:12px 10px">';
       html += '<div class="exec-line-summary">';
       html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
@@ -3025,6 +3072,13 @@
   // ===== 下注执行表：1:7:15 两套方案（只做两期 / 三期全打），逐期提醒每条线下多少 =====
   var BET_STAKES = [100, 700, 1500];
   var BET_HALF = [100, 300, 700];
+  // 14线引擎跑在“全表序号”上；页面上统一显示“当年第几期”
+  function betLocalPeriod(g) {
+    var row = D[Number(g) - 1];
+    if (row) return Number(row.p);
+    var lastRow = D[D.length - 1];
+    return lastRow ? Number(lastRow.p) + (Number(g) - D.length) : Number(g);
+  }
   var BET_ODDS = 1.8;
   // 2026年验证为正的线路（两期方案和三期方案各自算）；其余线路本方案不配仓，仍可切“显示全部14条”查看
   var BET_POSITIVE = {
@@ -3196,9 +3250,10 @@
   function betWindowRowsHTML(line, w, maxStage) {
     var out = "";
     for (var k = 0; k < 3; k++) {
-      var period = Number(w.start) + k;
+      var g = Number(w.start) + k;
+      var period = betLocalPeriod(g);
       var at = (w.attempts || [])[k] || null;
-      var tail = at && at.tail != null ? at.tail : wmLiveTailFor(line, w, period);
+      var tail = at && at.tail != null ? at.tail : wmLiveTailFor(line, w, g);
       var stateText = at ? (at.hit ? "中" : "错") : (period <= latest ? "未记录" : "待开奖");
       var tone = at ? (at.hit ? "#16a34a" : "#dc2626") : "#2563eb";
       var inPlan = k + 1 <= maxStage;
@@ -3431,14 +3486,16 @@
 
       if (live.active) {
         html += '<div style="margin-top:9px;padding-top:8px;border-top:1px solid #e5e7eb">';
-        html += '<div style="font-size:11px;font-weight:900;color:#475569">当前窗口 · 起始 第' + live.active.start + '期 · ' + (live.active.lockedTail != null ? "锁定尾" + live.active.lockedTail : "每期最新推荐") + "</div>";
+        html += '<div style="font-size:11px;font-weight:900;color:#475569">当前窗口 · 起始 第' + betLocalPeriod(live.active.start) + '期 · ' + (live.active.lockedTail != null ? "锁定尾" + live.active.lockedTail : "每期最新推荐") + "</div>";
         html += betWindowRowsHTML(line, live.active, maxStage);
         html += "</div>";
       } else if (live.waiting) {
         html += '<div style="margin-top:9px;padding-top:8px;border-top:1px solid #e5e7eb;font-size:11px;color:#b45309;font-weight:800">上窗三期全错 · 等尾' + live.waiting.tail + " 重新开出后再开新窗口（本期不下）</div>";
       }
 
-      var rows = wmWindowsForStage(line, maxStage).slice();
+      // 记录只展示最近一年（当年）的窗口
+      var curYear = (D[D.length - 1] || {}).y;
+      var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
       var allCount = rows.length;
       var showCount = perfExpandAll["betexec:" + line.id] ? allCount : Math.min(allCount, 12);
       rows = rows.slice(allCount - showCount).reverse();
@@ -3451,7 +3508,7 @@
         var bg = r.hitAt ? "#f0fdf4" : "#fef2f2";
         var border = r.hitAt ? "#bbf7d0" : "#fecaca";
         html += '<div class="exec-hist-card" style="min-width:186px;border:1px solid ' + border + ';border-radius:8px;padding:7px 8px;background:' + bg + '">';
-        html += '<div style="font-size:10px;color:#6b7280">起始 第' + w.start + '期</div>';
+        html += '<div style="font-size:10px;color:#6b7280">起始 第' + betLocalPeriod(w.start) + '期</div>';
         html += '<div style="font-size:12px;font-weight:900;color:' + tone + ';margin-top:2px">' + (r.hitAt ? "第" + r.hitAt + "期中" : (w.hitIndex > 0 && w.hitIndex > maxStage ? "第" + w.hitIndex + "期中（超出本方案）" : "本方案内未中")) + '</div>';
         html += betWindowRowsHTML(line, w, maxStage);
         html += '<div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px"><span style="color:#64748b">投入 ' + r.cost + '</span><b style="color:' + tone + '">本窗 ' + (r.net >= 0 ? "+" : "") + Math.round(r.net) + '</b></div>';
