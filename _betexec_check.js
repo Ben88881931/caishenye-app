@@ -49,14 +49,14 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   }))`));
   check(refTable.length === 14 && refTable.every((r) => /%/.test(r) && /\|/.test(r)),
     "选号参考表列出14条线（状态+窗口命中率+连错+错1后+今年净收益+参考）", refTable.slice(0, 3).join("  ;;  "));
-  // 每个窗口记录卡都要带性格标记（稳N/动荡N/样本不足）
+  // 每个窗口记录卡都要带对错标记（连中N/连错N）
   const histCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .exec-hist-card'), function (c) {
     var t = c.innerText.replace(/\\n+/g, ' ');
-    var m = t.match(/起始 第\\d+期\\s*(稳\\d+|动荡\\d+|样本不足)/);
+    var m = t.match(/起始 第\\d+期\\s*(连中\\d+|连错\\d+|样本不足)/);
     return m ? m[1] : null;
   }).filter(Boolean))`));
-  check(histCards.length >= 100 && histCards.some((t) => /稳\d+/.test(t)),
-    "每个窗口记录都标了性格（稳N/动荡N）", histCards.length + " 个窗口带标记，示例 " + histCards.slice(0, 6).join(","));
+  check(histCards.length >= 100 && histCards.some((t) => /连中\d+/.test(t)) && histCards.some((t) => /连错\d+/.test(t)),
+    "每个窗口记录都标了对错性格（连中N/连错N）", histCards.length + " 个窗口带标记，示例 " + histCards.slice(0, 6).join(","));
   const research = await ev("!!document.querySelector('#view details summary')");
   check(research, "研究性筛选收进折叠区（默认不显示）");
   await ev("var sm=document.querySelector('#view details > summary'); if(sm)sm.click(); true"); await sleep(700);
@@ -102,14 +102,14 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   check(cardsOk, "今日规划每条线都有尾号+金额+第几期", todayCards.cards.join(" | "));
   check(todayCards.cards.length === todayCards.betLines, "今日规划条数 = 本期要下的线数", todayCards.cards.length + " vs " + todayCards.betLines);
 
-  // 性格规律提示：每条线都有，且随方案切换而变
+  // 对错规律提示：每条线都有，且随方案切换而变
   // 默认已是三期，先明确切到两期再读，才能比较两种方案下的提示差异
   await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1800);
-  const regime2 = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/性格规律 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
-  check(/性格规律 · (盈利状态|亏损状态|状态样本不足)/.test(regime2), "每条线都有性格规律提示", regime2.slice(0, 160));
+  const regime2 = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/对错规律 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
+  check(/对错规律 · (连中第|连错第|对错样本不足)/.test(regime2), "每条线都有对错规律提示（连中/连错）", regime2.slice(0, 160));
   await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(1600);
-  const regime3 = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/性格规律 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
-  check(regime3 !== regime2, "切换方案后性格规律提示跟着重算", "两期: " + (regime2.match(/第\d+窗/g) || []).join(",") + " / 三期: " + (regime3.match(/第\d+窗/g) || []).join(","));
+  const regime3 = await ev("[].map.call(document.querySelectorAll('#view .panel'), function(p){var r=p.innerText.match(/对错规律 · [^\\n]+/); return r?r[0]:'';}).filter(Boolean).join(' || ')");
+  check(regime3 !== regime2, "切换方案后对错规律提示跟着重算", "两期: " + (regime2.match(/第\d+窗/g) || []).join(",") + " / 三期: " + (regime3.match(/第\d+窗/g) || []).join(","));
   // 重新切到两期并读一次，再切三期读一次（不能用前面的旧 d.cards）
   await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1800);
   const d2 = JSON.parse(await read());

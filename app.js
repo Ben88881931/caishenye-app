@@ -2602,39 +2602,22 @@
   // 每年最优5条：按该年净收益从高到低取前5（跑出来给页面看，用来分年对比）
   // 窗口体检：这个窗口该不该下、下多重（只看该窗口之前已结算的窗口，和回测同一套规则）
   function betVerdictFor(line, maxStage) {
-    var rows = wmWindowsForStage(line, maxStage);
-    var nets = rows.map(function (w) { return betWindowRow(w, maxStage).net; });
-    var roll = [];
-    for (var i = 4; i < nets.length; i++) {
-      var s = 0;
-      for (var j = i - 4; j <= i; j++) s += nets[j];
-      roll.push(s >= 0 ? 1 : -1);
-    }
-    if (!roll.length) return { verdict: "样本不足", stakes: null, reason: "窗口还不够5个，暂时按原额" };
-    var state = roll[roll.length - 1], len = 1;
-    for (var k = roll.length - 2; k >= 0 && roll[k] === state; k--) len++;
-    var winRuns = [], loseRuns = [], cur = null;
-    roll.forEach(function (sg) {
-      if (!cur || cur.sign !== sg) { cur = { sign: sg, len: 1 }; (sg === 1 ? winRuns : loseRuns).push(cur); }
-      else cur.len++;
-    });
-    var winLens = winRuns.map(function (r) { return r.len; }).sort(function (a, b) { return a - b; });
-    var loseLens = loseRuns.map(function (r) { return r.len; }).sort(function (a, b) { return a - b; });
-    function q(a, p) { return a.length ? a[Math.min(a.length - 1, Math.floor(a.length * p))] : 0; }
-    if (state === 1) {
-      if (winLens.length < 4 || len <= q(winLens, 0.75)) {
-        return { verdict: "正常下注", stakes: BET_STAKES.slice(0, maxStage), state: 1, len: len, reason: "盈利状态第" + len + "窗 · 在p75(" + q(winLens, 0.75) + "窗)内" };
+    // 只按窗口对错算（连中/连错段长度），不看金额
+    var rg = betRegimeFor(line, maxStage);
+    if (!rg || !rg.state) return { verdict: "样本不足", stakes: null, reason: "对错样本不足，暂时按原额" };
+    if (rg.state === 1) {
+      if (!rg.winP75 || rg.len <= rg.winP75) {
+        return { verdict: "正常下注", stakes: BET_STAKES.slice(0, maxStage), state: 1, len: rg.len, reason: "连中第" + rg.len + "窗 · 在连中段p75(" + (rg.winP75 || 0) + "窗)内" };
       }
-      return { verdict: "轻仓·怕见顶", stakes: BET_HALF.slice(0, maxStage), state: 1, len: len, reason: "盈利状态第" + len + "窗 · 已超p75(" + q(winLens, 0.75) + "窗)" };
+      return { verdict: "轻仓·怕翻转", stakes: BET_HALF.slice(0, maxStage), state: 1, len: rg.len, reason: "连中第" + rg.len + "窗 · 已超连中段p75(" + rg.winP75 + "窗)" };
     }
-    var l75 = q(loseLens, 0.75), l90 = q(loseLens, 0.9);
-    if (loseLens.length >= 4 && len > l90) {
-      return { verdict: "停 · 退出观察", stakes: null, state: -1, len: len, reason: "亏损状态第" + len + "窗 · 超退出线(p90=" + l90 + "窗)" };
+    if (rg.loseP90 && rg.len > rg.loseP90) {
+      return { verdict: "停 · 退出观察", stakes: null, state: -1, len: rg.len, reason: "连错第" + rg.len + "窗 · 超历史p90(" + rg.loseP90 + "窗)" };
     }
-    if (loseLens.length >= 4 && len > l75) {
-      return { verdict: "轻仓·试单", stakes: BET_HALF.slice(0, maxStage), state: -1, len: len, reason: "亏损状态第" + len + "窗 · 接近历史翻转点(p75=" + l75 + "窗)" };
+    if (rg.loseP75 && rg.len > rg.loseP75) {
+      return { verdict: "轻仓·试单", stakes: BET_HALF.slice(0, maxStage), state: -1, len: rg.len, reason: "连错第" + rg.len + "窗 · 接近历史p90(p75=" + rg.loseP75 + "窗)" };
     }
-    return { verdict: "不下 · 亏损期", stakes: null, state: -1, len: len, reason: "亏损状态第" + len + "窗 · 还在亏损期(p75=" + l75 + "窗)" };
+    return { verdict: "不下 · 连错期", stakes: null, state: -1, len: rg.len, reason: "连错第" + rg.len + "窗 · 还在历史连错段均值(" + (rg.loseAvg || 0).toFixed(1) + "窗)以内" };
   }
 
   function betYearTop5(maxStage, year) {
@@ -2649,31 +2632,20 @@
   }
 
   // 规律轮动排队：盈利状态优先（离均值越远越好=状态越新），其次亏损但没超退出线的（越接近历史翻转点越好），超过p90的排最后
-  // 性格序列：每个窗口下注时的"性格状态"（用该窗口之前最近5个已结算窗口的累计盈亏定稳/动荡，年初重新起算）
+  // 性格序列：只看窗口对错，不看金额。每个窗口记“连中第几窗 / 连错第几窗”，年初重新起算。
+  // 中窗（窗口3期内命中过）= 连中 +1；错窗（3期全错）= 连错 +1；中了/错了就按对错翻段。
   function betPersonalitySeries(line, maxStage) {
     var rows = wmWindowsForStage(line, maxStage);
-    var nets = rows.map(function (w) { return betWindowRow(w, maxStage).net; });
     var states = [];
-    var curYear = null, yearStart = 0;
+    var curYear = null, prevState = 0, len = 0;
     for (var i = 0; i < rows.length; i++) {
       var y = wmYearOf(rows[i].start);
-      if (y !== curYear) { curYear = y; yearStart = i; }
-      var state = 0, len = 0;
-      if (i - yearStart >= 5) {
-        var s = 0;
-        for (var j = i - 5; j < i; j++) s += nets[j];
-        state = s >= 0 ? 1 : -1;
-        len = 1;
-        for (var k = i - 1; k - yearStart >= 5; k--) {
-          var s2 = 0;
-          for (var m = k - 5; m < k; m++) s2 += nets[m];
-          if ((s2 >= 0 ? 1 : -1) !== state) break;
-          len++;
-        }
-      }
-      states.push({ state: state, len: len, start: rows[i].start });
+      if (y !== curYear) { curYear = y; prevState = 0; len = 0; }
+      var st = rows[i].hitIndex > 0 ? 1 : -1;
+      if (st === prevState) len++; else { prevState = st; len = 1; }
+      states.push({ state: st, len: len, start: rows[i].start });
     }
-    return { rows: rows, nets: nets, states: states };
+    return { rows: rows, states: states };
   }
 
   // 选号参考表：14 条线一行，给用户自己挑 2-3 条下注（只做参考，不是指令）
@@ -2718,7 +2690,7 @@
       else { verdict = "中性"; color = "#475569"; }
       var ps = betPersonalitySeries(line, maxStage);
       var lastP = ps.states.length ? ps.states[ps.states.length - 1] : { state: 0, len: 0 };
-      var personality = lastP.state === 1 ? ("稳定第" + lastP.len + "窗") : (lastP.state === -1 ? ("动荡第" + lastP.len + "窗") : "样本不足");
+      var personality = lastP.state === 1 ? ("连中" + lastP.len + "窗") : (lastP.state === -1 ? ("连错" + lastP.len + "窗") : "样本不足");
       var pColor = lastP.state === 1 ? "#16a34a" : (lastP.state === -1 ? "#dc2626" : "#64748b");
       out[line.id] = { line: line, n: n, rate: rate, streak: streak, after: after, a1n: a1n, net2026: betLineAccount(line, maxStage, 2026).net, state: state, verdict: verdict, color: color, personality: personality, pColor: pColor, p1: p1, p2: p2, p3: p3, t1: t1, t2: t2, t3: t3 };
     });
@@ -2729,23 +2701,24 @@
   // ① 线性格选方向（这条线这个阶段跟不跟）
   // ② 窗口选号（当下这个窗口打不打、打哪个号）
   // ③ 第几期定轻重（这条线历史上第1/2/3期谁最容易中，决定重仓还是轻仓）
+  // 只按窗口对错说规律：连中几窗 / 连错几窗，跟历史连中、连错段长度比
   function betChainRegimeText(rg) {
-    if (!rg || !rg.state) return { text: "状态样本不足（今年窗口还没攒够5个）", color: "#64748b" };
+    if (!rg || !rg.state) return { text: "对错样本不足", color: "#64748b" };
     if (rg.state === 1) {
       var overWin = rg.winP75 && rg.len > rg.winP75;
       return {
-        text: "盈利状态第" + rg.len + "窗 · 历史盈利段均值 " + rg.winAvg.toFixed(1) + " 窗" + (overWin ? " · 已超p75，注意见顶" : " · 正常"),
+        text: "连中第" + rg.len + "窗 · 历史连中段均值 " + rg.winAvg.toFixed(1) + " 窗" + (overWin ? " · 已超p75，注意翻转" : " · 正常"),
         color: overWin ? "#b45309" : "#166534"
       };
     }
     if (rg.loseP90 && rg.len > rg.loseP90) {
-      return { text: "亏损状态第" + rg.len + "窗 · 已超历史p90（" + rg.loseP90 + "窗）→ 建议停这条线观察", color: "#991b1b" };
+      return { text: "连错第" + rg.len + "窗 · 已超历史p90（" + rg.loseP90 + "窗）→ 建议停这条线观察", color: "#991b1b" };
     }
     if (rg.loseP75 && rg.len > rg.loseP75) {
-      return { text: "亏损状态第" + rg.len + "窗 · 超75%分位（" + rg.loseP75 + "窗）· 准备减仓", color: "#b45309" };
+      return { text: "连错第" + rg.len + "窗 · 超75%分位（" + rg.loseP75 + "窗）· 准备减仓", color: "#b45309" };
     }
     return {
-      text: "亏损状态第" + rg.len + "窗 · 历史亏损段均值 " + (rg.loseAvg || 0).toFixed(1) + " 窗 · 还在正常范围（离退出线 " + Math.max(0, (rg.loseP90 || 0) - rg.len) + " 窗）",
+      text: "连错第" + rg.len + "窗 · 历史连错段均值 " + (rg.loseAvg || 0).toFixed(1) + " 窗 · 还在正常范围（离历史p90还差 " + Math.max(0, (rg.loseP90 || 0) - rg.len) + " 窗）",
       color: "#166534"
     };
   }
@@ -2758,7 +2731,7 @@
     var stake = stakeIn != null ? stakeIn : live.stake;
     var dirText = line.hold ? "暂停建仓（首推失效）"
       : live.waiting ? "先躲 · 上窗全错等重开"
-      : (rg && rg.state === 1 ? "可跟 · 走热段" : (rg && rg.state === -1 ? "观察 · 走冷段" : "观察 · 样本不足"));
+      : (rg && rg.state === 1 ? "可跟 · 连中段" : (rg && rg.state === -1 ? "观察 · 连错段" : "观察 · 对错样本不足"));
     var pickText = line.hold ? "暂停建仓 · 只跑窗口不建仓"
       : live.waiting ? ("等尾" + live.waiting.tail + "开出后才开新窗口")
       : live.active ? ("窗口第" + live.stage + "期 · " + (live.active.lockedTail != null ? "锁尾" + live.active.lockedTail : "每期最新推荐"))
@@ -2770,8 +2743,8 @@
       : (line.hold ? "不下（暂停建仓）" : (live.waiting ? "不下（等重开）" : "不下"));
     var html = '<div class="bet-chain">';
     html += '<div class="bet-chain__step bet-chain__step--dir"><b>① 线方向 · 选不选这条线</b>';
-    html += '<span style="font-weight:900;color:' + ref.pColor + '">性格 ' + ref.personality + "</span> · " + dirText;
-    html += '<span style="color:' + rgInfo.color + '">性格规律 · ' + rgInfo.text + "</span>";
+    html += '<span style="font-weight:900;color:' + ref.pColor + '">对错性格 ' + ref.personality + "</span> · " + dirText;
+    html += '<span style="color:' + rgInfo.color + '">对错规律 · ' + rgInfo.text + "</span>";
     html += "</div>";
     html += '<div class="bet-chain__step bet-chain__step--pick"><b>② 窗口选号 · 这窗打不打</b>';
     html += "<span style=\"font-weight:900\">" + pickText + "</span>";
@@ -2792,13 +2765,13 @@
         tier = 3; score = -1e6; note = "样本不足";
       } else if (rg.state === 1) {
         tier = 0; score = (rg.winAvg || 0) - rg.len;
-        note = "盈利状态第" + rg.len + "窗 · 均值" + (rg.winAvg || 0).toFixed(1) + "窗";
+        note = "连中第" + rg.len + "窗 · 历史连中段均值 " + (rg.winAvg || 0).toFixed(1) + "窗";
       } else if (rg.loseP90 && rg.len > rg.loseP90) {
         tier = 3; score = -1e6;
-        note = "亏损第" + rg.len + "窗 · 已超p90(" + rg.loseP90 + "窗)·退出观察";
+        note = "连错第" + rg.len + "窗 · 已超p90(" + rg.loseP90 + "窗)·退出观察";
       } else {
         tier = 1; score = -Math.abs((rg.loseAvg || 0) - rg.len);
-        note = "亏损第" + rg.len + "窗 · 均值" + (rg.loseAvg || 0).toFixed(1) + "窗";
+        note = "连错第" + rg.len + "窗 · 历史连错段均值 " + (rg.loseAvg || 0).toFixed(1) + "窗";
       }
       return { line: line, rg: rg, tier: tier, score: score, note: note };
     });
@@ -3014,7 +2987,7 @@
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="color:#1d4ed8">' + todayTotal + '</div><div class="stat__label">本期合计（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:' + (yearNet >= 0 ? "#16a34a" : "#dc2626") + '">' + (yearNet >= 0 ? "+" : "") + Math.round(yearNet) + '</div><div class="stat__label">2026年净收益（元）· ROI ' + (yearCost ? (yearNet / yearCost * 100).toFixed(1) : "0.0") + '%</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (yearNet >= 0 ? "#16a34a" : "#dc2626") + '">' + (yearNet >= 0 ? "+" : "") + Math.round(yearNet) + '</div><div class="stat__label">2026年净收益（元）· ROI ' + (yearCost ? (yearNet / yearCost * 100).toFixed(1) : "0.0") + '%（假设14条全下）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + skipCount + '</div><div class="stat__label">本期不下注（条）</div></div>';
     var totalWin = plan.reduce(function (s, r) { return s + r.acc.windows; }, 0);
     var totalHit = plan.reduce(function (s, r) { return s + r.acc.hit; }, 0);
@@ -3059,7 +3032,7 @@
     // 选号参考表：14 条线一行，自己挑 2-3 条下（只做参考，不是指令，也不自动下单）
     var refRows = betPickRefRows(maxStage);
     html += '<div class="section"><div class="section__head"><h2 class="section__title">选号参考表 · 自己挑 2-3 条下</h2><span class="section__hint">不是指令：只看状态与规律，这窗下哪几条、下不下，你自己定</span></div>';
-    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1080px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>性格</th><th>窗口命中率</th><th>第1期中</th><th>第2期中</th><th>第3期中</th><th>连错窗口</th><th>错1窗后</th><th>今年净收益</th><th>参考</th></tr></thead><tbody>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1080px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>对错性格</th><th>窗口命中率</th><th>第1期中</th><th>第2期中</th><th>第3期中</th><th>当前连错</th><th>错1窗后</th><th>今年净收益<br>（假设14条全下）</th><th>参考</th></tr></thead><tbody>';
     EXEC_LINES.forEach(function (line) {
       var r = refRows[line.id];
       html += '<tr><td><b>' + line.label + "</b></td>";
@@ -3076,7 +3049,7 @@
       html += '<td><b style="color:' + r.color + '">' + r.verdict + "</b></td></tr>";
     });
     html += "</tbody></table>";
-    html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>性格</b>=看最近5个窗口的盈亏：<span style="color:#16a34a">稳定</span>=热段（可挑），<span style="color:#dc2626">动荡</span>=冷段（先避开），后面数字是已经持续了几个窗口。<b>可关注</b>=窗口命中率≥90% 且"错1窗后"不低于平时；<b>刚错窗·观望</b>=上一个窗口刚全错；<b>等待重开·先躲</b>=三期全错后正在等该号重新开出（此期间不下）；<b>避开</b>=历史窗口命中率低于88%；<b>暂停建仓</b>=模型首推近期失效。</div>';
+    html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>对错性格</b>只看窗口对错、不看金额：<span style="color:#16a34a">连中N窗</span>=已连续N个窗口3期内命中，<span style="color:#dc2626">连错N窗</span>=已连续N个窗口3期全错（N是这一段连续长度，每年重新起算）。<b>可关注</b>=窗口命中率≥90% 且"错1窗后"不低于平时；<b>刚错窗·观望</b>=上一个窗口刚全错；<b>等待重开·先躲</b>=三期全错后正在等该号重新开出（此期间不下）；<b>避开</b>=历史窗口命中率低于88%；<b>暂停建仓</b>=模型首推近期失效。<b>净收益/ROI 都是"假设14条线全按公式下注"的模拟账，不是你实际下的单</b>（你的真账在「追三期下单」页）。</div>';
     html += "</div>";
 
     plan.forEach(function (row) {
@@ -3093,9 +3066,9 @@
       html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
       html += '<b class="exec-line__label' + (line.kind === "tail" ? " exec-line__label--tail" : "") + '" style="' + (losing ? "color:#b91c1c" : "") + '">' + line.label + "</b>";
       if (losing) {
-        html += '<span class="chip" style="background:#fee2e2;border-color:#fca5a5;color:#991b1b;font-weight:900">亏线 · 本方案2026年为亏 ' + Math.round(row.acc.net) + '元</span>';
+        html += '<span class="chip" style="background:#fee2e2;border-color:#fca5a5;color:#991b1b;font-weight:900">亏线（假设全下）· 本方案2026年 ' + Math.round(row.acc.net) + '元</span>';
       } else {
-        html += '<span class="chip" style="background:#f0fdf4;border-color:#86efac;color:#166534;font-weight:900">赚线 · 本方案2026年 ' + (row.acc.net >= 0 ? "+" : "") + Math.round(row.acc.net) + '元</span>';
+        html += '<span class="chip" style="background:#f0fdf4;border-color:#86efac;color:#166534;font-weight:900">赚线（假设全下）· 本方案2026年 ' + (row.acc.net >= 0 ? "+" : "") + Math.round(row.acc.net) + '元</span>';
       }
       html += '<span class="chip" style="font-weight:900;color:' + stakeColor + '">本期 ' + (row.betStake > 0 ? row.betStake + "元" : "-") + "</span>";
       html += '<span class="chip">' + stateText + "</span>";
@@ -3139,6 +3112,33 @@
       // 记录只展示最近一年（当年）的窗口
       var curYear = (D[D.length - 1] || {}).y;
       var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
+      // 窗口对错序列 + 连中/连错段长分布（只看对错，不看金额）
+      var seqWin = [], seqLose = [], seqSeg = null;
+      rows.forEach(function (w) {
+        var v = w.hitIndex > 0 ? 1 : 0;
+        if (!seqSeg || seqSeg.sign !== v) { seqSeg = { sign: v, len: 1 }; (v ? seqWin : seqLose).push(seqSeg); }
+        else seqSeg.len++;
+      });
+      var runBrief = function (runs) {
+        if (!runs.length) return "暂无";
+        var lens = runs.map(function (r) { return r.len; });
+        var sum = lens.reduce(function (a, b) { return a + b; }, 0);
+        var maxLen = Math.max.apply(null, lens);
+        var dist = {};
+        lens.forEach(function (L) { var k = L >= 4 ? "4+" : String(L); dist[k] = (dist[k] || 0) + 1; });
+        return "均值 " + (sum / lens.length).toFixed(1) + " 窗 · 最长 " + maxLen + " 窗 · 长度分布 " + ["1", "2", "3", "4+"].filter(function (k) { return dist[k]; }).map(function (k) { return k + "窗×" + dist[k]; }).join(" / ");
+      };
+      var seqHit = rows.filter(function (w) { return w.hitIndex > 0; }).length;
+      html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #e5e7eb">';
+      html += '<div style="font-size:11px;font-weight:900;color:#475569">窗口对错序列 · 当年 · 旧→新 · 中 ' + seqHit + ' 窗 / 错 ' + (rows.length - seqHit) + ' 窗（可左右滑动看全部）</div>';
+      html += '<div class="exec-seq">';
+      rows.forEach(function (w) {
+        var hit = w.hitIndex > 0;
+        html += '<div class="exec-seq__cell ' + (hit ? "is-hit" : "is-miss") + '"><b>' + betLocalPeriod(w.start) + '</b><span>' + (hit ? "中" : "错") + '</span></div>';
+      });
+      html += "</div>";
+      html += '<div style="font-size:11px;color:#334155;line-height:1.75"><b style="color:#16a34a">连中段</b>（连中几个窗口会断开）：' + runBrief(seqWin) + '<br><b style="color:#dc2626">连错段</b>（错的时候连错几个窗口）：' + runBrief(seqLose) + '</div>';
+      html += "</div>";
       var allCount = rows.length;
       var showCount = perfExpandAll["betexec:" + line.id] ? allCount : Math.min(allCount, 12);
       rows = rows.slice(allCount - showCount).reverse();
@@ -3153,7 +3153,7 @@
         var bg = r.hitAt ? "#f0fdf4" : "#fef2f2";
         var border = r.hitAt ? "#bbf7d0" : "#fecaca";
         var psx = pMap[w.start] || { state: 0, len: 0 };
-        var psTxt = psx.state === 1 ? ("稳" + psx.len) : (psx.state === -1 ? ("动荡" + psx.len) : "样本不足");
+        var psTxt = psx.state === 1 ? ("连中" + psx.len) : (psx.state === -1 ? ("连错" + psx.len) : "样本不足");
         var psTone = psx.state === 1 ? "#16a34a" : (psx.state === -1 ? "#dc2626" : "#94a3b8");
         html += '<div class="exec-hist-card" style="min-width:186px;border:1px solid ' + border + ';border-radius:8px;padding:7px 8px;background:' + bg + '">';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#6b7280"><span>起始 第' + betLocalPeriod(w.start) + '期</span><b style="color:' + psTone + '">' + psTxt + "</b></div>";

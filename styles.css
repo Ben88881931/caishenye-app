@@ -2245,3 +2245,54 @@ html.gesture-active * {
   background: #f0fdf4;
 }
 
+/* 窗口对错序列（只看中/错，不看金额）：一排小方块，横向滚动，不触发翻页 */
+.exec-seq {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 6px;
+  touch-action: pan-x;
+}
+
+.exec-seq__cell {
+  flex: 0 0 auto;
+  width: 40px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f8fafc;
+  padding: 3px 0;
+  font-size: 10px;
+}
+
+.exec-seq__cell b {
+  display: block;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.exec-seq__cell span {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.exec-seq__cell.is-hit {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.exec-seq__cell.is-hit span {
+  color: #16a34a;
+}
+
+.exec-seq__cell.is-miss {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.exec-seq__cell.is-miss span {
+  color: #dc2626;
+}
+
