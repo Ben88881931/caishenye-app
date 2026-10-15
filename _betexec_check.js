@@ -43,6 +43,12 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   check(d.cards.length === 14, "默认按 1:7:15 全做14条（研究模式已收起）", String(d.cards.length));
   const planBtns = await ev("!!document.querySelector('[data-bet-mode=\"two\"]') && !!document.querySelector('[data-bet-mode=\"three\"]')");
   check(planBtns, "顶部保留“只做两期 / 三期全打”两个切换按钮");
+  // 选号参考表：14 条线，含状态/命中率/连错/错1后/今年净收益/参考
+  const refTable = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view table.table tbody tr'), function (tr) {
+    return [].map.call(tr.querySelectorAll('td'), function (td) { return td.innerText.replace(/\\n+/g, ' ').trim(); }).join(' | ');
+  }))`));
+  check(refTable.length === 14 && refTable.every((r) => /%/.test(r) && /\|/.test(r)),
+    "选号参考表列出14条线（状态+窗口命中率+连错+错1后+今年净收益+参考）", refTable.slice(0, 3).join("  ;;  "));
   const research = await ev("!!document.querySelector('#view details summary')");
   check(research, "研究性筛选收进折叠区（默认不显示）");
   await ev("var sm=document.querySelector('#view details > summary'); if(sm)sm.click(); true"); await sleep(700);

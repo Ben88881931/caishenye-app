@@ -1333,7 +1333,7 @@
         ["历史回测", "用已经发生的数据模拟过去的表现，不是真实下单记录。"],
         ["已结算 / 待开奖", "已结算表示该期已经开奖并算完；待开奖表示号码还没出。"],
         ["命中率", "已经结算的窗口里，命中的比例。"],
-        ["中窗 / 错窗", "中窗=3期内至少中1次；错窗=连续3期都没有命中。"],
+        ["中窗 / 错窗", "中窗=窗口3期内命中过；错窗=3期连续都没命中。"],
         ["首次命中分布", "统计命中的窗口分别是在第1期、第2期还是第3期命中的。"],
         ["净收益 / ROI", "净收益是最后赚了多少钱；ROI是净收益相对于投入的比例。"],
         ["最大回撤", "历史过程中从最高收益回落到最低点最深的一次亏损幅度。"],
@@ -2856,7 +2856,7 @@
       html += '</div>';
       html += '</div>';
       html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">对错滚动记录 · 从第' + firstStart + '期起 · 已结算中' + stats.hitWindows + '窗 / 错' + stats.missWindows + '窗 · 新→旧</div>';
-      html += '<div style="font-size:11px;color:#64748b;margin:0 0 6px">中窗=3期内至少中1次；错窗=连续3期未中；首次命中分布之和=中窗数。</div>';
+      html += '<div style="font-size:11px;color:#64748b;margin:0 0 6px">中窗=窗口3期内命中过；错窗=3期连续未中；首次命中分布之和=中窗数。</div>';
       html += '<div class="exec-line__scroll">';
       html += '<div class="exec-window-card--current" data-current-window="1" data-current-period="' + nextPeriod + '" style="min-width:236px;border:1px solid ' + action.color + ';border-radius:8px;padding:8px 9px;background:#f8fafc">';
       html += '<div style="font-size:11px;font-weight:900;color:' + action.color + '">当前窗口 · 当下第' + nextPeriod + '期</div>';
@@ -3140,6 +3140,39 @@
   }
 
   // 规律轮动排队：盈利状态优先（离均值越远越好=状态越新），其次亏损但没超退出线的（越接近历史翻转点越好），超过p90的排最后
+  // 选号参考表：14 条线一行，给用户自己挑 2-3 条下注（只做参考，不是指令）
+  function betPickRefRows(maxStage) {
+    var out = {};
+    EXEC_LINES.forEach(function (line) {
+      var seq = wmWindowsForStage(line, maxStage).map(function (w) { return w.hitIndex > 0 ? 1 : 0; });
+      var n = seq.length;
+      var h = seq.reduce(function (a, b) { return a + b; }, 0);
+      var streak = 0;
+      for (var i = seq.length - 1; i >= 0 && seq[i] === 0; i--) streak++;
+      var a1n = 0, a1h = 0;
+      for (var j = 0; j + 1 < seq.length; j++) {
+        if (seq[j] === 0) { a1n++; if (seq[j + 1]) a1h++; }
+      }
+      var now = wmStageNow(line, maxStage);
+      var state = line.hold ? "暂停建仓"
+        : (now.waiting ? "等待重开 · 等尾" + now.waiting.tail + "开出"
+          : (now.active ? ("窗口第" + ((now.active.attempts || []).length + 1) + "期 · 锁尾" + (now.active.lockedTail != null ? now.active.lockedTail : "每期推荐"))
+            : "可开新窗"));
+      var rate = n ? h / n : 0;
+      var after = a1n ? a1h / a1n : null;
+      var verdict, color;
+      if (line.hold) { verdict = "暂停建仓（首推失效）"; color = "#991b1b"; }
+      else if (now.waiting) { verdict = "等待重开 · 先躲"; color = "#b45309"; }
+      else if (n < 100) { verdict = "样本不足 · 观察"; color = "#64748b"; }
+      else if (rate < 0.88) { verdict = "避开（历史偏弱）"; color = "#dc2626"; }
+      else if (streak >= 1) { verdict = "刚错窗 · 观望"; color = "#d97706"; }
+      else if (after != null && after >= rate && rate >= 0.90) { verdict = "可关注"; color = "#16a34a"; }
+      else { verdict = "中性"; color = "#475569"; }
+      out[line.id] = { line: line, n: n, rate: rate, streak: streak, after: after, a1n: a1n, net2026: betLineAccount(line, maxStage, 2026).net, state: state, verdict: verdict, color: color };
+    });
+    return out;
+  }
+
   function betRankLines(maxStage) {
     var rank = EXEC_LINES.map(function (line) {
       var rg = betRegimeFor(line, maxStage);
@@ -3423,6 +3456,24 @@
     html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + skipCount + '</div><div class="stat__label">今日不下注（条）</div></div>';
     html += '</div></div>';
+
+    // 选号参考表：14 条线一行，自己挑 2-3 条下（只做参考，不是指令，也不自动下单）
+    var refRows = betPickRefRows(maxStage);
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">选号参考表 · 自己挑 2-3 条下</h2><span class="section__hint">不是指令：只看状态与规律，这窗下哪几条、下不下，你自己定</span></div>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:780px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>窗口命中率</th><th>连错窗口</th><th>错1窗后命中率</th><th>今年净收益</th><th>参考</th></tr></thead><tbody>';
+    EXEC_LINES.forEach(function (line) {
+      var r = refRows[line.id];
+      html += '<tr><td><b>' + line.label + "</b></td>";
+      html += "<td>" + r.state + "</td>";
+      html += "<td>" + (r.rate * 100).toFixed(1) + '%<span style="color:#94a3b8">（' + r.n + "窗）</span></td>";
+      html += "<td>" + (r.streak ? r.streak + " 个" : "-") + "</td>";
+      html += "<td>" + (r.after != null ? (r.after * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.a1n + "）</span>" : "-") + "</td>";
+      html += '<td style="color:' + (r.net2026 >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.net2026 >= 0 ? "+" : "") + Math.round(r.net2026) + "</td>";
+      html += '<td><b style="color:' + r.color + '">' + r.verdict + "</b></td></tr>";
+    });
+    html += "</tbody></table>";
+    html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>可关注</b>=窗口命中率≥90% 且"错1窗后"不低于平时；<b>刚错窗·观望</b>=上一个窗口刚全错；<b>等待重开·先躲</b>=三期全错后正在等该号重新开出（此期间不下）；<b>避开</b>=历史窗口命中率低于88%；<b>暂停建仓</b>=模型首推近期失效。</div>';
+    html += "</div>";
 
     plan.forEach(function (row) {
       var line = row.line;
@@ -5589,28 +5640,22 @@
       html += '</div>';
       html += '</div>';
 
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">双号整体 & 等级组合</h2><span class="section__hint">真实快照账 · 双号整体至少中一 + 按两尾号等级组合分组 · 样本≥20期才显示命中率</span></div></div>';
+      // 唯一命中口径：三期窗口（窗口内命中即中窗）。旧的「每期两号」口径已退役，不再展示。
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">三期窗口命中（唯一口径）</h2><span class="section__hint">窗口=短期策略单元 · 3期内命中即中窗 · 锁号流/每期推荐流分开算 · 真实快照</span></div></div>';
       html += '<div class="section"><div class="panel" style="padding:12px">';
-      var ov = snapStats.overallAtLeastOne || { n: 0, hits: 0, miss: 0 };
-      var ovMiss = (ov.miss != null) ? ov.miss : (ov.n - ov.hits);
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
-      html += '<span style="font-size:13px;font-weight:700">双号整体至少中一</span>';
-      html += '<span class="chip">' + ov.hits + '/' + ov.n + '</span>';
-      html += '<span style="font-size:13px;color:var(--muted)">未中' + ovMiss + ' · ' + snapRate(ov.n, ov.hits) + '</span>';
-      html += '</div>';
-      var comboMap = snapStats.combos || {};
-      var comboKeys = Object.keys(comboMap);
-      comboKeys.sort(function (a, b) { return comboMap[b].n - comboMap[a].n; });
-      html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
-      comboKeys.forEach(function (ck) {
-        var c = comboMap[ck];
-        var cMiss = (c.miss != null) ? c.miss : (c.n - c.hits);
-        html += '<div style="border:1px solid #e0e3e8;border-radius:8px;padding:6px 10px;background:#fff;font-size:12px">';
-        html += '<b>' + ck + '</b> ' + c.hits + '/' + c.n + '（未中' + cMiss + '） <span style="color:var(--muted)">' + snapRate(c.n, c.hits) + '</span>';
-        html += '</div>';
-      });
-      if (!comboKeys.length) html += '<span style="color:#9ca3af;font-size:12px">暂无组合样本</span>';
-      html += '</div>';
+      var swSum = snapStats.sourceWindowSummary || null;
+      if (swSum && swSum.byStream) {
+        ["D1", "D2"].forEach(function (sk) {
+          var b = swSum.byStream[sk] || { settled: 0, hits: 0, miss: 0, hit3Rate: 0, pending: 0 };
+          html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
+          html += '<span style="font-size:13px;font-weight:900">双号' + (sk === "D1" ? "首推" : "备选") + " " + sk + "</span>";
+          html += '<span class="chip">中' + (b.hits || 0) + '窗 / 错' + (b.miss || 0) + '窗 · 共' + (b.settled || 0) + '窗</span>';
+          html += '<span style="font-size:13px;color:var(--muted)">窗口命中率 ' + ((b.hit3Rate || 0) * 100).toFixed(1) + '% · 进行中 ' + (b.pending || 0) + ' 窗</span>';
+          html += '</div>';
+        });
+      } else {
+        html += '<span style="color:#9ca3af;font-size:12px">暂无窗口数据</span>';
+      }
       html += '</div></div>';
 
       var CM = window.CAISHEN_MODEL || {};
@@ -5692,7 +5737,10 @@
     html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">第2~' + N + '期回测 · 第' + (N + 1) + '期实盘待开奖 · 每期推2号 · 赔率1.8</span></div></div>';
     html += '<div class="section"><div class="grid-2">';
     html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + singleRate + '%</div><div class="stat__label">单号命中率 中' + tHits + '·错' + (tPicks - tHits) + '·共' + tPicks + '</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + atLeast1 + '/' + actDays + '</div><div class="stat__label">至少中1个（落空' + d0 + '期）</div></div>';
+    var sws2 = (window.APP_SNAPSHOTS && window.APP_SNAPSHOTS.sourceWindowSummary && window.APP_SNAPSHOTS.sourceWindowSummary.byStream) || {};
+    var swD1 = sws2.D1 || { hits: 0, settled: 0, hit3Rate: 0 };
+    var swD2 = sws2.D2 || { hits: 0, settled: 0, hit3Rate: 0 };
+    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + ((swD1.hit3Rate || 0) * 100).toFixed(1) + '% / ' + ((swD2.hit3Rate || 0) * 100).toFixed(1) + '%</div><div class="stat__label">三期窗口命中率（首推/备选）· 中' + swD1.hits + '/' + swD1.settled + ' 与 ' + swD2.hits + '/' + swD2.settled + ' 窗</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:' + (cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (cum >= 0 ? '+' : '') + cum.toFixed(2) + '</div><div class="stat__label">累计盈亏（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + maxDD.toFixed(2) + '</div><div class="stat__label">最大回撤（元）</div></div>';
     html += '</div></div>';
