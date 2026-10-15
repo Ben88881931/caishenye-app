@@ -3140,6 +3140,33 @@
   }
 
   // 规律轮动排队：盈利状态优先（离均值越远越好=状态越新），其次亏损但没超退出线的（越接近历史翻转点越好），超过p90的排最后
+  // 性格序列：每个窗口下注时的"性格状态"（用该窗口之前最近5个已结算窗口的累计盈亏定稳/动荡，年初重新起算）
+  function betPersonalitySeries(line, maxStage) {
+    var rows = wmWindowsForStage(line, maxStage);
+    var nets = rows.map(function (w) { return betWindowRow(w, maxStage).net; });
+    var states = [];
+    var curYear = null, yearStart = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var y = wmYearOf(rows[i].start);
+      if (y !== curYear) { curYear = y; yearStart = i; }
+      var state = 0, len = 0;
+      if (i - yearStart >= 5) {
+        var s = 0;
+        for (var j = i - 5; j < i; j++) s += nets[j];
+        state = s >= 0 ? 1 : -1;
+        len = 1;
+        for (var k = i - 1; k - yearStart >= 5; k--) {
+          var s2 = 0;
+          for (var m = k - 5; m < k; m++) s2 += nets[m];
+          if ((s2 >= 0 ? 1 : -1) !== state) break;
+          len++;
+        }
+      }
+      states.push({ state: state, len: len, start: rows[i].start });
+    }
+    return { rows: rows, nets: nets, states: states };
+  }
+
   // 选号参考表：14 条线一行，给用户自己挑 2-3 条下注（只做参考，不是指令）
   function betPickRefRows(maxStage) {
     var out = {};
@@ -3160,6 +3187,18 @@
             : "可开新窗"));
       var rate = n ? h / n : 0;
       var after = a1n ? a1h / a1n : null;
+      // 三期里"第1/2/3期"各自的条件命中率：第2期的分母=第1期没中的那些窗，第3期同理
+      var t1 = 0, t2 = 0, t3 = 0, c1 = 0, c2 = 0, c3 = 0;
+      wmWindowsForStage(line, maxStage).forEach(function (w) {
+        var att = w.attempts || [];
+        for (var k = 0; k < att.length && k < maxStage; k++) {
+          if (k === 0) t1++;
+          else if (k === 1) t2++;
+          else if (k === 2) t3++;
+          if (att[k] && att[k].hit) { if (k === 0) c1++; else if (k === 1) c2++; else if (k === 2) c3++; break; }
+        }
+      });
+      var p1 = t1 ? c1 / t1 : 0, p2 = t2 ? c2 / t2 : 0, p3 = t3 ? c3 / t3 : 0;
       var verdict, color;
       if (line.hold) { verdict = "暂停建仓（首推失效）"; color = "#991b1b"; }
       else if (now.waiting) { verdict = "等待重开 · 先躲"; color = "#b45309"; }
@@ -3168,7 +3207,11 @@
       else if (streak >= 1) { verdict = "刚错窗 · 观望"; color = "#d97706"; }
       else if (after != null && after >= rate && rate >= 0.90) { verdict = "可关注"; color = "#16a34a"; }
       else { verdict = "中性"; color = "#475569"; }
-      out[line.id] = { line: line, n: n, rate: rate, streak: streak, after: after, a1n: a1n, net2026: betLineAccount(line, maxStage, 2026).net, state: state, verdict: verdict, color: color };
+      var ps = betPersonalitySeries(line, maxStage);
+      var lastP = ps.states.length ? ps.states[ps.states.length - 1] : { state: 0, len: 0 };
+      var personality = lastP.state === 1 ? ("稳定第" + lastP.len + "窗") : (lastP.state === -1 ? ("动荡第" + lastP.len + "窗") : "样本不足");
+      var pColor = lastP.state === 1 ? "#16a34a" : (lastP.state === -1 ? "#dc2626" : "#64748b");
+      out[line.id] = { line: line, n: n, rate: rate, streak: streak, after: after, a1n: a1n, net2026: betLineAccount(line, maxStage, 2026).net, state: state, verdict: verdict, color: color, personality: personality, pColor: pColor, p1: p1, p2: p2, p3: p3, t1: t1, t2: t2, t3: t3 };
     });
     return out;
   }
@@ -3460,19 +3503,24 @@
     // 选号参考表：14 条线一行，自己挑 2-3 条下（只做参考，不是指令，也不自动下单）
     var refRows = betPickRefRows(maxStage);
     html += '<div class="section"><div class="section__head"><h2 class="section__title">选号参考表 · 自己挑 2-3 条下</h2><span class="section__hint">不是指令：只看状态与规律，这窗下哪几条、下不下，你自己定</span></div>';
-    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:780px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>窗口命中率</th><th>连错窗口</th><th>错1窗后命中率</th><th>今年净收益</th><th>参考</th></tr></thead><tbody>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1080px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>性格</th><th>窗口命中率</th><th>第1期中</th><th>第2期中</th><th>第3期中</th><th>连错窗口</th><th>错1窗后</th><th>今年净收益</th><th>参考</th></tr></thead><tbody>';
     EXEC_LINES.forEach(function (line) {
       var r = refRows[line.id];
       html += '<tr><td><b>' + line.label + "</b></td>";
       html += "<td>" + r.state + "</td>";
+      html += '<td><b style="color:' + r.pColor + '">' + r.personality + "</b></td>";
       html += "<td>" + (r.rate * 100).toFixed(1) + '%<span style="color:#94a3b8">（' + r.n + "窗）</span></td>";
+      var mark = function (x) { return x >= 0.5556 ? '<b style="color:#16a34a">✅</b>' : '<span style="color:#94a3b8">·</span>'; };
+      html += "<td>" + mark(r.p1) + " " + (r.p1 * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.t1 + "）</span></td>";
+      html += "<td>" + mark(r.p2) + " " + (r.p2 * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.t2 + "）</span></td>";
+      html += "<td>" + mark(r.p3) + " " + (r.p3 * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.t3 + "）</span></td>";
       html += "<td>" + (r.streak ? r.streak + " 个" : "-") + "</td>";
       html += "<td>" + (r.after != null ? (r.after * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.a1n + "）</span>" : "-") + "</td>";
       html += '<td style="color:' + (r.net2026 >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.net2026 >= 0 ? "+" : "") + Math.round(r.net2026) + "</td>";
       html += '<td><b style="color:' + r.color + '">' + r.verdict + "</b></td></tr>";
     });
     html += "</tbody></table>";
-    html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>可关注</b>=窗口命中率≥90% 且"错1窗后"不低于平时；<b>刚错窗·观望</b>=上一个窗口刚全错；<b>等待重开·先躲</b>=三期全错后正在等该号重新开出（此期间不下）；<b>避开</b>=历史窗口命中率低于88%；<b>暂停建仓</b>=模型首推近期失效。</div>';
+    html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>性格</b>=看最近5个窗口的盈亏：<span style="color:#16a34a">稳定</span>=热段（可挑），<span style="color:#dc2626">动荡</span>=冷段（先避开），后面数字是已经持续了几个窗口。<b>可关注</b>=窗口命中率≥90% 且"错1窗后"不低于平时；<b>刚错窗·观望</b>=上一个窗口刚全错；<b>等待重开·先躲</b>=三期全错后正在等该号重新开出（此期间不下）；<b>避开</b>=历史窗口命中率低于88%；<b>暂停建仓</b>=模型首推近期失效。</div>';
     html += "</div>";
 
     plan.forEach(function (row) {
@@ -3560,13 +3608,18 @@
       html += '<div style="margin-top:10px;font-size:11px;font-weight:900;color:#6b7280">对错滚动记录 · 新→旧 · 已结算 ' + allCount + ' 窗 · ' + modeLabel + '</div>';
       html += '<div class="exec-line__scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
       html += '<div style="display:flex;gap:6px;min-width:max-content">';
+      var pMap = {};
+      betPersonalitySeries(line, maxStage).states.forEach(function (s) { pMap[s.start] = s; });
       rows.forEach(function (w) {
         var r = betWindowRow(w, maxStage);
         var tone = r.hitAt ? "#16a34a" : "#dc2626";
         var bg = r.hitAt ? "#f0fdf4" : "#fef2f2";
         var border = r.hitAt ? "#bbf7d0" : "#fecaca";
+        var psx = pMap[w.start] || { state: 0, len: 0 };
+        var psTxt = psx.state === 1 ? ("稳" + psx.len) : (psx.state === -1 ? ("动荡" + psx.len) : "样本不足");
+        var psTone = psx.state === 1 ? "#16a34a" : (psx.state === -1 ? "#dc2626" : "#94a3b8");
         html += '<div class="exec-hist-card" style="min-width:186px;border:1px solid ' + border + ';border-radius:8px;padding:7px 8px;background:' + bg + '">';
-        html += '<div style="font-size:10px;color:#6b7280">起始 第' + betLocalPeriod(w.start) + '期</div>';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#6b7280"><span>起始 第' + betLocalPeriod(w.start) + '期</span><b style="color:' + psTone + '">' + psTxt + "</b></div>";
         html += '<div style="font-size:12px;font-weight:900;color:' + tone + ';margin-top:2px">' + (r.hitAt ? "第" + r.hitAt + "期中" : (w.hitIndex > 0 && w.hitIndex > maxStage ? "第" + w.hitIndex + "期中（超出本方案）" : "本方案内未中")) + '</div>';
         html += betWindowRowsHTML(line, w, maxStage);
         html += '<div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px"><span style="color:#64748b">投入 ' + r.cost + '</span><b style="color:' + tone + '">本窗 ' + (r.net >= 0 ? "+" : "") + Math.round(r.net) + '</b></div>';

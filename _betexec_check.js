@@ -49,6 +49,14 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   }))`));
   check(refTable.length === 14 && refTable.every((r) => /%/.test(r) && /\|/.test(r)),
     "选号参考表列出14条线（状态+窗口命中率+连错+错1后+今年净收益+参考）", refTable.slice(0, 3).join("  ;;  "));
+  // 每个窗口记录卡都要带性格标记（稳N/动荡N/样本不足）
+  const histCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .exec-hist-card'), function (c) {
+    var t = c.innerText.replace(/\\n+/g, ' ');
+    var m = t.match(/起始 第\\d+期\\s*(稳\\d+|动荡\\d+|样本不足)/);
+    return m ? m[1] : null;
+  }).filter(Boolean))`));
+  check(histCards.length >= 100 && histCards.some((t) => /稳\d+/.test(t)),
+    "每个窗口记录都标了性格（稳N/动荡N）", histCards.length + " 个窗口带标记，示例 " + histCards.slice(0, 6).join(","));
   const research = await ev("!!document.querySelector('#view details summary')");
   check(research, "研究性筛选收进折叠区（默认不显示）");
   await ev("var sm=document.querySelector('#view details > summary'); if(sm)sm.click(); true"); await sleep(700);
@@ -120,7 +128,9 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   // 两期模式：滚动记录应标注第3期不打，且不该有第3期中
   await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1500);
   const text2 = await ev("document.querySelector('#view').innerText");
-  check(/本方案不打/.test(text2) && !/第3期中/.test(text2), "两期方案窗口只做两期，第3期标注不打");
+  // 只看“窗口记录卡”里有没有第3期中（选号参考表里有“第3期中”这一列，不参与判定）
+  const bad3 = await ev("[].filter.call(document.querySelectorAll('#view .exec-hist-card'), function (c) { var t = c.innerText.replace(/\\n+/g, '|'); return /第3期\\|[^|]*第\\d+期\\|尾\\d\\|中/.test(t); }).length");
+  check(/本方案不打/.test(text2) && bad3 === 0, "两期方案窗口只做两期，第3期标注不打", "记录卡里第3期中出现 " + bad3 + " 次");
 
   await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1800);
   d = JSON.parse(await read());
