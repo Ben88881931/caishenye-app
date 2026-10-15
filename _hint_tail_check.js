@@ -71,10 +71,14 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     const pending = (flat.match(/待开奖/g) || []).length;
     // 该线处于“等待重开”时本来就没有进行中的窗口，属正常状态
     const waiting = !card && /等待重开|等尾\d/.test(await ev("(document.querySelector('#view').innerText||'')"));
-    lineChecks.push({ lineId, flat, tails, pending, waiting });
+    // 锁定类线（尾0-9、追号码）三期都写同一个锁号；每期推荐类线（追推荐）只写当期推荐，未来期必须待定
+    lineChecks.push({ lineId, flat, tails, pending, waiting, isRecommend: lineId.indexOf("rec") === 0 });
   }
-  // 有进行中窗口时：三期行都要写出尾号且至少1行待开奖；等待重开的线不要求
-  const badLine = lineChecks.filter((c) => !c.waiting && (c.tails < 3 || c.pending < 1));
+  const badLine = lineChecks.filter((c) => {
+    if (c.waiting) return false;
+    if (c.isRecommend) return c.tails < 1 || c.pending < 1;   // 推荐线：当期必须有号，未来期写待定
+    return c.tails < 3 || c.pending < 1;                       // 锁定线：三期都要有锁号
+  });
   check(badLine.length === 0, "14线规律中心：当前窗口待开奖行写出尾号", lineChecks.map((c) => c.lineId + " 尾号" + c.tails + "个/待开奖" + c.pending).join(" ; "));
 
   check(errs.length === 0, "无 console 报错", errs.slice(0, 3).join(","));
