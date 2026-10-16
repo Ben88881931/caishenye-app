@@ -1379,12 +1379,26 @@ html.gesture-active * {
 
 /* 刚好一屏宽：列等比压缩，不再左右滑动；上下用整页自然滚动（不再套内部滚动容器，避免滑不动） */
 .wm-heat {
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
   max-height: none;
   padding: 4px 3px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
+}
+
+/* 整页滚动时表头钉在顶部导航下面，往下滑也能看到列名 */
+.panel--wmheat {
+  overflow: visible;
+}
+
+.wm-heat .heatmap__table thead th {
+  top: 62px;
+  z-index: 4;
+  background: #f3f4f6;
+}
+
+.wm-heat .heatmap__table thead .row-label {
+  background: #f3f4f6;
 }
 
 .wm-heat .heatmap__table .row-label {

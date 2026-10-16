@@ -337,7 +337,7 @@
   }
 
   var state = {
-    tab: lsGet("v2_current_tab", "pick3"),
+    tab: lsGet("v2_current_tab", "directory"),
     group: lsGet("v2_nav_group", "recommend"),
     groupHistory: [],
     groupHistoryIndex: -1,
@@ -1734,7 +1734,7 @@
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
     html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=14条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第2期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
-    html += '<div class="panel"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
+    html += '<div class="panel panel--wmheat"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
     // 旧在上、新在下（和尾数遗漏热图同方向）：各线从底部对齐，最新的那件事永远在最底下一行
@@ -6712,7 +6712,8 @@
   var validTabs = TABS.map(function (t) { return t.id; });
   var validGroups = NAV_GROUPS.map(function (g) { return g.id; });
   if (validGroups.indexOf(state.group) === -1) state.group = NAV_GROUPS[0].id;
-  state.tab = "directory";
+  // 刷新后停在原来那个页面（用户要求）；只有存的页面已经不存在了才回目录
+  if (validTabs.indexOf(state.tab) === -1) state.tab = "directory";
   var currentGroup = groupForTab(state.tab) || groupById(state.group) || NAV_GROUPS[0];
   state.group = currentGroup.id;
   if (state.tab !== "directory") {
