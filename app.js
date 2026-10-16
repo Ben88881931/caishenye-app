@@ -1700,6 +1700,7 @@
       var rows = wmWindowsForStage(line, 3).filter(function (w) { return wmYearOf(w.start) === curYear; });
       var stNow = wmStageNow(line, 3);
       var nextStartFull = stNow && stNow.active ? Number(stNow.active.start) : null;
+      // 每条线自己的竖排事件流：一窗一格；窗与窗之间“等号重开”的空档单独占一格
       var out = [], streak = 0;
       rows.forEach(function (w, i) {
         var hit = w.hitIndex > 0;
@@ -1708,38 +1709,35 @@
         var attempts = (w.attempts || []).length;
         var nextFull = (i + 1 < rows.length) ? Number(rows[i + 1].start) : nextStartFull;
         var nextP = nextFull ? betLocalPeriod(nextFull) : null;
-        out.push({
-          period: startP,
-          hit: hit,
-          miss: streak,
-          // 命中的那一格写“在第几期中的”（窗口内第1/2/3期），括号里附上真实期号做备注
-          hitAt: hit ? Number(w.hitIndex) : null,
-          hitPeriod: hit ? betLocalPeriod(Number(w.start) + Number(w.hitIndex) - 1) : null,
-          // 错窗后到下一次开窗之间空等了几个期（等号重开），0 表示下期就重开
-          wait: nextP ? Math.max(0, nextP - startP - attempts) : 0
-        });
+        var wait = nextP ? Math.max(0, nextP - startP - attempts) : 0;
+        // 命中的那一格写“在第几期中的”（窗口内第1/2/3期）
+        out.push({ kind: hit ? "hit" : "miss", hitAt: hit ? Number(w.hitIndex) : null, miss: streak });
+        // 错窗后等多号重新开出的空档：单独一格，写等了几期
+        if (wait > 0) out.push({ kind: "wait", wait: wait });
       });
-      return { label: line.label, cells: out };
+      out.reverse();
+      return { label: line.label, events: out };
     });
     var maxN = 0;
-    perLine.forEach(function (p) { if (p.cells.length > maxN) maxN = p.cells.length; });
+    perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 共 ' + maxN + ' 窗 · 单位=窗口（不是期）· 新→旧（第1行=各线最新窗，14条线在这一行对齐，行标签「-N」=往前第N窗）</span></div>';
-    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">只看窗口与错漏，不管期号：<span class="heat-cell cell-hit">2</span> 红格=这个窗口3期内中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=这个错窗<b>连错到第几窗</b>（一=连错第1窗）；<span class="heat-wait">等3期</span> 橙字=这个错窗之后<b>等号重开空了几期</b>（期间不下注）；空格=该线当年还没开到这个窗。</div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 每条线一竖列，一格一件事（中窗 / 错窗 / 等号重开）· 新→旧（第1行=各线最新的一件事，行标签「-N」=往前第N件）· 只看窗口，不管期号</span></div>';
+    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">一格一件事：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 橙格=这个窗口之后等号重开、<b>空等了3期</b>（等的时候不下注，格子就写等）；空格=该线当年还没走到这一件事。</div></div>';
     html += '<div class="panel"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">窗</th><th>中</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
     // 行轴按“各线自己的窗口从新往旧”排：第1行=每条线最新的那一窗，14条线自然对齐（各线窗口数不同，按序号排是对不齐的）
     for (var k = 1; k <= maxN; k++) {
       var hitN = 0;
-      perLine.forEach(function (p) { var c = p.cells[p.cells.length - k]; if (c && c.hit) hitN++; });
+      perLine.forEach(function (p) { var c = p.events[k - 1]; if (c && c.kind === "hit") hitN++; });
       html += '<tr><td class="row-label">' + (k === 1 ? "最新" : "-" + (k - 1)) + '</td><td class="open-count">' + hitN + "</td>";
       perLine.forEach(function (p) {
-        var c = p.cells[p.cells.length - k];
+        var c = p.events[k - 1];
         if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
-        if (c.hit) { html += '<td><span class="heat-cell cell-hit">' + c.hitAt + "</span></td>"; return; }
+        if (c.kind === "wait") { html += '<td><span class="heat-cell cell-wait">等' + c.wait + "</span></td>"; return; }
+        if (c.kind === "hit") { html += '<td><span class="heat-cell cell-hit">' + c.hitAt + "</span></td>"; return; }
         var cls = "cell-miss" + Math.min(4, c.miss);
-        html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span>" + (c.wait > 0 ? '<span class="heat-wait">等' + c.wait + "期</span>" : "") + "</td>";
+        html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span></td>";
       });
       html += "</tr>";
     }
