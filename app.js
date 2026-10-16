@@ -987,6 +987,13 @@
 
   function scrollToLatest() {
     if (state.tab === "pick3" || state.tab === "selector" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog") return;
+    // 窗口遗漏热图没有内部滚动容器（整页滚），而且切页会先把页面拉回顶部；
+    // 用 rAF + 60ms 兜底，在“回顶”之后再跳到底部，保证点开就停在最新那一行
+    if (state.tab === "windowmiss") {
+      var jumpBottom = function () { window.scrollTo(0, document.documentElement.scrollHeight); };
+      requestAnimationFrame(function () { jumpBottom(); setTimeout(jumpBottom, 60); });
+      return;
+    }
     var sc = view.querySelector(".trend-scroll, .heatmap, .seg-hist-scroll");
     if (sc) {
       sc.scrollTop = sc.scrollHeight;
