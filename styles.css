@@ -1366,8 +1366,8 @@ html.gesture-active * {
   border-spacing: 0;
 }
 
-.wm-heat .heatmap__table th:nth-child(n + 3),
-.wm-heat .heatmap__table td:nth-child(n + 3) {
+.wm-heat .heatmap__table th:nth-child(n + 2),
+.wm-heat .heatmap__table td:nth-child(n + 2) {
   border-left: 1px solid #cbd5e1;
 }
 
@@ -1380,12 +1380,6 @@ html.gesture-active * {
 .wm-heat .heatmap__table .row-label {
   width: 30px;
   padding-right: 2px;
-  font-size: 10px;
-}
-
-.wm-heat .heatmap__table th:nth-child(2),
-.wm-heat .heatmap__table td:nth-child(2) {
-  width: 18px;
   font-size: 10px;
 }
 
