@@ -1343,6 +1343,9 @@ html.gesture-active * {
 /* 窗口遗漏热图：错窗后面「等号重开」空了几期的绿色标记（浅绿底+深绿字，和连错第2窗的实心绿区分开） */
 .heat-cell.cell-wait { background: #dcfce7; color: #15803d; }
 
+/* 窗口遗漏热图：当前正在跑的窗口（还没开奖，不算结果） */
+.heat-cell.cell-live { background: #e0e7ff; color: #3730a3; }
+
 .heat-wait {
   display: inline-block;
   margin: 2px 0 0;

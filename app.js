@@ -1722,6 +1722,10 @@
         var waitNow = latest - endP + 1;
         if (waitNow > 0) out.push({ kind: "wait", wait: waitNow });
       }
+      // 现在有正在跑的窗口：把“当前跑到第几期”作为最新一件事补一格（还没开奖，不算结果）
+      if (stNow && stNow.active) {
+        out.push({ kind: "live", stage: (stNow.active.attempts || []).length + 1 });
+      }
       // 保持时间正序（旧→新）：渲染时各线从底部对齐，最新的那件事永远在最下面一行
       return { label: line.label, events: out };
     });
@@ -1729,7 +1733,7 @@
     perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 行标签「上N」= 比最新早N格（一格=一个窗口或一个等待格）· 只看窗口，不管期号</span></div>';
-    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">左起第一列=<b>行序</b>：最底一行写「最新」，往上依次「上1、上2…」=比最新早1格、2格（一格=一个窗口或一个等待格，不是第几个窗口）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=这个窗口之后等号重开、<b>空等了3期</b>（单位是期）；空格=该线当年还没走到这一件。</div></div>';
+    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=14条线各自当前的状态；往上「上1、上2…」=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第2期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
     html += '<div class="panel"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th><th>中</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
@@ -1743,6 +1747,7 @@
         var c = p.events[r - (maxN - p.events.length)];
         if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
         if (c.kind === "wait") { html += '<td><span class="heat-cell cell-wait">等' + c.wait + "</span></td>"; return; }
+        if (c.kind === "live") { html += '<td><span class="heat-cell cell-live">进' + c.stage + "</span></td>"; return; }
         if (c.kind === "hit") { html += '<td><span class="heat-cell cell-hit">' + c.hitAt + "</span></td>"; return; }
         var cls = "cell-miss" + Math.min(4, c.miss);
         html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span></td>";
