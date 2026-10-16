@@ -1698,19 +1698,34 @@
     var curYear = (D[D.length - 1] || {}).y;
     var perLine = EXEC_LINES.map(function (line) {
       var rows = wmWindowsForStage(line, 3).filter(function (w) { return wmYearOf(w.start) === curYear; });
+      var stNow = wmStageNow(line, 3);
+      var nextStartFull = stNow && stNow.active ? Number(stNow.active.start) : null;
       var out = [], streak = 0;
-      rows.forEach(function (w) {
+      rows.forEach(function (w, i) {
         var hit = w.hitIndex > 0;
         streak = hit ? 0 : streak + 1;
-        out.push({ period: betLocalPeriod(w.start), hit: hit, miss: streak });
+        var startP = betLocalPeriod(w.start);
+        var attempts = (w.attempts || []).length;
+        var nextFull = (i + 1 < rows.length) ? Number(rows[i + 1].start) : nextStartFull;
+        var nextP = nextFull ? betLocalPeriod(nextFull) : null;
+        out.push({
+          period: startP,
+          hit: hit,
+          miss: streak,
+          // 命中的那一格写上是第几期中的
+          hitPeriod: hit ? betLocalPeriod(Number(w.start) + Number(w.hitIndex) - 1) : null,
+          // 错窗后到下一次开窗之间空等了几个期（等号重开），0 表示下期就重开
+          wait: nextP ? Math.max(0, nextP - startP - attempts) : 0
+        });
       });
       return { label: line.label, cells: out };
     });
     var maxN = 0;
     perLine.forEach(function (p) { if (p.cells.length > maxN) maxN = p.cells.length; });
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年第 1 窗 - 第 ' + maxN + " 窗 · 共 " + maxN + " 窗（单位=窗口，不是期）</span></div>";
-    html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">窗</th><th>起期</th><th>中</th>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 共 ' + maxN + ' 窗 · 单位=窗口（不是期）· 新→旧（第1行=各线最新窗，14条线在这一行对齐，行标签「-N」=往前第N窗）</span></div>';
+    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">看格子的意思：<span class="heat-cell cell-hit">268</span> 红格=3期内命中，里面写的是<b>第几期中的</b>；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=这个错窗是<b>连错到第几窗</b>（一=连错第1窗）；<span class="heat-wait">等3期</span> 橙字=这个错窗之后<b>等号重开空了几期</b>（没到下一窗，期间不下注）；空格=该线当年还没开到这个窗。</div></div>';
+    html += '<div class="panel"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">窗</th><th>起期</th><th>中</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
     // 行轴按“各线自己的窗口从新往旧”排：第1行=每条线最新的那一窗，14条线自然对齐（各线窗口数不同，按序号排是对不齐的）
@@ -1721,9 +1736,9 @@
       perLine.forEach(function (p) {
         var c = p.cells[p.cells.length - k];
         if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
-        if (c.hit) { html += '<td><span class="heat-cell cell-hit">中</span></td>'; return; }
+        if (c.hit) { html += '<td><span class="heat-cell cell-hit">' + c.hitPeriod + "</span></td>"; return; }
         var cls = "cell-miss" + Math.min(4, c.miss);
-        html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span></td>";
+        html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span>" + (c.wait > 0 ? '<span class="heat-wait">等' + c.wait + "期</span>" : "") + "</td>";
       });
       html += "</tr>";
     }

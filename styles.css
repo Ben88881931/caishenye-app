@@ -1339,6 +1339,42 @@ html.gesture-active * {
 .heat-cell.cell-miss3 { background: #eab308; color: #7a5b00; }
 .heat-cell.cell-miss4 { background: #ef4444; }
 .heat-cell.cell-empty { background: #f1f5f9; color: #cbd5e1; }
+
+/* 窗口遗漏热图：错窗后面「等号重开」空了几期的橙色标记 */
+.heat-wait {
+  display: inline-block;
+  margin: 2px 0 0;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 900;
+  color: #c2410c;
+  background: #ffedd5;
+  white-space: nowrap;
+}
+
+/* 窗口遗漏热图：每条线自成一块（列框 + 隔行底色 + 表头分块），不要连成一整片竖条 */
+.wm-heat .heatmap__table th:nth-child(n + 4),
+.wm-heat .heatmap__table td:nth-child(n + 4) {
+  border-left: 2px solid #e2e8f0;
+}
+
+.wm-heat .heatmap__table th:nth-child(odd):nth-child(n + 4),
+.wm-heat .heatmap__table td:nth-child(odd):nth-child(n + 4) {
+  background: #f8fafc;
+}
+
+.wm-heat .heatmap__table th:nth-child(n + 4) {
+  background: #eef2f7;
+  border-top: 2px solid #cbd5e1;
+  white-space: nowrap;
+}
+
+.wm-heat .heatmap__table td {
+  vertical-align: top;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
 .heat-num { font-size: 10px; line-height: 1; }
 
 .linechart {
