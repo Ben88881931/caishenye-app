@@ -42,6 +42,31 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     return JSON.stringify(out);
   })()`));
 
+  // 窗口遗漏热图：最底一行=各线当前状态（等N=等待重开 / 进N=窗口已跑到第N期）
+  await ev("var bk=document.querySelector('[data-directory=\"1\"]'); if(bk)bk.click(); true"); await sleep(700);
+  await ev("var g1=document.querySelector('[data-directory-group=\"miss\"]'); if(g1)g1.click(); true"); await sleep(700);
+  await ev("document.querySelector('.tab[data-tab=\"windowmiss\"]').click(); true"); await sleep(2300);
+  const hm = JSON.parse(await ev(`(function(){
+    var tab = document.querySelector('#view .heatmap__table');
+    if (!tab) return JSON.stringify({});
+    var heads = [].map.call(tab.querySelectorAll('thead th'), function (t) { return t.innerText.trim(); });
+    var rows = tab.querySelectorAll('tbody tr');
+    var last = rows[rows.length - 1];
+    var tds = last.querySelectorAll('td');
+    var out = {};
+    for (var i = 2; i < tds.length; i++) {
+      var v = tds[i].innerText.trim();
+      var name = heads[i] || '';
+      var full = name.indexOf('号D') === 0 ? ('追号码 ' + name.slice(1))
+        : (name.indexOf('推D') === 0 ? ('追推荐 ' + name.slice(1)) : name);
+      out[full] = v;
+    }
+    return JSON.stringify(out);
+  })()`));
+
+  // 回到模型流程分组，继续核对14线规律中心
+  await ev("var bk2=document.querySelector('[data-directory=\"1\"]'); if(bk2)bk2.click(); true"); await sleep(700);
+  await ev("var g2=document.querySelector('[data-directory-group=\"recommend\"]'); if(g2)g2.click(); true"); await sleep(700);
   // 14线规律中心 · 窗口明细（逐条线）
   await ev("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
   await ev("var b=document.querySelector('.wm-view-tab[data-wm-view=\"windows\"]'); if(b)b.click(); true"); await sleep(900);
@@ -70,7 +95,18 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     console.log(lb + " | " + a + " | " + c + (same ? "" : "  ← 不一致"));
   });
   console.log("\n不一致条数：" + mismatch + " / 14");
+  // 额外核对：窗口遗漏热图最底行（当前状态）必须与下注执行表一致
+  let hmBad = [];
+  lineLabels.forEach(function (lb) {
+    const bv = bet[lb] || "-", hv = hm[lb] || "-";
+    const bWait = bv === "等待重开", hWait = hv.indexOf("等") === 0;
+    const bStage = (bv.match(/第(\d)期/) || [])[1] || "";
+    const hStage = (hv.match(/进(\d)/) || [])[1] || "";
+    const ok = (bWait === hWait) && (bWait || (bStage && bStage === hStage));
+    if (!ok) hmBad.push(lb + " 下注执行表=" + bv + " 热图=" + hv);
+  });
+  console.log("热图底行(当前状态) 与 下注执行表 不一致：" + hmBad.length + " / 14" + (hmBad.length ? " → " + hmBad.join(" ; ") : ""));
   ws.close(); chrome.kill(); server.kill(); await sleep(300);
   try { fs.rmSync(userDir, { recursive: true, force: true }); } catch (e) {}
-  process.exit(0);
+  process.exit(hmBad.length ? 1 : 0);
 })();
