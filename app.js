@@ -1710,35 +1710,36 @@
         var nextFull = (i + 1 < rows.length) ? Number(rows[i + 1].start) : nextStartFull;
         var nextP = nextFull ? betLocalPeriod(nextFull) : null;
         var wait = nextP ? Math.max(0, nextP - startP - attempts) : 0;
-        // 命中的那一格写“在第几期中的”（窗口内第1/2/3期）
-        out.push({ kind: hit ? "hit" : "miss", hitAt: hit ? Number(w.hitIndex) : null, miss: streak });
-        // 错窗后等多号重新开出的空档：单独一格，写等了几期
-        if (wait > 0) out.push({ kind: "wait", wait: wait });
+        // 一格就是一个窗口：命中的写“在第几期中的”；错窗后若在等号重开，把“等了几期”挂在这一格下面
+        out.push({ kind: hit ? "hit" : "miss", hitAt: hit ? Number(w.hitIndex) : null, miss: streak, wait: wait });
       });
-      // 保持时间正序（旧→新）：渲染时各线从底部对齐，最新的那件事永远在最下面一行
+      // 保持时间正序（旧→新）：渲染时各线从底部对齐，最新窗口永远在最下面一行
       return { label: line.label, events: out };
     });
     var maxN = 0;
     perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 行标签「上N」= 比最新早N格（一格=一个窗口或一个等待格）· 只看窗口，不管期号</span></div>';
-    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">左起第一列=<b>行序</b>：最底一行写「最新」，往上依次「上1、上2…」=比最新早1格、2格（一格=一个窗口或一个等待格，不是第几个窗口）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=这个窗口之后等号重开、<b>空等了3期</b>（单位是期）；空格=该线当年还没走到这一件。</div></div>';
+    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">左起第一列=<b>窗口序</b>：最底一行「最新」，往上「上1、上2、上3…」=上一个窗口、上两个窗口、上三个窗口（一格就是一个窗口，行号=上几个窗口）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 绿色小字「等N期」=这个错窗之后等号重开、空等了N期（单位是期，挂在错窗那一格下面）；空格=该线当年还没走到这一窗。</div></div>';
     html += '<div class="panel"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th><th>中</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
     // 旧在上、新在下（和尾数遗漏热图同方向）：各线从底部对齐，最新的那件事永远在最底下一行
     for (var r = 0; r < maxN; r++) {
       var hitN = 0;
+      // 一行 = 一个窗口：行号写“上N”，就是“上N个窗口”
       var rowLabel = (r === maxN - 1) ? "最新" : "上" + (maxN - 1 - r);
-      perLine.forEach(function (p) { var c = p.events[r - (maxN - p.events.length)]; if (c && c.kind === "hit") hitN++; });
+      perLine.forEach(function (p) {
+        var c = p.events[r - (maxN - p.events.length)];
+        if (c && c.kind === "hit") hitN++;
+      });
       html += '<tr><td class="row-label">' + rowLabel + '</td><td class="open-count">' + hitN + "</td>";
       perLine.forEach(function (p) {
         var c = p.events[r - (maxN - p.events.length)];
         if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
-        if (c.kind === "wait") { html += '<td><span class="heat-cell cell-wait">等' + c.wait + "</span></td>"; return; }
         if (c.kind === "hit") { html += '<td><span class="heat-cell cell-hit">' + c.hitAt + "</span></td>"; return; }
         var cls = "cell-miss" + Math.min(4, c.miss);
-        html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span></td>";
+        html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span>" + (c.wait > 0 ? '<span class="heat-wait">等' + c.wait + "期</span>" : "") + "</td>";
       });
       html += "</tr>";
     }
