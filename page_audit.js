@@ -156,6 +156,7 @@ const tabsBlock = (appText.match(/var TABS\s*=\s*\[([\s\S]*?)\];/) || [])[1] || 
 const tabIds = [...tabsBlock.matchAll(/id:\s*"([^"]+)"/g)].map((m) => m[1]);
 const missingTabs = tabIds.filter((id) => !appText.includes('state.tab === "' + id + '"') && !appText.includes("renderUltimateMode"));
 must(tabIds.length > 0 && missingTabs.length === 0, "所有导航页面都有渲染入口");
+must(appText.includes("exec-hist-card--live") && appText.includes("每个页面的窗口都必须能看到现在走到哪一步") && appText.includes("进行中 · 第") && appText.includes("等待中 · 等尾") && appText.includes("本期不下注"), "下注执行表的对错滚动记录第1张必须是当前窗口状态（进行中第N期 / 等待中等尾X已等N期），和窗口遗漏热图底行一个口径");
 const modelFlow = ["pick3", "chasenumber", "betexec", "formulas", "windowmult", "orderlog"];
 const flowPositions = modelFlow.map((id) => tabIds.indexOf(id));
 must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions[i - 1])), "导航按模型流程排序");

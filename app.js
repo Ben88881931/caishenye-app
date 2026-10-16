@@ -3253,6 +3253,32 @@
       html += '<div style="margin-top:10px;font-size:11px;font-weight:900;color:#6b7280">对错滚动记录 · 新→旧 · 已结算 ' + allCount + ' 窗 · ' + modeLabel + '</div>';
       html += '<div class="exec-line__scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
       html += '<div style="display:flex;gap:6px;min-width:max-content">';
+      // 对错滚动记录的第1张 = 当前状态（每个页面的窗口都必须能看到现在走到哪一步）
+      var liveTone = live.waiting ? "#b45309" : "#2563eb";
+      var liveBg = live.waiting ? "#fffbeb" : "#eff6ff";
+      var liveStageText, liveWaitText = "";
+      if (live.waiting) {
+        // 注意：这里的 rows 已经被截断/倒序过（只用于滚动记录展示），算等待期数必须用当年完整窗口列表
+        var yrRowsAll = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
+        var lastW = yrRowsAll.length ? yrRowsAll[yrRowsAll.length - 1] : null;
+        var waitedN = 0;
+        if (lastW) {
+          var endP = betLocalPeriod(lastW.start) + ((lastW.attempts || []).length) - 1;
+          waitedN = Math.max(1, latest - endP + 1);
+        }
+        liveStageText = "等待中 · 等尾" + live.waiting.tail + "开出（已等 " + waitedN + " 期）";
+        liveWaitText = "上窗三期全错 · 等尾" + live.waiting.tail + "重新开出后才开新窗口（本期不下注）";
+      } else if (live.active) {
+        liveStageText = "进行中 · 第" + live.stage + "期 · " + (live.active.lockedTail != null ? "锁尾" + live.active.lockedTail : "每期最新推荐");
+      } else {
+        liveStageText = "空仓 · 等新窗口";
+      }
+      html += '<div class="exec-hist-card exec-hist-card--live" style="min-width:186px;border:1px dashed ' + liveTone + ';border-radius:8px;padding:7px 8px;background:' + liveBg + '">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#6b7280"><span>起始 ' + (live.active ? "第" + betLocalPeriod(live.active.start) + "期" : "—") + '</span><b style="color:' + liveTone + '">当前状态</b></div>';
+      html += '<div style="font-size:12px;font-weight:900;color:' + liveTone + ';margin-top:2px">' + liveStageText + "</div>";
+      if (live.active) html += betWindowRowsHTML(line, live.active, maxStage);
+      else if (liveWaitText) html += '<div style="font-size:11px;color:#b45309;margin-top:3px">' + liveWaitText + "</div>";
+      html += "</div>";
       var pMap = {};
       betPersonalitySeries(line, maxStage).states.forEach(function (s) { pMap[s.start] = s; });
       rows.forEach(function (w) {
