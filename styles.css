@@ -1356,14 +1356,14 @@ html.gesture-active * {
 }
 
 /* 窗口遗漏热图：每条线自成一块（列框 + 隔行底色 + 表头分块），不要连成一整片竖条 */
-.wm-heat .heatmap__table th:nth-child(n + 4),
-.wm-heat .heatmap__table td:nth-child(n + 4) {
-  border-left: 2px solid #e2e8f0;
+.wm-heat .heatmap__table {
+  border-collapse: separate;
+  border-spacing: 5px 0;
 }
 
-.wm-heat .heatmap__table th:nth-child(odd):nth-child(n + 4),
-.wm-heat .heatmap__table td:nth-child(odd):nth-child(n + 4) {
-  background: #f8fafc;
+.wm-heat .heatmap__table th:nth-child(n + 4),
+.wm-heat .heatmap__table td:nth-child(n + 4) {
+  border-left: 1px solid #cbd5e1;
 }
 
 .wm-heat .heatmap__table th:nth-child(n + 4) {
