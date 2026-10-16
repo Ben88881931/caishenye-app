@@ -1713,12 +1713,13 @@
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">窗</th><th>起期</th><th>中</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
-    for (var i = 0; i < maxN; i++) {
+    // 行轴按“各线自己的窗口从新往旧”排：第1行=每条线最新的那一窗，14条线自然对齐（各线窗口数不同，按序号排是对不齐的）
+    for (var k = 1; k <= maxN; k++) {
       var starts = [], hitN = 0;
-      perLine.forEach(function (p) { var c = p.cells[i]; if (c) { starts.push(c.period); if (c.hit) hitN++; } });
-      html += '<tr><td class="row-label">' + (i + 1) + '</td><td class="open-tails">' + (starts.length ? Math.min.apply(null, starts) + "-" + Math.max.apply(null, starts) : "-") + '</td><td class="open-count">' + hitN + "</td>";
+      perLine.forEach(function (p) { var c = p.cells[p.cells.length - k]; if (c) { starts.push(c.period); if (c.hit) hitN++; } });
+      html += '<tr><td class="row-label">' + (k === 1 ? "最新" : "-" + (k - 1)) + '</td><td class="open-tails">' + (starts.length ? Math.min.apply(null, starts) + "-" + Math.max.apply(null, starts) : "-") + '</td><td class="open-count">' + hitN + "</td>";
       perLine.forEach(function (p) {
-        var c = p.cells[i];
+        var c = p.cells[p.cells.length - k];
         if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
         if (c.hit) { html += '<td><span class="heat-cell cell-hit">中</span></td>'; return; }
         var cls = "cell-miss" + Math.min(4, c.miss);
@@ -1729,7 +1730,7 @@
     html += "</tbody></table></div></div></div>";
     view.innerHTML = html;
     var hm = view.querySelector(".heatmap");
-    if (hm) hm.scrollTop = hm.scrollHeight;
+    if (hm) hm.scrollTop = 0;
   }
 
   function renderTrendImpl() {
