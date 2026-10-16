@@ -54,7 +54,8 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     var last = rows[rows.length - 1];
     var tds = last.querySelectorAll('td');
     var out = {};
-    for (var i = 2; i < tds.length; i++) {
+    // 行号是第0列，14条线从第1列开始（“中”合计列已删除，别再按2开始，否则整体错位）
+    for (var i = 1; i < tds.length; i++) {
       var v = tds[i].innerText.trim();
       var name = heads[i] || '';
       var full = name.indexOf('号D') === 0 ? ('追号码 ' + name.slice(1))

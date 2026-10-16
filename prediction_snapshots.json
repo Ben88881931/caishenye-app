@@ -1695,7 +1695,7 @@
       "generatedAt": "2026-10-15T15:02:04.061Z",
       "basedOn": 288,
       "target": 289,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -1715,11 +1715,77 @@
             }
           ]
         }
+      },
+      "actualTails": [
+        2,
+        4,
+        7,
+        8,
+        9
+      ],
+      "actualPeriod": 289,
+      "settledAt": "2026-10-16T13:49:28.807Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            7,
+            8
+          ],
+          "perPick": [
+            {
+              "tail": 7,
+              "score": 93.9,
+              "tag": "连出3",
+              "grade": "A",
+              "hit": true
+            },
+            {
+              "tail": 8,
+              "score": 93.9,
+              "tag": "连出3",
+              "grade": "A",
+              "hit": true
+            }
+          ],
+          "hits": [
+            7,
+            8
+          ],
+          "count": 2,
+          "hit": true
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-10-16T13:49:28.807Z",
+      "basedOn": 289,
+      "target": 290,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "ambiguous": true,
+          "picks": [
+            {
+              "tail": 7,
+              "score": 95.3,
+              "tag": "连出4",
+              "grade": "S"
+            },
+            {
+              "tail": 8,
+              "score": 95.3,
+              "tag": "连出4",
+              "grade": "S"
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 288,
-  "updatedAt": "2026-10-15T15:02:04.068Z",
+  "latestPeriod": 289,
+  "updatedAt": "2026-10-16T13:49:28.816Z",
   "threePeriodRecords": [
     {
       "target": 273,
@@ -2169,7 +2235,7 @@
       "tail": 9,
       "score": 93.9,
       "grade": "A",
-      "status": "pending",
+      "status": "hit",
       "attempts": [
         {
           "period": 288,
@@ -2183,11 +2249,23 @@
             8
           ],
           "hit": false
+        },
+        {
+          "period": 289,
+          "tail": 9,
+          "actualTails": [
+            2,
+            4,
+            7,
+            8,
+            9
+          ],
+          "hit": true
         }
       ],
-      "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "hitIndex": 2,
+      "settledPeriod": 289,
+      "settledAt": "2026-10-16T13:49:28.799Z"
     },
     {
       "target": 289,
@@ -2201,6 +2279,37 @@
       "tail": 7,
       "score": 93.9,
       "grade": "A",
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 289,
+          "tail": 7,
+          "actualTails": [
+            2,
+            4,
+            7,
+            8,
+            9
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 289,
+      "settledAt": "2026-10-16T13:49:28.807Z"
+    },
+    {
+      "target": 290,
+      "basedOn": 289,
+      "generatedAt": "2026-10-16T13:49:28.816Z",
+      "action": "跟双号",
+      "source": "double",
+      "rule": "P1/P6",
+      "reason": "双号达到A级且未触发过热或备选连中限制",
+      "stream": "D1",
+      "tail": 7,
+      "score": 95.3,
+      "grade": "S",
       "status": "pending",
       "attempts": [],
       "hitIndex": null,
@@ -2841,7 +2950,7 @@
       "score": 92.5,
       "grade": "C",
       "tag": "5期3次",
-      "status": "pending",
+      "status": "miss",
       "attempts": [
         {
           "period": 287,
@@ -2867,11 +2976,23 @@
             8
           ],
           "hit": false
+        },
+        {
+          "period": 289,
+          "tail": 3,
+          "actualTails": [
+            2,
+            4,
+            7,
+            8,
+            9
+          ],
+          "hit": false
         }
       ],
-      "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "hitIndex": 0,
+      "settledPeriod": 289,
+      "settledAt": "2026-10-16T13:49:28.807Z"
     },
     {
       "target": 289,
@@ -2883,6 +3004,51 @@
       "score": 93.9,
       "grade": "A",
       "tag": "连出3",
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 289,
+          "tail": 8,
+          "actualTails": [
+            2,
+            4,
+            7,
+            8,
+            9
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 289,
+      "settledAt": "2026-10-16T13:49:28.807Z"
+    },
+    {
+      "target": 290,
+      "basedOn": 289,
+      "generatedAt": "2026-10-16T13:49:28.807Z",
+      "stream": "D1",
+      "model": "双号追热",
+      "tail": 7,
+      "score": 95.3,
+      "grade": "S",
+      "tag": "连出4",
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    },
+    {
+      "target": 290,
+      "basedOn": 289,
+      "generatedAt": "2026-10-16T13:49:28.807Z",
+      "stream": "D2",
+      "model": "双号追热",
+      "tail": 8,
+      "score": 95.3,
+      "grade": "S",
+      "tag": "连出4",
       "status": "pending",
       "attempts": [],
       "hitIndex": null,
