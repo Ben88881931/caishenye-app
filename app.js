@@ -376,6 +376,7 @@
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
+    { id: "windowmiss", label: "窗口遗漏热图" },
     { id: "parity", label: "单双热图" },
     { id: "trend", label: "遗漏热图" },
     { id: "zodtrend", label: "生肖走势" },
@@ -395,7 +396,7 @@
   var NAV_GROUPS = [
     { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "betexec", "formulas", "windowmult", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
-    { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "parity"] },
+    { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "windowmiss", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
     { id: "tools", label: "分析工具", tabs: ["numsearch", "personality", "datarecord", "tails", "backtest"] },
   ];
@@ -1015,6 +1016,7 @@
     else if (state.tab === "segments") renderSegments();
     else if (state.tab === "miss") renderMiss();
     else if (state.tab === "trend") renderTrend();
+    else if (state.tab === "windowmiss") renderWindowMiss();
     else if (state.tab === "windowk") renderWindowK();
     else if (state.tab === "missorder") view.innerHTML = renderMissOrderHeatmap();
     else if (state.tab === "parity") view.innerHTML = renderParityHeatmap();
@@ -1688,6 +1690,46 @@
   }
 
   function renderTrend() {
+    return renderTrendImpl();
+  }
+
+  // 窗口遗漏热图：单位=窗口（不是期），14条线一屏，绿=中窗、红=错窗（数字=连错到第几窗），可左右上下滚动
+  function renderWindowMiss() {
+    var curYear = (D[D.length - 1] || {}).y;
+    var perLine = EXEC_LINES.map(function (line) {
+      var rows = wmWindowsForStage(line, 3).filter(function (w) { return wmYearOf(w.start) === curYear; });
+      var out = [], streak = 0;
+      rows.forEach(function (w) {
+        var hit = w.hitIndex > 0;
+        streak = hit ? 0 : streak + 1;
+        out.push({ period: betLocalPeriod(w.start), hit: hit, miss: streak });
+      });
+      return { label: line.label, cells: out };
+    });
+    var maxN = 0;
+    perLine.forEach(function (p) { if (p.cells.length > maxN) maxN = p.cells.length; });
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图 · 14条线</h2><span class="section__hint">单位=窗口（不是期）· 绿=中窗 / 红=错窗（数字=连错到第几窗）· 新→旧 · ' + curYear + '年 · 左右上下滑动查看</span></div></div>';
+    html += '<div class="panel" style="padding:10px;overflow:auto;-webkit-overflow-scrolling:touch;max-height:70vh">';
+    html += '<table class="table" style="min-width:960px;font-size:11px"><thead><tr><th style="position:sticky;left:0;top:0;background:#fff;z-index:2">窗口序号</th>';
+    perLine.forEach(function (p) { html += '<th style="position:sticky;top:0;background:#fff">' + p.label + '</th>'; });
+    html += "</tr></thead><tbody>";
+    for (var i = 0; i < maxN; i++) {
+      html += '<tr><td style="position:sticky;left:0;background:#fff;font-weight:800">第' + (maxN - i) + '窗</td>';
+      perLine.forEach(function (p) {
+        var cell = p.cells[p.cells.length - 1 - i];
+        if (!cell) { html += '<td style="color:#cbd5e1;text-align:center">-</td>'; return; }
+        var bg = cell.hit ? "#f0fdf4" : "#fef2f2";
+        var fg = cell.hit ? "#16a34a" : "#dc2626";
+        html += '<td style="background:' + bg + ';color:' + fg + ';text-align:center;font-weight:900">' + (cell.hit ? "中" : "错" + cell.miss) + '<div style="font-size:9px;color:#94a3b8">第' + cell.period + '期</div></td>';
+      });
+      html += "</tr>";
+    }
+    html += "</tbody></table></div>";
+    html += '<p class="disclaimer">本页只按窗口对错记账（窗口=3期为一个窗口，中=3期内命中过，错=3期全错），不看金额、不预测；数字是该窗口处在连错段的第几窗。</p>';
+    view.innerHTML = html;
+  }
+
+  function renderTrendImpl() {
     var heatPeriods = perfRows("trend", periods);
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
@@ -3013,7 +3055,7 @@
         var tail = null;
         if (line.kind === "tail") tail = line.tail;
         else if (live.active && live.active.lockedTail != null) tail = live.active.lockedTail;
-        else if (live.active) tail = wmLiveTailFor(line, live.active, latest + 1);
+        else if (live.active) tail = wmLiveTailFor(line, live.active, Number(live.active.start) + (live.stage - 1));
         var title = line.label + (tail != null ? " · 尾" + tail : "");
         html += '<div class="position-card position-card--execution">';
         html += '<div class="position-card__title">' + title + "</div>";
@@ -3142,14 +3184,37 @@
       };
       var seqHit = rows.filter(function (w) { return w.hitIndex > 0; }).length;
       html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #e5e7eb">';
-      html += '<div style="font-size:11px;font-weight:900;color:#475569">窗口对错序列 · 当年 · 旧→新 · 中 ' + seqHit + ' 窗 / 错 ' + (rows.length - seqHit) + ' 窗（可左右滑动看全部）</div>';
+      html += '<div style="font-size:11px;font-weight:900;color:#475569">窗口对错序列 · 当年 · 新→旧（最新在最左）· 中 ' + seqHit + ' 窗 / 错 ' + (rows.length - seqHit) + ' 窗 · 格子上排 = 该窗口起始期号（第几期），下排 = 中/错</div>';
       html += '<div class="exec-seq">';
-      rows.forEach(function (w) {
+      rows.slice().reverse().forEach(function (w) {
         var hit = w.hitIndex > 0;
-        html += '<div class="exec-seq__cell ' + (hit ? "is-hit" : "is-miss") + '"><b>' + betLocalPeriod(w.start) + '</b><span>' + (hit ? "中" : "错") + '</span></div>';
+        html += '<div class="exec-seq__cell ' + (hit ? "is-hit" : "is-miss") + '"><b>第' + betLocalPeriod(w.start) + '期</b><span>' + (hit ? "中" : "错") + '</span></div>';
       });
       html += "</div>";
       html += '<div style="font-size:11px;color:#334155;line-height:1.75"><b style="color:#16a34a">连中段</b>（连中几个窗口会断开）：' + runBrief(allWin) + '<br><b style="color:#dc2626">连错段</b>（错的时候连错几个窗口）：' + runBrief(allLose) + '<br><span style="color:#64748b">看危险不要只看最长：必须连频率一起看（多少年才出现一次）。</span></div>';
+      // 逐年拆开：每年多少窗、中/错、连中段、连错段、连错2窗与3窗+各几次
+      var yrsMap = {};
+      allRows.forEach(function (w) { var y = wmYearOf(w.start); (yrsMap[y] = yrsMap[y] || []).push(w.hitIndex > 0 ? 1 : 0); });
+      var segBrief = function (runs) {
+        if (!runs.length) return "-";
+        var lens = runs.map(function (r) { return r.len; });
+        return (lens.reduce(function (a, b) { return a + b; }, 0) / lens.length).toFixed(1) + "窗 · 最长" + Math.max.apply(null, lens) + "窗";
+      };
+      html += '<div class="wm-hscroll" style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 0;margin-top:2px">';
+      [2021, 2022, 2023, 2024, 2025, 2026].forEach(function (y) {
+        var seq = yrsMap[y] || [];
+        if (!seq.length) return;
+        var wR = [], lR = [], sg = null;
+        seq.forEach(function (v) { if (!sg || sg.sign !== v) { sg = { sign: v, len: 1 }; (v ? wR : lR).push(sg); } else sg.len++; });
+        var hitN = seq.filter(function (v) { return v; }).length;
+        var l2 = lR.filter(function (r) { return r.len === 2; }).length;
+        var l3 = lR.filter(function (r) { return r.len >= 3; }).length;
+        html += '<div style="min-width:158px;border:1px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:11px;line-height:1.65;background:#fff">';
+        html += '<b>' + y + '年</b> · 中' + hitN + ' / 错' + (seq.length - hitN) + '<br>';
+        html += '连中段 ' + segBrief(wR) + '<br>连错段 ' + segBrief(lR) + '<br>';
+        html += '连错2窗 ' + l2 + ' 次 · 连错3窗+ ' + l3 + ' 次</div>';
+      });
+      html += "</div>";
       html += "</div>";
       var allCount = rows.length;
       var showCount = perfExpandAll["betexec:" + line.id] ? allCount : Math.min(allCount, 12);
