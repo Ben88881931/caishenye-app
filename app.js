@@ -3143,6 +3143,34 @@
     html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>对错性格</b>只看窗口对错、不看金额：<span style="color:#16a34a">连中N窗</span>=已连续N个窗口3期内命中，<span style="color:#dc2626">连错N窗</span>=已连续N个窗口3期全错（N是这一段连续长度，每年重新起算）。<b>可关注</b>=窗口命中率≥90% 且"错1窗后"不低于平时；<b>刚错窗·观望</b>=上一个窗口刚全错；<b>等待重开·先躲</b>=三期全错后正在等该号重新开出（此期间不下）；<b>避开</b>=历史窗口命中率低于88%；<b>暂停建仓</b>=模型首推近期失效。<b>净收益/ROI 都是"假设14条线全按公式下注"的模拟账，不是你实际下的单</b>（你的真账在「追三期下单」页）。</div>';
     html += "</div>";
 
+    // ===== 两期 vs 三期 逐线对比（2026真实数据，只作参考，不改任何公式）=====
+    var ref3 = betPickRefRows(3);
+    var cmpRows = EXEC_LINES.map(function (line) {
+      return { line: line, n2: betLineAccount(line, 2, 2026).net, n3: betLineAccount(line, 3, 2026).net, p3: ref3[line.id].p3 };
+    });
+    var sumTwo = 0, sumThree = 0;
+    cmpRows.forEach(function (r) { sumTwo += r.n2; sumThree += r.n3; });
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">两期 / 三期 逐线对比 · 2026真实数据</h2><span class="section__hint">只作参考：同一条线两个口径各赚多少、差多少，决定这条线用哪个口径</span></div>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:880px;font-size:12px"><thead><tr><th>线路</th><th>三期净收益（元）</th><th>两期净收益（元）</th><th>两期−三期</th><th>第3期中率</th><th>建议</th></tr></thead><tbody>';
+    cmpRows.forEach(function (r) {
+      var d = r.n2 - r.n3, advice, tone;
+      if (r.line.hold) { advice = "永久不建仓"; tone = "#991b1b"; }
+      else if (r.n2 < 0 && r.n3 < 0) { advice = "都亏 · 先躲"; tone = "#dc2626"; }
+      else if (r.n2 > r.n3 + 500) { advice = "两期更优"; tone = "#2563eb"; }
+      else if (r.n3 > r.n2 + 500) { advice = "三期更优"; tone = "#16a34a"; }
+      else { advice = "差不多"; tone = "#475569"; }
+      html += '<tr><td><b>' + r.line.label + "</b></td>";
+      html += '<td style="color:' + (r.n3 >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.n3 >= 0 ? "+" : "") + Math.round(r.n3) + "</td>";
+      html += '<td style="color:' + (r.n2 >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.n2 >= 0 ? "+" : "") + Math.round(r.n2) + "</td>";
+      html += '<td style="color:' + (d >= 0 ? "#2563eb" : "#b45309") + '">' + (d >= 0 ? "+" : "") + Math.round(d) + "</td>";
+      html += "<td>" + (r.p3 * 100).toFixed(0) + '%</td>';
+      html += '<td><b style="color:' + tone + '">' + advice + "</b></td></tr>";
+    });
+    html += '<tr><td><b>合计</b></td><td><b>' + (sumThree >= 0 ? "+" : "") + Math.round(sumThree) + '</b></td><td><b>' + (sumTwo >= 0 ? "+" : "") + Math.round(sumTwo) + '</b></td><td><b>' + ((sumTwo - sumThree) >= 0 ? "+" : "") + Math.round(sumTwo - sumThree) + '</b></td><td>-</td><td>单窗最深亏 三期2300 / 两期800</td></tr>';
+    html += "</tbody></table>";
+    html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>两期−三期</b>正数=这条线两期多赚。第3期中率低的线（&lt;58%），三期第3期押1500只赚400、错一次亏2300，容易被拖死，两期只亏800更稳；第3期中率高的线（≥58%）三期能把+400收回来。两期单窗最深亏800、三期2300。</div>';
+    html += "</div>";
+
     plan.forEach(function (row) {
       var line = row.line;
       var live = row.live;

@@ -184,3 +184,4 @@ if (errors.length) {
   process.exit(1);
 }
 console.log("PAGE AUDIT PASSED");
+must(appText.includes("两期 / 三期 逐线对比") && appText.includes("betLineAccount(line, 2, 2026).net") && appText.includes("betLineAccount(line, 3, 2026).net") && appText.includes("两期−三期") && appText.includes("单窗最深亏 三期2300 / 两期800") && appText.includes("只作参考"), "下注执行表必须给「两期/三期逐线对比」表（2026真实数据·逐线净收益差·只作参考），方便决定每条线用哪个口径");
