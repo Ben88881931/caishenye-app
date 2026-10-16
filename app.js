@@ -1715,6 +1715,13 @@
         // 错窗后等多号重新开出的空档：单独一格，写等了几期
         if (wait > 0) out.push({ kind: "wait", wait: wait });
       });
+      // 现在还在等号重开、还没开出下一窗：最后一格必须是“等”（按已经等了几期算）
+      if (stNow && stNow.waiting && rows.length) {
+        var lastW = rows[rows.length - 1];
+        var endP = betLocalPeriod(lastW.start) + ((lastW.attempts || []).length) - 1;
+        var waitNow = latest - endP + 1;
+        if (waitNow > 0) out.push({ kind: "wait", wait: waitNow });
+      }
       // 保持时间正序（旧→新）：渲染时各线从底部对齐，最新的那件事永远在最下面一行
       return { label: line.label, events: out };
     });
