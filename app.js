@@ -3251,7 +3251,8 @@
         var l2 = lR.filter(function (r) { return r.len === 2; }).length;
         var l3 = lR.filter(function (r) { return r.len >= 3; }).length;
         html += '<div style="min-width:158px;border:1px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:11px;line-height:1.65;background:#fff">';
-        html += '<b>' + y + '年</b> · 中' + hitN + ' / 错' + (seq.length - hitN) + '<br>';
+        // 每年的窗口总数与命中率单独列出来（用户要求把总窗口按年拆开看）
+        html += '<b>' + y + '年</b> · 共' + seq.length + '窗 · 中' + hitN + ' / 错' + (seq.length - hitN) + ' · <b style="color:#1d4ed8">命中率' + (seq.length ? (hitN / seq.length * 100).toFixed(1) : "0.0") + '%</b><br>';
         html += '连中段 ' + segBrief(wR) + '<br>连错段 ' + segBrief(lR) + '<br>';
         html += '连错2窗 ' + l2 + ' 次 · 连错3窗+ ' + l3 + ' 次</div>';
       });
