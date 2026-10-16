@@ -1362,13 +1362,19 @@ html.gesture-active * {
 .wm-heat .heatmap__table {
   width: 100%;
   table-layout: fixed;
-  border-collapse: collapse;
-  border-spacing: 0;
+  border-collapse: separate;
+  border-spacing: 4px 0;
 }
 
 .wm-heat .heatmap__table th:nth-child(n + 2),
 .wm-heat .heatmap__table td:nth-child(n + 2) {
   border-left: 1px solid #cbd5e1;
+}
+
+/* 隔列淡底：让每条线各自成条，不会看成一片 */
+.wm-heat .heatmap__table th:nth-child(odd):nth-child(n + 2),
+.wm-heat .heatmap__table td:nth-child(odd):nth-child(n + 2) {
+  background: #f8fafc;
 }
 
 /* 刚好一屏宽：列等比压缩，不再左右滑动 */
@@ -1384,11 +1390,11 @@ html.gesture-active * {
 }
 
 .wm-heat .heat-cell {
-  width: 24px;
-  height: 24px;
+  width: 21px;
+  height: 21px;
   margin: 1px auto;
-  font-size: 12px;
-  border-radius: 4px;
+  font-size: 11px;
+  border-radius: 3px;
 }
 
 .wm-heat .heat-wait {
