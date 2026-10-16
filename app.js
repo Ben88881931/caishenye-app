@@ -361,6 +361,7 @@
     numSearchMode: "all",
     numSearchType: "tail",
     betPlanMode: "three",
+    windowMissMode: "three",   // 窗口遗漏热图自己的方案开关（与下注执行表完全独立）
     betLineMode: "all",
     betResearchOpen: false,
   };
@@ -1703,7 +1704,8 @@
   // 窗口遗漏热图：单位=窗口（不是期），14条线一屏，绿=中窗、红=错窗（数字=连错到第几窗），可左右上下滚动
   function renderWindowMiss() {
     var curYear = (D[D.length - 1] || {}).y;
-    var maxStage = betMaxStage();   // 两期/三期跟着下注执行表的方案走：两期=一个窗口最多2期
+    // 本页自己的方案开关：两期=一个窗口最多2期。两期/三期各自一套窗口、各自命中率、各自规律，互不引用
+    var maxStage = state.windowMissMode === "two" ? 2 : 3;
     var perLine = EXEC_LINES.map(function (line) {
       var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
       var stNow = wmStageNow(line, maxStage);
@@ -1741,9 +1743,9 @@
     perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
     var html = '<div class="section"><div class="panel" style="padding:10px;margin-bottom:8px"><div class="wm-view-tabs" style="margin-bottom:6px">';
-    html += '<button class="chip wm-view-tab' + (maxStage === 3 ? " is-active" : "") + '" type="button" data-bet-mode="three">三期窗口</button>';
-    html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-bet-mode="two">两期窗口</button>';
-    html += '</div><div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + (maxStage === 2 ? "两期窗口（一个窗口最多第2期）" : "三期窗口（一个窗口最多第3期）") + '</b> · 和「下注执行表」同一个方案开关，切哪边两边一起变。</div></div></div>';
+    html += '<button class="chip wm-view-tab' + (maxStage === 3 ? " is-active" : "") + '" type="button" data-wm-mode="three">三期窗口</button>';
+    html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-wm-mode="two">两期窗口</button>';
+    html += '</div><div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + (maxStage === 2 ? "两期窗口（一个窗口最多第2期）" : "三期窗口（一个窗口最多第3期）") + '</b> · 本页独立开关，只影响这一页；两期和三期各自一套窗口、命中率、性格规律，互不引用。</div></div></div>';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
     html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=14条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第2期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
     html += '<div class="panel panel--wmheat"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
@@ -2771,9 +2773,10 @@
       if (line.hold) { verdict = "暂停建仓（首推失效）"; color = "#991b1b"; }
       else if (now.waiting) { verdict = "等待重开 · 先躲"; color = "#b45309"; }
       else if (n < 100) { verdict = "样本不足 · 观察"; color = "#64748b"; }
-      else if (rate < 0.88) { verdict = "避开（历史偏弱）"; color = "#dc2626"; }
-      else if (streak >= 1) { verdict = "刚错窗 · 观望"; color = "#d97706"; }
-      else if (after != null && after >= rate && rate >= 0.90) { verdict = "可关注"; color = "#16a34a"; }
+    // 门槛按口径分开：三期随机基准 91.1%、两期随机基准 80.1%（各算各的，别拿三期门槛卡两期）
+    else if (rate < (maxStage === 2 ? 0.78 : 0.88)) { verdict = "避开（历史偏弱）"; color = "#dc2626"; }
+    else if (streak >= 1) { verdict = "刚错窗 · 观望"; color = "#d97706"; }
+    else if (after != null && after >= rate && rate >= (maxStage === 2 ? 0.82 : 0.90)) { verdict = "可关注"; color = "#16a34a"; }
       else { verdict = "中性"; color = "#475569"; }
       var ps = betPersonalitySeries(line, maxStage);
       var lastP = ps.states.length ? ps.states[ps.states.length - 1] : { state: 0, len: 0 };
@@ -2953,7 +2956,7 @@
       out += '<span style="color:#6b7280">第' + period + '期</span>';
       out += '<span style="margin-left:auto;font-weight:900">' + (tail != null ? "尾" + tail : "待定") + "</span>";
       out += '<span style="flex:0 0 30px;text-align:right;font-weight:900;color:' + tone + '">' + stateText + "</span>";
-      out += '<span style="flex:0 0 56px;text-align:right;color:#64748b">' + (inPlan ? BET_STAKES[k] + "元" : "本方案不打") + "</span>";
+      out += '<span style="flex:0 0 56px;text-align:right;color:#64748b">' + BET_STAKES[k] + "元</span>";
       out += "</div>";
     }
     return out;
@@ -3023,7 +3026,7 @@
     html += '</div>';
     html += '<div class="panel__body" style="font-size:13px;line-height:1.75">当前方案：<b>' + modeLabel + '</b>。<br>';
     if (maxStage === 2) {
-      html += "一个窗口最多做到第2期：第1期100元、第2期700元；两期都没中就结束这个窗口，第3期不打，等锁定号重新开出后再开新窗口。";
+      html += "一个窗口只做两期：第1期100元、第2期700元；两期都没中就结束这个窗口，等锁定号重新开出后再开新窗口（两期口径自己一套，不看第3期）。";
     } else {
       html += "一个窗口做到第3期：第1期100元、第2期700元、第3期1500元；任意一期命中或三期全错就结束窗口，全错后等锁定号重新开出再开新窗口。";
     }
@@ -3119,8 +3122,8 @@
 
     // 选号参考表：14 条线一行，自己挑 2-3 条下（只做参考，不是指令，也不自动下单）
     var refRows = betPickRefRows(maxStage);
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">选号参考表 · 自己挑 2-3 条下</h2><span class="section__hint">不是指令：只看状态与规律，这窗下哪几条、下不下，你自己定</span></div>';
-    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1080px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>对错性格</th><th>窗口命中率</th><th>第1期中</th><th>第2期中</th><th>第3期中</th><th>当前连错</th><th>错1窗后</th><th>今年净收益<br>（假设14条全下）</th><th>参考</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">选号参考表 · 自己挑 2-3 条下</h2><span class="section__hint">' + (maxStage === 2 ? "两期口径（一个窗口最多2期，没有第3期）" : "三期口径（一个窗口最多3期）") + ' · 不是指令：只看状态与规律，这窗下哪几条、下不下，你自己定</span></div>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1080px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>对错性格</th><th>窗口命中率</th><th>第1期中</th><th>第2期中</th>' + (maxStage === 3 ? "<th>第3期中</th>" : "") + '<th>当前连错</th><th>错1窗后</th><th>今年净收益<br>（假设14条全下）</th><th>参考</th></tr></thead><tbody>';
     EXEC_LINES.forEach(function (line) {
       var r = refRows[line.id];
       html += '<tr><td><b>' + line.label + "</b></td>";
@@ -3130,7 +3133,7 @@
       var mark = function (x) { return x >= 0.5556 ? '<b style="color:#16a34a">✅</b>' : '<span style="color:#94a3b8">·</span>'; };
       html += "<td>" + mark(r.p1) + " " + (r.p1 * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.t1 + "）</span></td>";
       html += "<td>" + mark(r.p2) + " " + (r.p2 * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.t2 + "）</span></td>";
-      html += "<td>" + mark(r.p3) + " " + (r.p3 * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.t3 + "）</span></td>";
+      if (maxStage === 3) html += "<td>" + mark(r.p3) + " " + (r.p3 * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.t3 + "）</span></td>";
       html += "<td>" + (r.streak ? r.streak + " 个" : "-") + "</td>";
       html += "<td>" + (r.after != null ? (r.after * 100).toFixed(0) + '%<span style="color:#94a3b8">（' + r.a1n + "）</span>" : "-") + "</td>";
       html += '<td style="color:' + (r.net2026 >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.net2026 >= 0 ? "+" : "") + Math.round(r.net2026) + "</td>";
@@ -6418,8 +6421,14 @@
     var betMode = e.target.closest("[data-bet-mode]");
     if (betMode) {
       state.betPlanMode = betMode.dataset.betMode === "three" ? "three" : "two";
-      // 方案开关两页共用：在哪一页点就重渲染哪一页
-      if (state.tab === "windowmiss") renderWindowMiss(); else renderBetExec();
+      renderBetExec();
+      return;
+    }
+    var wmMode = e.target.closest("[data-wm-mode]");
+    if (wmMode) {
+      // 窗口遗漏热图自己的开关，只重渲染本页，不动下注执行表的方案
+      state.windowMissMode = wmMode.dataset.wmMode === "two" ? "two" : "three";
+      renderWindowMiss();
       return;
     }
     var betResearch = e.target.closest("#view details > summary");
