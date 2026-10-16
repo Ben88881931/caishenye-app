@@ -1703,9 +1703,10 @@
   // 窗口遗漏热图：单位=窗口（不是期），14条线一屏，绿=中窗、红=错窗（数字=连错到第几窗），可左右上下滚动
   function renderWindowMiss() {
     var curYear = (D[D.length - 1] || {}).y;
+    var maxStage = betMaxStage();   // 两期/三期跟着下注执行表的方案走：两期=一个窗口最多2期
     var perLine = EXEC_LINES.map(function (line) {
-      var rows = wmWindowsForStage(line, 3).filter(function (w) { return wmYearOf(w.start) === curYear; });
-      var stNow = wmStageNow(line, 3);
+      var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
+      var stNow = wmStageNow(line, maxStage);
       var nextStartFull = stNow && stNow.active ? Number(stNow.active.start) : null;
       // 每条线自己的竖排事件流：一窗一格；窗与窗之间“等号重开”的空档单独占一格
       var out = [], streak = 0;
@@ -1739,7 +1740,11 @@
     var maxN = 0;
     perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
+    var html = '<div class="section"><div class="panel" style="padding:10px;margin-bottom:8px"><div class="wm-view-tabs" style="margin-bottom:6px">';
+    html += '<button class="chip wm-view-tab' + (maxStage === 3 ? " is-active" : "") + '" type="button" data-bet-mode="three">三期窗口</button>';
+    html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-bet-mode="two">两期窗口</button>';
+    html += '</div><div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + (maxStage === 2 ? "两期窗口（一个窗口最多第2期）" : "三期窗口（一个窗口最多第3期）") + '</b> · 和「下注执行表」同一个方案开关，切哪边两边一起变。</div></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
     html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=14条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第2期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
     html += '<div class="panel panel--wmheat"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
@@ -6413,7 +6418,8 @@
     var betMode = e.target.closest("[data-bet-mode]");
     if (betMode) {
       state.betPlanMode = betMode.dataset.betMode === "three" ? "three" : "two";
-      renderBetExec();
+      // 方案开关两页共用：在哪一页点就重渲染哪一页
+      if (state.tab === "windowmiss") renderWindowMiss(); else renderBetExec();
       return;
     }
     var betResearch = e.target.closest("#view details > summary");

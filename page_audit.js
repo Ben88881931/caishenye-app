@@ -158,6 +158,7 @@ const missingTabs = tabIds.filter((id) => !appText.includes('state.tab === "' + 
 must(tabIds.length > 0 && missingTabs.length === 0, "所有导航页面都有渲染入口");
 must(appText.includes("exec-hist-card--live") && appText.includes("每个页面的窗口都必须能看到现在走到哪一步") && appText.includes("进行中 · 第") && appText.includes("等待中 · 等尾") && appText.includes("本期不下注"), "下注执行表的对错滚动记录第1张必须是当前窗口状态（进行中第N期 / 等待中等尾X已等N期），和窗口遗漏热图底行一个口径");
 must(appText.includes('id: "fixedD1"') && appText.includes('id: "recD1"') && appText.includes("D1数据不达标永久不建仓") && appText.includes("真实快照需显著高于随机基准才解禁") && (appText.match(/plan: \[0, 0, 0\], hold: "D1数据不达标永久不建仓/g) || []).length === 2, "追号码D1与追推荐D1必须永久不建仓（plan [0,0,0] + 永久不建仓标记），只有真实快照显著高于随机基准才解禁");
+must(appText.includes("function renderWindowMiss") && appText.includes("var maxStage = betMaxStage()") && appText.includes("wmWindowsForStage(line, maxStage)") && (appText.match(/data-bet-mode="two"/g) || []).length >= 2 && appText.includes("两期窗口（一个窗口最多第2期）") && appText.includes('if (state.tab === "windowmiss") renderWindowMiss(); else renderBetExec();'), "窗口遗漏热图必须同时支持两期/三期（用同一方案开关），两期时窗口最多2期");
 must(appText.includes("每年的窗口总数与命中率单独列出来") && appText.includes("共' + seq.length + '窗") && appText.includes("命中率' + (seq.length ? (hitN / seq.length * 100)"), "下注执行表每条线必须把窗口总数按年单独列出：每年写「共N窗 / 中X / 错Y / 命中率Z%」，不能只给全历史总数");
 const modelFlow = ["pick3", "chasenumber", "betexec", "formulas", "windowmult", "orderlog"];
 const flowPositions = modelFlow.map((id) => tabIds.indexOf(id));
