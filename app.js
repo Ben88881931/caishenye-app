@@ -2436,9 +2436,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
-    { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [0, 0, 0], hold: "首推(D1)近期失效：27期37%(随机53%)、p=0.01，暂停建仓观察" },
+      { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [0, 0, 0], hold: "D1数据不达标永久不建仓（真实快照需显著高于随机基准才解禁）：27期37% vs 随机53%、p=0.01" },
     { id: "fixedD2", label: "追号码 D2", kind: "fixed", stream: "D2", plan: [0, 300, 0] },
-    { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [0, 0, 0], hold: "首推(D1)近期失效：27期37%(随机53%)、p=0.01，暂停建仓观察" },
+      { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [0, 0, 0], hold: "D1数据不达标永久不建仓（真实快照需显著高于随机基准才解禁）：27期37% vs 随机53%、p=0.01" },
     { id: "recD2", label: "追推荐 D2", kind: "recommend", stream: "D2", plan: [0, 300, 0] },
   ];
 
