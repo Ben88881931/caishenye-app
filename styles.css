@@ -1363,7 +1363,7 @@ html.gesture-active * {
   width: 100%;
   table-layout: fixed;
   border-collapse: separate;
-  border-spacing: 4px 0;
+  border-spacing: 3px 0;
 }
 
 .wm-heat .heatmap__table th:nth-child(n + 2),
@@ -1384,16 +1384,16 @@ html.gesture-active * {
 }
 
 .wm-heat .heatmap__table .row-label {
-  width: 34px;
-  padding-right: 2px;
+  width: 26px;
+  padding-right: 1px;
   font-size: 11px;
 }
 
 .wm-heat .heat-cell {
-  width: 21px;
-  height: 21px;
+  width: 23px;
+  height: 23px;
   margin: 1px auto;
-  font-size: 11px;
+  font-size: 12px;
   border-radius: 3px;
 }
 
