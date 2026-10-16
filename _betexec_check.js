@@ -121,16 +121,17 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const w3 = threeCounts.map((s) => Number((/2026窗 (\d+)/.exec(s) || [])[1] || 0));
   check(w2.some((n, i) => n !== w3[i]), "两期窗口与三期窗口分开算（各线独立，窗数对比）", "两期 " + w2.join(",") + " / 三期 " + w3.join(","));
 
-  // 三期模式：滚动记录里应该有“第3期中”，不该出现“本方案不打”
+  // 三期模式：滚动记录里应该有“第3期中”（窗口按3期跑）
   const text3 = await ev("document.querySelector('#view').innerText");
-  check(/第3期中/.test(text3) && !/本方案不打/.test(text3), "三期方案窗口做到第3期");
+  check(/第3期中/.test(text3), "三期方案窗口做到第3期");
 
-  // 两期模式：滚动记录应标注第3期不打，且不该有第3期中
+  // 两期模式：记录卡里只能有第1/2期，不许再出现第3期（窗口就是两期一个窗口）
   await ev("var b=document.querySelector('[data-bet-mode=\"two\"]'); if(b)b.click(); true"); await sleep(1500);
   const text2 = await ev("document.querySelector('#view').innerText");
-  // 只看“窗口记录卡”里有没有第3期中（选号参考表里有“第3期中”这一列，不参与判定）
-  const bad3 = await ev("[].filter.call(document.querySelectorAll('#view .exec-hist-card'), function (c) { var t = c.innerText.replace(/\\n+/g, '|'); return /第3期\\|[^|]*第\\d+期\\|尾\\d\\|中/.test(t); }).length");
-  check(/本方案不打/.test(text2) && bad3 === 0, "两期方案窗口只做两期，第3期标注不打", "记录卡里第3期中出现 " + bad3 + " 次");
+  // 只看“窗口记录卡”（选号参考表里有“第3期中”这一列，不参与判定）
+  const bad3 = await ev("[].filter.call(document.querySelectorAll('#view .exec-hist-card'), function (c) { return /第3期/.test(c.innerText); }).length");
+  const hasTwo = await ev("[].filter.call(document.querySelectorAll('#view .exec-hist-card'), function (c) { return /第2期/.test(c.innerText); }).length");
+  check(bad3 === 0 && hasTwo > 0 && /两期/.test(text2), "两期方案一个窗口只做两期（记录卡里没有第3期）", "含第3期的卡=" + bad3 + " 含第2期的卡=" + hasTwo);
 
   await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1800);
   d = JSON.parse(await read());

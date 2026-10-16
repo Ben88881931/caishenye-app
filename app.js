@@ -2934,7 +2934,8 @@
 
   function betWindowRowsHTML(line, w, maxStage) {
     var out = "";
-    for (var k = 0; k < 3; k++) {
+    // 只渲染本方案实际检查的期数：两期方案就是第1/2期，不再多列一行第3期（用户要求）
+    for (var k = 0; k < maxStage; k++) {
       var g = Number(w.start) + k;
       var period = betLocalPeriod(g);
       var at = (w.attempts || [])[k] || null;
@@ -3276,7 +3277,7 @@
           waitedN = Math.max(1, latest - endP + 1);
         }
         liveStageText = "等待中 · 等尾" + live.waiting.tail + "开出（已等 " + waitedN + " 期）";
-        liveWaitText = "上窗三期全错 · 等尾" + live.waiting.tail + "重新开出后才开新窗口（本期不下注）";
+        liveWaitText = "上窗" + (maxStage === 2 ? "两期" : "三期") + "全错 · 等尾" + live.waiting.tail + "重新开出后才开新窗口（本期不下注）";
       } else if (live.active) {
         liveStageText = "进行中 · 第" + live.stage + "期 · " + (live.active.lockedTail != null ? "锁尾" + live.active.lockedTail : "每期最新推荐");
       } else {
