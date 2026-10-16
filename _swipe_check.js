@@ -87,10 +87,14 @@ async function main() {
   check(t3o.during === "none" && t3o.before === "none", "拖动时页面不整体位移（不晃屏）", t3);
   await sleep(400);
 
-  // 4) 右滑 ≥160px → 回目录
-  await gesture("#view .section__title", [60, 120, 200], null, 25);
+  // 4a) 右滑 200px 不够 → 不该回目录（门槛已提到 220px）
+  await gesture("#view .section__title", [60, 130, 200], null, 25);
   await sleep(700);
-  check(await evalJS("!!document.querySelector('.directory-grid')") === true, "右滑 ≥160px → 回到目录");
+  check(await evalJS("!!document.querySelector('.directory-grid')") === false, "右滑 200px 不够 → 不会误回目录");
+  // 4b) 右滑 ≥220px 且明显横向 → 回目录
+  await gesture("#view .section__title", [80, 150, 240], null, 25);
+  await sleep(700);
+  check(await evalJS("!!document.querySelector('.directory-grid')") === true, "右滑 ≥220px 且明显横向 → 回到目录");
 
   // 5) 横向滚动条内滑动不翻页
   await evalJS("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
