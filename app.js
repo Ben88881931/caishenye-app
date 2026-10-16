@@ -1708,25 +1708,28 @@
     });
     var maxN = 0;
     perLine.forEach(function (p) { if (p.cells.length > maxN) maxN = p.cells.length; });
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图 · 14条线</h2><span class="section__hint">单位=窗口（不是期）· 绿=中窗 / 红=错窗（数字=连错到第几窗）· 新→旧 · ' + curYear + '年 · 左右上下滑动查看</span></div></div>';
-    html += '<div class="panel" style="padding:10px;overflow:auto;-webkit-overflow-scrolling:touch;max-height:70vh">';
-    html += '<table class="table" style="min-width:960px;font-size:11px"><thead><tr><th style="position:sticky;left:0;top:0;background:#fff;z-index:2">窗口序号</th>';
-    perLine.forEach(function (p) { html += '<th style="position:sticky;top:0;background:#fff">' + p.label + '</th>'; });
+    // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年第 1 窗 - 第 ' + maxN + " 窗 · 共 " + maxN + " 窗（单位=窗口，不是期）</span></div>";
+    html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">窗</th><th>起期</th><th>中</th>';
+    perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
     for (var i = 0; i < maxN; i++) {
-      html += '<tr><td style="position:sticky;left:0;background:#fff;font-weight:800">第' + (maxN - i) + '窗</td>';
+      var starts = [], hitN = 0;
+      perLine.forEach(function (p) { var c = p.cells[i]; if (c) { starts.push(c.period); if (c.hit) hitN++; } });
+      html += '<tr><td class="row-label">' + (i + 1) + '</td><td class="open-tails">' + (starts.length ? Math.min.apply(null, starts) + "-" + Math.max.apply(null, starts) : "-") + '</td><td class="open-count">' + hitN + "</td>";
       perLine.forEach(function (p) {
-        var cell = p.cells[p.cells.length - 1 - i];
-        if (!cell) { html += '<td style="color:#cbd5e1;text-align:center">-</td>'; return; }
-        var bg = cell.hit ? "#f0fdf4" : "#fef2f2";
-        var fg = cell.hit ? "#16a34a" : "#dc2626";
-        html += '<td style="background:' + bg + ';color:' + fg + ';text-align:center;font-weight:900">' + (cell.hit ? "中" : "错" + cell.miss) + '<div style="font-size:9px;color:#94a3b8">第' + cell.period + '期</div></td>';
+        var c = p.cells[i];
+        if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
+        if (c.hit) { html += '<td><span class="heat-cell cell-hit">中</span></td>'; return; }
+        var cls = "cell-miss" + Math.min(4, c.miss);
+        html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span></td>";
       });
       html += "</tr>";
     }
-    html += "</tbody></table></div>";
-    html += '<p class="disclaimer">本页只按窗口对错记账（窗口=3期为一个窗口，中=3期内命中过，错=3期全错），不看金额、不预测；数字是该窗口处在连错段的第几窗。</p>';
+    html += "</tbody></table></div></div></div>";
     view.innerHTML = html;
+    var hm = view.querySelector(".heatmap");
+    if (hm) hm.scrollTop = hm.scrollHeight;
   }
 
   function renderTrendImpl() {
