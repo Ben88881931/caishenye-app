@@ -1340,8 +1340,8 @@ html.gesture-active * {
 .heat-cell.cell-miss4 { background: #ef4444; }
 .heat-cell.cell-empty { background: #f1f5f9; color: #cbd5e1; }
 
-/* 窗口遗漏热图：错窗后面「等号重开」空了几期的橙色标记 */
-.heat-cell.cell-wait { background: #ffedd5; color: #c2410c; }
+/* 窗口遗漏热图：错窗后面「等号重开」空了几期的绿色标记（浅绿底+深绿字，和连错第2窗的实心绿区分开） */
+.heat-cell.cell-wait { background: #dcfce7; color: #15803d; }
 
 .heat-wait {
   display: inline-block;
