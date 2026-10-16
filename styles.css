@@ -1360,13 +1360,46 @@ html.gesture-active * {
 
 /* 窗口遗漏热图：每条线自成一块（列框 + 隔行底色 + 表头分块），不要连成一整片竖条 */
 .wm-heat .heatmap__table {
-  border-collapse: separate;
-  border-spacing: 5px 0;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
 }
 
-.wm-heat .heatmap__table th:nth-child(n + 4),
-.wm-heat .heatmap__table td:nth-child(n + 4) {
+.wm-heat .heatmap__table th:nth-child(n + 3),
+.wm-heat .heatmap__table td:nth-child(n + 3) {
   border-left: 1px solid #cbd5e1;
+}
+
+/* 刚好一屏宽：列等比压缩，不再左右滑动 */
+.wm-heat {
+  overflow-x: hidden;
+  padding: 3px 2px;
+}
+
+.wm-heat .heatmap__table .row-label {
+  width: 30px;
+  padding-right: 2px;
+  font-size: 10px;
+}
+
+.wm-heat .heatmap__table th:nth-child(2),
+.wm-heat .heatmap__table td:nth-child(2) {
+  width: 18px;
+  font-size: 10px;
+}
+
+.wm-heat .heat-cell {
+  width: 17px;
+  height: 17px;
+  margin: 1px auto;
+  font-size: 10px;
+  border-radius: 3px;
+}
+
+.wm-heat .heat-wait {
+  font-size: 8px;
+  padding: 0 2px;
 }
 
 .wm-heat .heatmap__table th:nth-child(n + 4) {
