@@ -1758,6 +1758,8 @@
     view.innerHTML = html;
     var hm = view.querySelector(".heatmap");
     if (hm) hm.scrollTop = hm.scrollHeight;
+    // 本页改成整页自然滚动（不再套内部滚动容器，避免上下滑不动），进页面直接停在最新
+    window.scrollTo(0, document.documentElement.scrollHeight);
   }
 
   function renderTrendImpl() {

@@ -1363,7 +1363,7 @@ html.gesture-active * {
   width: 100%;
   table-layout: fixed;
   border-collapse: separate;
-  border-spacing: 3px 0;
+  border-spacing: 4px 0;
 }
 
 .wm-heat .heatmap__table th:nth-child(n + 2),
@@ -1377,10 +1377,14 @@ html.gesture-active * {
   background: #f8fafc;
 }
 
-/* 刚好一屏宽：列等比压缩，不再左右滑动 */
+/* 刚好一屏宽：列等比压缩，不再左右滑动；上下用整页自然滚动（不再套内部滚动容器，避免滑不动） */
 .wm-heat {
   overflow-x: hidden;
-  padding: 3px 2px;
+  overflow-y: visible;
+  max-height: none;
+  padding: 4px 3px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
 }
 
 .wm-heat .heatmap__table .row-label {
@@ -1390,8 +1394,8 @@ html.gesture-active * {
 }
 
 .wm-heat .heat-cell {
-  width: 23px;
-  height: 23px;
+  width: 22px;
+  height: 22px;
   margin: 1px auto;
   font-size: 12px;
   border-radius: 3px;
