@@ -3154,8 +3154,11 @@
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:880px;font-size:12px"><thead><tr><th>线路</th><th>三期净收益（元）</th><th>两期净收益（元）</th><th>两期−三期</th><th>第3期中率</th><th>建议</th></tr></thead><tbody>';
     cmpRows.forEach(function (r) {
       var d = r.n2 - r.n3, advice, tone;
+      var BE = 0.5556;   // 单期打平线（赔率1.8）
       if (r.line.hold) { advice = "永久不建仓"; tone = "#991b1b"; }
       else if (r.n2 < 0 && r.n3 < 0) { advice = "都亏 · 先躲"; tone = "#dc2626"; }
+      // 第3期中率低于打平线 = 第3期这一注结构上就是亏的，不能因为今年三期多赚就选三期（那是波动）
+      else if (r.p3 < BE && r.n3 > r.n2) { advice = "两期更优 · 第3期不划算"; tone = "#2563eb"; }
       else if (r.n2 > r.n3 + 500) { advice = "两期更优"; tone = "#2563eb"; }
       else if (r.n3 > r.n2 + 500) { advice = "三期更优"; tone = "#16a34a"; }
       else { advice = "差不多"; tone = "#475569"; }
@@ -3163,7 +3166,7 @@
       html += '<td style="color:' + (r.n3 >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.n3 >= 0 ? "+" : "") + Math.round(r.n3) + "</td>";
       html += '<td style="color:' + (r.n2 >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.n2 >= 0 ? "+" : "") + Math.round(r.n2) + "</td>";
       html += '<td style="color:' + (d >= 0 ? "#2563eb" : "#b45309") + '">' + (d >= 0 ? "+" : "") + Math.round(d) + "</td>";
-      html += "<td>" + (r.p3 * 100).toFixed(0) + '%</td>';
+      html += "<td>" + (r.p3 * 100).toFixed(1) + '%</td>';
       html += '<td><b style="color:' + tone + '">' + advice + "</b></td></tr>";
     });
     html += '<tr><td><b>合计</b></td><td><b>' + (sumThree >= 0 ? "+" : "") + Math.round(sumThree) + '</b></td><td><b>' + (sumTwo >= 0 ? "+" : "") + Math.round(sumTwo) + '</b></td><td><b>' + ((sumTwo - sumThree) >= 0 ? "+" : "") + Math.round(sumTwo - sumThree) + '</b></td><td>-</td><td>单窗最深亏 三期2300 / 两期800</td></tr>';

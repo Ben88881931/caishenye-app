@@ -17,6 +17,7 @@ const CHECKS = [
   { name: "护栏·记录只当年", cmd: ["node", "_record_scope_check.js"], blocker: true },
   { name: "护栏·当期尾号写全", cmd: ["node", "_hint_tail_check.js"], blocker: true },
   { name: "护栏·下注执行表", cmd: ["node", "_betexec_check.js"], blocker: true },
+  { name: "监测·两期三期对比", cmd: ["node", "_twomode_watch.js"], blocker: false },
   { name: "护栏·翻页手势", cmd: ["node", "_swipe_check.js"], blocker: true },
   { name: "护栏·本地=远端", cmd: ["node", "_remote_sync_check.js"], blocker: postPush, skip: !postPush, skipNote: "推送后复核（加 --post-push 才跑）" },
 ];
