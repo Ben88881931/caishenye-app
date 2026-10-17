@@ -22,19 +22,31 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   await send("Page.enable"); await send("Runtime.enable");
   await send("Page.navigate", { url: "http://127.0.0.1:" + HTTP + "/index.html" });
   for (let i = 0; i < 30; i++) { if (await ev("!!document.querySelector('.directory-card')")) break; await sleep(400); }
-  const groups = JSON.parse(await ev("JSON.stringify([].map.call(document.querySelectorAll('[data-directory-group]'),function(g){return g.dataset.directoryGroup;}))"));
-  let pages = 0; const bad = [];
-  for (const gid of groups) {
+  // 目录页（首页）也要锁宽
+  await ev("var bk0=document.querySelector('[data-directory=\"1\"]'); if(bk0)bk0.click(); true"); await sleep(600);
+  const dirM = JSON.parse(await ev("JSON.stringify({d:document.documentElement.scrollWidth-document.documentElement.clientWidth,b:document.body.scrollWidth-document.body.clientWidth})"));
+  check(dirM.d <= 1 && dirM.b <= 1, "目录页（首页）整页横向溢出必须为0", "over=" + dirM.d + "/" + dirM.b);
+  const groups = JSON.parse(await ev("JSON.stringify([].map.call(document.querySelectorAll('[data-directory-group]'),function(g){return {id:g.dataset.directoryGroup,label:g.innerText.trim().split('\\n')[0]};}))"));
+  let pages = 0; const bad = []; const report = [];
+  for (const g of groups) {
+    const gid = g.id;
     await ev("var bk=document.querySelector('[data-directory=\"1\"]'); if(bk)bk.click(); true"); await sleep(420);
     await ev("var x=document.querySelector('[data-directory-group=\"" + gid + "\"]'); if(x)x.click(); true"); await sleep(500);
+    // 一级（分组落地页）
+    const gm = JSON.parse(await ev("JSON.stringify({d:document.documentElement.scrollWidth-document.documentElement.clientWidth,b:document.body.scrollWidth-document.body.clientWidth})"));
+    pages++;
+    if (gm.d > 1 || gm.b > 1) bad.push("一级·" + g.label + "(" + gm.d + "/" + gm.b + "px)");
+    report.push((gm.d <= 1 && gm.b <= 1 ? "PASS" : "FAIL") + " 一级 " + g.label + " over=" + gm.d + "/" + gm.b);
     const tabs = JSON.parse(await ev("JSON.stringify([].map.call(document.querySelectorAll('#tabs .tab[data-tab]'),function(b){return {id:b.dataset.tab,label:b.innerText.trim()};}).filter(function(t){return t.id!=='directory';}))"));
     for (const tb of tabs) {
       await ev("var b=document.querySelector('.tab[data-tab=\"" + tb.id + "\"]'); if(b)b.click(); true"); await sleep(1200);
       const m = JSON.parse(await ev("JSON.stringify({d:document.documentElement.scrollWidth-document.documentElement.clientWidth,b:document.body.scrollWidth-document.body.clientWidth})"));
       pages++;
       if (m.d > 1 || m.b > 1) bad.push(tb.label + "(" + m.d + "/" + m.b + "px)");
+      report.push((m.d <= 1 && m.b <= 1 ? "PASS" : "FAIL") + " 二级 " + g.label + " · " + tb.label + " over=" + m.d + "/" + m.b);
     }
   }
+  report.forEach((r) => console.log(r));
   check(bad.length === 0, "全部页面锁屏宽：整页横向溢出必须为0", pages + "页" + (bad.length ? " 溢出：" + bad.join(", ") : " 全部0"));
   await ev("var bk=document.querySelector('[data-directory=\"1\"]'); if(bk)bk.click(); true"); await sleep(420);
   await ev("var g=document.querySelector('[data-directory-group=\"recommend\"]'); if(g)g.click(); true"); await sleep(500);

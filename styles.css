@@ -1366,10 +1366,23 @@ body {
   max-width: 100%;
   overflow-x: clip;
   overscroll-behavior-x: none;
+  /* iOS 上真正止住左右回弹：整页只允许纵向手势，横向由各滚动容器自己接管 */
+  touch-action: pan-y;
 }
 
 #view {
   max-width: 100%;
+  touch-action: pan-y;
+}
+
+/* 需要横向滑动的容器单独声明，横向手势只在这些容器里生效 */
+.exec-line__scroll,
+.wm-hscroll,
+.trend-scroll,
+.seg-hist-scroll,
+.nav-groups,
+.nav-subtabs {
+  touch-action: pan-x;
 }
 
 #view > * {
