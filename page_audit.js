@@ -160,6 +160,7 @@ must(appText.includes("exec-hist-card--live") && appText.includes("每个页面�
 must(appText.includes('id: "fixedD1"') && appText.includes('id: "recD1"') && appText.includes("D1数据不达标永久不建仓") && appText.includes("真实快照需显著高于随机基准才解禁") && (appText.match(/plan: \[0, 0, 0\], hold: "D1数据不达标永久不建仓/g) || []).length === 2, "追号码D1与追推荐D1必须永久不建仓（plan [0,0,0] + 永久不建仓标记），只有真实快照显著高于随机基准才解禁");
 must(appText.includes("function renderWindowMiss") && appText.includes('state.windowMissMode === "two" ? 2 : 3') && appText.includes("wmWindowsForStage(line, maxStage)") && appText.includes('data-wm-mode="two"') && appText.includes("本页独立开关") && appText.includes("两期和三期各自一套窗口、命中率、性格规律，互不引用"), "窗口遗漏热图必须同时支持两期/三期，且两期与三期完全独立：各自开关、各自窗口引擎与统计，互不引用");
 must(appText.includes("每年的窗口总数与命中率单独列出来") && appText.includes("共' + seq.length + '窗") && appText.includes("命中率' + (seq.length ? (hitN / seq.length * 100)"), "下注执行表每条线必须把窗口总数按年单独列出：每年写「共N窗 / 中X / 错Y / 命中率Z%」，不能只给全历史总数");
+must(appText.includes('{ id: "notes", label: "我的笔记" }') && appText.includes("function renderNotes") && appText.includes("v2_my_notes") && appText.includes("data-note-add") && appText.includes("data-note-del") && appText.includes("data-note-clear") && appText.includes("只存在这台手机/浏览器里"), "必须提供「我的笔记」页：本地保存、随时可加可删，且不参与任何计算");
 const modelFlow = ["pick3", "chasenumber", "betexec", "formulas", "windowmult", "orderlog"];
 const flowPositions = modelFlow.map((id) => tabIds.indexOf(id));
 must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions[i - 1])), "导航按模型流程排序");

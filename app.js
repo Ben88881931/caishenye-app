@@ -385,6 +385,7 @@
     { id: "zodmonitor", label: "生肖遗漏" },
     { id: "personality", label: "尾号性格" },
     { id: "datarecord", label: "三期规律" },
+    { id: "notes", label: "我的笔记" },
     { id: "miss", label: "遗漏监控" },
     { id: "tails", label: "冷热分析" },
     { id: "windowk", label: "窗口走势" },
@@ -399,7 +400,7 @@
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "windowmiss", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
-    { id: "tools", label: "分析工具", tabs: ["numsearch", "personality", "datarecord", "tails", "backtest"] },
+    { id: "tools", label: "分析工具", tabs: ["numsearch", "personality", "datarecord", "tails", "backtest", "notes"] },
   ];
 
   var view = document.getElementById("view");
@@ -414,6 +415,18 @@
   function pct(x, digits) {
     return (x * 100).toFixed(digits == null ? 1 : digits) + "%";
   }
+
+  // 我的笔记：纯本地保存（只在这台手机/浏览器），随时可加可删
+  var NOTE_KEY = "v2_my_notes";
+  function escapeHTML(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function notesLoad() {
+    try { var a = JSON.parse(lsGet(NOTE_KEY, "[]")); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  }
+  function notesSave(a) { lsSet(NOTE_KEY, JSON.stringify(a)); }
 
   // ===== 性能：长表默认只上最近 60 期/窗，数据不删，点“显示全部”再全量渲染 =====
   var PERF_ROWS = 60;
@@ -1046,6 +1059,7 @@
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
+    else if (state.tab === "notes") renderNotes();
     else if (state.tab === "numsearch") renderNumSearch();
     var pagePrefix = historyStackHTML();
     if (state.tab !== "directory" && view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
@@ -1699,6 +1713,34 @@
 
   function renderTrend() {
     return renderTrendImpl();
+  }
+
+  // 我的笔记：想到什么写什么，随时加、随时删（只存本地）
+  function renderNotes() {
+    var notes = notesLoad();
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">我的笔记</h2><span class="section__hint">只存在这台手机/浏览器里 · 不参与任何计算 · 随时能加能删</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px">';
+    html += '<textarea id="noteInput" placeholder="写在这里，比如：今天尾9第1期中率61%，继续观察" style="width:100%;min-height:96px;font-size:14px;line-height:1.6;padding:10px;border:1px solid #e2e8f0;border-radius:8px;resize:vertical;box-sizing:border-box"></textarea>';
+    html += '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">';
+    html += '<button class="chip is-active" type="button" data-note-add="1" style="min-height:38px;padding:6px 16px">保存这条</button>';
+    html += '<button class="chip" type="button" data-note-clear="1" style="min-height:38px;padding:6px 12px;color:#b91c1c;border-color:#fecaca">全部清空</button>';
+    html += '</div></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">已保存 ' + notes.length + ' 条</h2><span class="section__hint">新→旧</span></div>';
+    if (!notes.length) {
+      html += '<div class="panel" style="padding:14px;color:#64748b;font-size:13px">还没有笔记，上面写一条试试。</div>';
+    } else {
+      html += '<div class="panel" style="padding:6px 8px">';
+      notes.slice().reverse().forEach(function (n) {
+        html += '<div style="display:flex;gap:8px;align-items:flex-start;border-bottom:1px solid #eef2f7;padding:9px 2px">';
+        html += '<div style="flex:0 0 82px;font-size:11px;color:#94a3b8;line-height:1.5">' + escapeHTML(n.at || "") + '</div>';
+        html += '<div style="flex:1;min-width:0;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word">' + escapeHTML(n.text || "") + '</div>';
+        html += '<button class="chip" type="button" data-note-del="' + escapeHTML(n.id) + '" style="flex:0 0 auto;color:#b91c1c;border-color:#fecaca">删除</button>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    view.innerHTML = html;
   }
 
   // 窗口遗漏热图：单位=窗口（不是期），14条线一屏，绿=中窗、红=错窗（数字=连错到第几窗），可左右上下滚动
@@ -6447,6 +6489,30 @@
     if (perfMore) {
       perfExpandAll[perfMore.dataset.perfMore] = true;
       render();
+      return;
+    }
+    var noteAdd = e.target.closest("[data-note-add]");
+    if (noteAdd) {
+      var noteBox = document.getElementById("noteInput");
+      var noteTxt = noteBox ? String(noteBox.value || "").trim() : "";
+      if (noteTxt) {
+        var noteList = notesLoad();
+        noteList.push({ id: String(Date.now()) + "-" + Math.random().toString(36).slice(2, 7), text: noteTxt, at: new Date().toLocaleString("zh-CN", { hour12: false }) });
+        notesSave(noteList);
+      }
+      renderNotes();
+      return;
+    }
+    var noteDel = e.target.closest("[data-note-del]");
+    if (noteDel) {
+      var noteDelId = String(noteDel.dataset.noteDel);
+      notesSave(notesLoad().filter(function (n) { return String(n.id) !== noteDelId; }));
+      renderNotes();
+      return;
+    }
+    var noteClear = e.target.closest("[data-note-clear]");
+    if (noteClear) {
+      if (window.confirm("确定清空全部笔记？")) { notesSave([]); renderNotes(); }
       return;
     }
     var betMode = e.target.closest("[data-bet-mode]");
