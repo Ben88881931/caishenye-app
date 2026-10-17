@@ -87,6 +87,12 @@ async function main() {
   check(t3o.during === "none" && t3o.before === "none", "拖动时页面不整体位移（不晃屏）", t3);
   await sleep(400);
 
+  // 4a2) 中间页长右滑 → 只回上一页，不回目录（滑到第一页才能返回上一级）
+  await evalJS("var cb=document.querySelector('.tab[data-tab=\"chasenumber\"]'); if(cb)cb.click(); true"); await sleep(900);
+  await gesture("#view .section__title", [80, 150, 240], null, 25);
+  await sleep(900);
+  const midTab = await evalJS("(document.querySelector('.tab.is-active')||{}).innerText||''");
+  check((await evalJS("!!document.querySelector('.directory-grid')")) === false && midTab === "双号追热", "中间页长右滑 → 只回上一页，不回目录", "当前=" + midTab);
   // 4a) 右滑 200px 不够 → 不该回目录（门槛已提到 220px）
   await gesture("#view .section__title", [60, 130, 200], null, 25);
   await sleep(700);

@@ -44,9 +44,14 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const planBtns = await ev("!!document.querySelector('[data-bet-mode=\"two\"]') && !!document.querySelector('[data-bet-mode=\"three\"]')");
   check(planBtns, "顶部保留“只做两期 / 三期全打”两个切换按钮");
   // 选号参考表：14 条线，含状态/命中率/连错/错1后/今年净收益/参考
-  const refTable = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view table.table tbody tr'), function (tr) {
-    return [].map.call(tr.querySelectorAll('td'), function (td) { return td.innerText.replace(/\\n+/g, ' ').trim(); }).join(' | ');
-  }))`));
+  // 只看“选号参考表”（页面现在还有一张两期/三期对比表，不能混在一起数）
+  const refTable = JSON.parse(await ev(`(function(){
+    var tb=[].filter.call(document.querySelectorAll('#view table.table'), function (x) { return /对错性格/.test((x.querySelector('thead')||{}).innerText||''); })[0];
+    if (!tb) return JSON.stringify([]);
+    return JSON.stringify([].map.call(tb.querySelectorAll('tbody tr'), function (tr) {
+      return [].map.call(tr.querySelectorAll('td'), function (td) { return td.innerText.replace(/\\n+/g, ' ').trim(); }).join(' | ');
+    }));
+  })()`));
   check(refTable.length === 14 && refTable.every((r) => /%/.test(r) && /\|/.test(r)),
     "选号参考表列出14条线（状态+窗口命中率+连错+错1后+今年净收益+参考）", refTable.slice(0, 3).join("  ;;  "));
   // 每个窗口记录卡都要带对错标记（连中N/连错N）

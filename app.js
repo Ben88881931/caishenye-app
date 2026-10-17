@@ -6290,7 +6290,8 @@
       stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
-    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6) {
+    // 只有已经滑到本级第一页，长右滑才返回上一级（目录）；中间页长右滑=回上一页（抖音/电商手感）
+    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6 && (function () { var ts = getVisibleTabs(state.group); return ts.length > 0 && ts[0].id === state.tab; })()) {
       historyPointerStart.handled = true;
       armGestureClickGuard();
       e.preventDefault();
@@ -6337,7 +6338,7 @@
       stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
-    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6) {
+    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6 && (function () { var ts = getVisibleTabs(state.group); return ts.length > 0 && ts[0].id === state.tab; })()) {
       state.tab = "directory";
       lsSet("v2_current_tab", state.tab);
       render();

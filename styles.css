@@ -2414,10 +2414,21 @@ body[data-page="formulas"] #view table.table { min-width: 0 !important; width: 1
 body[data-page="formulas"] #view table.table th,
 body[data-page="formulas"] #view table.table td { padding: 4px 3px; white-space: normal; word-break: break-word; }
 
-/* 分段对比：分段+命中率几列，压到屏宽 */
-body[data-page="segments"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
+/* 分段对比：22列的表，硬压到15px/列会看不清 → 表格保持可读宽度，横向滚动只发生在表格容器里 */
+body[data-page="segments"] #view .panel,
+body[data-page="segments"] #view .panel__body {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+body[data-page="segments"] #view table.table {
+  min-width: 780px !important;
+  width: auto !important;
+  table-layout: auto;
+  font-size: 12px;
+}
 body[data-page="segments"] #view table.table th,
-body[data-page="segments"] #view table.table td { padding: 4px 3px; white-space: normal; word-break: break-word; }
+body[data-page="segments"] #view table.table td { padding: 4px 6px; white-space: nowrap; }
 
 /* 尾号性格：指标列不多，压到屏宽 */
 body[data-page="personality"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
