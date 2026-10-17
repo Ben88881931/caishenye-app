@@ -1366,65 +1366,13 @@ body {
   max-width: 100%;
   overflow-x: clip;
   overscroll-behavior-x: none;
-  /* iOS 上真正止住左右回弹：整页只允许纵向手势，横向由各滚动容器自己接管 */
-  touch-action: pan-y;
 }
 
 #view {
   max-width: 100%;
-  touch-action: pan-y;
-}
-
-/* 需要横向滑动的容器单独声明，横向手势只在这些容器里生效 */
-.exec-line__scroll,
-.wm-hscroll,
-.trend-scroll,
-.seg-hist-scroll,
-.nav-groups,
-.nav-subtabs {
-  touch-action: pan-x;
 }
 
 #view > * {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* 表格按屏宽压缩：不再靠横向滚动才能看全（列宽自动分配，长内容换行） */
-#view table.table {
-  min-width: 0 !important;
-  width: 100% !important;
-  table-layout: fixed;
-  font-size: 10px;
-}
-
-#view table.table th,
-#view table.table td {
-  padding: 3px 2px;
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.45;
-}
-
-/* 面板里的其它表格（非 .table 类）也统一压到屏宽 */
-#view .panel__body table {
-  min-width: 0 !important;
-  width: 100% !important;
-  table-layout: fixed;
-  font-size: 10px;
-}
-
-#view .panel__body table th,
-#view .panel__body table td {
-  padding: 3px 2px;
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.45;
-}
-
-/* 面板内的固定宽块（如追三期下单的720px块）也压到屏宽 */
-#view .panel > div,
-#view .panel__body > div {
   max-width: 100%;
   box-sizing: border-box;
 }
