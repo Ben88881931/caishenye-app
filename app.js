@@ -6245,6 +6245,8 @@
   var SWIPE_Y = 36;
   var SWIPE_PRIMARY_X = 20;
   var RETURN_SWIPE_X = 220;
+    // 屏幕左右边缘 26px 是“翻页专用区”：从这里起手永远翻页，不会被表格/图表的横向滚动吃掉
+    var EDGE_FLIP_ZONE = 26;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   var gestureClickGuardTimer = null;
@@ -6277,6 +6279,7 @@
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: inHorizontalScroll,
       scrollEl: scrollEl,
+      edgeSwipe: (e.clientX <= EDGE_FLIP_ZONE || e.clientX >= window.innerWidth - EDGE_FLIP_ZONE),
       lineStrip: !!e.target.closest(".wm-line-selector"),
       handled: false
     };
@@ -6292,7 +6295,7 @@
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     // 横向容器只在“还能往这个方向继续滑”时才吃掉手势；滑到头了就让页面翻页，避免不灵敏
-    if (historyPointerStart.inHorizontalScroll) {
+    if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) {
       var se = historyPointerStart.scrollEl;
       var isReturnSwipe = level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6;
       var canScrollDir = se ? (dx < 0 ? (se.scrollLeft + se.clientWidth < se.scrollWidth - 2) : (se.scrollLeft > 2)) : true;
