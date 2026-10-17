@@ -103,8 +103,9 @@ async function main() {
   check(await evalJS("!!document.querySelector('.directory-grid')") === true, "右滑 ≥220px 且明显横向 → 回到目录");
 
   // 5) 横向滚动条内滑动不翻页
-  await evalJS("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
-  await evalJS("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(1800);
+  await evalJS("var bk9=document.querySelector('[data-directory=\"1\"]'); if(bk9)bk9.click(); true"); await sleep(500);
+  await evalJS("var g9=document.querySelector('[data-directory-group=\"recommend\"]'); if(g9)g9.click(); true"); await sleep(500);
+  await evalJS("var b9=document.querySelector('.tab[data-tab=\"betexec\"]'); if(b9)b9.click(); true"); await sleep(1800);
   const before5 = await activeTab();
   await gesture(".exec-line__scroll", [-40, -90], null, 20);
   await sleep(500);

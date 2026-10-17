@@ -6315,7 +6315,8 @@
       render();
       return;
     }
-    if (level === "tab" && dx > 0 && absX > absY * 1.05 && absX < RETURN_SWIPE_X) {
+    // 短右滑=回上一页（和左滑对称）；只有已经在本级第一页（没有上一页）时短右滑才什么都不做
+    if (level === "tab" && dx > 0 && absX > absY * 1.05 && absX < RETURN_SWIPE_X && !orderedTabAt(-1)) {
       return;
     }
     if (absX >= swipeX && absX > absY * 1.05) {
