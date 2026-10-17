@@ -1030,6 +1030,8 @@
       lsSet("v2_current_tab", state.tab);
     }
     var tabChanged = state.tab !== renderedTab;
+    // 给 body 打上当前页面标记，方便按页面单独定尺寸（不同页面内容不一样，不能一刀切）
+    document.body.dataset.page = state.tab;
     renderTabs();
     if (state.tab === "directory") renderDirectory();
     else if (state.tab === "overview") renderOverview();
