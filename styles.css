@@ -2439,6 +2439,14 @@ body[data-page="zodwindow"] #view table.table { min-width: 0 !important; width: 
 body[data-page="zodwindow"] #view table.table th,
 body[data-page="zodwindow"] #view table.table td { padding: 3px 2px; white-space: normal; word-break: break-word; }
 
+/* 这两页表格确实压不到一屏：让滚动发生在表格自己的容器里，整页仍定死不动 */
+body[data-page="windowk"] #view .panel__body,
+body[data-page="zodwindow"] #view .panel__body {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
 /* 追三期下单：内部写死720px的块，只在这一页放开 */
 body[data-page="orderlog"] #view div[style*="min-width"] { min-width: 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
 
