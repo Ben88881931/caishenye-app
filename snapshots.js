@@ -1,11 +1,11 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-10-16T13:49:28.820Z",
-  "settledCount": 28,
+  "generatedAt": "2026-10-17T13:39:19.454Z",
+  "settledCount": 29,
   "grades": {
     "S": {
       "single": {
-        "n": 7,
-        "hits": 3,
+        "n": 9,
+        "hits": 5,
         "miss": 4
       }
     },
@@ -39,8 +39,8 @@ window.APP_SNAPSHOTS = {
     }
   },
   "overallAtLeastOne": {
-    "n": 28,
-    "hits": 21,
+    "n": 29,
+    "hits": 22,
     "miss": 7
   },
   "combos": {
@@ -73,12 +73,17 @@ window.APP_SNAPSHOTS = {
       "n": 4,
       "hits": 3,
       "miss": 1
+    },
+    "S+S": {
+      "n": 1,
+      "hits": 1,
+      "miss": 0
     }
   },
   "scoreBuckets": {
     "95.x": {
-      "n": 7,
-      "hits": 3,
+      "n": 9,
+      "hits": 5,
       "miss": 4,
       "rolls": [
         {
@@ -126,6 +131,20 @@ window.APP_SNAPSHOTS = {
         {
           "target": 282,
           "tail": 9,
+          "score": 95.3,
+          "tag": "连出4",
+          "hit": true
+        },
+        {
+          "target": 290,
+          "tail": 7,
+          "score": 95.3,
+          "tag": "连出4",
+          "hit": true
+        },
+        {
+          "target": 290,
+          "tail": 8,
           "score": 95.3,
           "tag": "连出4",
           "hit": true
@@ -874,8 +893,8 @@ window.APP_SNAPSHOTS = {
       ]
     },
     "连出4": {
-      "n": 7,
-      "hits": 3,
+      "n": 9,
+      "hits": 5,
       "miss": 4,
       "rolls": [
         {
@@ -923,6 +942,20 @@ window.APP_SNAPSHOTS = {
         {
           "target": 282,
           "tail": 9,
+          "score": 95.3,
+          "bucket": "95.x",
+          "hit": true
+        },
+        {
+          "target": 290,
+          "tail": 7,
+          "score": 95.3,
+          "bucket": "95.x",
+          "hit": true
+        },
+        {
+          "target": 290,
+          "tail": 8,
           "score": 95.3,
           "bucket": "95.x",
           "hit": true
@@ -1779,6 +1812,37 @@ window.APP_SNAPSHOTS = {
       ],
       "atLeastOne": true,
       "settledAt": "2026-10-16T13:49:28.807Z"
+    },
+    {
+      "target": 290,
+      "picks": [
+        {
+          "tail": 7,
+          "score": 95.3,
+          "tag": "连出4",
+          "bucket": "95.x",
+          "grade": "S",
+          "hit": true
+        },
+        {
+          "tail": 8,
+          "score": 95.3,
+          "tag": "连出4",
+          "bucket": "95.x",
+          "grade": "S",
+          "hit": true
+        }
+      ],
+      "actualTails": [
+        0,
+        2,
+        5,
+        7,
+        8,
+        9
+      ],
+      "atLeastOne": true,
+      "settledAt": "2026-10-17T13:39:19.446Z"
     }
   ],
   "threePeriodRecords": [
@@ -2305,25 +2369,57 @@ window.APP_SNAPSHOTS = {
       "tail": 7,
       "score": 95.3,
       "grade": "S",
-      "status": "pending",
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 290,
+          "tail": 7,
+          "actualTails": [
+            0,
+            2,
+            5,
+            7,
+            8,
+            9
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 290,
+      "settledAt": "2026-10-17T13:39:19.438Z"
+    },
+    {
+      "target": 291,
+      "basedOn": 290,
+      "generatedAt": "2026-10-17T13:39:19.451Z",
+      "action": "观望",
+      "source": null,
+      "rule": "P5/P6",
+      "reason": "双号未确认，空仓观望",
+      "stream": null,
+      "tail": null,
+      "score": null,
+      "grade": null,
+      "status": "skip",
       "attempts": [],
       "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "settledPeriod": 291,
+      "settledAt": "2026-10-17T13:39:19.451Z"
     }
   ],
   "threePeriodSummary": {
-    "n": 18,
+    "n": 19,
     "acted": 10,
-    "settled": 9,
-    "pending": 1,
-    "skipped": 8,
-    "hits": 7,
+    "settled": 10,
+    "pending": 0,
+    "skipped": 9,
+    "hits": 8,
     "miss": 2,
-    "first": 4,
+    "first": 5,
     "second": 3,
     "third": 0,
-    "hit3Rate": 0.7777777777777778
+    "hit3Rate": 0.8
   },
   "sourceWindows": [
     {
@@ -3041,11 +3137,25 @@ window.APP_SNAPSHOTS = {
       "score": 95.3,
       "grade": "S",
       "tag": "连出4",
-      "status": "pending",
-      "attempts": [],
-      "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 290,
+          "tail": 7,
+          "actualTails": [
+            0,
+            2,
+            5,
+            7,
+            8,
+            9
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 290,
+      "settledAt": "2026-10-17T13:39:19.446Z"
     },
     {
       "target": 290,
@@ -3057,6 +3167,52 @@ window.APP_SNAPSHOTS = {
       "score": 95.3,
       "grade": "S",
       "tag": "连出4",
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 290,
+          "tail": 8,
+          "actualTails": [
+            0,
+            2,
+            5,
+            7,
+            8,
+            9
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 290,
+      "settledAt": "2026-10-17T13:39:19.446Z"
+    },
+    {
+      "target": 291,
+      "basedOn": 290,
+      "generatedAt": "2026-10-17T13:39:19.446Z",
+      "stream": "D1",
+      "model": "双号追热",
+      "tail": 4,
+      "score": 92.5,
+      "grade": "C",
+      "tag": "5期3次",
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    },
+    {
+      "target": 291,
+      "basedOn": 290,
+      "generatedAt": "2026-10-17T13:39:19.446Z",
+      "stream": "D2",
+      "model": "双号追热",
+      "tail": 5,
+      "score": 92.5,
+      "grade": "C",
+      "tag": "5期3次",
       "status": "pending",
       "attempts": [],
       "hitIndex": null,
@@ -3065,27 +3221,27 @@ window.APP_SNAPSHOTS = {
     }
   ],
   "sourceWindowSummary": {
-    "total": 19,
+    "total": 21,
     "byStream": {
       "D1": {
-        "total": 9,
-        "acted": 9,
-        "pending": 1,
-        "skipped": 0,
-        "settled": 8,
-        "hits": 5,
-        "miss": 3,
-        "hit3Rate": 0.625
-      },
-      "D2": {
         "total": 10,
         "acted": 10,
         "pending": 1,
         "skipped": 0,
         "settled": 9,
-        "hits": 8,
+        "hits": 6,
+        "miss": 3,
+        "hit3Rate": 0.6666666666666666
+      },
+      "D2": {
+        "total": 11,
+        "acted": 11,
+        "pending": 1,
+        "skipped": 0,
+        "settled": 10,
+        "hits": 9,
         "miss": 1,
-        "hit3Rate": 0.8888888888888888
+        "hit3Rate": 0.9
       }
     }
   }
