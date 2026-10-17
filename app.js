@@ -1796,7 +1796,9 @@
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
     // 旧在上、新在下（和尾数遗漏热图同方向）：各线从底部对齐，最新的那件事永远在最底下一行
-    for (var r = 0; r < maxN; r++) {
+    // 性能：默认只渲染最近60行（和全站其它长表一致），点“显示全部”再全量画，避免手机上卡顿
+    var showRows = perfExpandAll["windowMiss"] ? maxN : Math.min(maxN, 60);
+    for (var r = maxN - showRows; r < maxN; r++) {
       // 行号保留数字（不要留空列）：最底「最新」，往上依次 1、2、3…（=往前第几格）
       var rowLabel = (r === maxN - 1) ? "最新" : String(maxN - 1 - r);
       // 不做“这一行中了几条线”的跨线合计：每一行不是同一个时点，各线窗口进度不同，加起来的数不成立
@@ -1813,6 +1815,7 @@
       html += "</tr>";
     }
     html += "</tbody></table></div></div></div>";
+    html += perfMoreBtn("windowMiss", maxN, showRows, "行");
     view.innerHTML = html;
     var hm = view.querySelector(".heatmap");
     if (hm) hm.scrollTop = hm.scrollHeight;
