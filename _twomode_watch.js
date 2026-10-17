@@ -66,7 +66,16 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     if (p3 <= 52 && /三期更优/.test(r.advice)) odd.push(r.label + "：第3期中率 " + r.p3 + " 却建议三期更优");
     if (p3 < 55.56 && /三期更优/.test(r.advice)) odd.push(r.label + "：第3期中率 " + r.p3 + " 低于打平线却建议三期更优（应按结构选两期）");
   });
-  fs.writeFileSync(HIST, JSON.stringify({ updatedAt: new Date().toISOString(), latestPeriod: period, rows: data.rows, total: data.total }, null, 1));
+  // 只有数字真的变了才写基线文件（否则每次审计都会把文件改脏，导致“本地=远端”误报）
+  const changedNow = !prev || prev.latestPeriod !== period || !prev.total ||
+    prev.total.n2 !== data.total.n2 || prev.total.n3 !== data.total.n3 ||
+    data.rows.some(function (r) {
+      const o = (prev.rows || []).filter((x) => x.label === r.label)[0];
+      return !o || o.n2 !== r.n2 || o.advice !== r.advice;
+    });
+  if (changedNow) {
+    fs.writeFileSync(HIST, JSON.stringify({ updatedAt: new Date().toISOString(), latestPeriod: period, rows: data.rows, total: data.total }, null, 1));
+  }
   console.log("两期/三期对比监测 · 最新期=" + period + " · 合计 三期" + data.total.n3 + " / 两期" + data.total.n2);
   console.log("本期变化：" + (changes.length ? changes.join(" ; ") : "无（和上次一致）"));
   console.log("建议与第3期中率矛盾：" + (odd.length ? odd.join(" ; ") : "无"));
