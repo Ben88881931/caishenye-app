@@ -19,6 +19,7 @@ const CHECKS = [
   { name: "护栏·下注执行表", cmd: ["node", "_betexec_check.js"], blocker: true },
   { name: "监测·两期三期对比", cmd: ["node", "_twomode_watch.js"], blocker: false },
   { name: "护栏·翻页手势", cmd: ["node", "_swipe_check.js"], blocker: true },
+  { name: "护栏·全站锁屏宽", cmd: ["node", "_overscroll_check.js"], blocker: true },
   { name: "护栏·本地=远端", cmd: ["node", "_remote_sync_check.js"], blocker: postPush, skip: !postPush, skipNote: "推送后复核（加 --post-push 才跑）" },
 ];
 

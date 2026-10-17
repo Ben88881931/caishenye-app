@@ -1359,6 +1359,24 @@ html.gesture-active * {
 }
 
 /* 窗口遗漏热图：每条线自成一块（列框 + 隔行底色 + 表头分块），不要连成一整片竖条 */
+/* 全站锁屏宽：任何页面都不许整页左右晃；横向滚动只在各自的滚动容器里发生 */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
+
+#view {
+  max-width: 100%;
+}
+
+#view > * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .wm-heat .heatmap__table {
   width: 100%;
   table-layout: fixed;
