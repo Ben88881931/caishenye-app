@@ -2408,4 +2408,38 @@ html.gesture-active * {
   color: #dc2626;
 }
 
+/* ===== 逐页个性化（每页单独一条，互不影响）===== */
+/* 公式表：5列，压到屏宽；字号11px仍可读 */
+body[data-page="formulas"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
+body[data-page="formulas"] #view table.table th,
+body[data-page="formulas"] #view table.table td { padding: 4px 3px; white-space: normal; word-break: break-word; }
+
+/* 分段对比：分段+命中率几列，压到屏宽 */
+body[data-page="segments"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
+body[data-page="segments"] #view table.table th,
+body[data-page="segments"] #view table.table td { padding: 4px 3px; white-space: normal; word-break: break-word; }
+
+/* 尾号性格：指标列不多，压到屏宽 */
+body[data-page="personality"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
+body[data-page="personality"] #view table.table th,
+body[data-page="personality"] #view table.table td { padding: 4px 3px; white-space: normal; word-break: break-word; }
+
+/* 策略回测：结果表压到屏宽 */
+body[data-page="backtest"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
+body[data-page="backtest"] #view table.table th,
+body[data-page="backtest"] #view table.table td { padding: 4px 3px; white-space: normal; word-break: break-word; }
+
+/* 窗口走势：只差63px，单独缩这一页的表 */
+body[data-page="windowk"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
+body[data-page="windowk"] #view table.table th,
+body[data-page="windowk"] #view table.table td { padding: 3px 2px; white-space: normal; word-break: break-word; }
+
+/* 生肖窗口：同上，单独一条 */
+body[data-page="zodwindow"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
+body[data-page="zodwindow"] #view table.table th,
+body[data-page="zodwindow"] #view table.table td { padding: 3px 2px; white-space: normal; word-break: break-word; }
+
+/* 追三期下单：内部写死720px的块，只在这一页放开 */
+body[data-page="orderlog"] #view div[style*="min-width"] { min-width: 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
+
 
