@@ -905,6 +905,16 @@
     }
     return false;
   }
+  // 找到指针所在的最内层横向滚动容器（用于判断“还能不能往这个方向滑”）
+  function horizontalScrollerAt(e) {
+    var el = e.target;
+    while (el && el.nodeType === 1 && el !== document.documentElement) {
+      var style = window.getComputedStyle(el);
+      if (el.scrollWidth > el.clientWidth + 1 && /(auto|scroll)/.test(style.overflowX)) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
 
   function parseSearchNumbers(text, minValue, maxValue) {
     var seen = {};
@@ -6259,12 +6269,14 @@
       return;
     }
     var inHorizontalScroll = isInsideHorizontalScroll(e);
+    var scrollEl = horizontalScrollerAt(e);
     historyPointerStart = {
       x: e.clientX,
       y: e.clientY,
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: inHorizontalScroll,
+      scrollEl: scrollEl,
       lineStrip: !!e.target.closest(".wm-line-selector"),
       handled: false
     };
@@ -6279,9 +6291,12 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (historyPointerStart.inHorizontalScroll &&
-        !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6)) {
-      return;
+    // 横向容器只在“还能往这个方向继续滑”时才吃掉手势；滑到头了就让页面翻页，避免不灵敏
+    if (historyPointerStart.inHorizontalScroll) {
+      var se = historyPointerStart.scrollEl;
+      var isReturnSwipe = level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6;
+      var canScrollDir = se ? (dx < 0 ? (se.scrollLeft + se.clientWidth < se.scrollWidth - 2) : (se.scrollLeft > 2)) : true;
+      if (canScrollDir && !isReturnSwipe) return;
     }
     if (historyPointerStart.lineStrip && absX >= swipeX && absX > absY * 1.05) {
       historyPointerStart.handled = true;
@@ -6308,7 +6323,7 @@
       armGestureClickGuard();
       e.preventDefault();
       if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-      else if (state.tab === "windowmult") stepWindowMultView(dx > 0 ? -1 : 1);
+      // 14线规律中心：三级子页不再用左右滑动切换（用户要求取消），滑动只翻二级页面；子页仍可点按钮切换
       else stepTabHistory(dx > 0 ? -1 : 1);
     }
   }, true);
@@ -6346,7 +6361,7 @@
     }
     if (absX < swipeX || absX < absY * 1.1) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-    else if (state.tab === "windowmult") stepWindowMultView(dx > 0 ? -1 : 1);
+    // 14线规律中心：三级子页不再用左右滑动切换（用户要求取消）
     else stepTabHistory(dx > 0 ? -1 : 1);
   }, true);
 

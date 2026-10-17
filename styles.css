@@ -2408,6 +2408,18 @@ html.gesture-active * {
   color: #dc2626;
 }
 
+/* 14线规律中心：横向卡片条改成两列换行，一屏放完，不再左右滑 */
+body[data-page="windowmult"] #view .wm-hscroll {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  overflow-x: visible !important;
+}
+
+body[data-page="windowmult"] #view .wm-hscroll > div {
+  flex: 1 1 calc(50% - 6px) !important;
+  min-width: 0 !important;
+}
+
 /* ===== 逐页个性化（每页单独一条，互不影响）===== */
 /* 公式表：5列，压到屏宽；字号11px仍可读 */
 body[data-page="formulas"] #view table.table { min-width: 0 !important; width: 100% !important; table-layout: fixed; font-size: 11px; }
