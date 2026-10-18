@@ -5037,32 +5037,6 @@
     });
     html += '</div></div></div>';
 
-    var renderBatchCard = function (batch) {
-      var isPending = batch.status === "pending" || batch.hitIndex == null;
-      var isHit = !isPending && batch.status !== "miss" && batch.hitIndex >= 1 && batch.hitIndex <= 3;
-      var endPeriod = batch.attempts && batch.attempts.length ? batch.attempts[batch.attempts.length - 1].period : batch.startPeriod;
-      var sourceText = isRecommendMode ? (batch.sourceKind === "snapshot" ? "真实快照" : batch.sourceKind === "snapshot+live" ? "快照+当前" : batch.sourceKind === "live" ? "当前窗口" : batch.sourceKind === "mixed" ? "快照+回测" : "历史回测") : (batch.sourceKind === "snapshot" ? "真实快照" : "历史回测");
-      var h = '<div style="width:214px;flex:0 0 auto;border:1px solid #e0e3e8;border-radius:8px;padding:7px;background:#fff">';
-      h += '<div style="font-size:11px;font-weight:800">' + batch.label + '</div>';
-      h += '<div style="font-size:11px;color:var(--muted);margin-top:2px">起始 第' + batch.startPeriod + '期 · ' + sourceText + '</div>';
-      var batchMain = isRecommendMode
-        ? '推荐序列 ' + (batch.attempts || []).map(function (a) { return a.tail == null ? '空' : '尾' + a.tail; }).join('→')
-        : '原始号 尾' + batch.tail;
-      h += '<div style="font-size:16px;font-weight:900;margin:4px 0">' + batchMain + '</div>';
-      h += threeRowsHTML(batch, isRecommendMode, 11);
-      var expectedEnd = batch.startPeriod + 2;
-      if (isPending) {
-        var nextCheckPeriod = batch.attempts && batch.attempts.length
-          ? batch.attempts[batch.attempts.length - 1].period + 1
-          : batch.startPeriod;
-        if (nextCheckPeriod > expectedEnd) nextCheckPeriod = expectedEnd;
-        h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:#2563eb">当前状态：窗口进行中 · 下一期检查 第' + nextCheckPeriod + '期</div>';
-      } else {
-        h += '<div style="margin-top:4px;font-size:11px;font-weight:800;color:' + (isHit ? "#16a34a" : "#dc2626") + '">结束 第' + endPeriod + '期 · ' + (isHit ? "第" + batch.hitIndex + "期中" : "三期全错") + '</div>';
-      }
-      h += '</div>';
-      return h;
-    };
     // 原“三期内滚动记录”与上面的“对错滚动条”是同一批窗口（重复），已删除，只保留对错滚动条
 
     html += '<!--ULT_RECORDS_END-->';
