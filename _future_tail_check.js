@@ -50,6 +50,22 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     const tails = d.rows.filter((r) => r.tail !== "待定").map((r) => Number(String(r.tail).replace("尾", "")));
     check(tails.length > 0 && tails.every((t) => t === tails[0]) && tails[0] === d.lock, lb + "：锁号追3期，三期间同一个锁定号", "锁" + d.lock + " / 行内 " + tails.join(","));
   }
+
+// 「三期内追号/追推荐」页是另一套渲染代码，必须单独查未来期
+await ev("var bk=document.querySelector('[data-directory=\"1\"]'); if(bk)bk.click(); true"); await sleep(500);
+await ev("var g=document.querySelector('[data-directory-group=\"recommend\"]'); if(g)g.click(); true"); await sleep(500);
+await ev("var b=document.querySelector('.tab[data-tab=\"chasenumber\"]'); if(b)b.click(); true"); await sleep(2000);
+if (await ev("!!document.querySelector('[data-ult-mode=\"recommend\"]')")) {
+  await ev("document.querySelector('[data-ult-mode=\"recommend\"]').click(); true"); await sleep(2000);
+}
+const chRows = JSON.parse(await ev(`(function(){
+  var t=document.querySelector('#view').innerText.replace(/\\n+/g,'|');
+  var rows=[...t.matchAll(/第(\\d)期\\|第(\\d+)期\\|(尾\\d|待定)/g)].map(function(m){return {stage:+m[1],period:+m[2],tail:m[3]};});
+  return JSON.stringify(rows);
+})()`));
+const chBad = chRows.filter((r) => r.period > latestP + 1 && r.tail !== "待定");
+check(chRows.length > 0 && chBad.length === 0, "三期内追号/追推荐页：未来期（>" + (latestP + 1) + "期）必须写待定", chBad.map((r) => r.period + "=" + r.tail).join(",") || chRows.slice(0, 6).map((r) => r.period + "=" + r.tail).join(" "));
+
   check(await ev("true") === true, "无 console 报错（由页面加载成功隐式验证）");
   console.log("RESULT: " + (fails.length ? "FAILED " + fails.length : "ALL PASS"));
   ws.close(); chrome.kill(); server.kill(); await sleep(300);
