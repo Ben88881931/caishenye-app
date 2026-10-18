@@ -1595,8 +1595,35 @@
       html += '<tr><td>' + t + '</td><td class="' + missClass(miss) + '">' + miss + " 期</td><td>" + max + " 期</td><td><div style=\"display:flex;flex-wrap:wrap;gap:4px;min-width:220px\">" + chips + "</div></td></tr>";
     }
     html += "</tbody></table></div></div>";
+    // 遗漏滚动记录：从第1期开始，每次完整遗漏一格，全部列出（横向滚动）
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">遗漏滚动记录 · 从第1期开始</h2><span class="section__hint">旧→新 · 每格=一次完整遗漏（连续几期没开出）· 左右滑动看全部</span></div></div>';
+    for (var tt = 0; tt < 10; tt++) {
+      var allM = allMisses(tt);
+      html += '<div class="section"><div class="panel" style="padding:8px 10px">';
+      html += '<div style="font-size:12px;font-weight:900;margin-bottom:5px">尾' + tt + ' · 历史共 ' + allM.list.length + ' 次遗漏 · 当前遗漏 ' + allM.ongoing + ' 期</div>';
+      html += '<div class="miss-strip" style="display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px">';
+      allM.list.forEach(function (v) {
+        var bg2 = v >= 4 ? "#fee2e2" : v === 3 ? "#fef3c7" : v === 2 ? "#dcfce7" : v === 1 ? "#dbeafe" : "#f3f4f6";
+        var color2 = v >= 4 ? "#b91c1c" : v === 3 ? "#a16207" : v === 2 ? "#15803d" : v === 1 ? "#1d4ed8" : "#6b7280";
+        html += '<span style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 5px;border-radius:5px;background:' + bg2 + ';color:' + color2 + ';font-weight:700;font-size:11px">' + v + "</span>";
+      });
+      html += "</div></div></div>";
+    }
     html += '<p class="disclaimer">当前遗漏 = 截至最新一期连续未开出的期数；历史遗漏按完成一次遗漏后重新开出的记录统计。</p>';
     view.innerHTML = html;
+  }
+
+  // 从第1期开始的全部遗漏记录（旧→新）+ 当前进行中的遗漏
+  function allMisses(tail) {
+    var list = [], run = 0;
+    // 用全表 D（2021年第1期 → 最新），不是当年 periods
+    for (var i = 0; i < D.length; i++) {
+      var row = D[i];
+      var tailsArr = (row.nums || []).map(function (n) { return Number(n) % 10; });
+      if (tailsArr.indexOf(Number(tail)) >= 0) { if (run > 0) list.push(run); run = 0; }
+      else run++;
+    }
+    return { list: list, ongoing: run };
   }
 
   function recentMisses(tail, n) {
