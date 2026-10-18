@@ -1584,6 +1584,10 @@
     var list = [], start = -1;
     for (var i = 0; i < D.length; i++) {
       var row = D[i];
+      if (i > 0 && row.y !== D[i - 1].y && start >= 0) {
+        list.push({ start: D[start], end: D[i - 1], n: i - start, ongoing: false });
+        start = -1;
+      }
       var hasTail = (row.nums || []).some(function (n) { return Number(n) % 10 === Number(tail); });
       var active = hasTail === wantHit;
       if (active && start < 0) start = i;
@@ -1618,8 +1622,8 @@
       (run.ongoing ? " · 当前仍在持续" : "");
   }
 
-  function fullRunStripHTML(tail, kind) {
-    var runs = fullTailRuns(tail, kind);
+  function fullRunStripHTML(tail, kind, runs) {
+    runs = runs || fullTailRuns(tail, kind);
     var isHit = kind === "hit";
     var ongoing = runs.length && runs[runs.length - 1].ongoing ? runs[runs.length - 1].n : 0;
     var html = '<div class="trend-run-row">';
@@ -1645,12 +1649,26 @@
 
   function fullRunHistoryHTML() {
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏 / 连出滚动记录</h2><span class="section__hint">新→旧 · 打开自动停在最新 · 覆盖2021年第1期至最新已开奖期 · 左右滑动看全部</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏3”=连续3期没开出；“连2”=连续2期开出；格内小字如“2021.001–003”表示2021年第1–3期。最左边标“当前”的，就是还没结束的最新记录。</div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏3”=连续3期没开出；“连2”=连续2期开出；格内小字如“2021.001–003”表示2021年第1–3期。每年单独计算，跨年自动断段；最左边标“当前”的，就是还没结束的最新记录。</div></div>';
+    var years = [];
+    D.forEach(function (row) { if (years.indexOf(row.y) < 0) years.push(row.y); });
     for (var t = 0; t < 10; t++) {
+      var missRuns = fullTailRuns(t, "miss");
+      var hitRuns = fullTailRuns(t, "hit");
       html += '<div class="section"><div class="panel trend-run-card">';
-      html += '<div class="trend-run-card__title"><b>尾' + t + '</b><span>当前漏 ' + currentMiss(t) + ' 期 · 当前连 ' + currentStreak(t) + ' 期</span></div>';
-      html += fullRunStripHTML(t, "miss");
-      html += fullRunStripHTML(t, "hit");
+      html += '<div class="trend-run-card__title"><b>尾' + t + '</b><span>当前漏 ' + currentMiss(t) + ' 期 · 当前连 ' + currentStreak(t) + ' 期</span>';
+      html += '<div class="trend-run-card__years"><span class="trend-run-card__years-title">每年独立 · 最长遗漏 / 最长连出</span>';
+      years.slice().reverse().forEach(function (year) {
+        var longestMiss = missRuns.filter(function (run) { return run.start.y === year; })
+          .reduce(function (max, run) { return Math.max(max, run.n); }, 0);
+        var longestHit = hitRuns.filter(function (run) { return run.start.y === year; })
+          .reduce(function (max, run) { return Math.max(max, run.n); }, 0);
+        html += '<span class="trend-run-card__year" title="' + year + '年：最长遗漏 ' + longestMiss + ' 期，最长连出 ' + longestHit + ' 期">';
+        html += '<b>' + year + '</b><small>漏' + longestMiss + ' · 连' + longestHit + '</small></span>';
+      });
+      html += '</div></div>';
+      html += fullRunStripHTML(t, "miss", missRuns);
+      html += fullRunStripHTML(t, "hit", hitRuns);
       html += "</div></div>";
     }
     html += '<p class="disclaimer">所有记录来自已开奖号码；没有把待开奖或未来期写成记录。连出包含连1，便于完整核对每一段。</p>';
