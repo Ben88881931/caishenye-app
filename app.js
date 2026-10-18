@@ -4657,7 +4657,8 @@
       var attK = (batch.attempts || [])[k] || null;
       // 每期最新推荐模式：还没开奖的当期，用当期推荐号补上（真未来期没有推荐号才留空）
       var recTail = null;
-      if (isRecommendMode && !attK && periodK > latest && batch.stream) {
+    // 只有“下一期（latest+1）”的推荐号已经产生；更未来的期次一律待定，绝不显示模型重算的号
+    if (isRecommendMode && !attK && periodK > latest && periodK <= latest + 1 && batch.stream) {
         var pendingPick = execPick(periodK, batch.stream);
         if (pendingPick && pendingPick.tail != null) recTail = pendingPick.tail;
       }
