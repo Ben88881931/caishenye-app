@@ -1085,6 +1085,13 @@
       renderedTab = state.tab;
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     }
+    if (state.tab === "trend" || state.tab === "missorder") {
+      requestAnimationFrame(function () {
+        view.querySelectorAll(".trend-run-strip").forEach(function (strip) {
+          strip.scrollLeft = 0;
+        });
+      });
+    }
   }
 
   var PAGE_GUIDE_GROUPS = [
@@ -1623,7 +1630,7 @@
     if (!runs.length) {
       html += '<span class="trend-run-empty">暂无记录</span>';
     } else {
-      runs.forEach(function (run) {
+      runs.slice().reverse().forEach(function (run) {
         var cls = isHit ? " trend-run-chip--hit" : " trend-run-chip--miss";
         if (run.ongoing) cls += " is-current";
         html += '<span class="trend-run-chip' + cls + '" title="' + fullRunTitle(tail, kind, run) + '">';
@@ -1637,8 +1644,8 @@
   }
 
   function fullRunHistoryHTML() {
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏 / 连出滚动记录</h2><span class="section__hint">从2021年第1期开始 · 旧→新 · 每格=一次完整遗漏或连出 · 左右滑动看全部</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏3”=连续3期没开出；“连2”=连续2期开出；格内小字如“2021.001–003”表示2021年第1–3期。最后一格标“当前”的，就是还没结束的记录。</div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏 / 连出滚动记录</h2><span class="section__hint">新→旧 · 打开自动停在最新 · 覆盖2021年第1期至最新已开奖期 · 左右滑动看全部</span></div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏3”=连续3期没开出；“连2”=连续2期开出；格内小字如“2021.001–003”表示2021年第1–3期。最左边标“当前”的，就是还没结束的最新记录。</div></div>';
     for (var t = 0; t < 10; t++) {
       html += '<div class="section"><div class="panel trend-run-card">';
       html += '<div class="trend-run-card__title"><b>尾' + t + '</b><span>当前漏 ' + currentMiss(t) + ' 期 · 当前连 ' + currentStreak(t) + ' 期</span></div>';
