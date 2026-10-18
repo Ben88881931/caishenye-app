@@ -386,7 +386,6 @@
     { id: "personality", label: "尾号性格" },
     { id: "datarecord", label: "三期规律" },
     { id: "notes", label: "我的笔记" },
-    { id: "miss", label: "遗漏监控" },
     { id: "tails", label: "冷热分析" },
     { id: "windowk", label: "窗口走势" },
     { id: "zodrecords", label: "生肖开奖" },
@@ -398,7 +397,7 @@
   var NAV_GROUPS = [
     { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "betexec", "formulas", "windowmult", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
-    { id: "miss", label: "遗漏分析", tabs: ["trend", "miss", "missorder", "windowmiss", "parity"] },
+    { id: "miss", label: "遗漏分析", tabs: ["trend", "missorder", "windowmiss", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
     { id: "tools", label: "分析工具", tabs: ["numsearch", "personality", "datarecord", "tails", "backtest", "notes"] },
   ];
@@ -1034,6 +1033,10 @@
       state.tab = "betexec";
       lsSet("v2_current_tab", state.tab);
     }
+    if (state.tab === "miss") {
+      state.tab = "trend";
+      lsSet("v2_current_tab", state.tab);
+    }
     if (state.tab === "chaserecommend") {
       state.ultimateMode = "recommend";
       state.tab = "chasenumber";
@@ -1047,7 +1050,6 @@
     else if (state.tab === "overview") renderOverview();
     else if (state.tab === "tails") renderTails();
     else if (state.tab === "segments") renderSegments();
-    else if (state.tab === "miss") renderMiss();
     else if (state.tab === "trend") renderTrend();
     else if (state.tab === "windowmiss") renderWindowMiss();
     else if (state.tab === "windowk") renderWindowK();
@@ -1193,14 +1195,6 @@
           note: "遗漏长不等于马上会出，不能只看一个指标。"
         },
         {
-          name: "遗漏监控",
-          summary: "集中看当前遗漏和遗漏变化。",
-          look: ["当前遗漏期数", "历史最高遗漏", "遗漏排名"],
-          use: "找出当前最冷、最久没出的尾号。",
-          source: "真实历史开奖数据。",
-          note: "遗漏监控只记录，不直接决定下注。"
-        },
-        {
           name: "遗漏排序",
           summary: "把遗漏、连出和排序集中到一张表。",
           look: ["遗漏排序", "连出排序", "近期开出次数"],
@@ -1307,7 +1301,7 @@
     {
       title: "数据参考",
       desc: "这些页面只看走势、遗漏、冷热和规律，不直接决定今天下注。",
-      names: ["总览", "分段对比", "窗口分析", "号码走势", "生肖走势", "遗漏热图", "遗漏监控", "遗漏排序", "单双热图", "冷热分析", "三期规律"]
+      names: ["总览", "分段对比", "窗口分析", "号码走势", "生肖走势", "遗漏热图", "遗漏排序", "单双热图", "冷热分析", "三期规律"]
     },
     {
       title: "生肖与辅助",
@@ -1389,7 +1383,6 @@
     "号码走势": "numtrend",
     "生肖走势": "zodtrend",
     "遗漏热图": "trend",
-    "遗漏监控": "miss",
     "遗漏排序": "missorder",
     "单双热图": "parity",
     "冷热分析": "tails",
@@ -1484,15 +1477,14 @@
       windowmult: ["14线规律中心", "14条线各自的数据规律与窗口性格：逐条列出每个窗口第1/2/3期命中或全错，比较跨窗口1.5倍、2倍、2.5倍、3倍后的收益、回撤和最大倍率，并按窗口给出性格与重投/倍投参考建议。", "检查14条线规律、性格和资金风险时看。"],
       orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
       segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
-      missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖。", "找遗漏结构时看。"],
+      missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖；页面附全部历史的遗漏滚动记录和连出滚动记录。", "找遗漏结构、查看遗漏和连出全历史时看。"],
       parity: ["单双热图", "单数在左、双数在右，查看逐期开出和遗漏。", "观察单双分布时看。"],
-      trend: ["遗漏热图", "逐期查看尾数开出、遗漏深度和滚动开出率。", "复盘走势时看。"],
+      trend: ["遗漏热图", "逐期查看尾数开出、遗漏深度和滚动开出率；页面底部附全部历史的遗漏滚动记录和连出滚动记录。", "复盘走势时看。"],
       zodtrend: ["生肖走势", "按年份查看生肖开出趋势。", "看生肖长期走势时看。"],
       zodwindow: ["生肖窗口", "按窗口统计生肖热度、遗漏和连出。", "看生肖短中期窗口时看。"],
       zodmonitor: ["生肖遗漏", "查看生肖当前遗漏、历史最大和最近15次遗漏。", "监控生肖遗漏时看。"],
       personality: ["尾号性格", "查看每个尾号的遗漏、反弹和连出统计。", "研究单个尾号性格时看。"],
       datarecord: ["三期规律", "查看三期组合和规律记录。", "研究三期组合时看。"],
-      miss: ["遗漏监控", "查看尾号当前遗漏、历史最大和最近15次遗漏。", "监控尾号遗漏时看。"],
       tails: ["冷热分析", "按窗口比较尾号实际开出率与理论基准。", "判断冷热偏离时看。"],
       windowk: ["窗口走势", "按不同窗口查看尾号走势变化。", "比较窗口表现时看。"],
       zodrecords: ["生肖开奖", "按年份查看生肖开奖记录。", "查生肖历史开奖时看。"],
@@ -1579,66 +1571,83 @@
     return "";
   }
 
-  function renderMiss() {
-    var historyCount = 15;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏监控</h2><span class="section__hint">颜色越深，遗漏越久 · 最近 15 次记录按旧到新排列</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>当前遗漏</th><th>历史最大</th><th>近 15 次遗漏（旧→新）</th></tr></thead><tbody>';
-    for (var t = 0; t < 10; t++) {
-      var miss = currentMiss(t);
-      var max = maxMiss(t);
-      var history = recentMisses(t, historyCount);
-      var chips = history.map(function (v) {
-        var bg = v >= 4 ? "#fee2e2" : v === 3 ? "#fef3c7" : v === 2 ? "#dcfce7" : v === 1 ? "#dbeafe" : "#f3f4f6";
-        var color = v >= 4 ? "#b91c1c" : v === 3 ? "#a16207" : v === 2 ? "#15803d" : v === 1 ? "#1d4ed8" : "#6b7280";
-        return '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 5px;border-radius:5px;background:' + bg + ';color:' + color + ';font-weight:700">' + v + "</span>";
-      }).join("");
-      html += '<tr><td>' + t + '</td><td class="' + missClass(miss) + '">' + miss + " 期</td><td>" + max + " 期</td><td><div style=\"display:flex;flex-wrap:wrap;gap:4px;min-width:220px\">" + chips + "</div></td></tr>";
-    }
-    html += "</tbody></table></div></div>";
-    // 遗漏滚动记录：从第1期开始，每次完整遗漏一格，全部列出（横向滚动）
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">遗漏滚动记录 · 从第1期开始</h2><span class="section__hint">旧→新 · 每格=一次完整遗漏（连续几期没开出）· 左右滑动看全部</span></div></div>';
-    for (var tt = 0; tt < 10; tt++) {
-      var allM = allMisses(tt);
-      html += '<div class="section"><div class="panel" style="padding:8px 10px">';
-      html += '<div style="font-size:12px;font-weight:900;margin-bottom:5px">尾' + tt + ' · 历史共 ' + allM.list.length + ' 次遗漏 · 当前遗漏 ' + allM.ongoing + ' 期</div>';
-      html += '<div class="miss-strip" style="display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px">';
-      allM.list.forEach(function (v) {
-        var bg2 = v >= 4 ? "#fee2e2" : v === 3 ? "#fef3c7" : v === 2 ? "#dcfce7" : v === 1 ? "#dbeafe" : "#f3f4f6";
-        var color2 = v >= 4 ? "#b91c1c" : v === 3 ? "#a16207" : v === 2 ? "#15803d" : v === 1 ? "#1d4ed8" : "#6b7280";
-        html += '<span style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 5px;border-radius:5px;background:' + bg2 + ';color:' + color2 + ';font-weight:700;font-size:11px">' + v + "</span>";
-      });
-      html += "</div></div></div>";
-    }
-    html += '<p class="disclaimer">当前遗漏 = 截至最新一期连续未开出的期数；历史遗漏按完成一次遗漏后重新开出的记录统计。</p>';
-    view.innerHTML = html;
-  }
-
-  // 从第1期开始的全部遗漏记录（旧→新）+ 当前进行中的遗漏
-  function allMisses(tail) {
-    var list = [], run = 0;
-    // 用全表 D（2021年第1期 → 最新），不是当年 periods
+  // 全历史遗漏/连出：D 从2021年第1期开始，旧→新；每段只记录真实开奖。
+  function fullTailRuns(tail, kind) {
+    var wantHit = kind === "hit";
+    var list = [], start = -1;
     for (var i = 0; i < D.length; i++) {
       var row = D[i];
-      var tailsArr = (row.nums || []).map(function (n) { return Number(n) % 10; });
-      if (tailsArr.indexOf(Number(tail)) >= 0) { if (run > 0) list.push(run); run = 0; }
-      else run++;
-    }
-    return { list: list, ongoing: run };
-  }
-
-  function recentMisses(tail, n) {
-    var out = [];
-    var run = 0;
-    for (var i = periods.length - 1; i >= 0 && out.length < n; i--) {
-      if (hit(periods[i], tail)) {
-        if (run > 0) out.push(run);
-        run = 0;
-      } else {
-        run++;
+      var hasTail = (row.nums || []).some(function (n) { return Number(n) % 10 === Number(tail); });
+      var active = hasTail === wantHit;
+      if (active && start < 0) start = i;
+      if (!active && start >= 0) {
+        list.push({ start: D[start], end: D[i - 1], n: i - start, ongoing: false });
+        start = -1;
       }
     }
-    while (out.length < n) out.push(0);
-    return out.reverse();
+    if (start >= 0) list.push({ start: D[start], end: D[D.length - 1], n: D.length - start, ongoing: true });
+    return list;
+  }
+
+  function compactRunPeriod(row) {
+    var p = String(row.p);
+    while (p.length < 3) p = "0" + p;
+    return String(row.y) + "." + p;
+  }
+
+  function fullRunRange(run) {
+    if (run.start.y === run.end.y && run.start.p === run.end.p) return compactRunPeriod(run.start);
+    if (run.start.y === run.end.y) {
+      var endP = String(run.end.p);
+      while (endP.length < 3) endP = "0" + endP;
+      return compactRunPeriod(run.start) + "–" + endP;
+    }
+    return compactRunPeriod(run.start) + "–" + compactRunPeriod(run.end);
+  }
+
+  function fullRunTitle(tail, kind, run) {
+    return "尾" + tail + " · " + (kind === "hit" ? "连出" : "遗漏") + run.n + "期 · " +
+      run.start.y + "年第" + run.start.p + "期–" + run.end.y + "年第" + run.end.p + "期" +
+      (run.ongoing ? " · 当前仍在持续" : "");
+  }
+
+  function fullRunStripHTML(tail, kind) {
+    var runs = fullTailRuns(tail, kind);
+    var isHit = kind === "hit";
+    var ongoing = runs.length && runs[runs.length - 1].ongoing ? runs[runs.length - 1].n : 0;
+    var html = '<div class="trend-run-row">';
+    html += '<div class="trend-run-row__head"><b>' + (isHit ? "连出" : "遗漏") + '</b><span>历史 ' + runs.length + ' 段';
+    if (ongoing) html += ' · 当前 ' + ongoing + ' 期';
+    html += '</span></div>';
+    html += '<div class="trend-run-strip" aria-label="尾' + tail + (isHit ? "连出" : "遗漏") + '全部历史记录">';
+    if (!runs.length) {
+      html += '<span class="trend-run-empty">暂无记录</span>';
+    } else {
+      runs.forEach(function (run) {
+        var cls = isHit ? " trend-run-chip--hit" : " trend-run-chip--miss";
+        if (run.ongoing) cls += " is-current";
+        html += '<span class="trend-run-chip' + cls + '" title="' + fullRunTitle(tail, kind, run) + '">';
+        html += '<b>' + (isHit ? "连" : "漏") + run.n + '</b>';
+        html += '<small>' + fullRunRange(run) + (run.ongoing ? ' · 当前' : '') + '</small>';
+        html += "</span>";
+      });
+    }
+    html += "</div></div>";
+    return html;
+  }
+
+  function fullRunHistoryHTML() {
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏 / 连出滚动记录</h2><span class="section__hint">从2021年第1期开始 · 旧→新 · 每格=一次完整遗漏或连出 · 左右滑动看全部</span></div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏3”=连续3期没开出；“连2”=连续2期开出；格内小字如“2021.001–003”表示2021年第1–3期。最后一格标“当前”的，就是还没结束的记录。</div></div>';
+    for (var t = 0; t < 10; t++) {
+      html += '<div class="section"><div class="panel trend-run-card">';
+      html += '<div class="trend-run-card__title"><b>尾' + t + '</b><span>当前漏 ' + currentMiss(t) + ' 期 · 当前连 ' + currentStreak(t) + ' 期</span></div>';
+      html += fullRunStripHTML(t, "miss");
+      html += fullRunStripHTML(t, "hit");
+      html += "</div></div>";
+    }
+    html += '<p class="disclaimer">所有记录来自已开奖号码；没有把待开奖或未来期写成记录。连出包含连1，便于完整核对每一段。</p>';
+    return html;
   }
 
   function lastOpenIdx(tail) {
@@ -1707,6 +1716,7 @@
     html += "</tbody></table></div></div>";
     html += perfMoreBtn("missorder", periods.length, shownPeriodsMissOrder.length);
     html += '<p class="disclaimer">排序规则：按每个尾数最近一次遗漏满 3 期及以上的时间排序，旧的放左、最新的放右；正在遗漏满 3 期及以上的放在最后。</p>';
+    html += fullRunHistoryHTML();
     return html;
   }
 
@@ -1883,6 +1893,7 @@
     });
     html += "</tbody></table></div></div></div>";
     html += perfMoreBtn("trend", periods.length, heatPeriods.length);
+    html += fullRunHistoryHTML();
 
     html += '<div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">' + state.rollWindow + ' 期窗口 · 红点 = 开出</span></div>';
     html += '<div class="chips" style="margin-bottom:8px">';

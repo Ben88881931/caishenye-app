@@ -2474,4 +2474,134 @@ body[data-page="zodwindow"] #view .panel__body {
 /* 追三期下单：内部写死720px的块，只在这一页放开 */
 body[data-page="orderlog"] #view div[style*="min-width"] { min-width: 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
 
+/* 遗漏热图、遗漏排序：全历史遗漏/连出横向记录，只作用于这两个页面 */
+body[data-page="missorder"] .trend-run-guide,
+body[data-page="trend"] .trend-run-guide {
+  padding: 9px 11px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #334155;
+}
+
+body[data-page="missorder"] .trend-run-card,
+body[data-page="trend"] .trend-run-card {
+  max-width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+body[data-page="missorder"] .trend-run-card__title,
+body[data-page="trend"] .trend-run-card__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+body[data-page="missorder"] .trend-run-card__title b,
+body[data-page="trend"] .trend-run-card__title b {
+  font-size: 15px;
+}
+
+body[data-page="missorder"] .trend-run-card__title span,
+body[data-page="trend"] .trend-run-card__title span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+body[data-page="missorder"] .trend-run-row,
+body[data-page="trend"] .trend-run-row {
+  min-width: 0;
+  margin-top: 6px;
+}
+
+body[data-page="missorder"] .trend-run-row__head,
+body[data-page="trend"] .trend-run-row__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+body[data-page="missorder"] .trend-run-row__head b,
+body[data-page="trend"] .trend-run-row__head b {
+  color: #334155;
+  font-size: 12px;
+}
+
+body[data-page="missorder"] .trend-run-strip,
+body[data-page="trend"] .trend-run-strip {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1px 0 7px;
+  box-sizing: border-box;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  scrollbar-width: thin;
+}
+
+body[data-page="missorder"] .trend-run-chip,
+body[data-page="trend"] .trend-run-chip {
+  flex: 0 0 92px;
+  min-height: 42px;
+  padding: 4px 6px;
+  border: 1px solid #dbe3ec;
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.15;
+}
+
+body[data-page="missorder"] .trend-run-chip b,
+body[data-page="trend"] .trend-run-chip b {
+  font-size: 13px;
+}
+
+body[data-page="missorder"] .trend-run-chip small,
+body[data-page="trend"] .trend-run-chip small {
+  margin-top: 3px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+body[data-page="missorder"] .trend-run-chip--miss,
+body[data-page="trend"] .trend-run-chip--miss {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+
+body[data-page="missorder"] .trend-run-chip--hit,
+body[data-page="trend"] .trend-run-chip--hit {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+body[data-page="missorder"] .trend-run-chip.is-current,
+body[data-page="trend"] .trend-run-chip.is-current {
+  border-width: 2px;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px #dbeafe;
+}
+
+body[data-page="missorder"] .trend-run-empty,
+body[data-page="trend"] .trend-run-empty {
+  padding: 8px 4px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
 

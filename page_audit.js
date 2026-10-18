@@ -27,6 +27,7 @@ const snapshots = json("prediction_snapshots.json");
 const snapshotJs = JSON.parse(read("snapshots.js").match(/window\.APP_SNAPSHOTS\s*=\s*(\{.*\});/s)[1]);
 const indexText = read("index.html");
 const appText = read("app.js");
+const stylesText = read("styles.css");
 
 must(periods.length > 0 && periods[0] === 1, "原始期数从第1期开始");
 must(periods.every((p, i) => i === 0 || p === periods[i - 1] + 1), "原始期数连续");
@@ -161,6 +162,8 @@ must(appText.includes('id: "fixedD1"') && appText.includes('id: "recD1"') && app
 must(appText.includes("function renderWindowMiss") && appText.includes('state.windowMissMode === "two" ? 2 : 3') && appText.includes("wmWindowsForStage(line, maxStage)") && appText.includes('data-wm-mode="two"') && appText.includes("本页独立开关") && appText.includes("两期和三期各自一套窗口、命中率、性格规律，互不引用"), "窗口遗漏热图必须同时支持两期/三期，且两期与三期完全独立：各自开关、各自窗口引擎与统计，互不引用");
 must(appText.includes("每年的窗口总数与命中率单独列出来") && appText.includes("共' + seq.length + '窗") && appText.includes("命中率' + (seq.length ? (hitN / seq.length * 100)"), "下注执行表每条线必须把窗口总数按年单独列出：每年写「共N窗 / 中X / 错Y / 命中率Z%」，不能只给全历史总数");
 must(appText.includes('{ id: "notes", label: "我的笔记" }') && appText.includes("function renderNotes") && appText.includes("v2_my_notes") && appText.includes("data-note-add") && appText.includes("data-note-del") && appText.includes("data-note-clear") && appText.includes("只存在这台手机/浏览器里"), "必须提供「我的笔记」页：本地保存、随时可加可删，且不参与任何计算");
+must(!appText.includes('{ id: "miss", label: "遗漏监控" }') && !appText.includes("function renderMiss()") && appText.includes('if (state.tab === "miss")') && appText.includes('state.tab = "trend"'), "「遗漏监控」页必须删除，老入口只能重定向到遗漏热图");
+must(appText.includes("function fullTailRuns") && appText.includes("function fullRunHistoryHTML") && (appText.match(/fullRunHistoryHTML\(\);/g) || []).length === 2 && stylesText.includes('body[data-page="missorder"] .trend-run-strip') && stylesText.includes('body[data-page="trend"] .trend-run-strip'), "遗漏热图和遗漏排序都必须提供从第1期开始的遗漏/连出全历史横向滚动记录");
 const modelFlow = ["pick3", "chasenumber", "betexec", "formulas", "windowmult", "orderlog"];
 const flowPositions = modelFlow.map((id) => tabIds.indexOf(id));
 must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions[i - 1])), "导航按模型流程排序");
