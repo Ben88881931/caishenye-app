@@ -2415,6 +2415,11 @@ body[data-page="windowmult"] #view .wm-hscroll {
   overflow-x: visible !important;
 }
 
+/* 三期内追号/追推荐：同一批窗口原来渲染了两条滚动记录，只保留“对错滚动条”那一条，隐藏重复的嵌入记录 */
+body[data-page="chasenumber"] #view .card-followup {
+  display: none;
+}
+
 body[data-page="windowmult"] #view .wm-hscroll > div {
   flex: 1 1 calc(50% - 6px) !important;
   min-width: 0 !important;
