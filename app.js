@@ -5063,21 +5063,7 @@
       h += '</div>';
       return h;
     };
-    ["D1", "D2"].forEach(function (key) {
-      var streamResult = streamThree[key] || { label: key, batches: [] };
-      var batches = (streamResult.batches || []).slice().sort(function (a, b) { return b.startPeriod - a.startPeriod; });
-      var batchTotal = batches.length;
-      var batchKey = "ultroll:" + key + (isRecommendMode ? ":rec" : ":num");
-      if (batchTotal > 60 && !perfExpandAll[batchKey]) batches = batches.slice(0, 60);
-      var streamName = key + " " + streamResult.label + (key === "D1" ? " · 首推" : " · 备选");
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内滚动记录 · ' + streamName + '</h2><span class="section__hint">' + streamName + '独立滚动条 · 新→旧</span></div></div>';
-      html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-      html += '<div style="display:flex;gap:6px;min-width:max-content">';
-      batches.forEach(function (batch) { html += renderBatchCard(batch); });
-      if (!batches.length) html += '<div style="color:#9ca3af;font-size:12px">暂无记录</div>';
-      html += '</div></div>';
-      html += perfMoreBtn(batchKey, batchTotal, batches.length, "窗");
-    });
+    // 原“三期内滚动记录”与上面的“对错滚动条”是同一批窗口（重复），已删除，只保留对错滚动条
 
     html += '<!--ULT_RECORDS_END-->';
     html += '<p class="disclaimer">' + modeLabel + '只监控双号追热D1/D2。' + (isRecommendMode ? '追推荐模式窗口结束后，下一期按最新推荐重新开窗。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
