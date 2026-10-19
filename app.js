@@ -1884,13 +1884,15 @@
         var c = p.events[r - (maxN - p.events.length)];
         if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
         if (c.kind === "wait") {
-          var waitText = "等" + c.wait + (c.tail != null ? " · 尾" + c.tail : "");
-          html += '<td title="等待尾' + (c.tail != null ? c.tail : "-") + '重新开出"><span class="heat-cell cell-wait">' + waitText + "</span></td>";
+          html += '<td title="等待尾' + (c.tail != null ? c.tail : "-") + '重新开出"><span class="heat-cell cell-wait">等' + c.wait;
+          if (c.tail != null) html += '<span class="heat-cell__sub">尾' + c.tail + "</span>";
+          html += "</span></td>";
           return;
         }
         if (c.kind === "live") {
-          var liveText = "进" + c.stage + (c.tail != null ? " · 尾" + c.tail : "");
-          html += '<td title="当前窗口起始 ' + (c.start || "-") + ' · 第' + c.stage + '期' + (c.tail != null ? " · 锁定尾" + c.tail : "") + '"><span class="heat-cell cell-live">' + liveText + "</span></td>";
+          html += '<td title="当前窗口起始 ' + (c.start || "-") + ' · 第' + c.stage + '期' + (c.tail != null ? " · 锁定尾" + c.tail : "") + '"><span class="heat-cell cell-live">进' + c.stage;
+          if (c.tail != null) html += '<span class="heat-cell__sub">尾' + c.tail + "</span>";
+          html += "</span></td>";
           return;
         }
         if (c.kind === "hit") { html += '<td><span class="heat-cell cell-hit">' + c.hitAt + "</span></td>"; return; }
