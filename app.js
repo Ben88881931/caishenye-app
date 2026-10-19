@@ -1846,7 +1846,7 @@
         var lastW = rows[rows.length - 1];
         var endP = betLocalPeriod(lastW.start) + ((lastW.attempts || []).length) - 1;
         var waitNow = latest - endP + 1;
-        if (waitNow > 0) out.push({ kind: "wait", wait: waitNow, tail: stNow.waiting.tail });
+        if (waitNow > 0) out.push({ kind: "wait", wait: waitNow, tail: stNow.waiting.tail, amount: 0 });
       }
       // 现在有正在跑的窗口：把“当前跑到第几期”作为最新一件事补一格（还没开奖，不算结果）
       if (stNow && stNow.active) {
@@ -1854,7 +1854,8 @@
           kind: "live",
           stage: (stNow.active.attempts || []).length + 1,
           start: wmPeriodLabel(stNow.active.start),
-          tail: wmLiveTailFor(line, stNow.active, stNow.active.start)
+          tail: wmLiveTailFor(line, stNow.active, stNow.active.start),
+          amount: Number((line.plan || [])[(stNow.active.attempts || []).length] || 0)
         });
       }
       // 保持时间正序（旧→新）：渲染时各线从底部对齐，最新的那件事永远在最下面一行
@@ -1884,14 +1885,16 @@
         var c = p.events[r - (maxN - p.events.length)];
         if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
         if (c.kind === "wait") {
-          html += '<td title="等待尾' + (c.tail != null ? c.tail : "-") + '重新开出"><span class="heat-cell cell-wait">等' + c.wait;
+          html += '<td data-window-amount="0" title="等待尾' + (c.tail != null ? c.tail : "-") + '重新开出 · 本期0元"><span class="heat-cell cell-wait">等' + c.wait;
           if (c.tail != null) html += '<span class="heat-cell__sub">尾' + c.tail + "</span>";
+          html += '<span class="heat-cell__amount is-zero">0元</span>';
           html += "</span></td>";
           return;
         }
         if (c.kind === "live") {
-          html += '<td title="当前窗口起始 ' + (c.start || "-") + ' · 第' + c.stage + '期' + (c.tail != null ? " · 锁定尾" + c.tail : "") + '"><span class="heat-cell cell-live">进' + c.stage;
+          html += '<td data-window-amount="' + Number(c.amount || 0) + '" title="当前窗口起始 ' + (c.start || "-") + ' · 第' + c.stage + '期' + (c.tail != null ? " · 锁定尾" + c.tail : "") + ' · 本期' + Number(c.amount || 0) + '元"><span class="heat-cell cell-live">进' + c.stage;
           if (c.tail != null) html += '<span class="heat-cell__sub">尾' + c.tail + "</span>";
+          html += '<span class="heat-cell__amount ' + (Number(c.amount || 0) > 0 ? "is-bet" : "is-zero") + '">' + Number(c.amount || 0) + "元</span>";
           html += "</span></td>";
           return;
         }

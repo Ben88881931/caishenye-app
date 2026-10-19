@@ -1349,7 +1349,7 @@ html.gesture-active * {
 /* 窗口遗漏热图最新格：期数在上、尾号在下，不要用圆点挤在同一行 */
 .wm-heat .heat-cell.cell-wait,
 .wm-heat .heat-cell.cell-live {
-  height: 30px;
+  height: 40px;
   flex-direction: column;
   gap: 1px;
   font-size: 10px;
@@ -1360,6 +1360,22 @@ html.gesture-active * {
   font-size: 9px;
   line-height: 1;
   white-space: nowrap;
+}
+
+.wm-heat .heat-cell__amount {
+  display: block;
+  font-size: 7px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.wm-heat .heat-cell__amount.is-bet {
+  color: #166534;
+}
+
+.wm-heat .heat-cell__amount.is-zero {
+  color: #94a3b8;
 }
 
 .heat-wait {

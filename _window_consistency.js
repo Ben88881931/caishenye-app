@@ -37,6 +37,18 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     return JSON.stringify(out);
   })()`));
 
+  // 公式表：热图最新格金额的唯一口径
+  await ev("document.querySelector('.tab[data-tab=\"formulas\"]').click(); true"); await sleep(1200);
+  const plans = JSON.parse(await ev(`(function () {
+    var out = {};
+    [].forEach.call(document.querySelectorAll('#view table.table tbody tr'), function (row) {
+      var cells = row.querySelectorAll('td');
+      if (cells.length < 3) return;
+      out[cells[0].innerText.trim()] = cells[2].innerText.split('/').map(function (v) { return Number(v.trim()) || 0; });
+    });
+    return JSON.stringify(out);
+  })()`));
+
   // 下注执行表（全14条模式）
   await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(1800);
   // 下注执行表切到“三期全打”，和执行提示/14线同一套窗口口径（两期方案本来就是另一套窗口，不能混比）
@@ -83,9 +95,27 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     return JSON.stringify({
       count: cells.length,
       ok: cells.every(function (cell) {
-        return cell.innerText.indexOf('·') < 0 && getComputedStyle(cell).flexDirection === 'column';
+        return cell.innerText.indexOf('·') < 0
+          && getComputedStyle(cell).flexDirection === 'column'
+          && !!cell.querySelector('.heat-cell__amount')
+          && /\\d+元/.test(cell.querySelector('.heat-cell__amount').innerText);
       })
     });
+  })()`));
+  const hmAmounts = JSON.parse(await ev(`(function(){
+    var tab = document.querySelector('#view .heatmap__table');
+    var out = {};
+    if (!tab) return JSON.stringify(out);
+    var heads = [].map.call(tab.querySelectorAll('thead th'), function (t) { return t.innerText.trim(); });
+    var rows = tab.querySelectorAll('tbody tr');
+    var tds = rows[rows.length - 1].querySelectorAll('td');
+    for (var i = 1; i < tds.length; i++) {
+      var name = heads[i] || '';
+      var full = name.indexOf('号D') === 0 ? ('追号码 ' + name.slice(1))
+        : (name.indexOf('推D') === 0 ? ('追推荐 ' + name.slice(1)) : name);
+      out[full] = Number(tds[i].getAttribute('data-window-amount') || 0);
+    }
+    return JSON.stringify(out);
   })()`));
 
   // 回到模型流程分组，继续核对14线规律中心
@@ -112,6 +142,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   console.log("---|---|---|---");
   let mismatch = 0;
   let sourceMismatch = 0;
+  let amountMismatch = 0;
   lineLabels.forEach((lb) => {
     const a = bet[lb] || '-', c = wm[lb] || '-';
     const sourceKey = lb === "追号码 D1" ? "D1" : (lb === "追号码 D2" ? "D2" : "");
@@ -119,12 +150,17 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     // 只比“同一窗口”：起始期号相同（等待重开时两边都必须写等待重开）
     const same = a !== '-' && c !== '-' && a.split('/')[0] === c.split('/')[0];
     const sourceSame = !sourceKey || (s !== '-' && c !== '-' && s.split('/')[0] === c.split('/')[0] && s === c);
+    const stage = Number((c.match(/第(\d+)期/) || [])[1] || 0);
+    const expectedAmount = plans[lb] && stage ? Number(plans[lb][stage - 1] || 0) : 0;
+    const amountSame = expectedAmount === Number(hmAmounts[lb] || 0);
     if (!same) mismatch++;
     if (!sourceSame) sourceMismatch++;
+    if (!amountSame) amountMismatch++;
     console.log(lb + " | " + a + " | " + c + " | " + s + (same ? "" : "  ← 下注/14线不一致") + (sourceSame ? "" : "  ← 快照/14线不一致"));
   });
   console.log("\n不一致条数：" + mismatch + " / 14");
   console.log("三期内追号码与14线不一致条数：" + sourceMismatch + " / 2");
+  console.log("热图本期金额与公式表不一致：" + amountMismatch + " / 14");
   // 额外核对：窗口遗漏热图最底行（当前状态）必须与下注执行表一致
   let hmBad = [];
   lineLabels.forEach(function (lb) {
@@ -141,5 +177,5 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   console.log("窗口热图最新格上下对齐：" + (hmLayout.ok ? "PASS" : "FAIL") + " · 检查 " + hmLayout.count + " 格");
   ws.close(); chrome.kill(); server.kill(); await sleep(300);
   try { fs.rmSync(userDir, { recursive: true, force: true }); } catch (e) {}
-  process.exit(hmBad.length || sourceMismatch || !hmLayout.ok ? 1 : 0);
+  process.exit(hmBad.length || sourceMismatch || amountMismatch || !hmLayout.ok ? 1 : 0);
 })();
