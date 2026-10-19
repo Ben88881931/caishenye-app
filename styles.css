@@ -1347,30 +1347,25 @@ html.gesture-active * {
 .heat-cell.cell-live { background: #e0e7ff; color: #3730a3; }
 
 /* 窗口遗漏热图最新格：期数在上、尾号在下，不要用圆点挤在同一行 */
-.wm-heat .heat-cell.cell-wait {
-  height: 30px;
-  flex-direction: column;
-  gap: 1px;
-  font-size: 10px;
-}
-
+.wm-heat .heat-cell.cell-wait,
 .wm-heat .heat-cell.cell-live {
-  height: 40px;
+  height: 22px;
   flex-direction: column;
-  gap: 1px;
-  font-size: 10px;
+  gap: 0;
+  font-size: 8px;
+  line-height: 1;
 }
 
 .wm-heat .heat-cell__sub {
   display: block;
-  font-size: 9px;
+  font-size: 7px;
   line-height: 1;
   white-space: nowrap;
 }
 
 .wm-heat .heat-cell__amount {
   display: block;
-  font-size: 7px;
+  font-size: 6.5px;
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
@@ -1425,6 +1420,22 @@ body {
 .wm-heat .heatmap__table th:nth-child(n + 2),
 .wm-heat .heatmap__table td:nth-child(n + 2) {
   border-left: 1px solid #cbd5e1;
+}
+
+.wm-heat .heatmap__table td {
+  height: 22px;
+  line-height: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  vertical-align: middle;
+}
+
+.wm-heat .heat-cell {
+  margin: 0;
+}
+
+.wm-heat .heatmap__table td.row-label {
+  line-height: normal;
 }
 
 /* 隔列淡底：让每条线各自成条，不会看成一片 */

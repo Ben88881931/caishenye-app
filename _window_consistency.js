@@ -93,18 +93,32 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const hmLayout = JSON.parse(await ev(`(function(){
     var liveCells = [].slice.call(document.querySelectorAll('#view .wm-heat .cell-live'));
     var waitCells = [].slice.call(document.querySelectorAll('#view .wm-heat .cell-wait'));
+    function bad(cell, requiresAmount) {
+      var cellBox = cell.getBoundingClientRect();
+      var tdBox = cell.parentElement.getBoundingClientRect();
+      var amount = cell.querySelector('.heat-cell__amount');
+      var ok = cell.innerText.indexOf('·') < 0
+        && getComputedStyle(cell).flexDirection === 'column'
+        && Math.abs(tdBox.height - cellBox.height) <= 2
+        && (requiresAmount ? (!!amount && /\\d+元/.test(amount.innerText)) : !amount);
+      return ok ? null : {
+        text: cell.innerText.replace(/\\n/g, '/'),
+        gap: Math.round((tdBox.height - cellBox.height) * 10) / 10,
+        tdHeight: tdBox.height,
+        cellHeight: cellBox.height,
+        rowHeight: cell.parentElement.parentElement.getBoundingClientRect().height,
+        padding: getComputedStyle(cell.parentElement).padding,
+        border: getComputedStyle(cell.parentElement).borderWidth,
+        dir: getComputedStyle(cell).flexDirection,
+        amount: amount ? amount.innerText : ''
+      };
+    }
+    var liveBad = liveCells.map(function (c) { return bad(c, true); }).filter(Boolean);
+    var waitBad = waitCells.map(function (c) { return bad(c, false); }).filter(Boolean);
     return JSON.stringify({
       count: liveCells.length + waitCells.length,
-      ok: liveCells.every(function (cell) {
-        return cell.innerText.indexOf('·') < 0
-          && getComputedStyle(cell).flexDirection === 'column'
-          && !!cell.querySelector('.heat-cell__amount')
-          && /\\d+元/.test(cell.querySelector('.heat-cell__amount').innerText);
-      }) && waitCells.every(function (cell) {
-        return cell.innerText.indexOf('·') < 0
-          && getComputedStyle(cell).flexDirection === 'column'
-          && !cell.querySelector('.heat-cell__amount');
-      })
+      ok: !liveBad.length && !waitBad.length,
+      bad: liveBad.concat(waitBad).slice(0, 5)
     });
   })()`));
   const hmAmounts = JSON.parse(await ev(`(function(){
@@ -179,7 +193,8 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     if (!ok) hmBad.push(lb + " 下注执行表=" + bv + " 热图=" + hv);
   });
   console.log("热图底行(当前状态) 与 下注执行表 不一致：" + hmBad.length + " / 14" + (hmBad.length ? " → " + hmBad.join(" ; ") : ""));
-  console.log("窗口热图金额显示：" + (hmLayout.ok ? "PASS" : "FAIL") + " · 最新进格显示金额、等待格不显示金额 · 检查 " + hmLayout.count + " 格");
+  console.log("窗口热图金额显示：" + (hmLayout.ok ? "PASS" : "FAIL") + " · 无格子留白、最新进格显示金额、等待格不显示金额 · 检查 " + hmLayout.count + " 格");
+  if (!hmLayout.ok) console.log("窗口热图异常格：" + JSON.stringify(hmLayout.bad));
   ws.close(); chrome.kill(); server.kill(); await sleep(300);
   try { fs.rmSync(userDir, { recursive: true, force: true }); } catch (e) {}
   process.exit(hmBad.length || sourceMismatch || amountMismatch || !hmLayout.ok ? 1 : 0);
