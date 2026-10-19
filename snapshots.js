@@ -1,6 +1,6 @@
 window.APP_SNAPSHOTS = {
-  "generatedAt": "2026-10-18T13:41:02.367Z",
-  "settledCount": 30,
+  "generatedAt": "2026-10-19T13:41:12.484Z",
+  "settledCount": 31,
   "grades": {
     "S": {
       "single": {
@@ -11,9 +11,9 @@ window.APP_SNAPSHOTS = {
     },
     "A": {
       "single": {
-        "n": 19,
+        "n": 20,
         "hits": 9,
-        "miss": 10
+        "miss": 11
       }
     },
     "B": {
@@ -25,9 +25,9 @@ window.APP_SNAPSHOTS = {
     },
     "C": {
       "single": {
-        "n": 30,
+        "n": 31,
         "hits": 12,
-        "miss": 18
+        "miss": 19
       }
     },
     "D": {
@@ -39,9 +39,9 @@ window.APP_SNAPSHOTS = {
     }
   },
   "overallAtLeastOne": {
-    "n": 30,
+    "n": 31,
     "hits": 22,
-    "miss": 8
+    "miss": 9
   },
   "combos": {
     "C+D": {
@@ -55,9 +55,9 @@ window.APP_SNAPSHOTS = {
       "miss": 4
     },
     "A+C": {
-      "n": 7,
+      "n": 8,
       "hits": 6,
-      "miss": 1
+      "miss": 2
     },
     "A+A": {
       "n": 4,
@@ -158,9 +158,9 @@ window.APP_SNAPSHOTS = {
       "rolls": []
     },
     "93.x": {
-      "n": 19,
+      "n": 20,
       "hits": 9,
-      "miss": 10,
+      "miss": 11,
       "rolls": [
         {
           "target": 264,
@@ -294,13 +294,20 @@ window.APP_SNAPSHOTS = {
           "score": 93.9,
           "tag": "连出3",
           "hit": true
+        },
+        {
+          "target": 292,
+          "tail": 2,
+          "score": 93.9,
+          "tag": "连出3",
+          "hit": false
         }
       ]
     },
     "92.x": {
-      "n": 32,
+      "n": 33,
       "hits": 14,
-      "miss": 18,
+      "miss": 19,
       "rolls": [
         {
           "target": 262,
@@ -521,6 +528,13 @@ window.APP_SNAPSHOTS = {
         },
         {
           "target": 291,
+          "tail": 5,
+          "score": 92.5,
+          "tag": "5期3次",
+          "hit": false
+        },
+        {
+          "target": 292,
           "tail": 5,
           "score": 92.5,
           "tag": "5期3次",
@@ -543,9 +557,9 @@ window.APP_SNAPSHOTS = {
   },
   "tags": {
     "5期3次": {
-      "n": 30,
+      "n": 31,
       "hits": 12,
-      "miss": 18,
+      "miss": 19,
       "rolls": [
         {
           "target": 262,
@@ -752,6 +766,13 @@ window.APP_SNAPSHOTS = {
         },
         {
           "target": 291,
+          "tail": 5,
+          "score": 92.5,
+          "bucket": "92.x",
+          "hit": false
+        },
+        {
+          "target": 292,
           "tail": 5,
           "score": 92.5,
           "bucket": "92.x",
@@ -781,9 +802,9 @@ window.APP_SNAPSHOTS = {
       ]
     },
     "连出3": {
-      "n": 19,
+      "n": 20,
       "hits": 9,
-      "miss": 10,
+      "miss": 11,
       "rolls": [
         {
           "target": 264,
@@ -917,6 +938,13 @@ window.APP_SNAPSHOTS = {
           "score": 93.9,
           "bucket": "93.x",
           "hit": true
+        },
+        {
+          "target": 292,
+          "tail": 2,
+          "score": 93.9,
+          "bucket": "93.x",
+          "hit": false
         }
       ]
     },
@@ -1901,6 +1929,37 @@ window.APP_SNAPSHOTS = {
       ],
       "atLeastOne": false,
       "settledAt": "2026-10-18T13:41:02.345Z"
+    },
+    {
+      "target": 292,
+      "picks": [
+        {
+          "tail": 2,
+          "score": 93.9,
+          "tag": "连出3",
+          "bucket": "93.x",
+          "grade": "A",
+          "hit": false
+        },
+        {
+          "tail": 5,
+          "score": 92.5,
+          "tag": "5期3次",
+          "bucket": "92.x",
+          "grade": "C",
+          "hit": false
+        }
+      ],
+      "actualTails": [
+        0,
+        3,
+        4,
+        6,
+        8,
+        9
+      ],
+      "atLeastOne": false,
+      "settledAt": "2026-10-19T13:41:12.474Z"
     }
   ],
   "threePeriodRecords": [
@@ -2478,18 +2537,50 @@ window.APP_SNAPSHOTS = {
       "score": 93.9,
       "grade": "A",
       "status": "pending",
-      "attempts": [],
+      "attempts": [
+        {
+          "period": 292,
+          "tail": 2,
+          "actualTails": [
+            0,
+            3,
+            4,
+            6,
+            8,
+            9
+          ],
+          "hit": false
+        }
+      ],
       "hitIndex": null,
       "settledPeriod": null,
       "settledAt": null
+    },
+    {
+      "target": 293,
+      "basedOn": 292,
+      "generatedAt": "2026-10-19T13:41:12.481Z",
+      "action": "观望",
+      "source": null,
+      "rule": "P5/P6",
+      "reason": "双号未确认，空仓观望",
+      "stream": null,
+      "tail": null,
+      "score": null,
+      "grade": null,
+      "status": "skip",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": 293,
+      "settledAt": "2026-10-19T13:41:12.481Z"
     }
   ],
   "threePeriodSummary": {
-    "n": 20,
+    "n": 21,
     "acted": 11,
     "settled": 10,
     "pending": 1,
-    "skipped": 9,
+    "skipped": 10,
     "hits": 8,
     "miss": 2,
     "first": 5,
@@ -3273,7 +3364,7 @@ window.APP_SNAPSHOTS = {
       "score": 92.5,
       "grade": "C",
       "tag": "5期3次",
-      "status": "pending",
+      "status": "hit",
       "attempts": [
         {
           "period": 291,
@@ -3286,11 +3377,24 @@ window.APP_SNAPSHOTS = {
             8
           ],
           "hit": false
+        },
+        {
+          "period": 292,
+          "tail": 4,
+          "actualTails": [
+            0,
+            3,
+            4,
+            6,
+            8,
+            9
+          ],
+          "hit": true
         }
       ],
-      "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "hitIndex": 2,
+      "settledPeriod": 292,
+      "settledAt": "2026-10-19T13:41:12.465Z"
     },
     {
       "target": 291,
@@ -3315,25 +3419,54 @@ window.APP_SNAPSHOTS = {
             8
           ],
           "hit": false
+        },
+        {
+          "period": 292,
+          "tail": 5,
+          "actualTails": [
+            0,
+            3,
+            4,
+            6,
+            8,
+            9
+          ],
+          "hit": false
         }
       ],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    },
+    {
+      "target": 293,
+      "basedOn": 292,
+      "generatedAt": "2026-10-19T13:41:12.474Z",
+      "stream": "D1",
+      "model": "双号追热",
+      "tail": 2,
+      "score": 92.5,
+      "grade": "C",
+      "tag": "5期3次",
+      "status": "pending",
+      "attempts": [],
       "hitIndex": null,
       "settledPeriod": null,
       "settledAt": null
     }
   ],
   "sourceWindowSummary": {
-    "total": 21,
+    "total": 22,
     "byStream": {
       "D1": {
-        "total": 10,
-        "acted": 10,
+        "total": 11,
+        "acted": 11,
         "pending": 1,
         "skipped": 0,
-        "settled": 9,
-        "hits": 6,
+        "settled": 10,
+        "hits": 7,
         "miss": 3,
-        "hit3Rate": 0.6666666666666666
+        "hit3Rate": 0.7
       },
       "D2": {
         "total": 11,
