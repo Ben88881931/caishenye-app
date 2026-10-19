@@ -226,85 +226,90 @@ function settleThreePeriodRecords(snapshots, raw, model) {
   }
 }
 
-function sourcePickForWindow(snapshots, model, raw, prediction, stream, target) {
-  const index = stream === "D1" ? 0 : 1;
-  const saved = snapshots.records.find((r) => Number(r.target) === Number(target));
-  if (saved) {
-    const picks = saved.models && saved.models.doubleRecommendation && saved.models.doubleRecommendation.picks;
-    return Array.isArray(picks) ? (picks[index] || null) : null;
-  }
-  const base = Number(target) - 1;
-  if (!raw[String(base)]) return null;
-  const pred = base === Number(prediction.basedOn) ? prediction : model.buildPrediction(base);
-  const picks = pred.doubleRecommendation;
-  return Array.isArray(picks) ? (picks[index] || null) : null;
-}
-
-function addSourceWindow(snapshots, model, raw, prediction, stream, target) {
-  const existing = snapshots.sourceWindows.find((r) => Number(r.target) === Number(target) && r.stream === stream);
-  if (existing) return existing;
-  const pick = sourcePickForWindow(snapshots, model, raw, prediction, stream, target);
-  const pending = !!(pick && pick.tail != null);
-  const rec = {
+function buildSourceWindow(snapshots, recordByTarget, model, raw, stream, target) {
+  const saved = recordByTarget.get(Number(target));
+  if (!saved) return null;
+  const picks = saved.models && saved.models.doubleRecommendation && saved.models.doubleRecommendation.picks;
+  const pick = Array.isArray(picks) ? (picks[stream === "D1" ? 0 : 1] || null) : null;
+  if (!pick || pick.tail == null) return null;
+  const window = {
     target: Number(target),
-    basedOn: Number(target) - 1,
-    generatedAt: new Date().toISOString(),
+    basedOn: Number(saved.basedOn || (Number(target) - 1)),
+    generatedAt: saved.generatedAt || null,
     stream,
     model: "双号追热",
-    tail: pending ? pick.tail : null,
-    score: pending ? pick.score : null,
-    grade: pending ? (pick.grade || gradeOf(pick.score)) : null,
-    tag: pending ? (pick.tag || null) : null,
-    status: pending ? "pending" : "skip",
+    tail: Number(pick.tail),
+    score: pick.score,
+    grade: pick.grade || gradeOf(pick.score),
+    tag: pick.tag || null,
+    status: "pending",
     attempts: [],
     hitIndex: null,
-    settledPeriod: pending ? null : Number(target),
-    settledAt: pending ? null : new Date().toISOString()
+    settledPeriod: null,
+    settledAt: null
   };
-  snapshots.sourceWindows.push(rec);
-  return rec;
-}
-
-function settleSourceWindows(snapshots, raw, model, prediction, latest) {
-  if (!Array.isArray(snapshots.sourceWindows)) snapshots.sourceWindows = [];
-  snapshots.sourceWindows = snapshots.sourceWindows.filter((r) => r.stream === "D1" || r.stream === "D2");
-  const streams = ["D1", "D2"];
-  for (const stream of streams) {
-    let guard = 0;
-    while (guard++ < 30) {
-      let current = snapshots.sourceWindows.find((r) => r.stream === stream && r.status === "pending");
-      if (!current) current = addSourceWindow(snapshots, model, raw, prediction, stream, latest + 1);
-      if (current.status === "skip") {
-        if (current.target >= latest + 1) break;
-        addSourceWindow(snapshots, model, raw, prediction, stream, current.target + 1);
-        continue;
-      }
-      if (!Array.isArray(current.attempts)) current.attempts = [];
-      while (current.attempts.length < 3) {
-        const period = Number(current.target) + current.attempts.length;
-        if (!raw[String(period)]) break;
-        const actualTails = model.tailsOf(period);
-        const hit = actualTails.includes(Number(current.tail));
-        current.attempts.push({ period, tail: Number(current.tail), actualTails, hit });
-        if (hit) {
-          current.status = "hit";
-          current.hitIndex = current.attempts.length;
-          current.settledPeriod = period;
-          current.settledAt = new Date().toISOString();
-          break;
-        }
-        if (current.attempts.length === 3) {
-          current.status = "miss";
-          current.hitIndex = 0;
-          current.settledPeriod = period;
-          current.settledAt = new Date().toISOString();
-        }
-      }
-      if (current.status === "pending") break;
-      if (Number(current.settledPeriod) + 1 > latest + 1) break;
-      addSourceWindow(snapshots, model, raw, prediction, stream, Number(current.settledPeriod) + 1);
+  for (let index = 0; index < 3; index++) {
+    const period = Number(target) + index;
+    if (!raw[String(period)]) break;
+    const actualTails = model.tailsOf(period);
+    const hit = actualTails.includes(Number(window.tail));
+    window.attempts.push({ period, tail: Number(window.tail), actualTails, hit });
+    if (hit) {
+      window.status = "hit";
+      window.hitIndex = window.attempts.length;
+      window.settledPeriod = period;
+      break;
+    }
+    if (window.attempts.length === 3) {
+      window.status = "miss";
+      window.hitIndex = 0;
+      window.settledPeriod = period;
     }
   }
+  if (window.settledPeriod != null) {
+    const settled = recordByTarget.get(Number(window.settledPeriod));
+    window.settledAt = settled && settled.settledAt ? settled.settledAt : null;
+  }
+  return window;
+}
+
+function rebuildSourceWindows(snapshots, raw, model, latest) {
+  const records = Array.isArray(snapshots.records) ? snapshots.records : [];
+  const recordByTarget = new Map(records.map((record) => [Number(record.target), record]));
+  const targets = records.map((record) => Number(record.target)).filter(Number.isFinite);
+  const firstTarget = Math.max(262, targets.length ? Math.min(...targets) : latest + 1);
+  const rebuilt = [];
+  for (const stream of ["D1", "D2"]) {
+    let target = firstTarget;
+    let waitingTail = null;
+    let guard = 0;
+    while (target <= latest + 1 && guard++ < 500) {
+      if (waitingTail != null) {
+        let reopened = null;
+        for (let period = target; period <= latest; period++) {
+          if (!raw[String(period)]) continue;
+          if (model.tailsOf(period).includes(Number(waitingTail))) {
+            reopened = period;
+            break;
+          }
+        }
+        if (reopened == null) break;
+        target = reopened + 1;
+        waitingTail = null;
+      }
+      const window = buildSourceWindow(snapshots, recordByTarget, model, raw, stream, target);
+      if (!window) {
+        target += 1;
+        continue;
+      }
+      rebuilt.push(window);
+      if (window.status === "pending") break;
+      target = Number(window.settledPeriod) + 1;
+      if (window.status === "miss") waitingTail = Number(window.tail);
+    }
+  }
+  rebuilt.sort((a, b) => a.target - b.target || (a.stream === "D1" ? -1 : 1));
+  snapshots.sourceWindows = rebuilt;
 }
 
 
@@ -317,7 +322,6 @@ function sync() {
   const prediction = model.buildPrediction(latest);
 
   settleThreePeriodRecords(snapshots, raw, model);
-  settleSourceWindows(snapshots, raw, model, prediction, latest);
 
   for (const rec of snapshots.records) {
     if (rec.settled || !raw[String(rec.target)]) continue;
@@ -380,6 +384,7 @@ function sync() {
     });
   }
 
+  rebuildSourceWindows(snapshots, raw, model, latest);
   snapshots.latestPeriod = latest;
   snapshots.updatedAt = new Date().toISOString();
   saveSnapshots(snapshots);

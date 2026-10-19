@@ -1846,11 +1846,16 @@
         var lastW = rows[rows.length - 1];
         var endP = betLocalPeriod(lastW.start) + ((lastW.attempts || []).length) - 1;
         var waitNow = latest - endP + 1;
-        if (waitNow > 0) out.push({ kind: "wait", wait: waitNow });
+        if (waitNow > 0) out.push({ kind: "wait", wait: waitNow, tail: stNow.waiting.tail });
       }
       // 现在有正在跑的窗口：把“当前跑到第几期”作为最新一件事补一格（还没开奖，不算结果）
       if (stNow && stNow.active) {
-        out.push({ kind: "live", stage: (stNow.active.attempts || []).length + 1 });
+        out.push({
+          kind: "live",
+          stage: (stNow.active.attempts || []).length + 1,
+          start: wmPeriodLabel(stNow.active.start),
+          tail: wmLiveTailFor(line, stNow.active, stNow.active.start)
+        });
       }
       // 保持时间正序（旧→新）：渲染时各线从底部对齐，最新的那件事永远在最下面一行
       return { label: line.label, events: out };
@@ -1878,8 +1883,16 @@
       perLine.forEach(function (p) {
         var c = p.events[r - (maxN - p.events.length)];
         if (!c) { html += '<td><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
-        if (c.kind === "wait") { html += '<td><span class="heat-cell cell-wait">等' + c.wait + "</span></td>"; return; }
-        if (c.kind === "live") { html += '<td><span class="heat-cell cell-live">进' + c.stage + "</span></td>"; return; }
+        if (c.kind === "wait") {
+          var waitText = "等" + c.wait + (c.tail != null ? " · 尾" + c.tail : "");
+          html += '<td title="等待尾' + (c.tail != null ? c.tail : "-") + '重新开出"><span class="heat-cell cell-wait">' + waitText + "</span></td>";
+          return;
+        }
+        if (c.kind === "live") {
+          var liveText = "进" + c.stage + (c.tail != null ? " · 尾" + c.tail : "");
+          html += '<td title="当前窗口起始 ' + (c.start || "-") + ' · 第' + c.stage + '期' + (c.tail != null ? " · 锁定尾" + c.tail : "") + '"><span class="heat-cell cell-live">' + liveText + "</span></td>";
+          return;
+        }
         if (c.kind === "hit") { html += '<td><span class="heat-cell cell-hit">' + c.hitAt + "</span></td>"; return; }
         var cls = "cell-miss" + Math.min(4, c.miss);
         html += '<td><span class="heat-cell ' + cls + '">' + (CN[c.miss] || c.miss) + "</span></td>";
@@ -3512,6 +3525,7 @@
   var wmFullPickCache = {};
   var wmWindowCache = {};
   var wmWindowState = {};
+  var wmSourceCache = {};
   var WM_BASE = 100;
 
   function wmPlanFor(n) {
@@ -3538,12 +3552,64 @@
 
   function wmFullPick(period, stream) {
     if (period <= 1) return null;
+    var saved = execPick(betLocalPeriod(period), stream);
+    if (saved && saved.tail != null) return saved;
     if (!wmFullPickCache[period]) wmFullPickCache[period] = wmFullModel().buildPrediction(period - 1);
     return (wmFullPickCache[period].doubleRecommendation || [])[stream === "D1" ? 0 : 1] || null;
   }
 
+  function wmFixedSourceWindows(line) {
+    if (wmSourceCache[line.id]) return wmSourceCache[line.id];
+    var source = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows)
+      ? window.APP_SNAPSHOTS.sourceWindows.filter(function (w) {
+        return w.stream === line.stream && (w.status === "hit" || w.status === "miss" || w.status === "pending");
+      })
+      : [];
+    source.sort(function (a, b) { return Number(a.target) - Number(b.target); });
+    var lastRow = D[D.length - 1] || {};
+    var rows = [], active = null;
+    source.forEach(function (w) {
+      var start = D.length - Number(lastRow.p) + Number(w.target);
+      var item = {
+        start: start,
+        lockedTail: w.tail,
+        attempts: (w.attempts || []).map(function (attempt) {
+          return {
+            period: start + (Number(attempt.period) - Number(w.target)),
+            tail: attempt.tail,
+            hit: attempt.hit
+          };
+        }),
+        hitIndex: w.hitIndex == null ? null : Number(w.hitIndex),
+        sourceKind: "snapshot",
+        sourceTarget: Number(w.target)
+      };
+      if (w.status === "pending") active = item;
+      else rows.push(item);
+    });
+    var waiting = null;
+    if (!active && rows.length) {
+      var last = rows[rows.length - 1];
+      if (Number(last.hitIndex) === 0) {
+        var endAt = last.attempts.length ? Number(last.attempts[last.attempts.length - 1].period) : Number(last.start);
+        var reopened = false;
+        for (var p = endAt + 1; p <= D.length; p++) {
+          var actual = (D[p - 1].nums || []).map(function (n) { return Number(n) % 10; });
+          if (actual.indexOf(Number(last.lockedTail)) >= 0) { reopened = true; break; }
+        }
+        if (!reopened) waiting = { tail: Number(last.lockedTail) };
+      }
+    }
+    wmSourceCache[line.id] = rows;
+    wmWindowState[line.id] = { active: active, waiting: waiting };
+    return rows;
+  }
+
   function wmWindowsFor(line) {
     if (wmWindowCache[line.id]) return wmWindowCache[line.id];
+    if (line.kind === "fixed" && window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows) && window.APP_SNAPSHOTS.sourceWindows.length) {
+      return wmFixedSourceWindows(line);
+    }
     var rows = [];
     var active = null;
     var waiting = null;
@@ -4904,7 +4970,7 @@
         model: key.charAt(0) === "D" ? "双号" : "下期",
         activeWindow: activeWindow,
         statusText: activeWindow
-          ? "当前窗口第" + Math.min((activeWindow.attempts || []).length + 1, 3) + "期 · 锁定号不换"
+          ? "起始第" + activeWindow.target + "期 · 当前窗口第" + Math.min((activeWindow.attempts || []).length + 1, 3) + "期 · 锁定号不换"
           : (isRecommendMode ? "本期采用最新推荐" : "暂未开新窗口")
       });
     });
@@ -4952,7 +5018,7 @@
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px">';
     sourceRows.forEach(function (row) {
       var isExec = false;
-      html += '<div style="border:2px solid ' + (isExec ? lockTone.border : "#d1d5db") + ';border-radius:8px;padding:9px 10px;background:#fff">';
+      html += '<div class="source-window-card" data-source-stream="' + row.key + '" data-window-start="' + (row.activeWindow ? row.activeWindow.target : "") + '" data-window-stage="' + (row.activeWindow ? Math.min((row.activeWindow.attempts || []).length + 1, 3) : "") + '" data-window-tail="' + (row.pick ? row.pick.tail : "") + '" style="border:2px solid ' + (isExec ? lockTone.border : "#d1d5db") + ';border-radius:8px;padding:9px 10px;background:#fff">';
       html += '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><b style="color:' + (isExec ? lockTone.text : "#374151") + '">' + row.key + ' ' + row.label + '</b><span class="chip">' + (row.pick ? "尾" + row.pick.tail : "空") + '</span></div>';
       html += '<div style="font-size:11px;color:var(--muted);margin-top:5px">' + (row.pick ? row.pick.grade + '级 ' + row.pick.score.toFixed(1) + '分 · ' + (row.pick.tag || "-") : "空推荐") + ' · ' + row.model + '</div>';
       html += '<div style="font-size:11px;font-weight:800;color:' + (isExec ? lockTone.text : "#6b7280") + ';margin-top:5px">' + (row.statusText || "窗口照常记录") + '</div>';

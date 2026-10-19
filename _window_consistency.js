@@ -23,6 +23,20 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   for (let i = 0; i < 30; i++) { if (await ev("!!document.querySelector('.directory-card')")) break; await sleep(400); }
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
 
+  // 三期内追号码：D1/D2 顶部当前窗口（与热图共享真实快照窗口）
+  await ev("document.querySelector('.tab[data-tab=\"chasenumber\"]').click(); true"); await sleep(1800);
+  const source = JSON.parse(await ev(`(function () {
+    var out = {};
+    [].forEach.call(document.querySelectorAll('#view .source-window-card'), function (card) {
+      var key = card.getAttribute('data-source-stream');
+      var start = card.getAttribute('data-window-start') || '';
+      var stage = card.getAttribute('data-window-stage') || '';
+      var tail = card.getAttribute('data-window-tail') || '';
+      out[key] = start ? (start + '期/第' + stage + '期/尾' + tail) : '等待重开/无窗口';
+    });
+    return JSON.stringify(out);
+  })()`));
+
   // 下注执行表（全14条模式）
   await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(1800);
   // 下注执行表切到“三期全打”，和执行提示/14线同一套窗口口径（两期方案本来就是另一套窗口，不能混比）
@@ -85,17 +99,23 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     wm[lineLabels[i]] = t ? (start + '期/第' + (done + 1) + '期/' + firstTail) : '等待重开/无窗口';
   }
 
-  console.log("线条 | 下注执行表 | 14线规律中心");
-  console.log("---|---|---");
+  console.log("线条 | 下注执行表 | 14线规律中心 | 三期内追号码");
+  console.log("---|---|---|---");
   let mismatch = 0;
+  let sourceMismatch = 0;
   lineLabels.forEach((lb) => {
     const a = bet[lb] || '-', c = wm[lb] || '-';
+    const sourceKey = lb === "追号码 D1" ? "D1" : (lb === "追号码 D2" ? "D2" : "");
+    const s = sourceKey ? (source[sourceKey] || '-') : '-';
     // 只比“同一窗口”：起始期号相同（等待重开时两边都必须写等待重开）
     const same = a !== '-' && c !== '-' && a.split('/')[0] === c.split('/')[0];
+    const sourceSame = !sourceKey || (s !== '-' && c !== '-' && s.split('/')[0] === c.split('/')[0] && s === c);
     if (!same) mismatch++;
-    console.log(lb + " | " + a + " | " + c + (same ? "" : "  ← 不一致"));
+    if (!sourceSame) sourceMismatch++;
+    console.log(lb + " | " + a + " | " + c + " | " + s + (same ? "" : "  ← 下注/14线不一致") + (sourceSame ? "" : "  ← 快照/14线不一致"));
   });
   console.log("\n不一致条数：" + mismatch + " / 14");
+  console.log("三期内追号码与14线不一致条数：" + sourceMismatch + " / 2");
   // 额外核对：窗口遗漏热图最底行（当前状态）必须与下注执行表一致
   let hmBad = [];
   lineLabels.forEach(function (lb) {
@@ -103,11 +123,13 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     const bWait = bv === "等待重开", hWait = hv.indexOf("等") === 0;
     const bStage = (bv.match(/第(\d)期/) || [])[1] || "";
     const hStage = (hv.match(/进(\d)/) || [])[1] || "";
-    const ok = (bWait === hWait) && (bWait || (bStage && bStage === hStage));
+    const bTail = (bv.match(/尾(\d)/) || [])[1] || "";
+    const hTail = (hv.match(/尾(\d)/) || [])[1] || "";
+    const ok = (bWait === hWait) && (bWait || (bStage && bStage === hStage && bTail === hTail));
     if (!ok) hmBad.push(lb + " 下注执行表=" + bv + " 热图=" + hv);
   });
   console.log("热图底行(当前状态) 与 下注执行表 不一致：" + hmBad.length + " / 14" + (hmBad.length ? " → " + hmBad.join(" ; ") : ""));
   ws.close(); chrome.kill(); server.kill(); await sleep(300);
   try { fs.rmSync(userDir, { recursive: true, force: true }); } catch (e) {}
-  process.exit(hmBad.length ? 1 : 0);
+  process.exit(hmBad.length || sourceMismatch ? 1 : 0);
 })();
