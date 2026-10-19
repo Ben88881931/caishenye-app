@@ -1347,7 +1347,13 @@ html.gesture-active * {
 .heat-cell.cell-live { background: #e0e7ff; color: #3730a3; }
 
 /* 窗口遗漏热图最新格：期数在上、尾号在下，不要用圆点挤在同一行 */
-.wm-heat .heat-cell.cell-wait,
+.wm-heat .heat-cell.cell-wait {
+  height: 30px;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 10px;
+}
+
 .wm-heat .heat-cell.cell-live {
   height: 40px;
   flex-direction: column;

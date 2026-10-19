@@ -91,14 +91,19 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     return JSON.stringify(out);
   })()`));
   const hmLayout = JSON.parse(await ev(`(function(){
-    var cells = [].slice.call(document.querySelectorAll('#view .wm-heat .cell-live, #view .wm-heat .cell-wait'));
+    var liveCells = [].slice.call(document.querySelectorAll('#view .wm-heat .cell-live'));
+    var waitCells = [].slice.call(document.querySelectorAll('#view .wm-heat .cell-wait'));
     return JSON.stringify({
-      count: cells.length,
-      ok: cells.every(function (cell) {
+      count: liveCells.length + waitCells.length,
+      ok: liveCells.every(function (cell) {
         return cell.innerText.indexOf('·') < 0
           && getComputedStyle(cell).flexDirection === 'column'
           && !!cell.querySelector('.heat-cell__amount')
           && /\\d+元/.test(cell.querySelector('.heat-cell__amount').innerText);
+      }) && waitCells.every(function (cell) {
+        return cell.innerText.indexOf('·') < 0
+          && getComputedStyle(cell).flexDirection === 'column'
+          && !cell.querySelector('.heat-cell__amount');
       })
     });
   })()`));
@@ -174,7 +179,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     if (!ok) hmBad.push(lb + " 下注执行表=" + bv + " 热图=" + hv);
   });
   console.log("热图底行(当前状态) 与 下注执行表 不一致：" + hmBad.length + " / 14" + (hmBad.length ? " → " + hmBad.join(" ; ") : ""));
-  console.log("窗口热图最新格上下对齐：" + (hmLayout.ok ? "PASS" : "FAIL") + " · 检查 " + hmLayout.count + " 格");
+  console.log("窗口热图金额显示：" + (hmLayout.ok ? "PASS" : "FAIL") + " · 最新进格显示金额、等待格不显示金额 · 检查 " + hmLayout.count + " 格");
   ws.close(); chrome.kill(); server.kill(); await sleep(300);
   try { fs.rmSync(userDir, { recursive: true, force: true }); } catch (e) {}
   process.exit(hmBad.length || sourceMismatch || amountMismatch || !hmLayout.ok ? 1 : 0);

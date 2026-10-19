@@ -1887,7 +1887,6 @@
         if (c.kind === "wait") {
           html += '<td data-window-amount="0" title="等待尾' + (c.tail != null ? c.tail : "-") + '重新开出 · 本期0元"><span class="heat-cell cell-wait">等' + c.wait;
           if (c.tail != null) html += '<span class="heat-cell__sub">尾' + c.tail + "</span>";
-          html += '<span class="heat-cell__amount is-zero">0元</span>';
           html += "</span></td>";
           return;
         }
