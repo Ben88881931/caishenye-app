@@ -2049,9 +2049,9 @@
       }
       html += '<div class="section"><div class="panel trend-run-card">';
       html += '<div class="trend-run-card__title"><b>' + line.label + '</b><span>' + status + ' · 当年完成 ' + data.windows.length + ' 窗</span></div>';
-      html += '<div class="trend-run-card__years"><span class="trend-run-card__years-title">' + year + '年窗口连续段统计</span>';
-      html += '<span class="trend-run-card__year"><b>窗口遗漏</b><small>' + wmRunCountsText("漏", data.miss) + '</small><small>' + wmMissGapText(data.miss) + '</small></span>';
-      html += '<span class="trend-run-card__year"><b>窗口连中</b><small>' + wmRunCountsText("连", data.hit) + '</small></span>';
+      html += '<div class="wm-run-summary"><div class="wm-run-summary__title">' + year + '年窗口连续统计</div>';
+      html += '<div class="wm-run-summary__item wm-run-summary__item--miss"><b>窗口遗漏</b><span>' + wmRunCountsText("漏", data.miss) + '</span><small>' + wmMissGapText(data.miss) + '</small></div>';
+      html += '<div class="wm-run-summary__item wm-run-summary__item--hit"><b>窗口连中</b><span>' + wmRunCountsText("连", data.hit) + '</span><small>连续命中段单独统计，不计算盈亏</small></div>';
       html += '</div>';
       html += wmRunStripHTML(line, "miss", data.miss, activeState);
       html += wmRunStripHTML(line, "hit", data.hit, activeState);

@@ -133,7 +133,13 @@ async function main() {
       var strips=document.querySelectorAll('#view .trend-run-strip');
       var text=document.querySelector('#view').innerText;
       var gapMath=true;
+      var overflowOk=true;
       cards.forEach(function(card){
+        var cardRect=card.getBoundingClientRect();
+        [].forEach.call(card.querySelectorAll('.wm-run-summary__item b,.wm-run-summary__item span,.wm-run-summary__item small,.trend-run-row__head span'),function(el){
+          var rect=el.getBoundingClientRect();
+          if(el.scrollWidth>el.clientWidth+2||rect.right>cardRect.right+1||rect.left<cardRect.left-1)overflowOk=false;
+        });
         var row=card.querySelector('.trend-run-row');
         if(!row)return;
         var nodes=[].slice.call(row.children).reverse();
@@ -168,11 +174,12 @@ async function main() {
         strips:strips.length,
         yearTitle:text.indexOf('窗口遗漏 / 窗口连中滚动记录 · ${year}年')>=0,
         counts:text.indexOf('漏1×')>=0 && text.indexOf('漏4+×')>=0 && text.indexOf('连1×')>=0 && text.indexOf('连4+×')>=0,
-        gap:text.indexOf('起点差')>=0 && gapMath
+        gap:text.indexOf('起点差')>=0 && gapMath,
+        overflowOk:overflowOk
       });
     })()`));
     check(titleOk && Number(active) === year, `窗口遗漏热图切换到${year}年`, `active=${active}`);
-    check(runInfo.cards === 14 && runInfo.strips === 28 && runInfo.yearTitle && runInfo.counts && runInfo.gap, `窗口遗漏${year}年滚动记录结构正确`, JSON.stringify(runInfo));
+    check(runInfo.cards === 14 && runInfo.strips === 28 && runInfo.yearTitle && runInfo.counts && runInfo.gap && runInfo.overflowOk, `窗口遗漏${year}年滚动记录结构正确且文字不溢出`, JSON.stringify(runInfo));
   }
 
   await evaluate(`document.querySelector('[data-wm-mode="two"]').click()`);
