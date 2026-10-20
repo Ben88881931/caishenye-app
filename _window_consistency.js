@@ -93,6 +93,8 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const hmLayout = JSON.parse(await ev(`(function(){
     var liveCells = [].slice.call(document.querySelectorAll('#view .wm-heat .cell-live'));
     var waitCells = [].slice.call(document.querySelectorAll('#view .wm-heat .cell-wait'));
+    var table = document.querySelector('#view .wm-heat .heatmap__table');
+    var spacing = table ? getComputedStyle(table).borderSpacing : '';
     function bad(cell, requiresAmount) {
       var cellBox = cell.getBoundingClientRect();
       var tdBox = cell.parentElement.getBoundingClientRect();
@@ -117,7 +119,8 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     var waitBad = waitCells.map(function (c) { return bad(c, false); }).filter(Boolean);
     return JSON.stringify({
       count: liveCells.length + waitCells.length,
-      ok: !liveBad.length && !waitBad.length,
+      spacing: spacing,
+      ok: !liveBad.length && !waitBad.length && spacing.indexOf('6px') === 0,
       bad: liveBad.concat(waitBad).slice(0, 5)
     });
   })()`));
@@ -193,7 +196,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     if (!ok) hmBad.push(lb + " 下注执行表=" + bv + " 热图=" + hv);
   });
   console.log("热图底行(当前状态) 与 下注执行表 不一致：" + hmBad.length + " / 14" + (hmBad.length ? " → " + hmBad.join(" ; ") : ""));
-  console.log("窗口热图金额显示：" + (hmLayout.ok ? "PASS" : "FAIL") + " · 无格子留白、最新进格显示金额、等待格不显示金额 · 检查 " + hmLayout.count + " 格");
+  console.log("窗口热图布局：" + (hmLayout.ok ? "PASS" : "FAIL") + " · 列间距 " + hmLayout.spacing + "、无格子留白、最新进格显示金额、等待格不显示金额 · 检查 " + hmLayout.count + " 格");
   if (!hmLayout.ok) console.log("窗口热图异常格：" + JSON.stringify(hmLayout.bad));
   ws.close(); chrome.kill(); server.kill(); await sleep(300);
   try { fs.rmSync(userDir, { recursive: true, force: true }); } catch (e) {}
