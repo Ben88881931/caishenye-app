@@ -1941,17 +1941,20 @@
       last.latest = item.number === numbered.length;
     });
     var missRuns = runs.filter(function (run) { return run.kind === "miss"; });
-    missRuns.forEach(function (run, index) {
-      var previous = index > 0 ? missRuns[index - 1] : null;
-      run.previousStartWin = previous ? previous.startWin : null;
-      run.previousEndWin = previous ? previous.endWin : null;
-      run.gapFromPrevStart = previous ? run.startWin - previous.startWin : null;
-      run.gapFromPrevEnd = previous ? Math.max(0, run.startWin - previous.endWin - 1) : null;
+    var hitRuns = runs.filter(function (run) { return run.kind === "hit"; });
+    [missRuns, hitRuns].forEach(function (kindRuns) {
+      kindRuns.forEach(function (run, index) {
+        var previous = index > 0 ? kindRuns[index - 1] : null;
+        run.previousStartWin = previous ? previous.startWin : null;
+        run.previousEndWin = previous ? previous.endWin : null;
+        run.gapFromPrevStart = previous ? run.startWin - previous.startWin : null;
+        run.gapFromPrevEnd = previous ? Math.max(0, run.startWin - previous.endWin - 1) : null;
+      });
     });
     return {
       windows: numbered,
       miss: missRuns,
-      hit: runs.filter(function (run) { return run.kind === "hit"; })
+      hit: hitRuns
     };
   }
 
@@ -1971,7 +1974,7 @@
       " · 最长" + counts.max;
   }
 
-  function wmMissGapText(runs) {
+  function wmRunGapText(runs) {
     var gaps = runs.slice(1).map(function (run) { return run.gapFromPrevStart; }).filter(function (gap) {
       return gap != null && gap > 0;
     });
@@ -1984,10 +1987,13 @@
 
   function wmRunTitle(line, run) {
     var gapText = "";
-    if (run.kind === "miss") {
-      gapText = run.gapFromPrevStart == null
-        ? " · 该年第一次遗漏"
-        : " · 距上次遗漏起点" + run.gapFromPrevStart + "窗（距上次结束" + run.gapFromPrevEnd + "窗）";
+    var kindLabel = run.kind === "hit" ? "连中" : "遗漏";
+    if (run.gapFromPrevStart != null) {
+      gapText = " · 距上次" + kindLabel + "起点" + run.gapFromPrevStart + "窗（距上次结束" + run.gapFromPrevEnd + "窗）";
+    } else if (run.kind === "miss") {
+      gapText = " · 该年第一次遗漏";
+    } else {
+      gapText = " · 该年第一次连中";
     }
     return line.label + " · 窗口" + (run.kind === "hit" ? "连中" : "遗漏") + run.n +
       "窗 · " + run.year + "年第" + run.startWin + "–" + run.endWin + "窗 · " +
@@ -2006,14 +2012,17 @@
     } else {
       var reversed = runs.slice().reverse();
       reversed.forEach(function (run, index) {
-        if (!isHit && index > 0) {
+        if (index > 0) {
           var newer = reversed[index - 1];
           var gapFromStart = newer.startWin - run.startWin;
           var gapBetween = Math.max(0, newer.startWin - run.endWin - 1);
-          html += '<span class="window-gap-link" title="上次遗漏第' + run.startWin + '–' + run.endWin +
-            '窗，本次遗漏第' + newer.startWin + '–' + newer.endWin + '窗；起点差' + gapFromStart +
+          var kindLabel = isHit ? "连中" : "遗漏";
+          var linkClass = "window-gap-link" + (isHit ? " window-gap-link--hit" : "");
+          html += '<span class="' + linkClass + '" title="上次' + kindLabel + '第' + run.startWin + '–' + run.endWin +
+            '窗，本次' + kindLabel + '第' + newer.startWin + '–' + newer.endWin + '窗；起点差' + gapFromStart +
             '窗，中间隔' + gapBetween + '个完整窗口">';
-          html += '<b>起点差' + gapFromStart + '</b><small>中间' + gapBetween + '窗</small></span>';
+          html += '<b>起点差<span class="window-gap-link__start">' + gapFromStart + '</span></b>';
+          html += '<small>中间<span class="window-gap-link__between">' + gapBetween + '</span>窗</small></span>';
         }
         var cls = isHit ? " trend-run-chip--hit" : " trend-run-chip--miss";
         if (run.latest && !(activeState && (activeState.active || activeState.waiting))) cls += " is-current";
@@ -2031,7 +2040,7 @@
     var latestYear = Number((D[D.length - 1] || {}).y);
     var isCurrentYear = Number(year) === latestYear;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏 / 窗口连中滚动记录 · ' + year + '年</h2><span class="section__hint">单位=一个完整窗口，不是一期 · 每年重新开窗、跨年断段 · 新→旧 · 横向滑动看全部</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏2窗”=连续2个窗口三期全错；“连3窗”=连续3个窗口在三期内命中。遗漏铁链按新→旧：当前遗漏在左，连到上一次遗漏，再到更上一次。<b>连接牌写两组数：起点差=本次遗漏起点减上次遗漏起点；中间隔X窗=两段遗漏之间完整隔开的窗口数</b>。进行中的窗口还没结算，不计入已完成窗口的连错或连中。</div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏2窗”=连续2个窗口三期全错；“连3窗”=连续3个窗口在三期内命中。遗漏铁链和连中铁链都按新→旧排列：当前段在左，连到上一次同类段，再到更上一次。<b>每块连接牌都写两组数：起点差=本次段起点减上次段起点；中间隔X窗=两段之间完整隔开的窗口数</b>。进行中的窗口还没结算，不计入已完成窗口的连错或连中。</div></div>';
     EXEC_LINES.forEach(function (line) {
       var data = wmWindowRunData(line, maxStage, year);
       var activeState = isCurrentYear ? wmStageNow(line, maxStage) : null;
@@ -2050,8 +2059,8 @@
       html += '<div class="section"><div class="panel trend-run-card">';
       html += '<div class="trend-run-card__title"><b>' + line.label + '</b><span>' + status + ' · 当年完成 ' + data.windows.length + ' 窗</span></div>';
       html += '<div class="wm-run-summary"><div class="wm-run-summary__title">' + year + '年窗口连续统计</div>';
-      html += '<div class="wm-run-summary__item wm-run-summary__item--miss"><b>窗口遗漏</b><span>' + wmRunCountsText("漏", data.miss) + '</span><small>' + wmMissGapText(data.miss) + '</small></div>';
-      html += '<div class="wm-run-summary__item wm-run-summary__item--hit"><b>窗口连中</b><span>' + wmRunCountsText("连", data.hit) + '</span><small>连续命中段单独统计，不计算盈亏</small></div>';
+      html += '<div class="wm-run-summary__item wm-run-summary__item--miss"><b>窗口遗漏</b><span>' + wmRunCountsText("漏", data.miss) + '</span><small>' + wmRunGapText(data.miss) + '</small></div>';
+      html += '<div class="wm-run-summary__item wm-run-summary__item--hit"><b>窗口连中</b><span>' + wmRunCountsText("连", data.hit) + '</span><small>' + wmRunGapText(data.hit) + '</small></div>';
       html += '</div>';
       html += wmRunStripHTML(line, "miss", data.miss, activeState);
       html += wmRunStripHTML(line, "hit", data.hit, activeState);

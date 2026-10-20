@@ -134,39 +134,51 @@ async function main() {
       var text=document.querySelector('#view').innerText;
       var gapMath=true;
       var overflowOk=true;
+      var colorOk=true;
+      var sampleLink=document.querySelector('#view .window-gap-link');
+      if(!sampleLink)colorOk=false;else{
+        var startEl=sampleLink.querySelector('.window-gap-link__start');
+        var betweenEl=sampleLink.querySelector('.window-gap-link__between');
+        if(!startEl||!betweenEl)colorOk=false;else{
+          var startColor=getComputedStyle(startEl).color;
+          var betweenColor=getComputedStyle(betweenEl).color;
+          if(startColor===betweenColor)colorOk=false;
+        }
+      }
       cards.forEach(function(card){
         var cardRect=card.getBoundingClientRect();
         [].forEach.call(card.querySelectorAll('.wm-run-summary__item b,.wm-run-summary__item span,.wm-run-summary__item small,.trend-run-row__head span'),function(el){
           var rect=el.getBoundingClientRect();
           if(el.scrollWidth>el.clientWidth+2||rect.right>cardRect.right+1||rect.left<cardRect.left-1)overflowOk=false;
         });
-        var row=card.querySelector('.trend-run-row');
-        if(!row)return;
-        var nodes=[].slice.call(row.children).reverse();
-        nodes.forEach(function(node,index){
-          if(!node.classList.contains('window-gap-link'))return;
-          var older=null,newer=null;
-          for(var i=index-1;i>=0;i--){
-            if(nodes[i].classList&&nodes[i].classList.contains('trend-run-chip')){older=nodes[i];break;}
-          }
-          for(var j=index+1;j<nodes.length;j++){
-            if(nodes[j].classList&&nodes[j].classList.contains('trend-run-chip')){newer=nodes[j];break;}
-          }
-          if(!older||!newer){gapMath=false;return;}
-          var oldRange=(older.querySelector('small')||{}).innerText||'';
-          var newRange=(newer.querySelector('small')||{}).innerText||'';
-          var oldMatch=oldRange.match(/第(\\d+)[–-](\\d+)窗/);
-          var newMatch=newRange.match(/第(\\d+)[–-](\\d+)窗/);
-          var startMatch=(node.querySelector('b')||{}).innerText||'';
-          var betweenMatch=(node.querySelector('small')||{}).innerText||'';
-          var gapStart=startMatch.match(/起点差(\\d+)/);
-          var gapBetween=betweenMatch.match(/中间(\\d+)/);
-          if(!oldMatch||!newMatch||!gapStart||!gapBetween){
-            gapMath=false;
-            return;
-          }
-          var oldStart=Number(oldMatch[1]),oldEnd=Number(oldMatch[2]),newStart=Number(newMatch[1]);
-          if(Number(gapStart[1])!==newStart-oldStart||Number(gapBetween[1])!==Math.max(0,newStart-oldEnd-1))gapMath=false;
+        var rows=[].slice.call(card.querySelectorAll('.trend-run-row'));
+        rows.forEach(function(row){
+          var nodes=[].slice.call(row.children).reverse();
+          nodes.forEach(function(node,index){
+            if(!node.classList.contains('window-gap-link'))return;
+            var older=null,newer=null;
+            for(var i=index-1;i>=0;i--){
+              if(nodes[i].classList&&nodes[i].classList.contains('trend-run-chip')){older=nodes[i];break;}
+            }
+            for(var j=index+1;j<nodes.length;j++){
+              if(nodes[j].classList&&nodes[j].classList.contains('trend-run-chip')){newer=nodes[j];break;}
+            }
+            if(!older||!newer){gapMath=false;return;}
+            var oldRange=(older.querySelector('small')||{}).innerText||'';
+            var newRange=(newer.querySelector('small')||{}).innerText||'';
+            var oldMatch=oldRange.match(/第(\\d+)[–-](\\d+)窗/);
+            var newMatch=newRange.match(/第(\\d+)[–-](\\d+)窗/);
+            var startMatch=(node.querySelector('b')||{}).innerText||'';
+            var betweenMatch=(node.querySelector('small')||{}).innerText||'';
+            var gapStart=startMatch.match(/起点差(\\d+)/);
+            var gapBetween=betweenMatch.match(/中间(\\d+)/);
+            if(!oldMatch||!newMatch||!gapStart||!gapBetween){
+              gapMath=false;
+              return;
+            }
+            var oldStart=Number(oldMatch[1]),oldEnd=Number(oldMatch[2]),newStart=Number(newMatch[1]);
+            if(Number(gapStart[1])!==newStart-oldStart||Number(gapBetween[1])!==Math.max(0,newStart-oldEnd-1))gapMath=false;
+          });
         });
       });
       return JSON.stringify({
@@ -175,11 +187,12 @@ async function main() {
         yearTitle:text.indexOf('窗口遗漏 / 窗口连中滚动记录 · ${year}年')>=0,
         counts:text.indexOf('漏1×')>=0 && text.indexOf('漏4+×')>=0 && text.indexOf('连1×')>=0 && text.indexOf('连4+×')>=0,
         gap:text.indexOf('起点差')>=0 && gapMath,
-        overflowOk:overflowOk
+        overflowOk:overflowOk,
+        colorOk:colorOk
       });
     })()`));
     check(titleOk && Number(active) === year, `窗口遗漏热图切换到${year}年`, `active=${active}`);
-    check(runInfo.cards === 14 && runInfo.strips === 28 && runInfo.yearTitle && runInfo.counts && runInfo.gap && runInfo.overflowOk, `窗口遗漏${year}年滚动记录结构正确且文字不溢出`, JSON.stringify(runInfo));
+    check(runInfo.cards === 14 && runInfo.strips === 28 && runInfo.yearTitle && runInfo.counts && runInfo.gap && runInfo.overflowOk && runInfo.colorOk, `窗口遗漏${year}年滚动记录结构正确且文字不溢出`, JSON.stringify(runInfo));
   }
 
   await evaluate(`document.querySelector('[data-wm-mode="two"]').click()`);
