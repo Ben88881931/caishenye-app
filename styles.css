@@ -2147,6 +2147,18 @@ body {
   color: #0f766e;
 }
 
+.model-pair-note {
+  grid-column: 1 / -1;
+  padding: 8px 12px;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
 .wm-line-selector {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));

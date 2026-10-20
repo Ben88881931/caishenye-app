@@ -967,9 +967,16 @@
   function modelPairStrip(period) {
     var d1 = execPick(period, "D1");
     var d2 = execPick(period, "D2");
+    var prediction = MODEL.buildPrediction(period - 1);
+    var ranked = MODEL.pickTopAt(period - 1, 10);
+    var tied = [];
+    if (prediction.doubleAmbiguous && ranked.length) {
+      tied = ranked.filter(function (item) { return item.sc === ranked[0].sc; }).map(function (item) { return item.d; });
+    }
     return '<div class="model-pair-grid">' +
       '<div class="model-pair-card model-pair-card--d1"><span>D1 第一推荐</span><b>尾' + (d1 ? d1.tail : "-") + '</b></div>' +
       '<div class="model-pair-card model-pair-card--d2"><span>D2 第二推荐</span><b>尾' + (d2 ? d2.tail : "-") + '</b></div>' +
+      (tied.length > 2 ? '<div class="model-pair-note">同分并列：尾' + tied.join(" / 尾") + ' · 当前排序不代表强弱</div>' : '') +
       '</div>';
   }
 
@@ -1543,8 +1550,8 @@
     {
       title: "号码和推荐",
       rows: [
-        ["D1 第一推荐", "模型当前最看好的第一个尾号。执行提示、资金调度、窗口测试里都用D1代表它。"],
-        ["D2 第二推荐", "模型当前给出的第二个候选尾号。D1优先，D2是备选。"],
+        ["D1 第一推荐", "模型评分表里的第一个尾号。出现同分并列时，它只是按尾号顺序排在前面，不代表一定比D2强。"],
+        ["D2 第二推荐", "模型评分表里的第二个尾号。出现同分并列时，D1不优先、D2也不是天然备选；页面会单独提示并列号码。"],
         ["追号码 D1 / D2", "把一个推荐号锁定下来，连续检查3期，中途不换号。"],
         ["追推荐 D1 / D2", "每一期都使用当期最新的D1或D2推荐号，所以号码可能变。"],
         ["跟双号", "三期内调度建议本期按双号执行，不等于保证中奖。"],

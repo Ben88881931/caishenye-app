@@ -276,8 +276,8 @@ def main():
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
             fail("窗口倍投测试缺少今年最优规律或正式版候选标注")
-        if "function modelPairStrip" in app_text and "model-pair-grid" in app_text and "model-pair-card--d1" in app_text and "model-pair-card--d2" in app_text and "D1 第一推荐" in app_text and "D2 第二推荐" in app_text and "modelPairStrip(latest + 1)" in app_text and "view.innerHTML.indexOf('class=\"model-pair-grid\"') < 0" in app_text:
-            pass_("所有页面用且只用一组独立盒子显示下一期D1和D2推荐号码")
+        if "function modelPairStrip" in app_text and "model-pair-grid" in app_text and "model-pair-card--d1" in app_text and "model-pair-card--d2" in app_text and "D1 第一推荐" in app_text and "D2 第二推荐" in app_text and "modelPairStrip(latest + 1)" in app_text and "view.innerHTML.indexOf('class=\"model-pair-grid\"') < 0" in app_text and "doubleAmbiguous" in app_text and "当前排序不代表强弱" in app_text:
+            pass_("所有页面用且只用一组独立盒子显示下一期D1和D2推荐号码，并提示同分并列不代表强弱")
         else:
             fail("页面顶部缺少独立D1/D2推荐号码盒或存在重复插入")
         if "function renderBetExec" in app_text and "今日规划 · 第" in app_text and "按固定线路顺序排列" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:

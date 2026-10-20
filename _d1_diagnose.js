@@ -32,8 +32,9 @@ function stats(range, label) {
 }
 console.log("=== 首推 D1 命中率诊断（走步重建，和页面/快照同一模型）===");
 stats(periods, "全部");
-stats(periods.filter((p) => p <= 261), "2026年 1-261期");
-stats(periods.filter((p) => p >= 262), "2026年 262-288期(真实快照)");
+stats(periods.filter((p) => p <= 261), "2026年 31-261期");
+const snapshotStart = periods.includes(262) ? 262 : periods[0];
+stats(periods.filter((p) => p >= snapshotStart), "2026年 " + snapshotStart + "-" + periods[periods.length - 1] + "期(真实快照)");
 stats(periods.slice(-50), "最近50期");
 stats(periods.slice(-30), "最近30期");
 stats(periods.slice(-10), "最近10期");
@@ -46,7 +47,7 @@ for (let i = 0; i < last80.length; i += 10) {
   console.log("  " + blk[0] + "-" + blk[blk.length - 1] + "期：D1 " + h1 + "/" + n + " · D2 " + h2 + "/" + n);
 }
 // 按等级
-console.log("\n按等级（最近27期 vs 全部）：");
+console.log("\n按等级（真实快照区 vs 全部）：");
 function gradeStats(range, label) {
   const g = {};
   range.forEach((p) => {
@@ -61,15 +62,15 @@ function gradeStats(range, label) {
   console.log("  " + label + "：" + Object.keys(g).sort().map((k) => k + " " + g[k].h + "/" + g[k].n + "(" + (g[k].h / g[k].n * 100).toFixed(0) + "%)").join(" · "));
 }
 gradeStats(periods, "全部");
-gradeStats(periods.filter((p) => p >= 262), "262-288");
+gradeStats(periods.filter((p) => p >= snapshotStart), snapshotStart + "-" + periods[periods.length - 1]);
 // 二项检验：最近27期 D1 命中数 vs 前段命中率
 const prev = periods.filter((p) => p <= 261);
 const prevHit = prev.filter((p) => byP[p].D1 && byP[p].D1.hit).length / prev.length;
-const rec = periods.filter((p) => p >= 262);
+const rec = periods.filter((p) => p >= snapshotStart);
 const recHit = rec.filter((p) => byP[p].D1 && byP[p].D1.hit).length;
 function binomLE(k, n, p) { let s = 0, c = 1; for (let i = 0; i <= k; i++) { if (i > 0) c = c * (n - i + 1) / i; s += c * Math.pow(p, i) * Math.pow(1 - p, n - i); } return s; }
 console.log("\n统计检验：");
-console.log("  前段(31-261) D1 命中率 " + (prevHit * 100).toFixed(1) + "% · 最近27期 " + recHit + "/" + rec.length + " = " + (recHit / rec.length * 100).toFixed(1) + "%");
+  console.log("  前段(31-" + (snapshotStart - 1) + ") D1 命中率 " + (prevHit * 100).toFixed(1) + "% · 真实快照区 " + recHit + "/" + rec.length + " = " + (recHit / rec.length * 100).toFixed(1) + "%");
 console.log("  若真实命中率=前段水平，" + recHit + "/" + rec.length + " 或更差的概率 p=" + binomLE(recHit, rec.length, prevHit).toFixed(4));
-console.log("  随机基准(同期) " + (rec.reduce((s, p) => s + base1[p], 0) / rec.length * 100).toFixed(1) + "% · 最近27期 D1 比随机 " +
+  console.log("  随机基准(同期) " + (rec.reduce((s, p) => s + base1[p], 0) / rec.length * 100).toFixed(1) + "% · 真实快照区 D1 比随机 " +
   ((recHit / rec.length - rec.reduce((s, p) => s + base1[p], 0) / rec.length) * 100).toFixed(1) + " 个百分点");
