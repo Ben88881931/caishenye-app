@@ -3060,3 +3060,49 @@ body[data-page="windowmiss"] .trend-run-row__head span {
   background: #94a3b8;
   border-radius: 999px;
 }
+
+/* 动态概率：双号页式简洁结构 */
+.prob-page-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+}
+
+.prob-summary-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.prob-summary-state b { color: #b91c1c; font-size: 13px; }
+.prob-summary-state strong { color: #b91c1c; }
+.prob-summary-note { color: #64748b; font-size: 11px; line-height: 1.6; max-width: 260px; }
+
+.prob-details {
+  margin: 4px 0 14px;
+  border: 1px solid #dbe3ec;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.prob-details > summary {
+  padding: 9px 11px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  background: #f8fafc;
+}
+
+@media (max-width: 560px) {
+  .prob-page-summary { grid-template-columns: 1fr; }
+  .prob-summary-note { max-width: none; }
+}

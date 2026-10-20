@@ -364,6 +364,7 @@
     windowMultN: 2,
     windowMultView: "overview",
     windowMultDetailYears: 1,
+    probYear: lsGet("v2_prob_year", null),
     ultimateMode: "number",
     numSearchQuery: "",
     numSearchMode: "all",
@@ -6134,23 +6135,16 @@
     return rawYear;
   }
 
-  function probabilityTestWindowHTML() {
-    var years = [];
-    D.forEach(function (row) {
-      var year = Number(row.y);
-      if (year && years.indexOf(year) < 0) years.push(year);
-    });
-    years.sort(function (a, b) { return b - a; });
+  function probabilityTestWindowHTML(selectedYear) {
+    var year = Number(selectedYear);
+    var rawYear = probabilityYearRaw(year);
+    var trainingYear = year >= 2021 && year <= 2024;
+    var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "影子");
+    var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026仅观察");
     var labels = ["概率第1·影子", "概率第2·影子", "概率第3·影子"];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">2021-2026各年独立 · 固定追3期 · ' + WINDOW_RECORD_FORMAT + ' · 只按开奖前状态生成</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>每条概率线在新窗口开始时锁定当期排名号码，连续固定追3期；命中即关窗，三期全错后等待该尾号重新开出再开新窗。2025用于验证，2026仅影子观察，不作为正式下单依据。</div></div>';
-    years.forEach(function (year) {
-      var rawYear = probabilityYearRaw(year);
-      var trainingYear = year >= 2021 && year <= 2024;
-      var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "影子");
-      var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026仅观察");
-      html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '窗口</b><span>' + segmentNote + '</span></div>';
-      labels.forEach(function (label, rank) {
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">' + year + segment + '窗口 · 切换年份查看全部历史 · ' + WINDOW_RECORD_FORMAT + '</span></div></div>';
+    html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '窗口</b><span>' + segmentNote + '</span></div>';
+    labels.forEach(function (label, rank) {
         var records = PROB_MODEL.windowBacktest(rawYear, rank, 3);
         var first = records.filter(function (r) { return r.hitIndex === 1; }).length;
         var second = records.filter(function (r) { return r.hitIndex === 2; }).length;
@@ -6165,9 +6159,8 @@
         });
         html += '</div></div>';
       });
-      html += '</div></div>';
-    });
-    html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026为影子观察；所有窗口按每年第1期重新起算，不引用未来开奖。2026正式影子快照从294期开始。</p>';
+    html += '</div></div>';
+    html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026为影子观察；切换年份可查看全部历史，所有窗口按每年第1期重新起算，不引用未来开奖。</p>';
     return html;
   }
 
@@ -6177,20 +6170,29 @@
     var vb = PROB_MODEL.META.baseline.validation, sb = PROB_MODEL.META.baseline.shadow2026;
     function pct(v) { return (v * 100).toFixed(1) + "%"; }
     function delta(v, base) { var d = (v - base) * 100; return (d >= 0 ? "+" : "") + d.toFixed(1) + "pp"; }
+    var years = [];
+    D.forEach(function (row) {
+      var year = Number(row.y);
+      if (year && years.indexOf(year) < 0) years.push(year);
+    });
+    years.sort(function (a, b) { return b - a; });
+    var selectedYear = years.indexOf(Number(state.probYear)) >= 0 ? Number(state.probYear) : years[0];
+    state.probYear = selectedYear;
+    var yearTabs = years.map(function (year) {
+      var tag = year <= 2024 ? "训练" : year === 2025 ? "验证" : "影子";
+      return '<button class="chip wm-view-tab ' + (year === selectedYear ? "is-active" : "") + '" type="button" data-prob-year="' + year + '">' + year + ' ' + tag + '</button>';
+    }).join("");
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · 第' + result.target + '期影子预测</h2><span class="section__hint">模型 ' + result.version + ' · 每期重算10个尾号 · 当前状态：未通过正式验证</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-guide"><b>规则：</b>每期开奖后用上一期及之前的数据重新计算。前三名只表示概率顺序，不保证命中；概率接近时标为不可区分。旧D1/D2硬排序已退出正式推荐。</div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:14px;font-weight:900;color:#b91c1c;margin-bottom:8px">测试状态 · 未通过正式验证</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
-    html += '<div style="border:1px solid #dbe3ec;border-radius:6px;padding:9px;background:#f8fafc"><b>2025验证段</b><div style="font-size:12px;line-height:1.8;color:#475569;margin-top:4px">下一期Top1 <b>' + pct(vm.nextTop1) + '</b> / 随机 ' + pct(vb.next) + '<br>Top3覆盖 <b>' + pct(vm.nextTop3Coverage) + '</b><br>三期Top1 <b>' + pct(vm.window3Top1) + '</b> / 随机 ' + pct(vb.window3) + '</div></div>';
-    html += '<div style="border:1px solid #fde68a;border-radius:6px;padding:9px;background:#fffbeb"><b>2026影子段</b><div style="font-size:12px;line-height:1.8;color:#475569;margin-top:4px">下一期Top1 <b>' + pct(sm.nextTop1) + '</b> / 随机 ' + pct(sb.next) + '<br>Top3覆盖 <b>' + pct(sm.nextTop3Coverage) + '</b><br>三期Top1 <b>' + pct(sm.window3Top1) + '</b> / 随机 ' + pct(sb.window3) + '</div></div>';
-    html += '</div><div style="font-size:12px;color:#b91c1c;font-weight:800;line-height:1.8;margin-top:8px">结论：2025 Top1曾高于随机，但2026影子Top1只有 ' + delta(sm.nextTop1, sb.next) + '，三期Top1为 ' + delta(sm.window3Top1, sb.window3) + '，没有证明稳定优势。当前仅影子观察，0仓位，不进入正式下单。</div></div></div>';
-    html += probabilityTestWindowHTML();
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px;font-size:12px"><thead><tr><th>排名</th><th>尾号</th><th>下一期概率</th><th>三期出现概率</th><th>当前遗漏</th><th>当前连出</th><th>判断</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>测试状态 · 未通过正式验证</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>0仓位 · 不进入正式下单</strong></div><div class="prob-summary-note">2026 Top1 ' + delta(sm.nextTop1, sb.next) + '，三期Top1 ' + delta(sm.window3Top1, sb.window3) + '；没有证明稳定优势，只做影子记录。</div></div></div>';
+    html += '<div class="section"><div class="panel"><div class="wm-subhead">测试历史年份 · 2021-2026各年独立</div><div class="wm-view-tabs">' + yearTabs + '</div></div></div>';
+    html += probabilityTestWindowHTML(selectedYear);
+    html += '<details class="prob-details"><summary>全部尾号概率 · 10个号码</summary><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px;font-size:12px"><thead><tr><th>排名</th><th>尾号</th><th>下一期概率</th><th>三期出现概率</th><th>当前遗漏</th><th>当前连出</th><th>判断</th></tr></thead><tbody>';
     result.rows.forEach(function (row, index) {
       var confidence = row.nextProb >= 0.58 ? "较高" : row.nextProb >= 0.55 ? "中" : "低";
       var mark = index < 3 ? "前" + (index + 1) : "";
       html += '<tr><td><b>' + (index + 1) + '</b> ' + mark + '</td><td><b>尾' + row.tail + '</b></td><td>' + pct(row.nextProb) + '</td><td>' + pct(row.window3Prob) + '</td><td>' + row.currentMiss + ' 期</td><td>' + row.currentStreak + ' 期</td><td><b style="color:' + (confidence === "较高" ? "#15803d" : confidence === "中" ? "#2563eb" : "#64748b") + '">' + confidence + '</b></td></tr>';
     });
-    html += '</tbody></table></div></div>';
+    html += '</tbody></table></div></details>';
     html += '<p class="disclaimer">本页概率为固定权重影子模型，不使用未来数据；训练2021-2024、验证2025、2026仅做开奖前影子记录。历史真实D1/D2快照保留不动，但不再作为推荐依据。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
   }
@@ -7378,6 +7380,13 @@
     var noteClear = e.target.closest("[data-note-clear]");
     if (noteClear) {
       if (window.confirm("确定清空全部笔记？")) { notesSave([]); renderNotes(); }
+      return;
+    }
+    var probYearBtn = e.target.closest("[data-prob-year]");
+    if (probYearBtn) {
+      state.probYear = Number(probYearBtn.dataset.probYear);
+      lsSet("v2_prob_year", state.probYear);
+      renderProbabilityModel();
       return;
     }
     var betMode = e.target.closest("[data-bet-mode]");
