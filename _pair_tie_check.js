@@ -32,7 +32,11 @@ async function getJSON(url) { const response = await fetch(url, { signal: AbortS
         pages++;
         if(tab.id==="pick3")probPages++;
         if(state.p1!==1||state.p2!==1||state.p3!==1||state.old!==0||!/动态第1/.test(state.text)||!/动态第2/.test(state.text)||!/动态第3/.test(state.text)||(state.text.match(/%/g)||[]).length<4)failures.push(tab.label+"("+group+")");
-        if(tab.id==="pick3"&&(!/动态概率模型 · 第/.test(state.view)||!/影子预测/.test(state.view)))failures.push("动态概率页缺少影子模型说明");
+        if(tab.id==="pick3"&&(!/动态概率模型 · 第/.test(state.view)||!/影子预测/.test(state.view)||!/测试状态 · 未通过正式验证/.test(state.view)||!/测试窗口记录 · 2025验证 \/ 2026影子/.test(state.view)))failures.push("动态概率页缺少影子模型或测试状态");
+        if(tab.id==="pick3"){
+          const probTest=JSON.parse(await ev("(function(){return JSON.stringify({strips:document.querySelectorAll('.prob-test-strip').length,cards:document.querySelectorAll('.prob-test-card').length,text:document.querySelector('#view').innerText});})()"));
+          if(probTest.strips!==6||probTest.cards<6||!/第1期中/.test(probTest.text)||!/全错/.test(probTest.text))failures.push("动态概率页测试窗口滚动条不完整");
+        }
         if(/D1 第一推荐|D2 第二推荐/.test(state.text))failures.push(tab.label+"("+group+"·旧推荐)");
       }
     }

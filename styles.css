@@ -2856,6 +2856,91 @@ body[data-page="windowmiss"] .wm-run-summary__item small {
   font-size: 9px;
 }
 
+.prob-test-row {
+  min-width: 0;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid #e8edf3;
+}
+
+.prob-test-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.prob-test-head b {
+  color: #1e3a8a;
+  font-size: 12px;
+}
+
+.prob-test-head span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.prob-test-strip {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 7px;
+  box-sizing: border-box;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+
+.prob-test-card {
+  flex: 0 0 150px;
+  min-height: 66px;
+  padding: 7px 8px;
+  border: 1px solid #dbe3ec;
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #f8fafc;
+}
+
+.prob-test-card.is-hit {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.prob-test-card.is-miss {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.prob-test-card b {
+  color: #15803d;
+  font-size: 13px;
+}
+
+.prob-test-card.is-miss b {
+  color: #b91c1c;
+}
+
+.prob-test-card span {
+  color: #475569;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.prob-test-card small {
+  color: #64748b;
+  font-size: 9px;
+  line-height: 1.45;
+  white-space: normal;
+}
+
 body[data-page="windowmiss"] .trend-run-row__head {
   align-items: flex-start;
   flex-direction: column;

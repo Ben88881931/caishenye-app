@@ -38,6 +38,29 @@ check(
 );
 check(!("D1" in prediction) && !("D2" in prediction), "动态概率模型不得继续输出旧D1/D2排名");
 
+const appText = fs.readFileSync("data.js", "utf8");
+const appData = JSON.parse(appText.slice(appText.indexOf("{"), appText.lastIndexOf("}") + 1));
+function yearRawFor(year) {
+  const out = {};
+  appData.d.filter((row) => Number(row.y) === Number(year)).forEach((row) => {
+    const bits = Array(10).fill("0");
+    row.nums.forEach((num) => { bits[Number(num) % 10] = "1"; });
+    out[String(row.p)] = bits.join("");
+  });
+  return out;
+}
+for (const year of [2025, 2026]) {
+  const yearRaw = yearRawFor(year);
+  const maxPeriod = Math.max(...Object.keys(yearRaw).map(Number));
+  for (let rank = 0; rank < 3; rank++) {
+    const records = model.windowBacktest(yearRaw, rank, 3);
+    check(records.length > 0, year + "概率第" + (rank + 1) + "必须有测试窗口");
+    check(records.every((record) => record.attempts.length >= 1 && record.attempts.length <= 3), year + "概率第" + (rank + 1) + "每窗只能记录第1-3期");
+    check(records.every((record) => record.attempts.every((attempt) => attempt.period <= maxPeriod)), year + "概率第" + (rank + 1) + "不得出现未来期");
+    check(records.every((record, index, list) => index === 0 || list[index - 1].startPeriod < record.startPeriod), year + "概率第" + (rank + 1) + "窗口必须按时间递增");
+  }
+}
+
 console.log(`模型版本：${model.VERSION} · 目标期：${target} · 前三名：尾${prediction.top.map((row) => row.tail).join("/尾")}`);
 console.log(`RESULT: ${failures.length ? "FAILED " + failures.length : "ALL PASS"}`);
 process.exit(failures.length ? 1 : 0);

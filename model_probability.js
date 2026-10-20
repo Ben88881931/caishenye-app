@@ -128,5 +128,70 @@
     };
   }
 
-  return { VERSION: VERSION, META: META, analyze: analyze };
+  function windowBacktest(raw, rank, maxStage) {
+    var cap = maxStage === 2 ? 2 : 3;
+    var periods = periodsOf(raw);
+    if (!periods.length) return [];
+    var maxPeriod = periods[periods.length - 1];
+    var records = [];
+    var waitingTail = null;
+    var period = 1;
+    while (period <= maxPeriod) {
+      if (waitingTail != null) {
+        var reopened = null;
+        for (var wait = period; wait <= maxPeriod; wait++) {
+          if (hasTail(raw, wait, waitingTail)) {
+            reopened = wait;
+            break;
+          }
+        }
+        if (reopened == null) break;
+        period = reopened + 1;
+        waitingTail = null;
+        continue;
+      }
+      var prediction = analyze(raw, period - 1);
+      var pick = prediction.top[rank || 0];
+      if (!pick) {
+        period++;
+        continue;
+      }
+      var attempts = [];
+      var hitIndex = 0;
+      for (var offset = 0; offset < cap && period + offset <= maxPeriod; offset++) {
+        var at = period + offset;
+        var hit = hasTail(raw, at, pick.tail);
+        attempts.push({ period: at, tail: pick.tail, hit: hit });
+        if (hit) {
+          hitIndex = offset + 1;
+          break;
+        }
+      }
+      if (hitIndex > 0) {
+        records.push({
+          startPeriod: period,
+          tail: pick.tail,
+          status: "hit",
+          hitIndex: hitIndex,
+          attempts: attempts
+        });
+        period += hitIndex;
+      } else if (attempts.length === cap) {
+        records.push({
+          startPeriod: period,
+          tail: pick.tail,
+          status: "miss",
+          hitIndex: 0,
+          attempts: attempts
+        });
+        waitingTail = pick.tail;
+        period += cap;
+      } else {
+        break;
+      }
+    }
+    return records;
+  }
+
+  return { VERSION: VERSION, META: META, analyze: analyze, windowBacktest: windowBacktest };
 });

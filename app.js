@@ -5881,6 +5881,45 @@
     return { stream: stream, label: label, batches: batches, n: n, hits: hits, hitRate: n ? hits / n : 0, first: counts.first, second: counts.second, third: counts.third, miss: counts.miss, firstRate: n ? counts.first / n : 0, secondRate: n ? counts.second / n : 0, thirdRate: n ? counts.third / n : 0, missRate: n ? counts.miss / n : 0 };
   }
 
+  function probabilityYearRaw(year) {
+    var rawYear = {};
+    D.filter(function (row) { return Number(row.y) === Number(year); }).forEach(function (row) {
+      var bits = Array(10).fill("0");
+      (row.nums || []).forEach(function (num) { bits[Number(num) % 10] = "1"; });
+      rawYear[String(row.p)] = bits.join("");
+    });
+    return rawYear;
+  }
+
+  function probabilityTestWindowHTML() {
+    var years = [2025, 2026];
+    var labels = ["概率第1·影子", "概率第2·影子", "概率第3·影子"];
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 2025验证 / 2026影子</h2><span class="section__hint">固定追3期 · 新→旧 · 每窗标出第1/2/3期 · 只按开奖前状态生成</span></div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>每条概率线在新窗口开始时锁定当期排名号码，连续固定追3期；命中即关窗，三期全错后等待该尾号重新开出再开新窗。2025用于验证，2026仅影子观察，不作为正式下单依据。</div></div>';
+    years.forEach(function (year) {
+      var rawYear = probabilityYearRaw(year);
+      html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + (year === 2025 ? "验证" : "影子") + '窗口</b><span>' + (year === 2025 ? "验证段" : "2026仅观察") + '</span></div>';
+      labels.forEach(function (label, rank) {
+        var records = PROB_MODEL.windowBacktest(rawYear, rank, 3);
+        var first = records.filter(function (r) { return r.hitIndex === 1; }).length;
+        var second = records.filter(function (r) { return r.hitIndex === 2; }).length;
+        var third = records.filter(function (r) { return r.hitIndex === 3; }).length;
+        var miss = records.filter(function (r) { return r.status === "miss"; }).length;
+        html += '<div class="prob-test-row"><div class="prob-test-head"><b>' + label + '</b><span>共' + records.length + '窗 · 第1期中' + first + ' · 第2期中' + second + ' · 第3期中' + third + ' · 全错' + miss + '</span></div>';
+        html += '<div class="prob-test-strip">';
+        if (!records.length) html += '<span class="trend-run-empty">暂无已结算窗口</span>';
+        records.slice().reverse().forEach(function (record) {
+          var result = record.status === "miss" ? "错窗" : "中" + record.hitIndex;
+          html += '<span class="prob-test-card ' + (record.status === "miss" ? "is-miss" : "is-hit") + '"><b>' + result + '</b><span>' + year + '年第' + record.startPeriod + '期起 · 锁定尾' + record.tail + '</span><small>' + record.attempts.map(function (a) { return '第' + (a.period - record.startPeriod + 1) + '期 ' + (a.tail == null ? '待定' : '尾' + a.tail) + ' ' + (a.hit ? '中' : '错'); }).join(' | ') + '</small></span>';
+        });
+        html += '</div></div>';
+      });
+      html += '</div></div>';
+    });
+    html += '<p class="disclaimer">测试窗口按每年第1期重新起算，不引用未来开奖；2026影子窗口从294期开始。</p>';
+    return html;
+  }
+
   function renderProbabilityModel() {
     var result = PROB_MODEL.analyze(RAW, latest);
     var vm = PROB_MODEL.META.validation, sm = PROB_MODEL.META.shadow2026;
@@ -5893,6 +5932,7 @@
     html += '<div style="border:1px solid #dbe3ec;border-radius:6px;padding:9px;background:#f8fafc"><b>2025验证段</b><div style="font-size:12px;line-height:1.8;color:#475569;margin-top:4px">下一期Top1 <b>' + pct(vm.nextTop1) + '</b> / 随机 ' + pct(vb.next) + '<br>Top3覆盖 <b>' + pct(vm.nextTop3Coverage) + '</b><br>三期Top1 <b>' + pct(vm.window3Top1) + '</b> / 随机 ' + pct(vb.window3) + '</div></div>';
     html += '<div style="border:1px solid #fde68a;border-radius:6px;padding:9px;background:#fffbeb"><b>2026影子段</b><div style="font-size:12px;line-height:1.8;color:#475569;margin-top:4px">下一期Top1 <b>' + pct(sm.nextTop1) + '</b> / 随机 ' + pct(sb.next) + '<br>Top3覆盖 <b>' + pct(sm.nextTop3Coverage) + '</b><br>三期Top1 <b>' + pct(sm.window3Top1) + '</b> / 随机 ' + pct(sb.window3) + '</div></div>';
     html += '</div><div style="font-size:12px;color:#b91c1c;font-weight:800;line-height:1.8;margin-top:8px">结论：2025 Top1曾高于随机，但2026影子Top1只有 ' + delta(sm.nextTop1, sb.next) + '，三期Top1为 ' + delta(sm.window3Top1, sb.window3) + '，没有证明稳定优势。当前仅影子观察，0仓位，不进入正式下单。</div></div></div>';
+    html += probabilityTestWindowHTML();
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px;font-size:12px"><thead><tr><th>排名</th><th>尾号</th><th>下一期概率</th><th>三期出现概率</th><th>当前遗漏</th><th>当前连出</th><th>判断</th></tr></thead><tbody>';
     result.rows.forEach(function (row, index) {
       var confidence = row.nextProb >= 0.58 ? "较高" : row.nextProb >= 0.55 ? "中" : "低";
