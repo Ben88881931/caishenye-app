@@ -25,6 +25,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const check = (ok, label, extra) => { console.log((ok ? "PASS: " : "FAIL: ") + label + (extra ? "  [" + extra + "]" : "")); if (!ok) fails.push(label); };
 
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
+  await ev("var dt=document.querySelector('[data-directory-tab=\"betexec\"]'); if(dt)dt.click(); true"); await sleep(400);
   // 执行提示/资金调度已并入下注执行表，这里改为核查主页面
   await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(2200);
   const data = JSON.parse(await ev(`(function () {

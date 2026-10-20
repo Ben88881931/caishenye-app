@@ -171,7 +171,7 @@ def main():
             pass_("renderTabs 通过 getVisibleTabs 生成导航")
         else:
             fail("renderTabs 未通过 getVisibleTabs 生成导航")
-        if "var NAV_GROUPS" in app_text and 'data-nav-group="' in app_text and "nav-subtabs" in app_text and "nav-groups" in app_text:
+        if "var NAV_GROUPS" in app_text and 'data-directory-group="' in app_text and "nav-subtabs" in app_text and "nav-groups" in app_text:
             pass_("app.js 含两级导航分类")
         else:
             fail("app.js 缺少两级导航分类")
@@ -179,18 +179,17 @@ def main():
             "navDragState" in app_text
             and "function startNavDrag" in app_text
             and "persistGroupOrderFromDom" in app_text
-            and 'data-nav-group="' in app_text
-            and 'aria-expanded="' in app_text
-            and "NAV_COLLAPSED_KEY" in app_text
+            and 'data-directory-group="' in app_text
+            and "startDirectoryGroupSort" in app_text
             and "NAV_GROUP_ORDER_KEY" in app_text
             and "TABLE_COL_ORDER_KEY" in app_text
             and "applySavedTableColumnOrders" in app_text
             and "data-sort=\"up\"" not in app_text
             and "sort-btn" not in app_text
         ):
-            pass_("app.js 支持分类折叠、导航长按拖动排序和表头长按拖动排序")
+            pass_("app.js 支持目录长按排序、导航拖动排序和表头长按拖动排序")
         else:
-            fail("app.js 缺少分类折叠、长按导航排序或长按表头排序")
+            fail("app.js 缺少目录长按排序、导航拖动排序或表头长按排序")
 
         for func in ["renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "hitLogSectionHTML"]:
             if f"function {func}" not in app_text:
@@ -221,7 +220,7 @@ def main():
             pass_("追号/追推荐页面观望与锁定文案分层正确")
         else:
             fail("追号/追推荐页面观望与锁定文案不清晰")
-        if "function nudgeNavItem" in app_text and "renderedTab" in app_text and "nav-group-caret" in app_text and "window.scrollTo" in app_text:
+        if "function nudgeNavItem" in app_text and "renderedTab" in app_text and "data-directory-tab" in app_text and "v2_directory_group" in app_text and "window.scrollTo" in app_text:
             pass_("顶部导航支持粘性定位、位置保持和当前项可见")
         else:
             fail("顶部导航缺少粘性定位、位置保持或当前项可见逻辑")
@@ -242,7 +241,7 @@ def main():
             pass_("三期内记录与调度记录均紧接卡片下方展示")
         else:
             fail("三期内记录未紧接卡片下方展示")
-        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "EXEC_LINES" in app_text and "13条独立线路" in app_text and "3期内命中率" in app_text and "首次命中分布" in app_text and "对错滚动记录 · 新→旧 · 已结算" in app_text and "exec-line__scroll" in app_text and "公式（元）" in app_text and "等待尾" in app_text and "重新开出后再开新窗口" in app_text and "金额 ' + planText" not in app_text and "slice(-30).reverse()" not in app_text and "function renderOrderHint" not in app_text and "function renderFunds" not in app_text:
+        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "EXEC_LINES" in app_text and "13条独立线路" in app_text and "3期内命中率" in app_text and "首次命中分布" in app_text and "对错滚动记录 · ' + WINDOW_RECORD_FORMAT + ' · 已结算" in app_text and "exec-line__scroll" in app_text and "公式（元）" in app_text and "等待尾" in app_text and "重新开出后再开新窗口" in app_text and "金额 ' + planText" not in app_text and "slice(-30).reverse()" not in app_text and "function renderOrderHint" not in app_text and "function renderFunds" not in app_text:
             pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和13条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")

@@ -22,6 +22,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   await send("Page.navigate", { url: "http://127.0.0.1:" + HTTP + "/index.html" });
   for (let i = 0; i < 30; i++) { if (await ev("!!document.querySelector('.directory-card')")) break; await sleep(400); }
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
+  await ev("var dt=document.querySelector('[data-directory-tab=\"formulas\"]'); if(dt)dt.click(); true"); await sleep(500);
 
   // 公式表：热图最新格金额的唯一口径
   await ev("document.querySelector('.tab[data-tab=\"formulas\"]').click(); true"); await sleep(1200);
@@ -57,6 +58,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   // 窗口遗漏热图：最底一行=各线当前状态（等N=等待重开 / 进N=窗口已跑到第N期）
   await ev("var bk=document.querySelector('[data-directory=\"1\"]'); if(bk)bk.click(); true"); await sleep(700);
   await ev("var g1=document.querySelector('[data-directory-group=\"miss\"]'); if(g1)g1.click(); true"); await sleep(700);
+  await ev("var dt1=document.querySelector('[data-directory-tab=\"windowmiss\"]'); if(dt1)dt1.click(); true"); await sleep(500);
   await ev("document.querySelector('.tab[data-tab=\"windowmiss\"]').click(); true"); await sleep(2300);
   const hm = JSON.parse(await ev(`(function(){
     var tab = document.querySelector('#view .heatmap__table');
@@ -130,6 +132,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   // 回到模型流程分组，继续核对13线规律中心
   await ev("var bk2=document.querySelector('[data-directory=\"1\"]'); if(bk2)bk2.click(); true"); await sleep(700);
   await ev("var g2=document.querySelector('[data-directory-group=\"recommend\"]'); if(g2)g2.click(); true"); await sleep(700);
+  await ev("var dt2=document.querySelector('[data-directory-tab=\"windowmult\"]'); if(dt2)dt2.click(); true"); await sleep(500);
   // 13线规律中心 · 窗口明细（逐条线）
   await ev("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
   await ev("var b=document.querySelector('.wm-view-tab[data-wm-view=\"windows\"]'); if(b)b.click(); true"); await sleep(900);

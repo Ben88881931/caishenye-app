@@ -53,7 +53,9 @@ async function main() {
   const activeTab = () => evalJS("(document.querySelector('.tab.is-active')||{}).dataset ? document.querySelector('.tab.is-active').dataset.tab : ''");
 
   await evalJS("document.querySelector('[data-directory-group=\"recommend\"]').click(); true");
-  await sleep(700);
+  await sleep(300);
+  await evalJS("var dt=document.querySelector('[data-directory-tab=\"pick3\"]'); if(dt)dt.click(); true");
+  await sleep(500);
 
   // 0) 执行提示/资金调度必须已从导航撤掉（并入下注执行表）
   const navLabels = await evalJS("[].map.call(document.querySelectorAll('#tabs .tab'),function(t){return (t.innerText||'').trim();}).join(',')");
@@ -105,7 +107,8 @@ async function main() {
 
   // 5) 横向滚动条内滑动不翻页
   await evalJS("var bk9=document.querySelector('[data-directory=\"1\"]'); if(bk9)bk9.click(); true"); await sleep(500);
-  await evalJS("var g9=document.querySelector('[data-directory-group=\"recommend\"]'); if(g9)g9.click(); true"); await sleep(500);
+  await evalJS("var g9=document.querySelector('[data-directory-group=\"recommend\"]'); if(g9)g9.click(); true"); await sleep(300);
+  await evalJS("var dt9=document.querySelector('[data-directory-tab=\"betexec\"]'); if(dt9)dt9.click(); true"); await sleep(500);
   await evalJS("var b9=document.querySelector('.tab[data-tab=\"betexec\"]'); if(b9)b9.click(); true"); await sleep(1800);
   const before5 = await activeTab();
   await gesture(".exec-line__scroll", [-40, -90], null, 20);

@@ -8,6 +8,7 @@
     .map(Number)
     .sort(function (a, b) { return a - b; });
   var latest = periods[periods.length - 1];
+  var WINDOW_RECORD_FORMAT = "每窗第1/2/3期 · 期号 + 尾号 + 中/错/待开奖 · 最新在左 · 左右滑动";
   var MODEL = window.CAISHEN_MODEL.createModel(RAW);
   var PROB_MODEL = window.CAISHEN_PROBABILITY;
 
@@ -343,6 +344,7 @@
   var state = {
     tab: lsGet("v2_current_tab", "directory"),
     group: lsGet("v2_nav_group", "recommend"),
+    directoryGroup: lsGet("v2_directory_group", null),
     groupHistory: [],
     groupHistoryIndex: -1,
     tabHistoryByGroup: {},
@@ -453,7 +455,6 @@
   var NAV_GROUP_KEY = "v2_nav_group";
   var NAV_GROUP_ORDER_KEY = "v2_nav_group_order";
   var NAV_PAGE_GROUPS_KEY = "v2_nav_page_groups";
-  var NAV_COLLAPSED_KEY = "v2_nav_collapsed";
   var TABLE_COL_ORDER_KEY = "v2_table_col_orders";
   var renderedTab = null;
 
@@ -551,7 +552,6 @@
       localStorage.removeItem(TAB_ORDER_KEY);
       localStorage.removeItem(NAV_GROUP_ORDER_KEY);
       localStorage.removeItem(NAV_PAGE_GROUPS_KEY);
-      localStorage.removeItem(NAV_COLLAPSED_KEY);
       localStorage.removeItem(TABLE_COL_ORDER_KEY);
     } catch (e) {}
   }
@@ -624,7 +624,7 @@
     var kind = gesture.kind;
     var tabId = kind === "tab" ? gesture.target.dataset.tab : null;
     var groupButton = kind === "group" ? gesture.target.querySelector(".nav-group[data-nav-group]") : null;
-    var groupId = kind === "group" ? groupButton.dataset.navGroup : (groupForTab(tabId) || NAV_GROUPS[0]).id;
+    var groupId = kind === "group" ? (gesture.groupId || groupButton.dataset.navGroup) : (groupForTab(tabId) || NAV_GROUPS[0]).id;
     var tab = TABS.filter(function (item) { return item.id === tabId; })[0];
     var group = groupById(groupId) || NAV_GROUPS[0];
     var position = kind === "tab"
@@ -680,6 +680,44 @@
 
   var navDragState = null;
   var navDragClickGuard = false;
+  var directoryGroupSortState = null;
+
+  function clearDirectoryGroupSortState() {
+    if (directoryGroupSortState && directoryGroupSortState.timer) clearTimeout(directoryGroupSortState.timer);
+    directoryGroupSortState = null;
+  }
+
+  function startDirectoryGroupSort() {
+    var sortState = directoryGroupSortState;
+    if (!sortState) return;
+    directoryGroupSortState = null;
+    navDragClickGuard = true;
+    openNavSortDialog({ kind: "group", groupId: sortState.groupId, target: sortState.target });
+  }
+
+  view.addEventListener("pointerdown", function (e) {
+    if (e.button != null && e.button !== 0) return;
+    var card = e.target.closest(".directory-card[data-directory-group]");
+    if (!card) return;
+    clearDirectoryGroupSortState();
+    directoryGroupSortState = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      groupId: card.dataset.directoryGroup,
+      target: card,
+      timer: null
+    };
+    directoryGroupSortState.timer = setTimeout(startDirectoryGroupSort, 450);
+  }, { passive: true });
+
+  document.addEventListener("pointermove", function (e) {
+    var sortState = directoryGroupSortState;
+    if (!sortState || e.pointerId !== sortState.pointerId) return;
+    if (Math.abs(e.clientX - sortState.startX) > 8 || Math.abs(e.clientY - sortState.startY) > 8) clearDirectoryGroupSortState();
+  }, { passive: true });
+  document.addEventListener("pointerup", clearDirectoryGroupSortState, true);
+  document.addEventListener("pointercancel", clearDirectoryGroupSortState, true);
 
   function clearNavDragState() {
     if (!navDragState) return;
@@ -963,22 +1001,6 @@
   });
   tableOrderObserver.observe(view, { childList: true });
 
-  function collapsedGroupIds() {
-    var arr = lsGet(NAV_COLLAPSED_KEY, []);
-    return Array.isArray(arr) ? arr : [];
-  }
-
-  function isGroupCollapsed(groupId) {
-    return collapsedGroupIds().indexOf(groupId) >= 0;
-  }
-
-  function toggleGroupCollapsed(groupId) {
-    var arr = collapsedGroupIds();
-    var idx = arr.indexOf(groupId);
-    if (idx >= 0) arr.splice(idx, 1);
-    else arr.push(groupId);
-    lsSet(NAV_COLLAPSED_KEY, arr);
-  }
 
   function nudgeNavItem(container, item) {
     if (!container || !item) return;
@@ -1003,15 +1025,6 @@
     var groupHtml = "";
     if (directoryActive) {
       groupHtml = '<button class="nav-group nav-group--directory is-active" type="button" data-directory="1">目录</button>';
-      groupHtml += groups.map(function (g) {
-        var collapsed = isGroupCollapsed(g.id);
-        var h = '<span class="nav-group-wrap">';
-        h += '<button class="nav-group' + (collapsed ? " is-collapsed" : "") +
-          '" type="button" data-nav-group="' + g.id + '" aria-expanded="' + (!collapsed) + '">' + g.label +
-          '<span class="nav-group-caret" aria-hidden="true">' + (collapsed ? "▸" : "▾") + '</span></button>';
-        h += "</span>";
-        return h;
-      }).join("");
     } else {
       groupHtml = "";
     }
@@ -1214,38 +1227,30 @@
     return "";
   }
 
-  function isPointerOnScrollbar(e) {
+  // 一次遍历同时判断滚动条、横向容器和最内层滚动元素，避免每次触摸重复扫描三遍。
+  function horizontalGestureInfoAt(e) {
     var el = e.target;
+    var info = { onScrollbar: false, inHorizontalScroll: false, scrollEl: null };
     while (el && el.nodeType === 1 && el !== document.documentElement) {
-      var style = window.getComputedStyle(el);
-      var rect = el.getBoundingClientRect();
-      var hasX = el.scrollWidth > el.clientWidth && /(auto|scroll)/.test(style.overflowX);
-      var hasY = el.scrollHeight > el.clientHeight && /(auto|scroll)/.test(style.overflowY);
-      if (hasX && e.clientY >= rect.top + el.clientHeight) return true;
-      if (hasY && e.clientX >= rect.left + el.clientWidth) return true;
+      var hasX = el.scrollWidth > el.clientWidth + 1;
+      var hasY = el.scrollHeight > el.clientHeight + 1;
+      if (hasX || hasY) {
+        var style = window.getComputedStyle(el);
+        var xScroll = hasX && /(auto|scroll)/.test(style.overflowX);
+        var yScroll = hasY && /(auto|scroll)/.test(style.overflowY);
+        if (xScroll || yScroll) {
+          var rect = el.getBoundingClientRect();
+          if (xScroll) {
+            if (!info.inHorizontalScroll) info.inHorizontalScroll = true;
+            if (!info.scrollEl) info.scrollEl = el;
+            if (e.clientY >= rect.top + el.clientHeight) info.onScrollbar = true;
+          }
+          if (yScroll && e.clientX >= rect.left + el.clientWidth) info.onScrollbar = true;
+        }
+      }
       el = el.parentElement;
     }
-    return false;
-  }
-
-  function isInsideHorizontalScroll(e) {
-    var el = e.target;
-    while (el && el.nodeType === 1 && el !== document.documentElement) {
-      var style = window.getComputedStyle(el);
-      if (el.scrollWidth > el.clientWidth + 1 && /(auto|scroll)/.test(style.overflowX)) return true;
-      el = el.parentElement;
-    }
-    return false;
-  }
-  // 找到指针所在的最内层横向滚动容器（用于判断“还能不能往这个方向滑”）
-  function horizontalScrollerAt(e) {
-    var el = e.target;
-    while (el && el.nodeType === 1 && el !== document.documentElement) {
-      var style = window.getComputedStyle(el);
-      if (el.scrollWidth > el.clientWidth + 1 && /(auto|scroll)/.test(style.overflowX)) return el;
-      el = el.parentElement;
-    }
-    return null;
+    return info;
   }
 
   function parseSearchNumbers(text, minValue, maxValue) {
@@ -1326,8 +1331,25 @@
 
   function renderDirectory() {
     var groups = getConfiguredGroups();
+    var activeGroup = state.directoryGroup ? groupById(state.directoryGroup) : null;
+    if (activeGroup) {
+      var tabs = getVisibleTabs(activeGroup.id);
+      var html = '<div class="section"><div class="section__head"><h2 class="section__title">目录 · ' + activeGroup.label + '</h2><span class="section__hint">选择二级页面</span></div></div>';
+      html += '<div style="margin-bottom:10px"><button class="chip" type="button" data-directory-home="1">← 主目录</button></div>';
+      html += '<div class="directory-grid">';
+      tabs.forEach(function (tab, index) {
+        html += '<button class="directory-card directory-card--tab" type="button" data-directory-tab="' + tab.id + '">';
+        html += '<span class="directory-card__index">' + (index + 1) + '</span>';
+        html += '<b>' + tab.label + '</b>';
+        html += '<span class="directory-card__pages">进入页面</span>';
+        html += '</button>';
+      });
+      html += '</div>';
+      view.innerHTML = html;
+      return;
+    }
     var active = groupById(state.group) || groups[0];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">目录</h2><span class="section__hint">选择一级类目，进入下面的二级页面</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">目录</h2><span class="section__hint">选择一级类目，进入该类目的页面目录</span></div></div>';
     html += '<div class="directory-grid">';
     groups.forEach(function (group, index) {
       var tabs = getVisibleTabs(group.id);
@@ -3962,7 +3984,7 @@
       };
       var seqHit = rows.filter(function (w) { return w.hitIndex > 0; }).length;
       html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #e5e7eb">';
-      html += '<div style="font-size:11px;font-weight:900;color:#475569">窗口对错序列 · 当年 · 新→旧（最新在最左）· 中 ' + seqHit + ' 窗 / 错 ' + (rows.length - seqHit) + ' 窗 · 格子上排 = 该窗口起始期号（第几期），下排 = 中/错</div>';
+      html += '<div class="record-format">窗口对错序列 · ' + WINDOW_RECORD_FORMAT + ' · 中 ' + seqHit + ' 窗 / 错 ' + (rows.length - seqHit) + ' 窗</div>';
       html += '<div class="exec-seq">';
       rows.slice().reverse().forEach(function (w) {
         var hit = w.hitIndex > 0;
@@ -3998,7 +4020,7 @@
       var allCount = rows.length;
       var showCount = perfExpandAll["betexec:" + line.id] ? allCount : Math.min(allCount, 12);
       rows = rows.slice(allCount - showCount).reverse();
-      html += '<div style="margin-top:10px;font-size:11px;font-weight:900;color:#6b7280">对错滚动记录 · 新→旧 · 已结算 ' + allCount + ' 窗 · ' + modeLabel + '</div>';
+      html += '<div class="record-format">对错滚动记录 · ' + WINDOW_RECORD_FORMAT + ' · 已结算 ' + allCount + ' 窗 · ' + modeLabel + '</div>';
       html += '<div class="exec-line__scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
       html += '<div style="display:flex;gap:6px;min-width:max-content">';
       // 对错滚动记录的第1张 = 当前状态（每个页面的窗口都必须能看到现在走到哪一步）
@@ -4717,7 +4739,7 @@
     html += '<div class="section"><div class="panel wm-card">';
     html += '<div class="wm-card__head"><b class="wm-card__title">总览 · ' + line.label + '</b><span class="wm-card__hint">正式执行口径 = 公式表 line.plan；年度稳健最优 / 全周期收益最高 / 今年最优只作研究参考 · 左右滑动</span></div>';
     html += '<div class="wm-subhead">核心结论</div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     html += wmCell("年度稳健最优", (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过"), best ? ((best.net >= 0 ? "+" : "") + best.net + " · ROI " + best.roi.toFixed(2) + "%") : "训练/验证未同时通过", "#16a34a");
     html += wmCell("全周期收益最高", netBestText, netBest ? ((netBest.net >= 0 ? "+" : "") + netBest.net + " · ROI " + netBest.roi.toFixed(2) + "%") : "未通过", "#0f172a");
     html += wmCell(currentYear + "年最优", (selectedYtdBest ? (selectedYtdBest.n === 1 ? "不倍投" : selectedYtdBest.n + "倍") : "无数据"), selectedYtdBest ? wmPlanText(selectedYtdBest.n) : "0 / 0 / 0", "#1d4ed8");
@@ -4745,7 +4767,7 @@
     html += '</div>';
     html += '<div class="wm-subhead">倍率选择</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + multiplierButtons + '</div>';
     html += '<div class="wm-subhead">各倍率对比 <span style="font-weight:400;color:#64748b">点卡片切换当前倍率</span></div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     simulations.forEach(function (s) {
       var isBest = best && best.n === s.n;
       var isCurrent = s.n === activeN;
@@ -4758,7 +4780,7 @@
     });
     html += '</div>';
     html += '<div class="wm-subhead">当前倍率统计</div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     html += wmStat("真实窗口总数", selected.records.length);
     html += wmStat("窗口命中率", windowHitRate.toFixed(2) + "%");
     html += wmStat("三期全错率", missRate.toFixed(2) + "%", "#dc2626");
@@ -4781,7 +4803,7 @@
     });
     var selectedAnnual = (annualByN[selected.n] || { years: [] }).years.slice().sort(function (a, b) { return b.year - a.year; });
     html += '<div class="wm-subhead">当前倍率逐年统计 <span style="font-weight:400;color:#64748b">每年单独算，最新在左</span></div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     if (!selectedAnnual.length) {
       html += '<div style="font-size:13px;color:#64748b">当前倍率没有可用的年度数据</div>';
     } else {
@@ -4803,7 +4825,7 @@
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="windows">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">窗口明细 · ' + line.label + '</b><span class="wm-card__hint">每个窗口的第1/2/3期分别在哪一期、尾号、中或错 · 最新在前 · 左右滑动查看</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">窗口明细 · ' + line.label + '</b><span class="wm-card__hint">' + WINDOW_RECORD_FORMAT + '</span></div>';
     var missRuns = [];
     var currentRun = null;
     selected.records.forEach(function (item) {
@@ -4868,7 +4890,7 @@
       else if (run.length >= 4) hitRunCounts.fourPlus++;
     });
     html += '<div class="wm-subhead">连续全错规律</div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     html += wmStat("单次全错次数", runCounts.one);
     html += wmStat("连续2窗全错", runCounts.two, "#d97706");
     html += wmStat("连续3窗全错", runCounts.three, "#dc2626");
@@ -4879,7 +4901,7 @@
     html += wmStat("历史最大连续全错", selected.maxLossStreak + "窗", "#dc2626");
     html += '</div>';
     html += '<div class="wm-subhead">连续命中规律</div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     html += wmStat("历史最大连续命中", maxHitStreak + "窗", "#16a34a");
     html += wmStat("连续2窗命中", hitRunCounts.two, "#16a34a");
     html += wmStat("连续3窗命中", hitRunCounts.three, "#16a34a");
@@ -4888,7 +4910,7 @@
     html += '</div>';
     var consecutiveHits = hitRuns.filter(function (run) { return run.length >= 2; }).slice().reverse();
     html += '<div class="wm-subhead">连续2窗及以上命中记录</div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     if (!consecutiveHits.length) {
       html += '<div style="font-size:13px;color:#64748b">没有连续2窗命中记录</div>';
     } else {
@@ -4903,7 +4925,7 @@
     html += '</div>';
     var consecutiveRuns = missRuns.filter(function (run) { return run.length >= 2; }).slice().reverse();
     html += '<div class="wm-subhead">连续2窗及以上全错记录</div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     if (!consecutiveRuns.length) {
       html += '<div style="font-size:13px;color:#64748b">没有连续2窗全错记录</div>';
     } else {
@@ -4958,9 +4980,9 @@
       card += '</div></div>';
       return card;
     }
-    html += '<div class="wm-subhead">窗口明细 · 每个窗口的第1/2/3期分别在哪一期、尾号、中或错 · 每年从第1期重新开窗 · <span style="font-weight:400;color:#64748b">新→旧 · 中=绿 错=红 进行中=蓝</span></div>';
+    html += '<div class="wm-subhead">窗口明细 · ' + WINDOW_RECORD_FORMAT + ' · 每年从第1期重新开窗 · <span style="font-weight:400;color:#64748b">中=绿 错=红 进行中=蓝</span></div>';
     html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口</div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     var detailYears = Number(state.windowMultDetailYears) || 1;
     var allYears = [];
     selected.records.forEach(function (r) {
@@ -5003,7 +5025,7 @@
     html += '<div class="wm-view-group" data-wm-group="personality">';
     html += '<div class="section"><div class="panel wm-card">';
     html += '<div class="wm-card__head"><b class="wm-card__title">13线性格规律 · 当下建议</b><span class="wm-card__hint">按“上一窗状态 → 下一窗命中率”判断性格，再按当前窗口状态给重投/轻仓建议，并按上一窗亏损给出回本倍投参考；金额只认公式表 line.plan，这里只作研究参考 · 左右滑动</span></div>';
-    html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
+    html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     orderedLines.forEach(function (item) {
       var itemSims = (lineBest[item.id] || {}).simulations;
       var sim = itemSims ? itemSims[0] : null;
@@ -5392,7 +5414,7 @@
 
   function buildThreePeriodCorrectScrollHTML(streamThree, isRecommendMode) {
     var html = '';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内对错滚动条</h2><span class="section__hint">D1/D2 独立线 · 新→旧 · 中=绿 错=红 进行中=蓝</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内对错滚动条</h2><span class="section__hint">D1/D2 独立线 · ' + WINDOW_RECORD_FORMAT + ' · 中=绿 错=红 进行中=蓝</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px 10px">';
     ["D1", "D2"].forEach(function (key) {
       var result = streamThree[key] || { label: key, batches: [] };
@@ -5404,7 +5426,7 @@
       if (corrTotal > 60 && !perfExpandAll[corrKey]) batches = batches.slice(0, 60);
       html += '<div id="threeCorrectScroll' + key + '"' + (key === "D1" ? ' style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #e5e7eb"' : '') + '>';
       html += '<div style="font-size:12px;font-weight:900;color:' + (key === "D1" ? "#16a34a" : "#2563eb") + ';margin-bottom:6px">' + key + ' ' + result.label + '</div>';
-      html += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px">';
+      html += '<div class="record-scroll" style="padding-bottom:2px">';
       html += '<div style="display:flex;gap:6px;min-width:max-content">';
       if (!batches.length) {
         html += '<span style="font-size:12px;color:#9ca3af">暂无记录</span>';
@@ -5422,7 +5444,7 @@
           var mainText = isRecommendMode
             ? "推荐 " + (batch.attempts || []).map(function (a) { return a.tail == null ? "空" : "尾" + a.tail; }).join("→")
             : "锁定 尾" + batch.tail;
-          html += '<div style="min-width:212px;border:1px solid ' + border + ';border-radius:8px;padding:6px 8px;background:' + bg + '">';
+          html += '<div style="min-width:212px;border:1px solid ' + border + ';border-radius:6px;padding:6px 8px;background:' + bg + '">';
           html += '<div style="font-size:10px;color:#6b7280">起始 第' + batch.startPeriod + '期</div>';
           html += '<div style="font-size:13px;font-weight:900;color:' + tone + ';margin-top:2px">' + resultText + '</div>';
           html += '<div style="font-size:10px;color:#6b7280;margin-top:2px;white-space:nowrap">' + mainText + '</div>';
@@ -6008,7 +6030,7 @@
     });
     years.sort(function (a, b) { return b - a; });
     var labels = ["概率第1·影子", "概率第2·影子", "概率第3·影子"];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">2021-2026各年独立 · 固定追3期 · 新→旧 · 每窗标出第1/2/3期 · 只按开奖前状态生成</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">2021-2026各年独立 · 固定追3期 · ' + WINDOW_RECORD_FORMAT + ' · 只按开奖前状态生成</span></div></div>';
     html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>每条概率线在新窗口开始时锁定当期排名号码，连续固定追3期；命中即关窗，三期全错后等待该尾号重新开出再开新窗。2025用于验证，2026仅影子观察，不作为正式下单依据。</div></div>';
     years.forEach(function (year) {
       var rawYear = probabilityYearRaw(year);
@@ -7004,19 +7026,18 @@
       historyPointerStart = null;
       return;
     }
-    if (isPointerOnScrollbar(e)) {
+    var gestureInfo = horizontalGestureInfoAt(e);
+    if (gestureInfo.onScrollbar) {
       historyPointerStart = null;
       return;
     }
-    var inHorizontalScroll = isInsideHorizontalScroll(e);
-    var scrollEl = horizontalScrollerAt(e);
     historyPointerStart = {
       x: e.clientX,
       y: e.clientY,
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
-      inHorizontalScroll: inHorizontalScroll,
-      scrollEl: scrollEl,
+      inHorizontalScroll: gestureInfo.inHorizontalScroll,
+      scrollEl: gestureInfo.scrollEl,
       edgeSwipe: (e.clientX <= EDGE_FLIP_ZONE || e.clientX >= window.innerWidth - EDGE_FLIP_ZONE),
       lineStrip: !!e.target.closest(".wm-line-selector"),
       handled: false
@@ -7056,6 +7077,8 @@
       armGestureClickGuard();
       e.preventDefault();
       state.tab = "directory";
+      state.directoryGroup = null;
+      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
       lsSet("v2_current_tab", state.tab);
       render();
       return;
@@ -7101,6 +7124,8 @@
     }
     if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6 && (function () { var ts = getVisibleTabs(state.group); return ts.length > 0 && ts[0].id === state.tab; })()) {
       state.tab = "directory";
+      state.directoryGroup = null;
+      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
       lsSet("v2_current_tab", state.tab);
       render();
       return;
@@ -7152,6 +7177,8 @@
       touchReturnStart.returned = true;
       e.preventDefault();
       state.tab = "directory";
+      state.directoryGroup = null;
+      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
       lsSet("v2_current_tab", state.tab);
       render();
     }
@@ -7171,41 +7198,8 @@
     var directoryBtn = e.target.closest("[data-directory]");
     if (directoryBtn) {
       state.tab = "directory";
-      lsSet("v2_current_tab", state.tab);
-      render();
-      return;
-    }
-    var collapseBtn = e.target.closest("[data-collapse-group]");
-    if (collapseBtn) {
-      toggleGroupCollapsed(collapseBtn.dataset.collapseGroup);
-      renderTabs();
-      return;
-    }
-    var navGroup = e.target.closest("[data-nav-group]");
-    if (navGroup) {
-      var nextGroup = navGroup.dataset.navGroup;
-      if (state.tab === "directory") {
-        state.group = nextGroup;
-        state.tab = state.lastTabByGroup[state.group] || firstTabInGroup(state.group);
-        rememberGroup(state.group);
-        rememberTabInGroup(state.group, state.tab);
-        lsSet(NAV_GROUP_KEY, state.group);
-        lsSet("v2_current_tab", state.tab);
-        render();
-        return;
-      }
-      if (state.group === nextGroup) {
-        toggleGroupCollapsed(nextGroup);
-        renderTabs();
-        return;
-      }
-      state.group = nextGroup;
-      var collapsed = collapsedGroupIds().filter(function (id) { return id !== state.group; });
-      lsSet(NAV_COLLAPSED_KEY, collapsed);
-      state.tab = firstTabInGroup(state.group);
-      rememberGroup(state.group);
-      rememberTabInGroup(state.group, state.tab);
-      lsSet(NAV_GROUP_KEY, state.group);
+      state.directoryGroup = null;
+      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
       lsSet("v2_current_tab", state.tab);
       render();
       return;
@@ -7357,15 +7351,38 @@
       if (searchResults) searchResults.innerHTML = numSearchResultsHTML();
       return;
     }
-    var directoryGroup = e.target.closest("[data-directory-group]");
-    if (directoryGroup) {
-      state.group = directoryGroup.dataset.directoryGroup;
-      state.tab = state.lastTabByGroup[state.group] || firstTabInGroup(state.group);
+    var directoryHome = e.target.closest("[data-directory-home]");
+    if (directoryHome) {
+      state.directoryGroup = null;
+      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
+      renderDirectory();
+      return;
+    }
+    var directoryTab = e.target.closest("[data-directory-tab]");
+    if (directoryTab) {
+      state.tab = directoryTab.dataset.directoryTab;
+      state.directoryGroup = null;
+      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
       rememberGroup(state.group);
       rememberTabInGroup(state.group, state.tab);
-      lsSet(NAV_GROUP_KEY, state.group);
       lsSet("v2_current_tab", state.tab);
       render();
+      return;
+    }
+    var directoryGroup = e.target.closest("[data-directory-group]");
+    if (directoryGroup && navDragClickGuard) {
+      navDragClickGuard = false;
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    if (directoryGroup) {
+      state.group = directoryGroup.dataset.directoryGroup;
+      state.directoryGroup = state.group;
+      rememberGroup(state.group);
+      lsSet(NAV_GROUP_KEY, state.group);
+      lsSet("v2_directory_group", state.group);
+      renderDirectory();
       return;
     }
     var groupHistoryStep = e.target.closest("[data-group-history-step]");

@@ -25,9 +25,9 @@ async function getJSON(url) { const response = await fetch(url, { signal: AbortS
     for(const group of groups){
       await ev("var back=document.querySelector('[data-directory=\"1\"]');if(back)back.click();true");await sleep(350);
       await ev("var group=document.querySelector('[data-directory-group=\"" + group + "\"]');if(group)group.click();true");await sleep(450);
-      const tabs=JSON.parse(await ev("JSON.stringify([].map.call(document.querySelectorAll('#tabs .tab[data-tab]'),function(n){return {id:n.dataset.tab,label:n.innerText.trim()};}).filter(function(x){return x.id!=='directory';}))"));
+      const tabs=JSON.parse(await ev("JSON.stringify([].map.call(document.querySelectorAll('.directory-card[data-directory-tab]'),function(n){return {id:n.dataset.directoryTab,label:n.innerText.trim()};}).filter(function(x){return x.id!=='directory';}))"));
       for(const tab of tabs){
-        await ev("var b=document.querySelector('.tab[data-tab=\"" + tab.id + "\"]');if(b)b.click();true");await sleep(900);
+        await ev("var b=document.querySelector('[data-directory-tab=\"" + tab.id + "\"]');if(b)b.click();true");await sleep(900);
         const state=JSON.parse(await ev("(function(){var g=document.querySelector('.model-pair-grid');var t=g?g.innerText:'';return JSON.stringify({p1:document.querySelectorAll('.model-pair-card--p1').length,p2:document.querySelectorAll('.model-pair-card--p2').length,p3:document.querySelectorAll('.model-pair-card--p3').length,old:document.querySelectorAll('.model-pair-card--d1,.model-pair-card--d2').length,text:t,view:document.querySelector('#view')?document.querySelector('#view').innerText:''});})()"));
         pages++;
         if(tab.id==="pick3")probPages++;
@@ -40,7 +40,7 @@ async function getJSON(url) { const response = await fetch(url, { signal: AbortS
         if(/D1 第一推荐|D2 第二推荐/.test(state.text))failures.push(tab.label+"("+group+"·旧推荐)");
       }
     }
-    const oldTabs=await ev("document.querySelectorAll('.tab[data-tab=\"chasenumber\"]').length");
+    const oldTabs=await ev("document.querySelectorAll('[data-directory-tab=\"chasenumber\"]').length");
     if(oldTabs!==0)failures.push("旧追号页签仍存在");
     ws.close();
     console.log((failures.length?"FAIL: ":"PASS: ")+"所有页面顶部必须是动态概率前三名，旧D1/D2不得出现");

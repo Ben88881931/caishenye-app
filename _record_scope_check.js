@@ -25,10 +25,11 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const fails = [];
   const check = (ok, label, extra) => { console.log((ok ? "PASS: " : "FAIL: ") + label + (extra ? "  [" + extra + "]" : "")); if (!ok) fails.push(label); };
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
+  await ev("var dt=document.querySelector('[data-directory-tab=\"betexec\"]'); if(dt)dt.click(); true"); await sleep(400);
   // 下注执行表（执行提示/资金调度已并入本页）：记录头部“已结算 N 窗”必须是当年窗数，不是五六年累积
   await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(2200);
   const betCounts = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .panel'), function (p) {
-    var m = p.innerText.match(/对错滚动记录 · 新→旧 · 已结算 (\\d+) 窗/);
+    var m = p.innerText.match(/对错滚动记录 · [^\\n]*? · 已结算 (\\d+) 窗/);
     return m ? Number(m[1]) : null;
   }).filter(function (x) { return x != null; }))`));
   const betMax = betCounts.length ? Math.max(...betCounts) : 0;

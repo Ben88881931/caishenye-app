@@ -27,9 +27,9 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   for (const gid of groups) {
     await ev("var bk=document.querySelector('[data-directory=\"1\"]'); if(bk)bk.click(); true"); await sleep(420);
     await ev("var x=document.querySelector('[data-directory-group=\"" + gid + "\"]'); if(x)x.click(); true"); await sleep(500);
-    const tabs = JSON.parse(await ev("JSON.stringify([].map.call(document.querySelectorAll('#tabs .tab[data-tab]'),function(b){return {id:b.dataset.tab,label:b.innerText.trim()};}).filter(function(t){return t.id!=='directory';}))"));
+    const tabs = JSON.parse(await ev("JSON.stringify([].map.call(document.querySelectorAll('.directory-card[data-directory-tab]'),function(b){return {id:b.dataset.directoryTab,label:b.innerText.trim()};}).filter(function(t){return t.id!=='directory';}))"));
     for (const tb of tabs) {
-      await ev("var b=document.querySelector('.tab[data-tab=\"" + tb.id + "\"]'); if(b)b.click(); true"); await sleep(1200);
+      await ev("var b=document.querySelector('[data-directory-tab=\"" + tb.id + "\"]'); if(b)b.click(); true"); await sleep(1200);
       const m = JSON.parse(await ev("JSON.stringify({d:document.documentElement.scrollWidth-document.documentElement.clientWidth,b:document.body.scrollWidth-document.body.clientWidth})"));
       pages++;
       if (m.d > 1 || m.b > 1) bad.push(tb.label + "(" + m.d + "/" + m.b + "px)");
@@ -38,12 +38,14 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   check(bad.length === 0, "全部页面锁屏宽：整页横向溢出必须为0", pages + "页" + (bad.length ? " 溢出：" + bad.join(", ") : " 全部0"));
   await ev("var bk=document.querySelector('[data-directory=\"1\"]'); if(bk)bk.click(); true"); await sleep(420);
   await ev("var g=document.querySelector('[data-directory-group=\"recommend\"]'); if(g)g.click(); true"); await sleep(500);
-  await ev("var b=document.querySelector('.tab[data-tab=\"betexec\"]'); if(b)b.click(); true"); await sleep(2000);
+  await ev("var dt=document.querySelector('[data-directory-tab=\"betexec\"]'); if(dt)dt.click(); true"); await sleep(500);
+  await ev("var b=document.querySelector('[data-directory-tab=\"betexec\"]'); if(b)b.click(); true"); await sleep(2000);
   const sc = await ev("(function(){var s=document.querySelector('#view .exec-line__scroll');if(!s)return 'none';s.scrollLeft=80;return String(Math.round(s.scrollLeft));})()");
   check(Number(sc) > 0, "页面锁宽后，内部横向滚动条仍然能滑（横向滚动只发生在容器里）", "scrollLeft=" + sc);
   await ev("var bk2=document.querySelector('[data-directory=\"1\"]'); if(bk2)bk2.click(); true"); await sleep(420);
   await ev("var g2=document.querySelector('[data-directory-group=\"miss\"]'); if(g2)g2.click(); true"); await sleep(500);
-  await ev("var b2=document.querySelector('.tab[data-tab=\"windowmiss\"]'); if(b2)b2.click(); true"); await sleep(2000);
+  await ev("var dt2=document.querySelector('[data-directory-tab=\"windowmiss\"]'); if(dt2)dt2.click(); true"); await sleep(500);
+  await ev("var b2=document.querySelector('[data-directory-tab=\"windowmiss\"]'); if(b2)b2.click(); true"); await sleep(2000);
   const st = await ev("(function(){window.scrollTo(0,2000);var th=document.querySelector('#view .heatmap__table thead th');if(!th)return -999;return th.getBoundingClientRect().top;})()");
   check(Number(st) >= 0 && Number(st) < 400, "表头 sticky 未被锁宽破坏（滚到下面仍可见）", "top=" + st);
   ws.close(); chrome.kill(); server.kill(); await sleep(200);

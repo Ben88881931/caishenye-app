@@ -28,6 +28,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   await send("Page.navigate", { url: "http://127.0.0.1:" + HTTP + "/index.html" });
   for (let i = 0; i < 30; i++) { if (await ev("!!document.querySelector('.directory-card')")) break; await sleep(400); }
   await ev("var g=document.querySelector('[data-directory-group=\"recommend\"]'); if(g)g.click(); true"); await sleep(600);
+  await ev("var dt=document.querySelector('[data-directory-tab=\"betexec\"]'); if(dt)dt.click(); true"); await sleep(500);
   await ev("var b=document.querySelector('[data-tab=\"betexec\"]'); if(b)b.click(); true"); await sleep(2600);
   const data = JSON.parse(await ev(`(function(){
     var tab=[].filter.call(document.querySelectorAll('#view table.table'),function(x){return /两期净收益/.test((x.querySelector('thead')||{}).innerText||'');})[0];

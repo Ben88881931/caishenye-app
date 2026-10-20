@@ -25,6 +25,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   const check = (ok, label, extra) => { console.log((ok ? "PASS: " : "FAIL: ") + label + (extra ? "  [" + extra + "]" : "")); if (!ok) fails.push(label); };
 
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
+  await ev("var dt=document.querySelector('[data-directory-tab=\"betexec\"]'); if(dt)dt.click(); true"); await sleep(400);
   const hasTab = await ev("!!document.querySelector('.tab[data-tab=\"betexec\"]')");
   check(hasTab, "导航出现「下注执行表」入口");
   await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(1500);

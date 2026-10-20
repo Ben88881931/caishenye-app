@@ -184,11 +184,17 @@ async function main() {
 
   await sleep(700);
   await evaluate(`document.querySelector('[data-directory="1"]').click()`);
-  if (!(await waitFor("document.body.dataset.page === 'directory' && document.querySelectorAll('.nav-groups .nav-group-wrap').length > 1"))) throw new Error("Directory did not open for numeric sort test");
-  const groupNumericBefore = await evaluate(`(function(){
+  if (!(await waitFor("document.body.dataset.page === 'directory' && document.querySelectorAll('.directory-card[data-directory-group]').length > 1"))) throw new Error("Directory did not open for numeric sort test");
+  const directoryNavState = await evaluate(`(function(){
     var wraps = document.querySelectorAll(".nav-groups .nav-group-wrap");
-    var groups = [...document.querySelectorAll(".nav-groups .nav-group[data-nav-group]")].map(function (button) { return button.dataset.navGroup; });
-    var box = wraps[0].getBoundingClientRect();
+    var cards = document.querySelectorAll(".directory-card[data-directory-group]");
+    return { wraps: wraps.length, cards: cards.length };
+  })()`);
+  check(directoryNavState.wraps === 0 && directoryNavState.cards > 1, "目录页顶部不再重复显示一级滚动条", `wraps=${directoryNavState.wraps}, cards=${directoryNavState.cards}`);
+  const groupNumericBefore = await evaluate(`(function(){
+    var cards = document.querySelectorAll(".directory-card[data-directory-group]");
+    var groups = [...cards].map(function (card) { return card.dataset.directoryGroup; });
+    var box = cards[0].getBoundingClientRect();
     return { groups: groups, point: { x: box.left + box.width / 2, y: box.top + box.height / 2 } };
   })()`);
   await holdOnly(groupNumericBefore.point);
@@ -197,29 +203,15 @@ async function main() {
     hasPosition: !!document.querySelector("[data-nav-sort-position]"),
     hasGroup: !!document.querySelector("[data-nav-sort-group]")
   })`);
-  check(groupDialog.open && groupDialog.hasPosition && !groupDialog.hasGroup, "长按一级表头弹出数字顺位输入");
+  check(groupDialog.open && groupDialog.hasPosition && !groupDialog.hasGroup, "长按目录卡片弹出数字顺位输入");
   await evaluate(`(function(){ document.querySelector("[data-nav-sort-position]").value = "2"; document.querySelector("[data-nav-sort-apply]").click(); })()`);
   await sleep(300);
-  const groupNumericAfter = await evaluate(`[...document.querySelectorAll(".nav-groups .nav-group[data-nav-group]")].map(function (button) { return button.dataset.navGroup; })`);
-  check(groupNumericAfter[0] === groupNumericBefore.groups[1] && groupNumericAfter[1] === groupNumericBefore.groups[0], "一级表头输入数字后自动排序", groupNumericAfter.slice(0,3).join(","));
-
-  await sleep(500);
-  await evaluate(`document.querySelector('[data-directory="1"]').click()`);
-  await waitFor("document.body.dataset.page === 'directory' && document.querySelectorAll('.nav-groups .nav-group-wrap').length > 1");
-  const groupBefore = await evaluate(`(function(){
-    var groups = document.querySelectorAll('.nav-groups .nav-group-wrap');
-    return { ids: [groups[0].querySelector('[data-nav-group]').dataset.navGroup, groups[1].querySelector('[data-nav-group]').dataset.navGroup], box1: groups[0].getBoundingClientRect().toJSON(), box2: groups[1].getBoundingClientRect().toJSON() };
-  })()`);
-  await holdDrag(
-    { x: groupBefore.box1.x + groupBefore.box1.width / 2, y: groupBefore.box1.y + groupBefore.box1.height / 2 },
-    { x: groupBefore.box2.x + groupBefore.box2.width * 0.85, y: groupBefore.box2.y + groupBefore.box2.height / 2 }
-  );
-  const groupAfter = await evaluate(`(function(){
-    var ids = [...document.querySelectorAll('.nav-groups .nav-group[data-nav-group]')].map(function (button) { return button.dataset.navGroup; });
+  const groupNumericAfter = await evaluate(`(function(){
+    var ids = [...document.querySelectorAll(".directory-card[data-directory-group]")].map(function (card) { return card.dataset.directoryGroup; });
     return { ids: ids, saved: JSON.parse(localStorage.getItem("v2_nav_group_order") || "[]") };
   })()`);
-  check(groupAfter.ids[0] === groupBefore.ids[1] && groupAfter.ids[1] === groupBefore.ids[0], "长按一级导航可拖动排序", groupAfter.ids.slice(0,3).join(","));
-  check(groupAfter.saved[0] === groupBefore.ids[1] && groupAfter.saved[1] === groupBefore.ids[0], "一级导航顺序写入本地保存");
+  check(groupNumericAfter.ids[0] === groupNumericBefore.groups[1] && groupNumericAfter.ids[1] === groupNumericBefore.groups[0], "目录卡片输入数字后自动排序", groupNumericAfter.ids.slice(0,3).join(","));
+  check(groupNumericAfter.saved[0] === groupNumericBefore.groups[1] && groupNumericAfter.saved[1] === groupNumericBefore.groups[0], "一级类目顺序写入本地保存");
 
   await sleep(500);
   await evaluate(`document.querySelector('[data-sort-reset]').click()`);

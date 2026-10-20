@@ -140,17 +140,6 @@ body {
   color: #fff;
 }
 
-.nav-group.is-collapsed {
-  border-color: #cbd5e1;
-}
-
-.nav-group-caret {
-  margin-left: 4px;
-  font-size: 10px;
-  opacity: 0.68;
-}
-
-.nav-group.is-active .nav-group-caret { opacity: 1; }
 
 .nav-collapse {
   width: 36px;
@@ -354,8 +343,8 @@ th.table-col-dragging {
   padding: 12px 16px 40px;
 }
 
-html.gesture-active,
-html.gesture-active * {
+html.gesture-active body {
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -861,8 +850,8 @@ html.gesture-active * {
   flex: 0 0 198px;
   min-width: 198px;
   padding: 6px 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid #dbe3ec;
+  border-radius: 6px;
   background: #fff;
 }
 
@@ -2051,10 +2040,10 @@ body {
 }
 .exec-line__scroll {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
+  padding-bottom: 8px;
 }
 .exec-window-card--current {
   order: -1;
@@ -2148,10 +2137,6 @@ body {
     min-height: 42px;
     padding: 7px 2px;
     font-size: 12px;
-  }
-  .nav-group-caret {
-    margin-left: 2px;
-    font-size: 9px;
   }
   .nav-subtabs {
     padding-bottom: 2px;
@@ -2404,11 +2389,7 @@ body {
   overscroll-behavior-y: none;
 }
 
-html.gesture-active,
-html.gesture-active * {
-  -webkit-user-select: none;
-  user-select: none;
-}
+
 
 /* 按下反馈只给会点的方块，且不做常驻 transition：几千个 chip 一起挂 transition 会拖慢样式重算 */
 .position-card,
@@ -2495,10 +2476,10 @@ html.gesture-active * {
 /* 窗口对错序列（只看中/错，不看金额）：一排小方块，横向滚动，不触发翻页 */
 .exec-seq {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 4px 0 6px;
+  padding: 4px 0 8px;
   touch-action: pan-x;
 }
 
@@ -2721,12 +2702,12 @@ body[data-page="missorder"] .trend-run-strip,
 body[data-page="windowmiss"] .trend-run-strip,
 body[data-page="trend"] .trend-run-strip {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 1px 0 7px;
+  padding: 1px 0 8px;
   box-sizing: border-box;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
@@ -2951,12 +2932,12 @@ body[data-page="windowmiss"] .wm-run-summary__item small {
 
 .prob-test-strip {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 7px;
+  padding-bottom: 8px;
   box-sizing: border-box;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
@@ -3020,5 +3001,62 @@ body[data-page="windowmiss"] .trend-run-row__head span {
   overflow-wrap: anywhere;
   line-height: 1.45;
 }
+/* ===== 统一横向记录：所有窗口记录、对错记录、概率测试记录共用一套滚动样式 ===== */
+.record-format {
+  margin: 6px 0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.65;
+}
 
+.wm-hscroll,
+.prob-test-strip,
+.exec-seq,
+.exec-line__scroll,
+.trend-run-strip,
+.record-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #e2e8f0;
+}
 
+.prob-test-strip,
+.exec-seq,
+.exec-line__scroll,
+.record-scroll,
+.wm-hscroll {
+  padding-bottom: 8px;
+}
+
+.wm-hscroll::-webkit-scrollbar,
+.prob-test-strip::-webkit-scrollbar,
+.exec-seq::-webkit-scrollbar,
+.exec-line__scroll::-webkit-scrollbar,
+.trend-run-strip::-webkit-scrollbar,
+.record-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.wm-hscroll::-webkit-scrollbar-track,
+.prob-test-strip::-webkit-scrollbar-track,
+.exec-seq::-webkit-scrollbar-track,
+.exec-line__scroll::-webkit-scrollbar-track,
+.trend-run-strip::-webkit-scrollbar-track,
+.record-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.wm-hscroll::-webkit-scrollbar-thumb,
+.prob-test-strip::-webkit-scrollbar-thumb,
+.exec-seq::-webkit-scrollbar-thumb,
+.exec-line__scroll::-webkit-scrollbar-thumb,
+.trend-run-strip::-webkit-scrollbar-thumb,
+.record-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 999px;
+}
