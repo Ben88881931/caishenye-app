@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #f4f5f7;
   --surface: #ffffff;
   --line: #e7e8ec;
@@ -234,6 +234,85 @@ body.nav-sorting-active {
   outline-offset: 2px;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
   transform: scale(0.97);
+}
+
+/* 长按导航：数字顺位 + 跨类目调整 */
+.nav-sort-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.32);
+}
+
+.nav-sort-dialog__panel {
+  width: min(420px, 100%);
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22);
+}
+
+.nav-sort-dialog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.nav-sort-dialog__close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.nav-sort-field {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.nav-sort-field input,
+.nav-sort-field select {
+  width: 100%;
+  min-height: 40px;
+  padding: 7px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.nav-sort-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.nav-sort-dialog__actions .nav-sort-dialog__apply {
+  border-color: #1d4ed8;
+  background: #2563eb;
+  color: #fff;
 }
 
 /* 表头长按拖动排序：第一列业务标签固定，其余列可调整 */
@@ -2464,18 +2543,6 @@ html.gesture-active * {
   color: #dc2626;
 }
 
-/* 14线规律中心：横向卡片条改成两列换行，一屏放完，不再左右滑 */
-body[data-page="windowmult"] #view .wm-hscroll {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  overflow-x: visible !important;
-}
-
-
-body[data-page="windowmult"] #view .wm-hscroll > div {
-  flex: 1 1 calc(50% - 6px) !important;
-  min-width: 0 !important;
-}
 
 /* ===== 逐页个性化（每页单独一条，互不影响）===== */
 /* 公式表：5列，压到屏宽；字号11px仍可读 */

@@ -542,6 +542,10 @@
     lsSet(TAB_ORDER_KEY, ids);
   }
 
+  function savePageGroupMap(map) {
+    if (map && typeof map === "object" && !Array.isArray(map)) lsSet(NAV_PAGE_GROUPS_KEY, map);
+  }
+
   function resetTabOrder() {
     try {
       localStorage.removeItem(TAB_ORDER_KEY);
@@ -577,6 +581,103 @@
     if (ids.length) lsSet(NAV_GROUP_ORDER_KEY, ids);
   }
 
+  function closeNavSortDialog(preserveClickGuard) {
+    var dialog = document.querySelector("[data-nav-sort-dialog]");
+    if (dialog) dialog.remove();
+    document.body.classList.remove("nav-sort-dialog-open");
+    if (!preserveClickGuard) navDragClickGuard = false;
+  }
+
+  function applyNavTabSort(tabId, groupId, position) {
+    var group = groupById(groupId);
+    if (!group || !TABS.some(function (tab) { return tab.id === tabId; })) return;
+    var pageGroups = getPageGroupMap();
+    pageGroups[tabId] = groupId;
+    savePageGroupMap(pageGroups);
+    var ids = getOrderedAllTabs().map(function (tab) { return tab.id; });
+    var sourceIndex = ids.indexOf(tabId);
+    if (sourceIndex >= 0) ids.splice(sourceIndex, 1);
+    var targetIds = ids.filter(function (id) { return pageGroups[id] === groupId; });
+    var targetIndex = Math.max(0, Math.min(targetIds.length, position - 1));
+    var insertAt = ids.length;
+    if (targetIndex < targetIds.length) insertAt = ids.indexOf(targetIds[targetIndex]);
+    else if (targetIds.length) insertAt = ids.indexOf(targetIds[targetIds.length - 1]) + 1;
+    ids.splice(insertAt, 0, tabId);
+    saveTabOrderIds(ids);
+    state.group = groupId;
+    lsSet(NAV_GROUP_KEY, groupId);
+    render();
+  }
+
+  function applyNavGroupSort(groupId, position) {
+    var ids = getConfiguredGroups().map(function (group) { return group.id; });
+    var sourceIndex = ids.indexOf(groupId);
+    if (sourceIndex < 0) return;
+    ids.splice(sourceIndex, 1);
+    ids.splice(Math.max(0, Math.min(ids.length, position - 1)), 0, groupId);
+    lsSet(NAV_GROUP_ORDER_KEY, ids);
+    render();
+  }
+
+  function openNavSortDialog(gesture) {
+    closeNavSortDialog(true);
+    var kind = gesture.kind;
+    var tabId = kind === "tab" ? gesture.target.dataset.tab : null;
+    var groupButton = kind === "group" ? gesture.target.querySelector(".nav-group[data-nav-group]") : null;
+    var groupId = kind === "group" ? groupButton.dataset.navGroup : (groupForTab(tabId) || NAV_GROUPS[0]).id;
+    var tab = TABS.filter(function (item) { return item.id === tabId; })[0];
+    var group = groupById(groupId) || NAV_GROUPS[0];
+    var position = kind === "tab"
+      ? getVisibleTabs(groupId).map(function (item) { return item.id; }).indexOf(tabId) + 1
+      : getConfiguredGroups().map(function (item) { return item.id; }).indexOf(groupId) + 1;
+    if (position < 1) position = 1;
+    var maxPosition = kind === "tab" ? getVisibleTabs(groupId).length : getConfiguredGroups().length;
+    var groupOptions = getConfiguredGroups().map(function (item) {
+      return '<option value="' + item.id + '"' + (item.id === groupId ? " selected" : "") + '>' + escapeHTML(item.label) + "</option>";
+    }).join("");
+    var dialog = document.createElement("div");
+    dialog.className = "nav-sort-dialog";
+    dialog.setAttribute("data-nav-sort-dialog", "1");
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.innerHTML = '<div class="nav-sort-dialog__panel">' +
+      '<div class="nav-sort-dialog__head"><b>调整“' + escapeHTML(kind === "tab" ? tab.label : group.label) + '”</b><button class="nav-sort-dialog__close" type="button" data-nav-sort-cancel="1" aria-label="关闭">×</button></div>' +
+      (kind === "tab" ? '<label class="nav-sort-field"><span>所属类目</span><select data-nav-sort-group="1">' + groupOptions + '</select></label>' : "") +
+      '<label class="nav-sort-field"><span>' + (kind === "tab" ? "类目内顺位" : "一级类目顺位") + '</span><input data-nav-sort-position="1" type="number" inputmode="numeric" min="1" max="' + maxPosition + '" value="' + position + '"></label>' +
+      '<div class="nav-sort-dialog__actions"><button class="chip" type="button" data-nav-sort-cancel="1">取消</button><button class="chip nav-sort-dialog__apply" type="button" data-nav-sort-apply="1">应用排序</button></div>' +
+      '</div>';
+    document.body.appendChild(dialog);
+    document.body.classList.add("nav-sort-dialog-open");
+    var input = dialog.querySelector("[data-nav-sort-position]");
+    var select = dialog.querySelector("[data-nav-sort-group]");
+    function syncPosition() {
+      if (!select) return;
+      var ids = getVisibleTabs(select.value).map(function (item) { return item.id; });
+      var nextPosition = ids.indexOf(tabId) + 1;
+      if (nextPosition < 1) nextPosition = ids.length + 1;
+      input.max = String(ids.length + 1);
+      input.value = String(nextPosition);
+    }
+    if (select) select.addEventListener("change", syncPosition);
+    dialog.addEventListener("click", function (e) {
+      if (e.target === dialog || e.target.closest("[data-nav-sort-cancel]")) closeNavSortDialog();
+    });
+    dialog.querySelector("[data-nav-sort-apply]").addEventListener("click", function () {
+      var positionValue = parseInt(input.value, 10);
+      var maxValue = Math.max(1, parseInt(input.max, 10) || 1);
+      positionValue = Math.max(1, Math.min(maxValue, positionValue || maxValue));
+      var targetGroupId = select ? select.value : groupId;
+      closeNavSortDialog();
+      if (kind === "tab") applyNavTabSort(tabId, targetGroupId, positionValue);
+      else applyNavGroupSort(groupId, positionValue);
+    });
+    dialog.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeNavSortDialog();
+      if (e.key === "Enter") dialog.querySelector("[data-nav-sort-apply]").click();
+    });
+    requestAnimationFrame(function () { input.focus(); input.select(); });
+  }
+
   var navDragState = null;
   var navDragClickGuard = false;
 
@@ -607,6 +708,7 @@
       return;
     }
     e.preventDefault();
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) gesture.moved = true;
     var containerRect = gesture.container.getBoundingClientRect();
     if (e.clientX < containerRect.left + 28) gesture.container.scrollLeft -= 12;
     else if (e.clientX > containerRect.right - 28) gesture.container.scrollLeft += 12;
@@ -632,15 +734,19 @@
       clearNavDragState();
       return;
     }
-    if (gesture.kind === "tab") persistTabOrderFromDom();
-    else persistGroupOrderFromDom();
     gesture.target.classList.remove("nav-sort-dragging");
     document.body.classList.remove("nav-sorting-active");
     navDragClickGuard = true;
     var done = gesture;
     navDragState = null;
     if (done.timer) clearTimeout(done.timer);
+    if (!done.moved) {
+      openNavSortDialog(done);
+      return;
+    }
     setTimeout(function () { navDragClickGuard = false; }, 450);
+    if (gesture.kind === "tab") persistTabOrderFromDom();
+    else persistGroupOrderFromDom();
   }
 
   tabsEl.addEventListener("pointerdown", function (e) {
@@ -664,6 +770,7 @@
       target: dragTarget,
       container: container,
       active: false,
+      moved: false,
       timer: null
     };
     navDragState.timer = setTimeout(startNavDrag, 450);
@@ -5892,13 +5999,21 @@
   }
 
   function probabilityTestWindowHTML() {
-    var years = [2025, 2026];
+    var years = [];
+    D.forEach(function (row) {
+      var year = Number(row.y);
+      if (year && years.indexOf(year) < 0) years.push(year);
+    });
+    years.sort(function (a, b) { return b - a; });
     var labels = ["概率第1·影子", "概率第2·影子", "概率第3·影子"];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 2025验证 / 2026影子</h2><span class="section__hint">固定追3期 · 新→旧 · 每窗标出第1/2/3期 · 只按开奖前状态生成</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">2021-2026各年独立 · 固定追3期 · 新→旧 · 每窗标出第1/2/3期 · 只按开奖前状态生成</span></div></div>';
     html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>每条概率线在新窗口开始时锁定当期排名号码，连续固定追3期；命中即关窗，三期全错后等待该尾号重新开出再开新窗。2025用于验证，2026仅影子观察，不作为正式下单依据。</div></div>';
     years.forEach(function (year) {
       var rawYear = probabilityYearRaw(year);
-      html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + (year === 2025 ? "验证" : "影子") + '窗口</b><span>' + (year === 2025 ? "验证段" : "2026仅观察") + '</span></div>';
+      var trainingYear = year >= 2021 && year <= 2024;
+      var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "影子");
+      var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026仅观察");
+      html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '窗口</b><span>' + segmentNote + '</span></div>';
       labels.forEach(function (label, rank) {
         var records = PROB_MODEL.windowBacktest(rawYear, rank, 3);
         var first = records.filter(function (r) { return r.hitIndex === 1; }).length;
@@ -5916,7 +6031,7 @@
       });
       html += '</div></div>';
     });
-    html += '<p class="disclaimer">测试窗口按每年第1期重新起算，不引用未来开奖；2026影子窗口从294期开始。</p>';
+    html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026为影子观察；所有窗口按每年第1期重新起算，不引用未来开奖。2026正式影子快照从294期开始。</p>';
     return html;
   }
 

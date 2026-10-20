@@ -49,7 +49,9 @@ function yearRawFor(year) {
   });
   return out;
 }
-for (const year of [2025, 2026]) {
+const testYears = [...new Set(appData.d.map((row) => Number(row.y)).filter(Number.isFinite))].sort((a, b) => b - a);
+console.log(`测试历史年份：${testYears.join("/")}`);
+for (const year of testYears) {
   const yearRaw = yearRawFor(year);
   const maxPeriod = Math.max(...Object.keys(yearRaw).map(Number));
   for (let rank = 0; rank < 3; rank++) {
