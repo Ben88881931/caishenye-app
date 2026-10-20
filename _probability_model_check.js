@@ -10,6 +10,9 @@ const prediction = model.analyze(raw, latest);
 const pending = (snapshots.records || []).filter((record) => !record.settled);
 const target = latest + 1;
 const failures = [];
+function tailOf(period, tail) {
+  return raw[String(period)] && raw[String(period)][tail] === "1";
+}
 
 function check(ok, label) {
   console.log(`${ok ? "PASS" : "FAIL"}: ${label}`);
@@ -22,6 +25,12 @@ check(new Set(prediction.top.map((row) => row.tail)).size === 3, "概率前三�
 check(prediction.rows.every((row) => Number.isFinite(row.nextProb) && row.nextProb > 0 && row.nextProb < 1), "下一期概率必须在0到1之间");
 check(prediction.rows.every((row) => Number.isFinite(row.window3Prob) && row.window3Prob > 0 && row.window3Prob < 1), "三期概率必须在0到1之间");
 check(prediction.rows.every((row, index, rows) => index === 0 || rows[index - 1].nextProb >= row.nextProb), "概率结果必须按下一期概率降序排列");
+check(prediction.rows.every((row) => {
+  let streak = 0;
+  for (let period = latest; period >= 1 && tailOf(period, row.tail); period--) streak++;
+  return row.currentStreak === streak;
+}), "页面的当前连出必须使用真实未截断值");
+check(prediction.rows.some((row) => row.currentStreak > 5), "真实连出超过5期时不得在展示数据中封顶");
 check(pending.length === 1 && Number(pending[0].target) === target, "必须只有一条下一期待开奖影子快照");
 check(
   pending.length === 1 && pending[0].top3.map((row) => row.tail).join(",") === prediction.top.map((row) => row.tail).join(","),

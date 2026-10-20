@@ -134,7 +134,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   await ev("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
   await ev("var b=document.querySelector('.wm-view-tab[data-wm-view=\"windows\"]'); if(b)b.click(); true"); await sleep(900);
   const lineIds = ["tail0","tail1","tail2","tail3","tail4","tail5","tail6","tail7","tail8","tail9","prob1","prob2","prob3"];
-  const lineLabels = ["尾0","尾1","尾2","尾3","尾4","尾5","尾6","尾7","尾8","尾9","概率第1","概率第2","概率第3"];
+  const lineLabels = ["尾0","尾1","尾2","尾3","尾4","尾5","尾6","尾7","尾8","尾9","概率第1·影子","概率第2·影子","概率第3·影子"];
   const wm = {};
   for (let i = 0; i < lineIds.length; i++) {
     await ev("var l=document.querySelector('.wm-line-selector [data-wm-line=\"" + lineIds[i] + "\"]'); if(l)l.click(); true");

@@ -10,15 +10,21 @@
     validation: "2025",
     shadow: "2026",
     samples: { train: 9240, validation: 2310, shadow: 2910 },
+    baseline: {
+      validation: { next: 0.5428571428571428, window3: 0.9103896103896104 },
+      shadow2026: { next: 0.5474226804123712, window3: 0.9030927835051546 }
+    },
     validation: {
       nextTop1: 136 / 231,
       nextTop3Coverage: 214 / 231,
-      window3Top1: 212 / 231
+      window3Top1: 212 / 231,
+      window3CoverageTop3: 231 / 231
     },
     shadow2026: {
       nextTop1: 160 / 291,
       nextTop3Coverage: 279 / 291,
-      window3Top1: 261 / 291
+      window3Top1: 261 / 291,
+      window3CoverageTop3: 291 / 291
     }
   };
   var MEAN = [1, 0.1, 0.5406277056277154, 0.5346969696969679, 0.5228192640692708, 0.5109920634920567, 0.08581168831169216, 0.2350000000000066];
@@ -68,6 +74,20 @@
     ];
   }
 
+  function rawStateAt(raw, basedOn, tail) {
+    var periods = periodsOf(raw).filter(function (period) { return period <= basedOn; });
+    var miss = 0, streak = 0;
+    for (var i = periods.length - 1; i >= 0; i--) {
+      if (!hasTail(raw, periods[i], tail)) miss++;
+      else break;
+    }
+    for (var j = periods.length - 1; j >= 0; j--) {
+      if (hasTail(raw, periods[j], tail)) streak++;
+      else break;
+    }
+    return { miss: miss, streak: streak };
+  }
+
   function sigmoid(value) {
     var z = Math.max(-20, Math.min(20, value));
     return 1 / (1 + Math.exp(-z));
@@ -83,10 +103,13 @@
     var rows = [];
     for (var tail = 0; tail <= 9; tail++) {
       var features = featuresAt(raw, basedOn, tail);
+      var state = rawStateAt(raw, basedOn, tail);
       rows.push({
         tail: tail,
         nextProb: predictWith(features, NEXT_W),
         window3Prob: predictWith(features, WINDOW_W),
+        currentMiss: state.miss,
+        currentStreak: state.streak,
         features: features
       });
     }

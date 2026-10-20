@@ -968,7 +968,7 @@
     if (!PROB_MODEL || !PROB_MODEL.analyze) return "";
     var result = PROB_MODEL.analyze(RAW, period - 1);
     var picks = result.top || [];
-    var labels = ["动态第1", "动态第2", "动态第3"];
+    var labels = ["动态第1 · 影子", "动态第2 · 影子", "动态第3 · 影子"];
     var tones = ["model-pair-card--p1", "model-pair-card--p2", "model-pair-card--p3"];
     return '<div class="model-pair-grid">' +
       picks.map(function (row, index) {
@@ -3030,9 +3030,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
-    { id: "prob1", label: "概率第1", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
-    { id: "prob2", label: "概率第2", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
-    { id: "prob3", label: "概率第3", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
+    { id: "prob1", label: "概率第1·影子", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
+    { id: "prob2", label: "概率第2·影子", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
+    { id: "prob3", label: "概率第3·影子", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
   ];
 
   // 公式来源：2021-2023训练段 + 2024-2026验证段，两段均为正的阶段系数才配仓。
@@ -5883,17 +5883,24 @@
 
   function renderProbabilityModel() {
     var result = PROB_MODEL.analyze(RAW, latest);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · 第' + result.target + '期影子预测</h2><span class="section__hint">10个尾号每期重算 · 训练' + PROB_MODEL.META.train + ' · 验证' + PROB_MODEL.META.validation + ' · 2026仅影子观察</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-guide"><b>规则：</b>每期开奖后用上一期及之前的数据重新计算。前三名只表示概率顺序，不保证命中；概率接近时标为不可区分。旧D1/D2硬排序不再参与推荐。</div></div>';
+    var vm = PROB_MODEL.META.validation, sm = PROB_MODEL.META.shadow2026;
+    var vb = PROB_MODEL.META.baseline.validation, sb = PROB_MODEL.META.baseline.shadow2026;
+    function pct(v) { return (v * 100).toFixed(1) + "%"; }
+    function delta(v, base) { var d = (v - base) * 100; return (d >= 0 ? "+" : "") + d.toFixed(1) + "pp"; }
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · 第' + result.target + '期影子预测</h2><span class="section__hint">模型 ' + result.version + ' · 每期重算10个尾号 · 当前状态：未通过正式验证</span></div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>规则：</b>每期开奖后用上一期及之前的数据重新计算。前三名只表示概率顺序，不保证命中；概率接近时标为不可区分。旧D1/D2硬排序已退出正式推荐。</div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div style="font-size:14px;font-weight:900;color:#b91c1c;margin-bottom:8px">测试状态 · 未通过正式验证</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">';
+    html += '<div style="border:1px solid #dbe3ec;border-radius:6px;padding:9px;background:#f8fafc"><b>2025验证段</b><div style="font-size:12px;line-height:1.8;color:#475569;margin-top:4px">下一期Top1 <b>' + pct(vm.nextTop1) + '</b> / 随机 ' + pct(vb.next) + '<br>Top3覆盖 <b>' + pct(vm.nextTop3Coverage) + '</b><br>三期Top1 <b>' + pct(vm.window3Top1) + '</b> / 随机 ' + pct(vb.window3) + '</div></div>';
+    html += '<div style="border:1px solid #fde68a;border-radius:6px;padding:9px;background:#fffbeb"><b>2026影子段</b><div style="font-size:12px;line-height:1.8;color:#475569;margin-top:4px">下一期Top1 <b>' + pct(sm.nextTop1) + '</b> / 随机 ' + pct(sb.next) + '<br>Top3覆盖 <b>' + pct(sm.nextTop3Coverage) + '</b><br>三期Top1 <b>' + pct(sm.window3Top1) + '</b> / 随机 ' + pct(sb.window3) + '</div></div>';
+    html += '</div><div style="font-size:12px;color:#b91c1c;font-weight:800;line-height:1.8;margin-top:8px">结论：2025 Top1曾高于随机，但2026影子Top1只有 ' + delta(sm.nextTop1, sb.next) + '，三期Top1为 ' + delta(sm.window3Top1, sb.window3) + '，没有证明稳定优势。当前仅影子观察，0仓位，不进入正式下单。</div></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px;font-size:12px"><thead><tr><th>排名</th><th>尾号</th><th>下一期概率</th><th>三期出现概率</th><th>当前遗漏</th><th>当前连出</th><th>判断</th></tr></thead><tbody>';
     result.rows.forEach(function (row, index) {
       var confidence = row.nextProb >= 0.58 ? "较高" : row.nextProb >= 0.55 ? "中" : "低";
       var mark = index < 3 ? "前" + (index + 1) : "";
-      html += '<tr><td><b>' + (index + 1) + '</b> ' + mark + '</td><td><b>尾' + row.tail + '</b></td><td>' + (row.nextProb * 100).toFixed(2) + '%</td><td>' + (row.window3Prob * 100).toFixed(2) + '%</td><td>' + Math.round(row.features[6] * 10) + ' 期</td><td>' + Math.round(row.features[7] * 5) + ' 期</td><td><b style="color:' + (confidence === "较高" ? "#15803d" : confidence === "中" ? "#2563eb" : "#64748b") + '">' + confidence + '</b></td></tr>';
+      html += '<tr><td><b>' + (index + 1) + '</b> ' + mark + '</td><td><b>尾' + row.tail + '</b></td><td>' + pct(row.nextProb) + '</td><td>' + pct(row.window3Prob) + '</td><td>' + row.currentMiss + ' 期</td><td>' + row.currentStreak + ' 期</td><td><b style="color:' + (confidence === "较高" ? "#15803d" : confidence === "中" ? "#2563eb" : "#64748b") + '">' + confidence + '</b></td></tr>';
     });
     html += '</tbody></table></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px;font-size:12px;line-height:1.8;color:#475569">验证记录：2025下一期Top1 <b>' + (PROB_MODEL.META.validation.nextTop1 * 100).toFixed(1) + '%</b>，Top3覆盖 <b>' + (PROB_MODEL.META.validation.nextTop3Coverage * 100).toFixed(1) + '%</b>；2026影子Top1 <b>' + (PROB_MODEL.META.shadow2026.nextTop1 * 100).toFixed(1) + '%</b>。目前没有证明稳定跑赢随机基准，因此只作影子研究，不进入正式下单。</div></div>';
-    html += '<p class="disclaimer">本页概率为固定权重影子模型，不使用未来数据；历史真实D1/D2快照保留不动，但不再作为推荐依据。</p>';
+    html += '<p class="disclaimer">本页概率为固定权重影子模型，不使用未来数据；训练2021-2024、验证2025、2026仅做开奖前影子记录。历史真实D1/D2快照保留不动，但不再作为推荐依据。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
   }
 

@@ -52,25 +52,12 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   });
   check(rowsTotal > 0 && bad === 0, "下注执行表：当期（第" + data.next + "期及以前）必须写出尾号，不能待定", rowsTotal + " 行，缺号 " + bad + " 行");
 
-  // 三期内追推荐：待检查的那一期也要有尾号
-  await ev("document.querySelector('.tab[data-tab=\"chasenumber\"]').click(); true"); await sleep(900);
-  await ev("var b=document.querySelector('[data-ult-mode=\"recommend\"]'); if(b)b.click(); true"); await sleep(1400);
-  const recText = await ev("document.querySelector('#view').innerText");
-  const recFlat = recText.replace(/\n+/g, "|");
-  const pendingRow = /第\d期\|第(\d{3,4})期\|(尾\d|待定)\|待开奖/.exec(recFlat);
-  check(!!pendingRow && pendingRow[2] !== "待定", "三期内追推荐：待检查当期也写出尾号", pendingRow ? pendingRow[0] : "未找到待开奖行");
-
-  // 双号追热：连错遗漏记录里的当期也要写尾号
-  await ev("document.querySelector('.tab[data-tab=\"pick3\"]').click(); true"); await sleep(1100);
-  const pick3Text = await ev("document.querySelector('#view').innerText");
-  const liveCell = /①尾\d/.test(pick3Text) && /②尾\d/.test(pick3Text);
-  check(liveCell, "双号追热：连错遗漏记录当期写尾号而不是①待②待", (/[①②][^\n]{0,4}/.exec(pick3Text) || [""])[0]);
-
+  // 13线规律中心：窗口明细的当前窗口也要写尾号
   // 14线规律中心：窗口明细的当前窗口也要写尾号
   await ev("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
   await ev("var b=document.querySelector('.wm-view-tab[data-wm-view=\"windows\"]'); if(b)b.click(); true"); await sleep(900);
   const lineChecks = [];
-  for (const lineId of ["fixedD2", "recD2", "tail1"]) {
+  for (const lineId of ["tail1", "prob1", "prob2", "prob3"]) {
     await ev("var l=document.querySelector('.wm-line-selector [data-wm-line=\"" + lineId + "\"]'); if(l)l.click(); true"); await sleep(900);
     const card = await ev("(document.querySelector('#view .wm-win-card--live')||{}).innerText || ''");
     const flat = String(card).replace(/\n+/g, "|");
@@ -78,15 +65,13 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     const pending = (flat.match(/待开奖/g) || []).length;
     // 该线处于“等待重开”时本来就没有进行中的窗口，属正常状态
     const waiting = !card && /等待重开|等尾\d/.test(await ev("(document.querySelector('#view').innerText||'')"));
-    // 锁定类线（尾0-9、追号码）三期都写同一个锁号；每期推荐类线（追推荐）只写当期推荐，未来期必须待定
-    lineChecks.push({ lineId, flat, tails, pending, waiting, isRecommend: lineId.indexOf("rec") === 0 });
+    lineChecks.push({ lineId, flat, tails, pending, waiting });
   }
   const badLine = lineChecks.filter((c) => {
     if (c.waiting) return false;
-    if (c.isRecommend) return c.tails < 1 || c.pending < 1;   // 推荐线：当期必须有号，未来期写待定
-    return c.tails < 3 || c.pending < 1;                       // 锁定线：三期都要有锁号
+    return c.tails < 3 || c.pending < 1;
   });
-  check(badLine.length === 0, "14线规律中心：当前窗口待开奖行写出尾号", lineChecks.map((c) => c.lineId + " 尾号" + c.tails + "个/待开奖" + c.pending).join(" ; "));
+  check(badLine.length === 0, "13线规律中心：当前窗口待开奖行写出尾号", lineChecks.map((c) => c.lineId + " 尾号" + c.tails + "个/待开奖" + c.pending).join(" ; "));
 
   check(errs.length === 0, "无 console 报错", errs.slice(0, 3).join(","));
   console.log("RESULT: " + (fails.length ? "FAILED " + fails.length : "ALL PASS"));

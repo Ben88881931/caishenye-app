@@ -88,11 +88,12 @@ async function main() {
   await sleep(400);
 
   // 4a2) 中间页长右滑 → 只回上一页，不回目录（滑到第一页才能返回上一级）
-  await evalJS("var cb=document.querySelector('.tab[data-tab=\"chasenumber\"]'); if(cb)cb.click(); true"); await sleep(900);
+  await evalJS("var cb=document.querySelector('.tab[data-tab=\"betexec\"]'); if(cb)cb.click(); true"); await sleep(900);
   await gesture("#view .section__title", [80, 150, 240], null, 25);
   await sleep(900);
   const midTab = await evalJS("(document.querySelector('.tab.is-active')||{}).innerText||''");
-  check((await evalJS("!!document.querySelector('.directory-grid')")) === false && midTab === "双号追热", "中间页长右滑 → 只回上一页，不回目录", "当前=" + midTab);
+  check((await evalJS("!!document.querySelector('.directory-grid')")) === false && midTab === "动态概率", "中间页长右滑 → 只回上一页，不回目录", "当前=" + midTab);
+  await evalJS("var cb2=document.querySelector('.tab[data-tab=\"betexec\"]'); if(cb2)cb2.click(); true"); await sleep(700);
   // 4a) 右滑 200px 不够 → 不该回目录（门槛已提到 220px）
   await gesture("#view .section__title", [60, 130, 200], null, 25);
   await sleep(700);
@@ -118,13 +119,13 @@ async function main() {
   await sleep(500);
   check((await activeTab()) === before6, "竖向滑动不翻页");
 
-  // 7) 14线按钮排左滑 → 切下一条线
+  // 7) 13线按钮排左滑 → 切下一条线
   await evalJS("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
   const lineBefore = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
   await gesture(".wm-line-selector [data-wm-line]", [-30, -60], null, 20);
   await sleep(700);
   const lineAfter = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
-  check(lineBefore !== lineAfter, "14线按钮排左滑 → 切到下一条线（" + lineBefore + " → " + lineAfter + "）");
+  check(lineBefore !== lineAfter, "13线按钮排左滑 → 切到下一条线（" + lineBefore + " → " + lineAfter + "）");
 
   check(errs.length === 0, "控制台无报错" + (errs.length ? " → " + errs.join(",") : ""));
   console.log(results.join("\n"));

@@ -1377,7 +1377,7 @@ body {
 }
 
 .wm-heat .heatmap__table {
-  width: 100%;
+  width: calc(100% - 20px);
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 6px 4px;
