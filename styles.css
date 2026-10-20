@@ -1414,7 +1414,7 @@ body {
   width: 100%;
   table-layout: fixed;
   border-collapse: separate;
-  border-spacing: 6px 0;
+  border-spacing: 6px 4px;
 }
 
 .wm-heat .heatmap__table th:nth-child(n + 2),

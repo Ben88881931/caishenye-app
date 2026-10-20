@@ -121,7 +121,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     return JSON.stringify({
       count: liveCells.length + waitCells.length,
       spacing: spacing,
-      ok: !liveBad.length && !waitBad.length && spacing.indexOf('6px') === 0,
+      ok: !liveBad.length && !waitBad.length && spacing === '6px 4px',
       bad: liveBad.concat(waitBad).slice(0, 5)
     });
   })()`));
