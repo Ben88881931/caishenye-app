@@ -128,8 +128,48 @@ async function main() {
     await evaluate(`document.querySelector('[data-window-miss-year="${year}"]').click()`);
     const titleOk = await waitFor(`document.querySelector('#view .section__title') && document.querySelector('#view .section__title').innerText.includes('${year}年')`);
     const active = await evaluate(`(document.querySelector('[data-window-miss-year].is-active') || {}).innerText`);
+    const runInfo = JSON.parse(await evaluate(`(function(){
+      var cards=document.querySelectorAll('#view .trend-run-card');
+      var strips=document.querySelectorAll('#view .trend-run-strip');
+      var text=document.querySelector('#view').innerText;
+      var gapMath=true;
+      cards.forEach(function(card){
+        var row=card.querySelector('.trend-run-row');
+        if(!row)return;
+        var chips=[].slice.call(row.querySelectorAll('.trend-run-chip')).reverse();
+        var previousStart=null;
+        chips.forEach(function(chip){
+          var small=(chip.querySelector('small')||{}).innerText||'';
+          var startMatch=small.match(/第(\\d+)/);
+          if(!startMatch){gapMath=false;return;}
+          var start=Number(startMatch[1]);
+          if(previousStart==null){
+            if(small.indexOf('年内首段')<0)gapMath=false;
+          }else{
+            var gapMatch=small.match(/距上次(\\d+)窗/);
+            if(!gapMatch||Number(gapMatch[1])!==start-previousStart)gapMath=false;
+          }
+          previousStart=start;
+        });
+      });
+      return JSON.stringify({
+        cards:cards.length,
+        strips:strips.length,
+        yearTitle:text.indexOf('窗口遗漏 / 窗口连中滚动记录 · ${year}年')>=0,
+        counts:text.indexOf('漏1×')>=0 && text.indexOf('漏4+×')>=0 && text.indexOf('连1×')>=0 && text.indexOf('连4+×')>=0,
+        gap:(text.indexOf('距上次')>=0 || text.indexOf('年内首段')>=0) && gapMath
+      });
+    })()`));
     check(titleOk && Number(active) === year, `窗口遗漏热图切换到${year}年`, `active=${active}`);
+    check(runInfo.cards === 14 && runInfo.strips === 28 && runInfo.yearTitle && runInfo.counts && runInfo.gap, `窗口遗漏${year}年滚动记录结构正确`, JSON.stringify(runInfo));
   }
+
+  await evaluate(`document.querySelector('[data-wm-mode="two"]').click()`);
+  await waitFor("document.querySelector('[data-wm-mode=\"two\"]').classList.contains('is-active')");
+  const twoMode = JSON.parse(await evaluate(`(function(){return JSON.stringify({cards:document.querySelectorAll('#view .trend-run-card').length,strips:document.querySelectorAll('#view .trend-run-strip').length});})()`));
+  check(twoMode.cards === 14 && twoMode.strips === 28, "两期窗口滚动记录同步切换为14线", JSON.stringify(twoMode));
+  await evaluate(`document.querySelector('[data-wm-mode="three"]').click()`);
+  await waitFor("document.querySelector('[data-wm-mode=\"three\"]').classList.contains('is-active')");
 
   await evaluate(`document.querySelector('[data-window-miss-year="2025"]').click()`);
   await waitFor(`document.querySelector('#view .section__title').innerText.includes('2025年')`);

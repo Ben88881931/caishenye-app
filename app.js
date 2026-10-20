@@ -1906,6 +1906,151 @@
     return html;
   }
 
+  function wmWindowRunData(line, maxStage, year) {
+    var windows = wmWindowsForStage(line, maxStage).filter(function (w) {
+      return wmYearOf(w.start) === Number(year);
+    });
+    var numbered = windows.map(function (w, index) {
+      return {
+        window: w,
+        number: index + 1,
+        kind: Number(w.hitIndex) > 0 ? "hit" : "miss",
+        startPeriod: betLocalPeriod(w.start),
+        endPeriod: betLocalPeriod(w.start) + Math.max(1, (w.attempts || []).length) - 1
+      };
+    });
+    var runs = [];
+    numbered.forEach(function (item) {
+      var last = runs[runs.length - 1];
+      if (!last || last.kind !== item.kind) {
+        last = {
+          kind: item.kind,
+          year: Number(year),
+          n: 0,
+          startWin: item.number,
+          endWin: item.number,
+          startPeriod: item.startPeriod,
+          endPeriod: item.endPeriod,
+          latest: false
+        };
+        runs.push(last);
+      }
+      last.n++;
+      last.endWin = item.number;
+      last.endPeriod = item.endPeriod;
+      last.latest = item.number === numbered.length;
+    });
+    var missRuns = runs.filter(function (run) { return run.kind === "miss"; });
+    missRuns.forEach(function (run, index) {
+      var previous = index > 0 ? missRuns[index - 1] : null;
+      run.gapFromPrevStart = previous ? run.startWin - previous.startWin : null;
+      run.gapFromPrevEnd = previous ? Math.max(0, run.startWin - previous.endWin - 1) : null;
+    });
+    return {
+      windows: numbered,
+      miss: missRuns,
+      hit: runs.filter(function (run) { return run.kind === "hit"; })
+    };
+  }
+
+  function wmRunLengthCounts(runs) {
+    var counts = { 1: 0, 2: 0, 3: 0, 4: 0, max: 0 };
+    runs.forEach(function (run) {
+      counts[Math.min(4, run.n)]++;
+      counts.max = Math.max(counts.max, run.n);
+    });
+    return counts;
+  }
+
+  function wmRunCountsText(label, runs) {
+    var counts = wmRunLengthCounts(runs);
+    return label + "1×" + counts[1] + " · " + label + "2×" + counts[2] +
+      " · " + label + "3×" + counts[3] + " · " + label + "4+×" + counts[4] +
+      " · 最长" + counts.max;
+  }
+
+  function wmMissGapText(runs) {
+    var gaps = runs.slice(1).map(function (run) { return run.gapFromPrevStart; }).filter(function (gap) {
+      return gap != null && gap > 0;
+    });
+    if (!gaps.length) return "间隔样本不足";
+    var latestGap = gaps[gaps.length - 1];
+    var averageGap = gaps.reduce(function (sum, gap) { return sum + gap; }, 0) / gaps.length;
+    var maxGap = Math.max.apply(null, gaps);
+    return "最近隔" + latestGap + "窗 · 平均" + averageGap.toFixed(1) + "窗 · 最长" + maxGap + "窗";
+  }
+
+  function wmRunTitle(line, run) {
+    var gapText = "";
+    if (run.kind === "miss") {
+      gapText = run.gapFromPrevStart == null
+        ? " · 该年第一次遗漏"
+        : " · 距上次遗漏起点" + run.gapFromPrevStart + "窗（距上次结束" + run.gapFromPrevEnd + "窗）";
+    }
+    return line.label + " · 窗口" + (run.kind === "hit" ? "连中" : "遗漏") + run.n +
+      "窗 · " + run.year + "年第" + run.startWin + "–" + run.endWin + "窗 · " +
+      "当年第" + run.startPeriod + "–" + run.endPeriod + "期" + gapText;
+  }
+
+  function wmRunStripHTML(line, kind, runs, activeState) {
+    var isHit = kind === "hit";
+    var label = isHit ? "窗口连中" : "窗口遗漏";
+    var countsText = wmRunCountsText(isHit ? "连" : "漏", runs);
+    var html = '<div class="trend-run-row">';
+    html += '<div class="trend-run-row__head"><b>' + label + '</b><span>' + countsText + '</span></div>';
+    html += '<div class="trend-run-strip" aria-label="' + line.label + label + '滚动记录">';
+    if (!runs.length) {
+      html += '<span class="trend-run-empty">该年暂无' + (isHit ? "连中" : "遗漏") + '段</span>';
+    } else {
+      runs.slice().reverse().forEach(function (run) {
+        var cls = isHit ? " trend-run-chip--hit" : " trend-run-chip--miss";
+        if (run.latest && !(activeState && (activeState.active || activeState.waiting))) cls += " is-current";
+        html += '<span class="trend-run-chip' + cls + '" title="' + wmRunTitle(line, run) + '">';
+        html += '<b>' + (isHit ? "连" : "漏") + run.n + '窗</b>';
+        html += '<small>第' + run.startWin + '–' + run.endWin + '窗 · ' +
+          (isHit || run.gapFromPrevStart == null ? (isHit ? "窗口段" : "年内首段") : "距上次" + run.gapFromPrevStart + "窗") +
+          '</small>';
+        html += "</span>";
+      });
+    }
+    html += "</div></div>";
+    return html;
+  }
+
+  function wmRunHistoryHTML(maxStage, year) {
+    var latestYear = Number((D[D.length - 1] || {}).y);
+    var isCurrentYear = Number(year) === latestYear;
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏 / 窗口连中滚动记录 · ' + year + '年</h2><span class="section__hint">单位=一个完整窗口，不是一期 · 每年重新开窗、跨年断段 · 新→旧 · 横向滑动看全部</span></div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏2窗”=连续2个窗口三期全错；“连3窗”=连续3个窗口在三期内命中。漏1/2/3/4+和连1/2/3/4+分别统计该年出现了几段。<b>“距上次N窗”=本次遗漏起点距上一次遗漏起点相隔N个窗口</b>；进行中的窗口还没结算，不计入已完成窗口的连错或连中。</div></div>';
+    EXEC_LINES.forEach(function (line) {
+      var data = wmWindowRunData(line, maxStage, year);
+      var activeState = isCurrentYear ? wmStageNow(line, maxStage) : null;
+      var status = "历史年份";
+      if (isCurrentYear) {
+        if (activeState && activeState.waiting) {
+          status = "当前等待重开 · 尾" + activeState.waiting.tail;
+        } else if (activeState && activeState.active) {
+          status = "当前窗口进行中 · 第" + Math.min(maxStage, (activeState.active.attempts || []).length + 1) + "期";
+        } else {
+          var allRuns = data.miss.concat(data.hit).sort(function (a, b) { return a.endWin - b.endWin; });
+          var lastRun = allRuns[allRuns.length - 1];
+          status = lastRun ? "最近完成 · 连续" + (lastRun.kind === "hit" ? "中" : "错") + lastRun.n + "窗" : "暂无完整窗口";
+        }
+      }
+      html += '<div class="section"><div class="panel trend-run-card">';
+      html += '<div class="trend-run-card__title"><b>' + line.label + '</b><span>' + status + ' · 当年完成 ' + data.windows.length + ' 窗</span></div>';
+      html += '<div class="trend-run-card__years"><span class="trend-run-card__years-title">' + year + '年窗口连续段统计</span>';
+      html += '<span class="trend-run-card__year"><b>窗口遗漏</b><small>' + wmRunCountsText("漏", data.miss) + '</small><small>' + wmMissGapText(data.miss) + '</small></span>';
+      html += '<span class="trend-run-card__year"><b>窗口连中</b><small>' + wmRunCountsText("连", data.hit) + '</small></span>';
+      html += '</div>';
+      html += wmRunStripHTML(line, "miss", data.miss, activeState);
+      html += wmRunStripHTML(line, "hit", data.hit, activeState);
+      html += "</div></div>";
+    });
+    html += '<p class="disclaimer">窗口记录只读取本页同一套两期/三期窗口引擎；切换上方两期/三期或年份，整页一起切换。没有把未结算的当前窗口写成中或错。</p>';
+    return html;
+  }
+
   function lastOpenIdx(tail) {
     for (var i = periods.length - 1; i >= 0; i--) {
       if (hit(periods[i], tail)) return i;
@@ -2212,11 +2357,13 @@
     }
     html += "</tbody></table></div></div></div>";
     html += perfMoreBtn("windowMiss", maxN, showRows, "行");
+    html += wmRunHistoryHTML(maxStage, curYear);
     view.innerHTML = html;
     var hm = view.querySelector(".heatmap");
     if (hm) hm.scrollTop = hm.scrollHeight;
-    // 本页改成整页自然滚动（不再套内部滚动容器，避免上下滑不动），进页面直接停在最新
-    window.scrollTo(0, document.documentElement.scrollHeight);
+    // 进页面先停在热图最新一行；窗口滚动记录放在热图下方，不把首屏直接推到最后一条线路。
+    var heatPanel = view.querySelector(".panel--wmheat");
+    if (heatPanel) window.scrollTo(0, Math.max(0, heatPanel.offsetTop + heatPanel.offsetHeight - window.innerHeight + 16));
   }
 
   function renderTrendImpl() {
