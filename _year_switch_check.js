@@ -136,20 +136,31 @@ async function main() {
       cards.forEach(function(card){
         var row=card.querySelector('.trend-run-row');
         if(!row)return;
-        var chips=[].slice.call(row.querySelectorAll('.trend-run-chip')).reverse();
-        var previousStart=null;
-        chips.forEach(function(chip){
-          var small=(chip.querySelector('small')||{}).innerText||'';
-          var startMatch=small.match(/第(\\d+)/);
-          if(!startMatch){gapMath=false;return;}
-          var start=Number(startMatch[1]);
-          if(previousStart==null){
-            if(small.indexOf('年内首段')<0)gapMath=false;
-          }else{
-            var gapMatch=small.match(/距上次(\\d+)窗/);
-            if(!gapMatch||Number(gapMatch[1])!==start-previousStart)gapMath=false;
+        var nodes=[].slice.call(row.children).reverse();
+        nodes.forEach(function(node,index){
+          if(!node.classList.contains('window-gap-link'))return;
+          var older=null,newer=null;
+          for(var i=index-1;i>=0;i--){
+            if(nodes[i].classList&&nodes[i].classList.contains('trend-run-chip')){older=nodes[i];break;}
           }
-          previousStart=start;
+          for(var j=index+1;j<nodes.length;j++){
+            if(nodes[j].classList&&nodes[j].classList.contains('trend-run-chip')){newer=nodes[j];break;}
+          }
+          if(!older||!newer){gapMath=false;return;}
+          var oldRange=(older.querySelector('small')||{}).innerText||'';
+          var newRange=(newer.querySelector('small')||{}).innerText||'';
+          var oldMatch=oldRange.match(/第(\\d+)[–-](\\d+)窗/);
+          var newMatch=newRange.match(/第(\\d+)[–-](\\d+)窗/);
+          var startMatch=(node.querySelector('b')||{}).innerText||'';
+          var betweenMatch=(node.querySelector('small')||{}).innerText||'';
+          var gapStart=startMatch.match(/起点差(\\d+)/);
+          var gapBetween=betweenMatch.match(/中间(\\d+)/);
+          if(!oldMatch||!newMatch||!gapStart||!gapBetween){
+            gapMath=false;
+            return;
+          }
+          var oldStart=Number(oldMatch[1]),oldEnd=Number(oldMatch[2]),newStart=Number(newMatch[1]);
+          if(Number(gapStart[1])!==newStart-oldStart||Number(gapBetween[1])!==Math.max(0,newStart-oldEnd-1))gapMath=false;
         });
       });
       return JSON.stringify({
@@ -157,7 +168,7 @@ async function main() {
         strips:strips.length,
         yearTitle:text.indexOf('窗口遗漏 / 窗口连中滚动记录 · ${year}年')>=0,
         counts:text.indexOf('漏1×')>=0 && text.indexOf('漏4+×')>=0 && text.indexOf('连1×')>=0 && text.indexOf('连4+×')>=0,
-        gap:(text.indexOf('距上次')>=0 || text.indexOf('年内首段')>=0) && gapMath
+        gap:text.indexOf('起点差')>=0 && gapMath
       });
     })()`));
     check(titleOk && Number(active) === year, `窗口遗漏热图切换到${year}年`, `active=${active}`);

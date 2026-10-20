@@ -1943,6 +1943,8 @@
     var missRuns = runs.filter(function (run) { return run.kind === "miss"; });
     missRuns.forEach(function (run, index) {
       var previous = index > 0 ? missRuns[index - 1] : null;
+      run.previousStartWin = previous ? previous.startWin : null;
+      run.previousEndWin = previous ? previous.endWin : null;
       run.gapFromPrevStart = previous ? run.startWin - previous.startWin : null;
       run.gapFromPrevEnd = previous ? Math.max(0, run.startWin - previous.endWin - 1) : null;
     });
@@ -2002,14 +2004,22 @@
     if (!runs.length) {
       html += '<span class="trend-run-empty">该年暂无' + (isHit ? "连中" : "遗漏") + '段</span>';
     } else {
-      runs.slice().reverse().forEach(function (run) {
+      var reversed = runs.slice().reverse();
+      reversed.forEach(function (run, index) {
+        if (!isHit && index > 0) {
+          var newer = reversed[index - 1];
+          var gapFromStart = newer.startWin - run.startWin;
+          var gapBetween = Math.max(0, newer.startWin - run.endWin - 1);
+          html += '<span class="window-gap-link" title="上次遗漏第' + run.startWin + '–' + run.endWin +
+            '窗，本次遗漏第' + newer.startWin + '–' + newer.endWin + '窗；起点差' + gapFromStart +
+            '窗，中间隔' + gapBetween + '个完整窗口">';
+          html += '<b>起点差' + gapFromStart + '</b><small>中间' + gapBetween + '窗</small></span>';
+        }
         var cls = isHit ? " trend-run-chip--hit" : " trend-run-chip--miss";
         if (run.latest && !(activeState && (activeState.active || activeState.waiting))) cls += " is-current";
         html += '<span class="trend-run-chip' + cls + '" title="' + wmRunTitle(line, run) + '">';
         html += '<b>' + (isHit ? "连" : "漏") + run.n + '窗</b>';
-        html += '<small>第' + run.startWin + '–' + run.endWin + '窗 · ' +
-          (isHit || run.gapFromPrevStart == null ? (isHit ? "窗口段" : "年内首段") : "距上次" + run.gapFromPrevStart + "窗") +
-          '</small>';
+        html += '<small>第' + run.startWin + '–' + run.endWin + '窗</small>';
         html += "</span>";
       });
     }
@@ -2021,7 +2031,7 @@
     var latestYear = Number((D[D.length - 1] || {}).y);
     var isCurrentYear = Number(year) === latestYear;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏 / 窗口连中滚动记录 · ' + year + '年</h2><span class="section__hint">单位=一个完整窗口，不是一期 · 每年重新开窗、跨年断段 · 新→旧 · 横向滑动看全部</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏2窗”=连续2个窗口三期全错；“连3窗”=连续3个窗口在三期内命中。漏1/2/3/4+和连1/2/3/4+分别统计该年出现了几段。<b>“距上次N窗”=本次遗漏起点距上一次遗漏起点相隔N个窗口</b>；进行中的窗口还没结算，不计入已完成窗口的连错或连中。</div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏2窗”=连续2个窗口三期全错；“连3窗”=连续3个窗口在三期内命中。遗漏铁链按新→旧：当前遗漏在左，连到上一次遗漏，再到更上一次。<b>连接牌写两组数：起点差=本次遗漏起点减上次遗漏起点；中间隔X窗=两段遗漏之间完整隔开的窗口数</b>。进行中的窗口还没结算，不计入已完成窗口的连错或连中。</div></div>';
     EXEC_LINES.forEach(function (line) {
       var data = wmWindowRunData(line, maxStage, year);
       var activeState = isCurrentYear ? wmStageNow(line, maxStage) : null;

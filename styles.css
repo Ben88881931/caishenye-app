@@ -2690,4 +2690,36 @@ body[data-page="trend"] .trend-run-empty {
   font-size: 11px;
 }
 
+body[data-page="windowmiss"] .trend-run-chip {
+  flex-basis: 108px;
+}
+
+body[data-page="windowmiss"] .window-gap-link {
+  flex: 0 0 72px;
+  min-height: 42px;
+  padding: 4px 5px;
+  border: 1px dashed #f59e0b;
+  border-radius: 999px;
+  background: #fffbeb;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #92400e;
+  line-height: 1.15;
+  text-align: center;
+}
+
+body[data-page="windowmiss"] .window-gap-link b {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+body[data-page="windowmiss"] .window-gap-link small {
+  margin-top: 3px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
 
