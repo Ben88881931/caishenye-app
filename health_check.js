@@ -99,12 +99,12 @@ const snapPending = snapshotRecords.filter(r => !r.settled).length;
 console.log('===== v3 模型健康检查（分账）=====\n');
 console.log('数据源: recommend_log.json');
 
-console.log('\n--- 回测账（第201-255期样本外）---');
+console.log('\n--- 单期参考回测账（不下注，不作战略结论）---');
 console.log('总数 ' + btRecords.length + ' 期, 命中 ' + bt['命中数'] + '/' + bt['已开奖数'] + ' = ' + pct(bt['命中率'] || 0));
 console.log('近10期回测命中率: ' + bt10.hits + '/' + bt10.n + ' = ' + pct(bt10.rate));
 console.log('近20期回测命中率: ' + bt20.hits + '/' + bt20.n + ' = ' + pct(bt20.rate));
 
-console.log('\n--- 实盘账（第256期起开奖前真实预测）---');
+console.log('\n--- 单期参考实盘账（不下注，只检查快照是否持续更新）---');
 console.log('已开奖 ' + liveSettled.length + ' 期, 命中 ' + live.hits + '/' + live.n + ' = ' + pct(live.rate));
 console.log('待开奖 ' + livePending.length + ' 期');
 console.log('当前连续未中 ' + missStreak + ' 期');
@@ -120,22 +120,22 @@ const srcWindows = Array.isArray(snapshotDoc.sourceWindows) ? snapshotDoc.source
 });
 console.log('  进行中窗口: ' + srcWindows.filter((w) => w.status === "pending").length + ' 个（下一期待开奖 ' + snapPending + ' 期）');
 
-// 预警判断（实盘样本不足时不作结论）
-const ALERT_THRESHOLD = 0.65;
-console.log('\n--- 健康状态 ---');
-if (liveSettled.length < 10) {
-  console.log('⏳ 实盘样本不足（当前 ' + liveSettled.length + ' 期），需攒够 10-20 期才有真实战绩，暂不作结论');
-} else if (live.rate < ALERT_THRESHOLD) {
-  console.log('⚠️ 预警：实盘命中率 ' + pct(live.rate) + ' 低于 65%，模型可能失效');
-} else if (missStreak >= 3) {
-  console.log('⚠️ 预警：实盘连续未中 ' + missStreak + ' 期');
-} else {
-  console.log('✅ 状态正常：实盘 ' + pct(live.rate) + '，回测 ' + pct(bt['命中率'] || 0));
-}
+// 单期只用于诊断数据链路，不参与战略失效或建仓判断。
+console.log('\n--- 单期参考状态 ---');
+console.log('单期样本 ' + liveSettled.length + ' 期，单期命中 ' + pct(live.rate) + '；仅作观察，不按单期下注。');
 
 const winD1 = srcWindows.filter((w) => w.stream === "D1" && w.status !== "pending");
 const winD2 = srcWindows.filter((w) => w.stream === "D2" && w.status !== "pending");
 const winD1Hit = winD1.filter((w) => w.status === "hit").length;
 const winD2Hit = winD2.filter((w) => w.status === "hit").length;
-console.log('\n【健康检查结果】回测 ' + pct(bt['命中率'] || 0) + '，旧实盘 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期），三期窗口命中 D1 ' +
-  winD1Hit + '/' + winD1.length + '、D2 ' + winD2Hit + '/' + winD2.length);
+console.log('\n--- 战略健康状态（唯一口径：三期窗口命中）---');
+if (Math.min(winD1.length, winD2.length) < 20) {
+  console.log('⏳ 真实快照窗口样本不足（D1 ' + winD1.length + ' 窗、D2 ' + winD2.length + ' 窗），暂不判断战略失效。');
+} else if ((winD1Hit / winD1.length) < 0.85 || (winD2Hit / winD2.length) < 0.85) {
+  console.log('⚠️ 预警：三期窗口命中率低于85%，需要人工复核。');
+} else {
+  console.log('✅ 战略窗口状态正常。');
+}
+console.log('【健康检查结果】战略主口径=三期窗口命中 D1 ' +
+  winD1Hit + '/' + winD1.length + '、D2 ' + winD2Hit + '/' + winD2.length +
+  '；单期 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期，仅诊断，不参与下单判断）');

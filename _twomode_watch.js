@@ -2,7 +2,7 @@
 // 每次运行都重新从页面读最新数字（页面本身就是按最新开奖实时算的），和上一次记录对比：
 //   1) 哪条线的「建议」翻转了
 //   2) 哪条线的净收益变动超过阈值（默认 2000 元）
-//   3) 建议与「第3期中率」是否矛盾（需要复核阈值）
+//   3) 两期研究对照与第3期中率是否需要复核；正式战略始终按三期
 // 只报不改，供监督总裁判断要不要调整阈值。
 const { spawn } = require("child_process");
 const path = require("path"), fs = require("fs");
@@ -56,15 +56,15 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
       changes.push("合计变动：三期 " + prev.total.n3 + " → " + data.total.n3 + "，两期 " + prev.total.n2 + " → " + data.total.n2);
     }
   }
-  // 建议与第3期中率是否矛盾（命中率高的线却说两期更优 / 命中率低却说三期更优）
+  // 两期只做研究对照；这里只提示差异，不把两期改回执行口径
   const odd = [];
   data.rows.forEach(function (r) {
     if (/永久不建仓|都亏/.test(r.advice)) return;
     const p3 = Number(String(r.p3).replace("%", ""));
     if (!isFinite(p3)) return;
-    if (p3 >= 58 && /两期更优/.test(r.advice)) odd.push(r.label + "：第3期中率 " + r.p3 + " 却建议两期更优");
+    if (p3 >= 58 && /两期估算略高/.test(r.advice)) odd.push(r.label + "：第3期中率 " + r.p3 + "，两期研究值略高，正式仍按三期");
     if (p3 <= 52 && /三期更优/.test(r.advice)) odd.push(r.label + "：第3期中率 " + r.p3 + " 却建议三期更优");
-    if (p3 < 55.56 && /三期更优/.test(r.advice)) odd.push(r.label + "：第3期中率 " + r.p3 + " 低于打平线却建议三期更优（应按结构选两期）");
+    if (p3 < 55.56 && /三期更优/.test(r.advice)) odd.push(r.label + "：第3期中率 " + r.p3 + " 低于单期打平线，需核对三期窗口总账");
   });
   // 只有数字真的变了才写基线文件（否则每次审计都会把文件改脏，导致“本地=远端”误报）
   const changedNow = !prev || prev.latestPeriod !== period || !prev.total ||
@@ -78,6 +78,6 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   }
   console.log("两期/三期对比监测 · 最新期=" + period + " · 合计 三期" + data.total.n3 + " / 两期" + data.total.n2);
   console.log("本期变化：" + (changes.length ? changes.join(" ; ") : "无（和上次一致）"));
-  console.log("建议与第3期中率矛盾：" + (odd.length ? odd.join(" ; ") : "无"));
+  console.log("两期研究对照观察：" + (odd.length ? odd.join(" ; ") : "无"));
   process.exit(0);
 })();

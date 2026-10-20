@@ -1,4 +1,4 @@
-// 护栏：D1/D2 同分时，所有页面的顶部推荐必须显示全部并列尾号，不能把排序冒充强弱
+// 护栏：D1/D2 同分必须明示；单期只能叫诊断，正式战略必须指向三期窗口
 const { spawn } = require("child_process");
 const path = require("path");
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
@@ -81,6 +81,7 @@ async function getJSON(url) {
     ));
     const failures = [];
     let pages = 0;
+    let strategyMetricPages = 0;
     for (const group of groups) {
       await evaluate("var back=document.querySelector('[data-directory=\"1\"]');if(back)back.click();true");
       await sleep(350);
@@ -111,11 +112,25 @@ async function getJSON(url) {
         if (!expectedTie && noteText) {
           failures.push(tab.label + "(" + group + ")");
         }
+        const metric = JSON.parse(await evaluate(`(function(){
+          var text=document.querySelector('#view')?document.querySelector('#view').innerText:'';
+          return JSON.stringify({
+            single:text.indexOf('单期快照诊断 · 只观察不下注')>=0,
+            strategy:text.indexOf('正式战略成绩只看三期窗口命中')>=0,
+            old:text.indexOf('真实快照命中率 · 实时记录')>=0
+          });
+        })()`));
+        if (metric.single) {
+          strategyMetricPages++;
+          if (!metric.strategy || metric.old) failures.push(tab.label + "(" + group + "·战略口径)");
+        }
       }
     }
+    if (strategyMetricPages < 2) failures.push("未覆盖单期诊断与三期战略口径");
     ws.close();
     console.log((failures.length ? "FAIL: " : "PASS: ") + "所有页面必须显示全部同分尾号且声明排序不代表强弱");
     console.log("检查页面数：" + pages + (failures.length ? " · 不合格：" + failures.join(", ") : " · 全部合格"));
+    console.log("单期/三期口径页面数：" + strategyMetricPages);
     console.log("RESULT: " + (failures.length ? "FAILED " + failures.length : "ALL PASS"));
     process.exitCode = failures.length ? 1 : 0;
   } finally {

@@ -1331,15 +1331,15 @@
         {
           name: "双号追热",
           summary: "看下一期最热的两个尾号，也就是D1第一推荐和D2第二推荐。",
-          look: ["D1、D2当前推荐号", "分数、等级、连出情况", "真实快照命中率和历史回测"],
-          use: "先看这一页确定下一期两个候选号，再进入后面的窗口页跟记录。",
+          look: ["D1、D2当前推荐号", "分数、等级、连出情况", "三期窗口命中和单期诊断"],
+          use: "先看这一页确定窗口候选号，再进入后面的窗口页连续观察3期。",
           source: "真实开奖数据、模型即时推荐、真实预测快照。",
-          note: "这里是选号入口，不代替下单；历史回测已经发生的成绩不能当成承诺。"
+          note: "正式战略只按三期窗口结算；单期命中率只作诊断，不按单期下注。"
         },
         {
           name: "三期内追号/追推荐",
           summary: "同一页切换两种追法：锁号追3期（号码锁定不换），或者每期最新推荐（每期可以换号）。",
-          look: ["当前模式：锁号追3期 / 每期最新推荐", "第1、2、3期分别检查哪一期", "D1、D2各自的真实快照命中率和对错滚动条"],
+          look: ["当前模式：锁号追3期 / 每期最新推荐", "第1、2、3期分别检查哪一期", "三期内窗口结果和单期对错滚动条"],
           use: "用来记录固定追号的真实窗口，并对比追推荐和追固定号码哪一种更稳定。",
           source: "真实开奖数据、D1/D2原始窗口记录、开奖前真实快照。",
           note: "两种模式分别记录、不可混算；观望只影响下单建议，不影响窗口记录。"
@@ -1554,6 +1554,8 @@
         ["D2 第二推荐", "模型评分表里的第二个尾号。出现同分并列时，D1不优先、D2也不是天然备选；页面会单独提示并列号码。"],
         ["追号码 D1 / D2", "把一个推荐号锁定下来，连续检查3期，中途不换号。"],
         ["追推荐 D1 / D2", "每一期都使用当期最新的D1或D2推荐号，所以号码可能变。"],
+        ["单期命中率", "只用来检查快照有没有实时更新和模型有没有明显异常，不作为单期下注依据，也不单独决定换线。"],
+        ["三期窗口命中", "正式战略成绩。一个窗口连续观察3期，只要第1、第2或第3期命中，就算这个窗口命中。"],
         ["跟双号", "三期内调度建议本期按双号执行，不等于保证中奖。"],
         ["观望", "本期不建议按这条线下单。它只是建议，不会停止窗口记录。"],
         ["锁定号", "追号码窗口开始后，第1到第3期固定使用这个号码。"]
@@ -3592,7 +3594,7 @@
     });
     var sumTwo = 0, sumThree = 0;
     cmpRows.forEach(function (r) { sumTwo += r.n2; sumThree += r.n3; });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">两期 / 三期 逐线对比 · 2026真实数据</h2><span class="section__hint">只作参考：同一条线两个口径各赚多少、差多少，决定这条线用哪个口径</span></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">两期 / 三期 逐线对比 · 2026真实数据</h2><span class="section__hint">只作参考：正式战略固定三期；两期只做研究对照，不切换执行口径</span></div>';
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:880px;font-size:12px"><thead><tr><th>线路</th><th>三期净收益（元）</th><th>两期净收益（元）</th><th>两期−三期</th><th>第3期中率</th><th>建议</th></tr></thead><tbody>';
     cmpRows.forEach(function (r) {
       var d = r.n2 - r.n3, advice, tone;
@@ -3600,9 +3602,9 @@
       if (r.line.hold) { advice = "永久不建仓"; tone = "#991b1b"; }
       else if (r.n2 < 0 && r.n3 < 0) { advice = "都亏 · 先躲"; tone = "#dc2626"; }
       // 第3期中率低于打平线 = 第3期这一注结构上就是亏的，不能因为今年三期多赚就选三期（那是波动）
-      else if (r.p3 < BE && r.n3 > r.n2) { advice = "两期更优 · 第3期不划算"; tone = "#2563eb"; }
-      else if (r.n2 > r.n3 + 500) { advice = "两期更优"; tone = "#2563eb"; }
-      else if (r.n3 > r.n2 + 500) { advice = "三期更优"; tone = "#16a34a"; }
+      else if (r.p3 < BE && r.n3 > r.n2) { advice = "两期估算略高 · 正式仍按三期战略"; tone = "#2563eb"; }
+      else if (r.n2 > r.n3 + 500) { advice = "两期估算略高 · 正式仍按三期战略"; tone = "#2563eb"; }
+      else if (r.n3 > r.n2 + 500) { advice = "三期更优 · 正式口径"; tone = "#16a34a"; }
       else { advice = "差不多"; tone = "#475569"; }
       html += '<tr><td><b>' + r.line.label + "</b></td>";
       html += '<td style="color:' + (r.n3 >= 0 ? "#16a34a" : "#dc2626") + '">' + (r.n3 >= 0 ? "+" : "") + Math.round(r.n3) + "</td>";
@@ -5015,7 +5017,7 @@
       color: config.color || "#111827"
     }];
     var html = '';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">真实快照命中率 · 实时记录</h2><span class="section__hint">' + (config.hint || "只统计开奖前保存、开奖后已结算的真实快照；未开奖不计入") + '</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">单期快照诊断 · 只观察不下注</h2><span class="section__hint">' + (config.hint || "单期只用于检查快照是否实时更新；正式战略成绩只看三期窗口命中，未开奖不计入") + '</span></div></div>';
     groups.forEach(function (group) {
       var rows = (group.rows || []).slice().sort(function (a, b) {
         return Number(b.period) - Number(a.period);
@@ -5027,11 +5029,11 @@
       html += '<div class="section"><div class="panel" style="padding:12px 10px;border-left:4px solid ' + (group.color || "#6b7280") + '">';
       html += '<div style="font-size:13px;font-weight:900;color:' + (group.color || "#111827") + ';margin-bottom:8px">' + (group.label || "合计") + '</div>';
       html += '<div class="grid-3">';
-      html += '<div class="stat"><div class="stat__value" style="color:' + (hits >= miss ? "#16a34a" : "#dc2626") + '">' + rate + '</div><div class="stat__label">命中率 · 中' + hits + ' 错' + miss + ' 共' + n + '</div></div>';
+      html += '<div class="stat"><div class="stat__value" style="color:' + (hits >= miss ? "#16a34a" : "#dc2626") + '">' + rate + '</div><div class="stat__label">单期命中率（非下单依据）· 中' + hits + ' 错' + miss + ' 共' + n + '</div></div>';
       html += '<div class="stat"><div class="stat__value">' + (rows.length ? rows[0].period : "-") + '</div><div class="stat__label">最新已结算快照期</div></div>';
       html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + (group.pendingText || "-") + '</div><div class="stat__label">待开奖 / 进行中</div></div>';
       html += '</div>';
-      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">最新真实快照记录 · 新→旧</div>';
+      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">最新单期快照 · 新→旧</div>';
       html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
       if (!rows.length) {
         html += '<span style="font-size:12px;color:#9ca3af">暂无已结算真实快照</span>';
@@ -5051,8 +5053,8 @@
     return html;
   }
 
-  // 真实快照命中率按“每一期”统计：该期开奖前已存快照、开奖后已结算就立刻计入；
-  // 不再等整个三期窗口结束，避免进行中的窗口把已结算的最新期（例如285）挡住。
+  // 单期快照诊断按“每一期”统计：只用于确认快照持续更新，不作为单期下注或战略结论。
+  // 正式战略仍按三期窗口是否命中结算；单期记录不能替代窗口账。
   function threePeriodRealtimeSnapshotRows() {
     var detail = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.detail) ? window.APP_SNAPSHOTS.detail : [];
     var rows = [];
@@ -5433,7 +5435,7 @@
       realtimePendingByStream[p.stream] = "第" + p.period + "期";
     });
     html += buildRealtimeSnapshotRateHTML({
-      hint: (isRecommendMode ? "三期内追推荐" : "三期内追号码") + " · 每一期真实快照独立统计，开奖后立即更新；未开奖不计入",
+      hint: (isRecommendMode ? "三期内追推荐" : "三期内追号码") + " · 单期快照只作诊断；正式战略成绩只看三期窗口命中，开奖后立即更新",
       groups: [
         {
           label: "第一推荐 D1",
@@ -5795,7 +5797,7 @@
       });
       var doublePending = "第" + (N + 1) + "期";
       html += buildRealtimeSnapshotRateHTML({
-        hint: "第一推荐 D1、第二推荐 D2 分别独立统计；只统计开奖前保存、开奖后已结算的真实快照，未开奖不计入",
+        hint: "第一推荐 D1、第二推荐 D2 分别独立统计；单期只作诊断，正式战略成绩只看三期窗口命中，未开奖不计入",
         groups: [
           { label: "第一推荐 D1", rows: firstSnapshotRows, pendingText: doublePending, color: "#16a34a" },
           { label: "第二推荐 D2", rows: secondSnapshotRows, pendingText: doublePending, color: "#2563eb" }
@@ -5964,13 +5966,13 @@
     var singleRate = tPicks ? (tHits / tPicks * 100).toFixed(2) : '0.00';
     var atLeast1 = actDays - d0;
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">第2~' + N + '期回测 · 第' + (N + 1) + '期实盘待开奖 · 每期推2号 · 赔率1.8</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">战略主口径=三期窗口命中 · 单期只作诊断 · 第' + (N + 1) + '期实盘待开奖</span></div></div>';
     html += '<div class="section"><div class="grid-2">';
-    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + singleRate + '%</div><div class="stat__label">单号命中率 中' + tHits + '·错' + (tPicks - tHits) + '·共' + tPicks + '</div></div>';
     var sws2 = (window.APP_SNAPSHOTS && window.APP_SNAPSHOTS.sourceWindowSummary && window.APP_SNAPSHOTS.sourceWindowSummary.byStream) || {};
     var swD1 = sws2.D1 || { hits: 0, settled: 0, hit3Rate: 0 };
     var swD2 = sws2.D2 || { hits: 0, settled: 0, hit3Rate: 0 };
-    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + ((swD1.hit3Rate || 0) * 100).toFixed(1) + '% / ' + ((swD2.hit3Rate || 0) * 100).toFixed(1) + '%</div><div class="stat__label">三期窗口命中率（首推/备选）· 中' + swD1.hits + '/' + swD1.settled + ' 与 ' + swD2.hits + '/' + swD2.settled + ' 窗</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + ((swD1.hit3Rate || 0) * 100).toFixed(1) + '% / ' + ((swD2.hit3Rate || 0) * 100).toFixed(1) + '%</div><div class="stat__label">战略主口径 · 三期窗口命中率（首推/备选）· 中' + swD1.hits + '/' + swD1.settled + ' 与 ' + swD2.hits + '/' + swD2.settled + ' 窗</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + singleRate + '%</div><div class="stat__label">单期诊断（不下注）· 中' + tHits + '·错' + (tPicks - tHits) + '·共' + tPicks + '</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:' + (cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (cum >= 0 ? '+' : '') + cum.toFixed(2) + '</div><div class="stat__label">累计盈亏（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + maxDD.toFixed(2) + '</div><div class="stat__label">最大回撤（元）</div></div>';
     html += '</div></div>';

@@ -146,8 +146,8 @@ must(appText.includes("result: \"pending\"") && appText.includes("snapshot+live"
 must(appText.includes("buildThreePeriodCorrectScrollHTML") && appText.includes("三期内对错滚动条") && appText.includes("第\" + batch.hitIndex + \"期中") && appText.includes("三期全错"), "追号码和追推荐必须分别显示三期内对错滚动条");
 must(appText.includes("batch.status !== \"miss\" && batch.hitIndex >= 1 && batch.hitIndex <= 3"), "对错滚动条必须把 hitIndex=0 视为三期全错");
 must(appText.includes("threeCorrectScroll") && appText.includes("[\"D1\", \"D2\"].forEach(function (key)") && appText.includes("overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px"), "对错滚动条 D1/D2 必须上下可见且各自独立滚动");
-must(appText.includes("buildRealtimeSnapshotRateHTML") && appText.includes("真实快照命中率 · 实时记录") && appText.includes("threePeriodRealtimeSnapshotRows") && appText.includes("firstSnapshotRows") && appText.includes("secondSnapshotRows") && appText.includes("第一推荐 D1") && appText.includes("第二推荐 D2"), "双号追热、追号码、追推荐必须分开显示 D1/D2 实时真实快照命中率");
-must(appText.includes("真实快照命中率按") && appText.includes("APP_SNAPSHOTS.detail") && appText.includes("每一期真实快照独立统计") && !appText.includes("只统计真实快照已结算窗口"), "真实快照命中率必须按每一期结算（开奖后立即入账），禁止等三期窗口结束后才更新");
+must(appText.includes("buildRealtimeSnapshotRateHTML") && appText.includes("单期快照诊断 · 只观察不下注") && appText.includes("正式战略成绩只看三期窗口命中") && appText.includes("threePeriodRealtimeSnapshotRows") && appText.includes("firstSnapshotRows") && appText.includes("secondSnapshotRows") && appText.includes("第一推荐 D1") && appText.includes("第二推荐 D2"), "双号追热、追号码、追推荐必须分开显示D1/D2单期快照诊断，并明确单期不下注、正式战略只看三期窗口命中");
+must(appText.includes("单期快照诊断按") && appText.includes("APP_SNAPSHOTS.detail") && appText.includes("只用于确认快照持续更新") && appText.includes("正式战略仍按三期窗口是否命中结算") && !appText.includes("只统计真实快照已结算窗口"), "单期快照必须逐期实时更新以检查数据链路，但不能冒充正式战略成绩");
 must(!appText.includes("D1+D2 合计") && !appText.includes("双号合计 · 至少中一"), "实时命中率只保留 D1/D2 独立记录，不做合计");
 must(!appText.includes("至少中一") && !appText.includes("至少中1"), "禁止再出现「每期两号至少中一」口径：唯一认可的是「三期窗口命中」（窗口=短期策略单元）");
 must(appText.includes("if (waiting) {") && appText.includes("waiting = null") && appText.includes("等待重开") && appText.includes("等尾") && appText.includes("重新开出"),
@@ -191,4 +191,4 @@ if (errors.length) {
   process.exit(1);
 }
 console.log("PAGE AUDIT PASSED");
-must(appText.includes("两期 / 三期 逐线对比") && appText.includes("betLineAccount(line, 2, 2026).net") && appText.includes("betLineAccount(line, 3, 2026).net") && appText.includes("两期−三期") && appText.includes("单窗最深亏 三期2300 / 两期800") && appText.includes("只作参考"), "下注执行表必须给「两期/三期逐线对比」表（2026真实数据·逐线净收益差·只作参考），方便决定每条线用哪个口径");
+must(appText.includes("两期 / 三期 逐线对比") && appText.includes("betLineAccount(line, 2, 2026).net") && appText.includes("betLineAccount(line, 3, 2026).net") && appText.includes("两期−三期") && appText.includes("单窗最深亏 三期2300 / 两期800") && appText.includes("只作参考") && appText.includes("正式战略固定三期"), "下注执行表必须给「两期/三期逐线对比」研究表，并明确正式战略固定三期、两期只作对照");
