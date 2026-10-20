@@ -1349,7 +1349,7 @@ html.gesture-active * {
 /* 窗口遗漏热图最新格：期数在上、尾号在下，不要用圆点挤在同一行 */
 .wm-heat .heat-cell.cell-wait,
 .wm-heat .heat-cell.cell-live {
-  height: 22px;
+  height: 28px;
   flex-direction: column;
   gap: 0;
   font-size: 8px;
@@ -1423,7 +1423,7 @@ body {
 }
 
 .wm-heat .heatmap__table td {
-  height: 22px;
+  height: 28px;
   line-height: 0;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
@@ -1472,7 +1472,7 @@ body {
 
 .wm-heat .heat-cell {
   width: 20px;
-  height: 22px;
+  height: 28px;
   margin: 0 auto;
   font-size: 12px;
   border-radius: 3px;

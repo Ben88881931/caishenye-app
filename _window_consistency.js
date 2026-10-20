@@ -101,6 +101,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
       var amount = cell.querySelector('.heat-cell__amount');
       var ok = cell.innerText.indexOf('·') < 0
         && getComputedStyle(cell).flexDirection === 'column'
+        && cellBox.height >= 28
         && Math.abs(tdBox.height - cellBox.height) <= 2
         && (requiresAmount ? (!!amount && /\\d+元/.test(amount.innerText)) : !amount);
       return ok ? null : {
