@@ -9,6 +9,7 @@
     .sort(function (a, b) { return a - b; });
   var latest = periods[periods.length - 1];
   var MODEL = window.CAISHEN_MODEL.createModel(RAW);
+  var PROB_MODEL = window.CAISHEN_PROBABILITY;
 
   var byYearPeriod = new Map();
   D.forEach(function (e) {
@@ -374,11 +375,10 @@
   var TABS = [
     { id: "directory", label: "目录" },
     { id: "overview", label: "总览" },
-    { id: "pick3", label: "双号追热" },
-    { id: "chasenumber", label: "三期内追号/追推荐" },
+    { id: "pick3", label: "动态概率" },
     { id: "betexec", label: "下注执行表" },
     { id: "formulas", label: "公式表" },
-    { id: "windowmult", label: "14线规律中心" },
+    { id: "windowmult", label: "13线规律中心" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -400,7 +400,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "chasenumber", "betexec", "formulas", "windowmult", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["pick3", "betexec", "formulas", "windowmult", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "missorder", "windowmiss", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -965,18 +965,16 @@
   }
 
   function modelPairStrip(period) {
-    var d1 = execPick(period, "D1");
-    var d2 = execPick(period, "D2");
-    var prediction = MODEL.buildPrediction(period - 1);
-    var ranked = MODEL.pickTopAt(period - 1, 10);
-    var tied = [];
-    if (prediction.doubleAmbiguous && ranked.length) {
-      tied = ranked.filter(function (item) { return item.sc === ranked[0].sc; }).map(function (item) { return item.d; });
-    }
+    if (!PROB_MODEL || !PROB_MODEL.analyze) return "";
+    var result = PROB_MODEL.analyze(RAW, period - 1);
+    var picks = result.top || [];
+    var labels = ["动态第1", "动态第2", "动态第3"];
+    var tones = ["model-pair-card--p1", "model-pair-card--p2", "model-pair-card--p3"];
     return '<div class="model-pair-grid">' +
-      '<div class="model-pair-card model-pair-card--d1"><span>D1 第一推荐</span><b>尾' + (d1 ? d1.tail : "-") + '</b></div>' +
-      '<div class="model-pair-card model-pair-card--d2"><span>D2 第二推荐</span><b>尾' + (d2 ? d2.tail : "-") + '</b></div>' +
-      (tied.length > 2 ? '<div class="model-pair-note">同分并列：尾' + tied.join(" / 尾") + ' · 当前排序不代表强弱</div>' : '') +
+      picks.map(function (row, index) {
+        return '<div class="model-pair-card ' + tones[index] + '"><span>' + labels[index] + '</span><b>尾' + row.tail + '</b><small>下期 ' + (row.nextProb * 100).toFixed(1) + '% · 三期 ' + (row.window3Prob * 100).toFixed(1) + '%</small></div>';
+      }).join("") +
+      (result.ambiguous ? '<div class="model-pair-note">前三名概率接近，当前排序不代表明显强弱</div>' : '') +
       '</div>';
   }
 
@@ -1069,7 +1067,7 @@
     renderWindowMultiplierTest();
   }
 
-  // 在14线按钮上左右滑动即可翻到上一条/下一条线，到两端循环
+  // 在13线按钮上左右滑动即可翻到上一条/下一条线，到两端循环
   function stepWindowMultLine(delta) {
     var index = -1;
     for (var i = 0; i < EXEC_LINES.length; i++) {
@@ -1255,7 +1253,7 @@
   }
 
   function render() {
-    if (state.tab === "selector") state.tab = "chasenumber";
+    if (state.tab === "selector" || state.tab === "chasenumber" || state.tab === "chaserecommend") state.tab = "pick3";
     // 「执行提示」「资金调度」已并入「下注执行表」：老入口一律转到主页面
     if (state.tab === "orderhint" || state.tab === "funds") {
       state.tab = "betexec";
@@ -1263,11 +1261,6 @@
     }
     if (state.tab === "miss") {
       state.tab = "trend";
-      lsSet("v2_current_tab", state.tab);
-    }
-    if (state.tab === "chaserecommend") {
-      state.ultimateMode = "recommend";
-      state.tab = "chasenumber";
       lsSet("v2_current_tab", state.tab);
     }
     var tabChanged = state.tab !== renderedTab;
@@ -1292,9 +1285,8 @@
     else if (state.tab === "history") renderHistory();
     else if (state.tab === "backtest") renderBacktest();
     else if (state.tab === "predict") renderPredict();
-    else if (state.tab === "pick3") renderPick3();
+    else if (state.tab === "pick3") renderProbabilityModel();
     else if (state.tab === "selector") renderSelector();
-    else if (state.tab === "chasenumber") renderChaseNumber();
     else if (state.tab === "betexec") renderBetExec();
     else if (state.tab === "formulas") renderFormulaTable();
     else if (state.tab === "windowmult") renderWindowMultiplierTest();
@@ -1329,25 +1321,17 @@
       desc: "这一组是每天真正用来选号、排仓、跟窗口和记录下单的页面。",
       items: [
         {
-          name: "双号追热",
-          summary: "看下一期最热的两个尾号，也就是D1第一推荐和D2第二推荐。",
-          look: ["D1、D2当前推荐号", "分数、等级、连出情况", "三期窗口命中和单期诊断"],
-          use: "先看这一页确定窗口候选号，再进入后面的窗口页连续观察3期。",
-          source: "真实开奖数据、模型即时推荐、真实预测快照。",
-          note: "正式战略只按三期窗口结算；单期命中率只作诊断，不按单期下注。"
-        },
-        {
-          name: "三期内追号/追推荐",
-          summary: "同一页切换两种追法：锁号追3期（号码锁定不换），或者每期最新推荐（每期可以换号）。",
-          look: ["当前模式：锁号追3期 / 每期最新推荐", "第1、2、3期分别检查哪一期", "三期内窗口结果和单期对错滚动条"],
-          use: "用来记录固定追号的真实窗口，并对比追推荐和追固定号码哪一种更稳定。",
-          source: "真实开奖数据、D1/D2原始窗口记录、开奖前真实快照。",
-          note: "两种模式分别记录、不可混算；观望只影响下单建议，不影响窗口记录。"
+          name: "动态概率",
+          summary: "每期动态计算10个尾号的下一期概率和三期出现概率，旧D1/D2硬排序退出正式推荐。",
+          look: ["10个尾号下一期概率", "三期出现概率", "当前遗漏、连出和置信度"],
+          use: "先看概率候选，再进入下注执行表检查真实窗口和仓位。",
+          source: "2021-2024训练、2025验证、2026影子记录；只使用目标期之前的数据。",
+          note: "影子模型尚未证明稳定跑赢随机，不进入正式下单。"
         },
         {
           name: "下注执行表",
           summary: "原来的「执行提示」和「资金调度」已经并进这一页：一条节奏链条走完，① 选方向 ② 选号 ③ 定轻重。",
-          look: ["节奏链条：① 线方向（性格）→ ② 窗口选号 → ③ 第几期定轻重", "选号参考表：14条独立线路一屏对比，自己挑2-3条下", "今日规划：今天每一注的线路+尾号+金额+第几期", "每条线当前窗口第1/2/3期明细 + 对错滚动记录"],
+          look: ["节奏链条：① 线方向（性格）→ ② 窗口选号 → ③ 第几期定轻重", "选号参考表：13条独立线路一屏对比，自己挑2-3条下", "今日规划：今天每一注的线路+尾号+金额+第几期", "每条线当前窗口第1/2/3期明细 + 对错滚动记录"],
           use: "下单前只看这一页：先按性格挑线，再看窗口锁尾号，最后按方案金额下单。",
           source: "公式表逐线公式、真实开奖窗口、开奖前真实快照。",
           note: "只提示不自动下单；不锚定本金，金额按公式表取当前窗口第几期；窗口等待和开窗等待是两种不同状态。"
@@ -1361,8 +1345,8 @@
           note: "公式表目前是稳定版本，不会每天自动改；今年最优只作参考，不能冒充正式公式。"
         },
         {
-          name: "14线规律中心",
-          summary: "14条线各自的数据规律与窗口性格：逐条列出每个窗口第1/2/3期的命中或全错，比较不同倍率的收益、风险和逐年表现，并给出窗口级性格与重投/倍投参考建议。",
+          name: "13线规律中心",
+          summary: "13条线各自的数据规律与窗口性格：逐条列出每个窗口第1/2/3期的命中或全错，比较不同倍率的收益、风险和逐年表现，并给出窗口级性格与重投/倍投参考建议。",
           look: ["当前有仓位的正式执行线路", "今年最优、年度稳健最优", "逐年收益、全错窗口和连续全错概率"],
           use: "研究公式有没有优化空间，比较不同年份是否稳定。",
           source: "真实窗口、真实开奖结果、公式表正式线计划。",
@@ -1527,12 +1511,12 @@
     {
       title: "每日操作",
       desc: "每天按这个顺序走：先选号，再看窗口和执行，最后记录下单。",
-      names: ["双号追热", "三期内追号/追推荐", "下注执行表", "追三期下单"]
+      names: ["动态概率", "下注执行表", "公式表", "13线规律中心", "追三期下单"]
     },
     {
       title: "公式验证",
       desc: "正式公式从哪里来，以及公式和倍率到底有没有经过历史验证。",
-      names: ["公式表", "14线规律中心", "策略回测"]
+      names: ["公式表", "13线规律中心", "策略回测"]
     },
     {
       title: "数据参考",
@@ -1550,12 +1534,7 @@
     {
       title: "号码和推荐",
       rows: [
-        ["D1 第一推荐", "模型评分表里的第一个尾号。出现同分并列时，它只是按尾号顺序排在前面，不代表一定比D2强。"],
-        ["D2 第二推荐", "模型评分表里的第二个尾号。出现同分并列时，D1不优先、D2也不是天然备选；页面会单独提示并列号码。"],
-        ["追号码 D1 / D2", "把一个推荐号锁定下来，连续检查3期，中途不换号。"],
-        ["追推荐 D1 / D2", "每一期都使用当期最新的D1或D2推荐号，所以号码可能变。"],
-        ["单期命中率", "只用来检查快照有没有实时更新和模型有没有明显异常，不作为单期下注依据，也不单独决定换线。"],
-        ["三期窗口命中", "正式战略成绩。一个窗口连续观察3期，只要第1、第2或第3期命中，就算这个窗口命中。"],
+        ["动态概率前三", "每期根据目标期之前的遗漏、连出、短中期频率重新计算10个尾号概率；概率接近时只算候选，不代表确定强弱。"],
         ["跟双号", "三期内调度建议本期按双号执行，不等于保证中奖。"],
         ["观望", "本期不建议按这条线下单。它只是建议，不会停止窗口记录。"],
         ["锁定号", "追号码窗口开始后，第1到第3期固定使用这个号码。"]
@@ -1609,11 +1588,10 @@
   ];
 
   var PAGE_GUIDE_TAB_MAP = {
-    "双号追热": "pick3",
-    "三期内追号/追推荐": "chasenumber",
+    "动态概率": "pick3",
     "下注执行表": "betexec",
     "公式表": "formulas",
-    "14线规律中心": "windowmult",
+    "13线规律中心": "windowmult",
     "追三期下单": "orderlog",
     "总览": "overview",
     "分段对比": "segments",
@@ -1708,11 +1686,10 @@
 
     var pageGuides = {
       overview: ["总览", "查看最新开奖、页面说明和每日操作顺序。", "每天打开小程序时先看。"],
-      pick3: ["双号追热", "双号选号模型，输出 D1、D2，并显示四色风险状态和对错遗漏。", "每天第一步选号时看。"],
-      chasenumber: ["三期内追号/追推荐", "同一页切换两种追法：锁号追3期（号码锁定不换）或每期最新推荐（每期可以换号）；命中或三期全错后重新开窗。", "按固定号码或每期最新推荐追三期时看。"],
+      pick3: ["动态概率", "每期动态计算10个尾号的下一期概率、三期出现概率、当前遗漏和连出状态；旧D1/D2硬排序不再参与推荐。", "查看每期概率排序和影子验证时看。"],
       betexec: ["下注执行表", "原来的执行提示和资金调度已并入本页：一条节奏链条走完（① 线方向 ② 窗口选号 ③ 第几期定轻重），含选号参考表、今日规划和逐线对错滚动记录。", "决定今天下不下、每条线下多少时看这一页就够了。"],
-      formulas: ["公式表", "展示14条线的阶段系数、训练/验证结果和最终下注公式，不预测号码。", "核查每条线下注公式是否通过历史验证时看。"],
-      windowmult: ["14线规律中心", "14条线各自的数据规律与窗口性格：逐条列出每个窗口第1/2/3期命中或全错，比较跨窗口1.5倍、2倍、2.5倍、3倍后的收益、回撤和最大倍率，并按窗口给出性格与重投/倍投参考建议。", "检查14条线规律、性格和资金风险时看。"],
+      formulas: ["公式表", "展示13条线的阶段系数、训练/验证结果和最终下注公式，不预测号码。", "核查每条线下注公式是否通过历史验证时看。"],
+      windowmult: ["13线规律中心", "13条线各自的数据规律与窗口性格：逐条列出每个窗口第1/2/3期命中或全错，比较跨窗口1.5倍、2倍、2.5倍、3倍后的收益、回撤和最大倍率，并按窗口给出性格与重投/倍投参考建议。", "检查13条线规律、性格和资金风险时看。"],
       orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
       segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
       missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖；页面附全部历史的遗漏滚动记录和连出滚动记录。", "找遗漏结构、查看遗漏和连出全历史时看。"],
@@ -2283,7 +2260,7 @@
     view.innerHTML = html;
   }
 
-  // 窗口遗漏热图：单位=窗口（不是期），14条线一屏，绿=中窗、红=错窗（数字=连错到第几窗），可左右上下滚动
+  // 窗口遗漏热图：单位=窗口（不是期），13条线一屏，绿=中窗、红=错窗（数字=连错到第几窗），可左右上下滚动
   function renderWindowMiss() {
     var latestYear = Number((D[D.length - 1] || {}).y);
     var curYear = DATA_YEARS.indexOf(Number(state.windowMissYear)) >= 0 ? Number(state.windowMissYear) : latestYear;
@@ -2340,7 +2317,7 @@
     html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-wm-mode="two">两期窗口</button>';
     html += '</div><div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + (maxStage === 2 ? "两期窗口（一个窗口最多第2期）" : "三期窗口（一个窗口最多第3期）") + '</b> · 本页独立开关，只影响这一页；两期和三期各自一套窗口、命中率、性格规律，互不引用。</div></div></div>';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图 · ' + curYear + '年</h2><span class="section__hint">每年独立 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
-    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=14条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第2期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
+    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=13条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第2期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
     html += '<div class="panel panel--wmheat"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
@@ -3053,10 +3030,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
-      { id: "fixedD1", label: "追号码 D1", kind: "fixed", stream: "D1", plan: [0, 0, 0], hold: "D1数据不达标永久不建仓（真实快照需显著高于随机基准才解禁）：27期37% vs 随机53%、p=0.01" },
-    { id: "fixedD2", label: "追号码 D2", kind: "fixed", stream: "D2", plan: [0, 300, 0] },
-      { id: "recD1", label: "追推荐 D1", kind: "recommend", stream: "D1", plan: [0, 0, 0], hold: "D1数据不达标永久不建仓（真实快照需显著高于随机基准才解禁）：27期37% vs 随机53%、p=0.01" },
-    { id: "recD2", label: "追推荐 D2", kind: "recommend", stream: "D2", plan: [0, 300, 0] },
+    { id: "prob1", label: "概率第1", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
+    { id: "prob2", label: "概率第2", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
+    { id: "prob3", label: "概率第3", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
   ];
 
   // 公式来源：2021-2023训练段 + 2024-2026验证段，两段均为正的阶段系数才配仓。
@@ -3075,6 +3051,9 @@
     fixedD2: { formula: "阶段公式", train: [0.0594, 0.0198, -0.0078], valid: [-0.0599, 0.0035, 0.0079], fullNet: 2700, fullRoi: 0.0256410256, trainNet: 2280, validNet: 420, maxDrawdown: 4380, miss: 67 },
     recD1: { formula: "连追100", train: [0.0246, 0.0262, 0.0031], valid: [0.0378, 0.0158, 0.0014], fullNet: 4400, fullRoi: 0.0339244410, trainNet: 2100, validNet: 2300, maxDrawdown: 2980, miss: 63 },
     recD2: { formula: "阶段公式", train: [0.1122, 0.0333, -0.0084], valid: [-0.0618, 0.0060, 0.0015], fullNet: 4740, fullRoi: 0.0456647399, trainNet: 4020, validNet: 720, maxDrawdown: 3720, miss: 66 },
+    prob1: { formula: "影子观察", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
+    prob2: { formula: "影子观察", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
+    prob3: { formula: "影子观察", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
   };
   var ORDER_PATTERNS = {
     P6: [1, 1.25, 2.8125],
@@ -3280,7 +3259,7 @@
   // ===== 下注执行表：1:7:15 两套方案（只做两期 / 三期全打），逐期提醒每条线下多少 =====
   var BET_STAKES = [100, 700, 1500];
   var BET_HALF = [100, 300, 700];
-  // 14线引擎跑在“全表序号”上；页面上统一显示“当年第几期”
+  // 13线引擎跑在“全表序号”上；页面上统一显示“当年第几期”
   function betLocalPeriod(g) {
     var row = D[Number(g) - 1];
     if (row) return Number(row.p);
@@ -3288,11 +3267,11 @@
     return lastRow ? Number(lastRow.p) + (Number(g) - D.length) : Number(g);
   }
   var BET_ODDS = 1.8;
-  // 2026年验证为正的线路（两期方案和三期方案各自算）；其余线路本方案不配仓，仍可切“显示全部14条”查看
+  // 2026年验证为正的线路（两期方案和三期方案各自算）；其余线路本方案不配仓，仍可切“显示全部13条”查看
   var BET_POSITIVE = {
     // 追号码D1 / 追推荐D1 已暂停建仓（首推近期失效），不再出现在任何下注组合里
-    two: ["tail0", "tail1", "tail6", "tail8", "tail9", "fixedD2", "recD2"],
-    three: ["tail0", "tail1", "tail4", "tail6", "tail7", "tail9", "fixedD2", "recD2"],
+    two: ["tail0", "tail1", "tail6", "tail8", "tail9"],
+    three: ["tail0", "tail1", "tail4", "tail6", "tail7", "tail9"],
   };
   function betPositiveLines(maxStage) {
     return BET_POSITIVE[maxStage >= 3 ? "three" : "two"];
@@ -3643,7 +3622,7 @@
     html += '<br>赔率 ' + BET_ODDS + '（打平线 ' + (100 / BET_ODDS).toFixed(2) + '%）· 第1期中 +80 / 第2期中 +460' + (maxStage === 3 ? " / 第3期中 +400 / 三期全错 -2300" : " / 两期没中 -800") + ' · 窗口由真实开奖算出。</div>';
     html += '<details style="margin-top:8px"><summary style="font-size:12px;font-weight:800;color:#475569;cursor:pointer">口径与回测说明（默认收起 · 性格规律、走步回测、窗口体检）</summary>';
     html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:6px">性格规律提示：把最近5个窗口的累计盈亏当作“当前状态”，看它已经持续了几个窗口，再跟这条线自己过去6年的状态段长度比——亏损状态超过 p75（约7窗）提示准备减仓，超过 p90（三期约10窗 / 两期约11窗）提示停这条线观察；盈利状态超过 p75 提示注意见顶。<b>点上面两个按钮切换方案时，性格提示会跟着用对应方案的窗口和阈值重算。</b></div>';
-    html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:4px">走步回测（2021-2026，无未来数据）：<b>只做盈利状态（≤5条）在两期方案下是唯一五年回测为正的组合</b>（+15,540 / ROI 0.8%，投入202万），比全做14条（-0.9%）和固定9条（0.0%）都好；三期方案下轮动反而更差，所以三期更该少换线。</div>';
+    html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:4px">走步回测（2021-2026，无未来数据）：<b>只做盈利状态（≤5条）在两期方案下是唯一五年回测为正的组合</b>（+15,540 / ROI 0.8%，投入202万），比全做10条（-0.9%）和固定9条（0.0%）都好；三期方案下轮动反而更差，所以三期更该少换线。</div>';
     html += '<div class="panel__body" style="font-size:12px;line-height:1.7;color:#475569;margin-top:4px"><b>窗口体检</b>：热（盈利状态）就下、冷（亏损状态）就不下——盈利超 p75 转轻仓、亏损在 p75~p90 轻仓试、亏损超 p90 直接停。走步回测：两期方案 +11,260 / ROI 0.5%（下注 5,895 窗、跳过 5,219 窗，跳过约 47%）；三期方案体检反而变差（-0.5%），三期不建议用体检。</div>';
     html += '</details>';
     html += '</div></div>';
@@ -3656,7 +3635,7 @@
     html += '<button class="chip ' + (state.betLineMode === "rotate5" ? "is-active" : "") + '" data-bet-lines="rotate5">规律轮动 · 前5条（含亏损补位）</button>';
     html += '<button class="chip ' + (state.betLineMode === "lastyear" ? "is-active" : "") + '" data-bet-lines="lastyear">去年最优5条（走步）</button>';
     html += '<button class="chip ' + (state.betLineMode === "positive" ? "is-active" : "") + '" data-bet-lines="positive">只做验证为正的线（D1已剔除）</button>';
-    html += '<button class="chip ' + (state.betLineMode === "all" ? "is-active" : "") + '" data-bet-lines="all">显示全部14条</button>';
+    html += '<button class="chip ' + (state.betLineMode === "all" ? "is-active" : "") + '" data-bet-lines="all">显示全部13条</button>';
     html += '</div>';
     // 规律排队：谁该在下注组里，一眼看完
     html += '<div class="wm-subhead">规律排队 · 1-5 当前组 / 6-10 第二组 / 11-14 待观察</div>';
@@ -3688,7 +3667,7 @@
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value" style="color:#1d4ed8">' + todayTotal + '</div><div class="stat__label">本期合计（元）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + todayRisk + '</div><div class="stat__label">本窗最大风险（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:' + (yearNet >= 0 ? "#16a34a" : "#dc2626") + '">' + (yearNet >= 0 ? "+" : "") + Math.round(yearNet) + '</div><div class="stat__label">2026年净收益（元）· ROI ' + (yearCost ? (yearNet / yearCost * 100).toFixed(1) : "0.0") + '%（假设14条全下）</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:' + (yearNet >= 0 ? "#16a34a" : "#dc2626") + '">' + (yearNet >= 0 ? "+" : "") + Math.round(yearNet) + '</div><div class="stat__label">2026年净收益（元）· ROI ' + (yearCost ? (yearNet / yearCost * 100).toFixed(1) : "0.0") + '%（假设13条全下）</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + skipCount + '</div><div class="stat__label">本期不下注（条）</div></div>';
     var totalWin = plan.reduce(function (s, r) { return s + r.acc.windows; }, 0);
     var totalHit = plan.reduce(function (s, r) { return s + r.acc.hit; }, 0);
@@ -3733,7 +3712,7 @@
     // 选号参考表：14 条线一行，自己挑 2-3 条下（只做参考，不是指令，也不自动下单）
     var refRows = betPickRefRows(maxStage);
     html += '<div class="section"><div class="section__head"><h2 class="section__title">选号参考表 · 自己挑 2-3 条下</h2><span class="section__hint">' + (maxStage === 2 ? "两期口径（一个窗口最多2期，没有第3期）" : "三期口径（一个窗口最多3期）") + ' · 不是指令：只看状态与规律，这窗下哪几条、下不下，你自己定</span></div>';
-    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1080px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>对错性格</th><th>窗口命中率</th><th>第1期中</th><th>第2期中</th>' + (maxStage === 3 ? "<th>第3期中</th>" : "") + '<th>当前连错</th><th>错1窗后</th><th>今年净收益<br>（假设14条全下）</th><th>参考</th></tr></thead><tbody>';
+    html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1080px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>对错性格</th><th>窗口命中率</th><th>第1期中</th><th>第2期中</th>' + (maxStage === 3 ? "<th>第3期中</th>" : "") + '<th>当前连错</th><th>错1窗后</th><th>今年净收益<br>（假设13条全下）</th><th>参考</th></tr></thead><tbody>';
     EXEC_LINES.forEach(function (line) {
       var r = refRows[line.id];
       html += '<tr><td><b>' + line.label + "</b></td>";
@@ -3750,7 +3729,7 @@
       html += '<td><b style="color:' + r.color + '">' + r.verdict + "</b></td></tr>";
     });
     html += "</tbody></table>";
-    html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>对错性格</b>只看窗口对错、不看金额：<span style="color:#16a34a">连中N窗</span>=已连续N个窗口3期内命中，<span style="color:#dc2626">连错N窗</span>=已连续N个窗口3期全错（N是这一段连续长度，每年重新起算）。<b>可关注</b>=窗口命中率≥90% 且"错1窗后"不低于平时；<b>刚错窗·观望</b>=上一个窗口刚全错；<b>等待重开·先躲</b>=三期全错后正在等该号重新开出（此期间不下）；<b>避开</b>=历史窗口命中率低于88%；<b>暂停建仓</b>=模型首推近期失效。<b>净收益/ROI 都是"假设14条线全按公式下注"的模拟账，不是你实际下的单</b>（你的真账在「追三期下单」页）。</div>';
+    html += '<div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">读法：<b>对错性格</b>只看窗口对错、不看金额：<span style="color:#16a34a">连中N窗</span>=已连续N个窗口3期内命中，<span style="color:#dc2626">连错N窗</span>=已连续N个窗口3期全错（N是这一段连续长度，每年重新起算）。<b>可关注</b>=窗口命中率≥90% 且"错1窗后"不低于平时；<b>刚错窗·观望</b>=上一个窗口刚全错；<b>等待重开·先躲</b>=三期全错后正在等该号重新开出（此期间不下）；<b>避开</b>=历史窗口命中率低于88%；<b>暂停建仓</b>=模型首推近期失效。<b>净收益/ROI 都是"假设13条线全按公式下注"的模拟账，不是你实际下的单</b>（你的真账在「追三期下单」页）。</div>';
     html += "</div>";
 
     // ===== 两期 vs 三期 逐线对比（2026真实数据，只作参考，不改任何公式）=====
@@ -3961,14 +3940,14 @@
       html += "</div></div>";
     });
 
-    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。下单主口径=三期窗口（三期命中或三期全错才关窗）。10条尾号线的窗口由真实开奖算出；模型线的窗口/锁定号在 262 期之后取开奖前保存的真实快照。追号码D1、追推荐D1 暂停建仓（首推近期失效：27期37%、p=0.01），仓位一律为0，但窗口与对错记录照常跑，用于观察。正线筛选属按 2026 年结果事后选线，跨年是否成立需继续观察。</p>';
+    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。下单主口径=三期窗口（三期命中或三期全错才关窗）。10条尾号线窗口由真实开奖算出；3条概率线从294期起按动态模型第1/2/3名各锁一号固定追3期，当前只做影子记录、仓位均为0。正线筛选属按 2026 年结果事后选线，跨年是否成立需继续观察。</p>';
     view.innerHTML = html;
   }
 
   function renderFormulaTable() {
     var enabled = EXEC_LINES.filter(function (line) { return planRisk(line.plan) > 0; }).length;
     var disabled = EXEC_LINES.length - enabled;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">公式表 · 14条线路</h2><span class="section__hint">2021-2023训练 / 2024-2026验证 · 两段同为正才配仓 · 100元步进</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">公式表 · 13条线路</h2><span class="section__hint">2021-2023训练 / 2024-2026验证 · 两段同为正才配仓 · 100元步进</span></div></div>';
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + EXEC_LINES.length + '</div><div class="stat__label">独立线路</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + enabled + '</div><div class="stat__label">通过验证并配仓</div></div>';
@@ -4035,6 +4014,20 @@
     return (wmFullPickCache[period].doubleRecommendation || [])[stream === "D1" ? 0 : 1] || null;
   }
 
+  function probabilityPickAt(period, rank) {
+    if (!PROB_MODEL || !PROB_MODEL.analyze || period <= 1) return null;
+    var localPeriod = betLocalPeriod(period);
+    var result = PROB_MODEL.analyze(RAW, localPeriod - 1);
+    var row = result.top && result.top[rank || 0];
+    return row ? { tail: row.tail, score: row.nextProb, window3Prob: row.window3Prob, role: "probability" } : null;
+  }
+
+  function windowTriggerForLine(line, period) {
+    if (line.kind === "tail") return { tail: line.tail };
+    if (line.kind === "probability") return probabilityPickAt(period, line.rank || 0);
+    return wmFullPick(period, line.stream);
+  }
+
   function wmFixedSourceWindows(line) {
     if (wmSourceCache[line.id]) return wmSourceCache[line.id];
     var source = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows)
@@ -4090,14 +4083,14 @@
     var rows = [];
     var active = null;
     var waiting = null;
-    var p = line.kind === "tail" ? 1 : 31;
+    var p = line.kind === "tail" ? 1 : (line.kind === "probability" && line.startPeriod ? line.startPeriod : 31);
     // 每年第一期重新开窗：跨年未完成窗口作废、等待重开清零，保证每一年的窗口单独成立
     var curYear = 0;
     // 多跑一期：最后一期之后那一期（待开奖）也要把新窗口开出来，只开窗不记结果
     while (p <= D.length + 1) {
       if (p > D.length) {
         if (!active && !waiting) {
-          var nextTrigger = line.kind === "tail" ? { tail: line.tail } : wmFullPick(p, line.stream);
+          var nextTrigger = windowTriggerForLine(line, p);
           if (nextTrigger) {
             active = { start: p, lockedTail: line.kind === "recommend" ? null : nextTrigger.tail, attempts: [] };
           }
@@ -4119,8 +4112,7 @@
       }
       var trigger = null;
       if (!active) {
-        if (line.kind === "tail") trigger = { tail: line.tail };
-        else trigger = wmFullPick(p, line.stream);
+        trigger = windowTriggerForLine(line, p);
         if (!trigger) { p++; continue; }
         active = { start: p, lockedTail: line.kind === "recommend" ? null : trigger.tail, attempts: [] };
       }
@@ -4175,12 +4167,12 @@
     var rows = [];
     var active = null;
     var waiting = null;
-    var p = line.kind === "tail" ? 1 : 31;
+    var p = line.kind === "tail" ? 1 : (line.kind === "probability" && line.startPeriod ? line.startPeriod : 31);
     var curYear = 0;
     while (p <= D.length + 1) {
       if (p > D.length) {
         if (!active && !waiting) {
-          var nextTrigger = line.kind === "tail" ? { tail: line.tail } : wmFullPick(p, line.stream);
+          var nextTrigger = windowTriggerForLine(line, p);
           if (nextTrigger) active = { start: p, lockedTail: line.kind === "recommend" ? null : nextTrigger.tail, attempts: [] };
         }
         break;
@@ -4200,8 +4192,7 @@
       }
       var trigger = null;
       if (!active) {
-        if (line.kind === "tail") trigger = { tail: line.tail };
-        else trigger = wmFullPick(p, line.stream);
+        trigger = windowTriggerForLine(line, p);
         if (!trigger) { p++; continue; }
         active = { start: p, lockedTail: line.kind === "recommend" ? null : trigger.tail, attempts: [] };
       }
@@ -4486,7 +4477,7 @@
     var wmViewTabs = [
       ["overview", "总览"],
       ["windows", "窗口明细"],
-      ["personality", "14线性格"],
+      ["personality", "13线性格"],
       ["formula", "公式与仓位"],
       ["years", "年度测试"]
     ].map(function (item) {
@@ -4499,7 +4490,7 @@
       return '<div class="wm-stat"><div style="font-size:16px;font-weight:900' + (color ? ";color:" + color : "") + '">' + value + '</div><div style="font-size:11px;color:#64748b;margin-top:2px">' + label + '</div></div>';
     }
     var html = '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><div><b class="wm-card__title">14线规律中心</b><span class="wm-card__hint">真实窗口规律账本 · 100元起 · 逐期记录每条线每个窗口的第1/2/3期尾号、命中或错误、第几期中、三期全错、等待重开和下一窗口；按窗口给出性格与重投/倍投参考，只按真实开奖结算，不预测、不补造、不改历史。</span></div></div>';
+    html += '<div class="wm-card__head"><div><b class="wm-card__title">13线规律中心</b><span class="wm-card__hint">真实窗口规律账本 · 100元起 · 逐期记录每条线每个窗口的第1/2/3期尾号、命中或错误、第几期中、三期全错、等待重开和下一窗口；按窗口给出性格与重投/倍投参考，只按真实开奖结算，不预测、不补造、不改历史。</span></div></div>';
     html += '<div class="wm-view-tabs">' + wmViewTabs + '</div>';
     html += '<div class="wm-line-selector">';
     orderedLines.forEach(function (item) {
@@ -4560,7 +4551,7 @@
       return (b.best ? b.best.year.net : -Infinity) - (a.best ? a.best.year.net : -Infinity);
     });
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">年度测试</b><span class="wm-card__hint">' + currentYear + '年最优规律排名 + 14线逐年测试对比 · 公式固定100元起 · 左右滑动查看</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">年度测试</b><span class="wm-card__hint">' + currentYear + '年最优规律排名 + 13线逐年测试对比 · 公式固定100元起 · 左右滑动查看</span></div>';
     html += '<div class="wm-subhead">' + currentYear + '年最优规律排名</div>';
     html += '<div class="wm-hscroll"><table class="table" style="min-width:1120px"><thead><tr><th>名次</th><th>线路</th><th>今年最优公式</th><th>第1/2/3期仓位</th><th>今年净收益</th><th>今年ROI</th><th>命中/全错</th><th>今年当前仓位</th><th>全周期验证</th></tr></thead><tbody>';
     ytdRows.forEach(function (row, index) {
@@ -4585,7 +4576,7 @@
     });
     html += '</tbody></table></div>';
     var annualYears = (lineBest[line.id].annual[selected.n] || { years: [] }).years.map(function (row) { return row.year; });
-    html += '<div class="wm-subhead">14线逐年测试对比 <span style="font-weight:400;color:#64748b">公式固定不变，逐年单算净收益/命中率；不要被某一年的高收益掩盖其他年份</span></div>';
+    html += '<div class="wm-subhead">13线逐年测试对比 <span style="font-weight:400;color:#64748b">公式固定不变，逐年单算净收益/命中率；不要被某一年的高收益掩盖其他年份</span></div>';
     html += '<div class="wm-hscroll"><table class="table" style="min-width:1500px"><thead><tr><th>线路</th><th>年度稳健最优</th>';
     annualYears.forEach(function (year) { html += '<th>' + year + '年</th>'; });
     html += '<th>正收益年</th><th>最近3年</th><th>全周期</th></tr></thead><tbody>';
@@ -4902,7 +4893,7 @@
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="personality">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">14线性格规律 · 当下建议</b><span class="wm-card__hint">按“上一窗状态 → 下一窗命中率”判断性格，再按当前窗口状态给重投/轻仓建议，并按上一窗亏损给出回本倍投参考；金额只认公式表 line.plan，这里只作研究参考 · 左右滑动</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">13线性格规律 · 当下建议</b><span class="wm-card__hint">按“上一窗状态 → 下一窗命中率”判断性格，再按当前窗口状态给重投/轻仓建议，并按上一窗亏损给出回本倍投参考；金额只认公式表 line.plan，这里只作研究参考 · 左右滑动</span></div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:8px">';
     orderedLines.forEach(function (item) {
       var itemSims = (lineBest[item.id] || {}).simulations;
@@ -5024,7 +5015,7 @@
     html += '<p class="disclaimer" style="margin-top:8px">性格规律按窗口统计：先看该线在不同“上一窗状态”（上窗命中 / 上窗全错1次 / 连错2次 / 连错3次以上）之后下一窗的命中率，再按当前所处的窗口状态给建议。回本倍投 = （上一窗全错亏损 + 100）÷ 该线平均每窗净收益，向上取整、封顶5倍，只在上一窗确实亏损且该线平均每窗为正收益时给出。建议等级和回本倍数都只作研究参考，正式下注金额只认公式表 line.plan。</p>';
     html += '</div></div>';
     html += '</div>';
-    html += '<p class="disclaimer">本页是14线规律中心，只做历史窗口规律测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
+    html += '<p class="disclaimer">本页是13线规律中心，只做历史窗口规律测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
     Array.prototype.forEach.call(view.querySelectorAll(".wm-view-group"), function (group) {
       if (group.getAttribute("data-wm-group") !== wmView) group.style.display = "none";
@@ -5170,7 +5161,7 @@
   }
 
   // ===== 预估三层框架 + 下期推荐 =====
-  // ===== 双号追热页面（连出惯性分层打分，每期推2个号，避尾0）=====
+  // ===== 动态概率页面（连出惯性分层打分，每期推2个号，避尾0）=====
   function pickTopAt(cur, k) {
     return MODEL.pickTopAt(cur, k);
   }
@@ -5646,7 +5637,7 @@
     // 原“三期内滚动记录”与上面的“对错滚动条”是同一批窗口（重复），已删除，只保留对错滚动条
 
     html += '<!--ULT_RECORDS_END-->';
-    html += '<p class="disclaimer">' + modeLabel + '只监控双号追热D1/D2。' + (isRecommendMode ? '追推荐模式窗口结束后，下一期按最新推荐重新开窗。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
+    html += '<p class="disclaimer">' + modeLabel + '只监控动态概率D1/D2。' + (isRecommendMode ? '追推荐模式窗口结束后，下一期按最新推荐重新开窗。' : '追号模式会锁定起始推荐号码，同一时间每个位置只追一条线。') + '第35/60分是当前规则阈值，后续必须用真实快照继续验证，不能把历史回测当成固定收益。</p>';
     var ultStartMarker = '<!--ULT_RECORDS_START-->';
     var ultEndMarker = '<!--ULT_RECORDS_END-->';
     var ultStart = html.indexOf(ultStartMarker);
@@ -5890,6 +5881,22 @@
     return { stream: stream, label: label, batches: batches, n: n, hits: hits, hitRate: n ? hits / n : 0, first: counts.first, second: counts.second, third: counts.third, miss: counts.miss, firstRate: n ? counts.first / n : 0, secondRate: n ? counts.second / n : 0, thirdRate: n ? counts.third / n : 0, missRate: n ? counts.miss / n : 0 };
   }
 
+  function renderProbabilityModel() {
+    var result = PROB_MODEL.analyze(RAW, latest);
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · 第' + result.target + '期影子预测</h2><span class="section__hint">10个尾号每期重算 · 训练' + PROB_MODEL.META.train + ' · 验证' + PROB_MODEL.META.validation + ' · 2026仅影子观察</span></div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>规则：</b>每期开奖后用上一期及之前的数据重新计算。前三名只表示概率顺序，不保证命中；概率接近时标为不可区分。旧D1/D2硬排序不再参与推荐。</div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px;font-size:12px"><thead><tr><th>排名</th><th>尾号</th><th>下一期概率</th><th>三期出现概率</th><th>当前遗漏</th><th>当前连出</th><th>判断</th></tr></thead><tbody>';
+    result.rows.forEach(function (row, index) {
+      var confidence = row.nextProb >= 0.58 ? "较高" : row.nextProb >= 0.55 ? "中" : "低";
+      var mark = index < 3 ? "前" + (index + 1) : "";
+      html += '<tr><td><b>' + (index + 1) + '</b> ' + mark + '</td><td><b>尾' + row.tail + '</b></td><td>' + (row.nextProb * 100).toFixed(2) + '%</td><td>' + (row.window3Prob * 100).toFixed(2) + '%</td><td>' + Math.round(row.features[6] * 10) + ' 期</td><td>' + Math.round(row.features[7] * 5) + ' 期</td><td><b style="color:' + (confidence === "较高" ? "#15803d" : confidence === "中" ? "#2563eb" : "#64748b") + '">' + confidence + '</b></td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;font-size:12px;line-height:1.8;color:#475569">验证记录：2025下一期Top1 <b>' + (PROB_MODEL.META.validation.nextTop1 * 100).toFixed(1) + '%</b>，Top3覆盖 <b>' + (PROB_MODEL.META.validation.nextTop3Coverage * 100).toFixed(1) + '%</b>；2026影子Top1 <b>' + (PROB_MODEL.META.shadow2026.nextTop1 * 100).toFixed(1) + '%</b>。目前没有证明稳定跑赢随机基准，因此只作影子研究，不进入正式下单。</div></div>';
+    html += '<p class="disclaimer">本页概率为固定权重影子模型，不使用未来数据；历史真实D1/D2快照保留不动，但不再作为推荐依据。</p>';
+    view.innerHTML = modelPairStrip(latest + 1) + html;
+  }
+
   function renderPick3() {
     var N = latest;
     var top2 = pickTopAt(N, 2);
@@ -5924,7 +5931,7 @@
     }
     hist.push({ period: N + 1, picks: top2.map(function (c) { return c.d; }), sig: top2.map(function (c) { return c.tag; }), actual: null, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: true });
 
-    var html = '<div class="section" id="pick3RecommendCard"><div class="section__head"><h2 class="section__title">双号追热</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
+    var html = '<div class="section" id="pick3RecommendCard"><div class="section__head"><h2 class="section__title">动态概率</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
 
     html += '<div class="section"><div class="panel" style="padding:18px 14px">';
     if (top2.length === 0) {
@@ -6198,7 +6205,7 @@
     html += '</div>';
     html += perfMoreBtn("pick3hist", hist.length, histShown, "期");
 
-    html += '<p class="disclaimer">双号追热基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
+    html += '<p class="disclaimer">动态概率基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
     view.innerHTML = html;
   }
 
@@ -6898,7 +6905,7 @@
       armGestureClickGuard();
       e.preventDefault();
       if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-      // 14线规律中心：三级子页不再用左右滑动切换（用户要求取消），滑动只翻二级页面；子页仍可点按钮切换
+      // 13线规律中心：三级子页不再用左右滑动切换（用户要求取消），滑动只翻二级页面；子页仍可点按钮切换
       else stepTabHistory(dx > 0 ? -1 : 1);
     }
   }, true);
@@ -6936,7 +6943,7 @@
     }
     if (absX < swipeX || absX < absY * 1.1) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-    // 14线规律中心：三级子页不再用左右滑动切换（用户要求取消）
+    // 13线规律中心：三级子页不再用左右滑动切换（用户要求取消）
     else stepTabHistory(dx > 0 ? -1 : 1);
   }, true);
 

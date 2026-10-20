@@ -192,13 +192,13 @@ async function main() {
       });
     })()`));
     check(titleOk && Number(active) === year, `窗口遗漏热图切换到${year}年`, `active=${active}`);
-    check(runInfo.cards === 14 && runInfo.strips === 28 && runInfo.yearTitle && runInfo.counts && runInfo.gap && runInfo.overflowOk && runInfo.colorOk, `窗口遗漏${year}年滚动记录结构正确且文字不溢出`, JSON.stringify(runInfo));
+    check(runInfo.cards === 13 && runInfo.strips === 26 && runInfo.yearTitle && runInfo.counts && runInfo.gap && runInfo.overflowOk && runInfo.colorOk, `窗口遗漏${year}年滚动记录结构正确且文字不溢出`, JSON.stringify(runInfo));
   }
 
   await evaluate(`document.querySelector('[data-wm-mode="two"]').click()`);
   await waitFor("document.querySelector('[data-wm-mode=\"two\"]').classList.contains('is-active')");
   const twoMode = JSON.parse(await evaluate(`(function(){return JSON.stringify({cards:document.querySelectorAll('#view .trend-run-card').length,strips:document.querySelectorAll('#view .trend-run-strip').length});})()`));
-  check(twoMode.cards === 14 && twoMode.strips === 28, "两期窗口滚动记录同步切换为14线", JSON.stringify(twoMode));
+  check(twoMode.cards === 13 && twoMode.strips === 26, "两期窗口滚动记录同步切换为13线", JSON.stringify(twoMode));
   await evaluate(`document.querySelector('[data-wm-mode="three"]').click()`);
   await waitFor("document.querySelector('[data-wm-mode=\"three\"]').classList.contains('is-active')");
 

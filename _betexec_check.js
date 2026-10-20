@@ -40,7 +40,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   })()`);
 
   let d = JSON.parse(await read());
-  check(d.cards.length === 14, "默认按 1:7:15 全做14条（研究模式已收起）", String(d.cards.length));
+  check(d.cards.length === 13, "默认按 1:7:15 全做13条线（10尾号+3概率）（旧D1/D2已移除）", String(d.cards.length));
   const planBtns = await ev("!!document.querySelector('[data-bet-mode=\"two\"]') && !!document.querySelector('[data-bet-mode=\"three\"]')");
   check(planBtns, "顶部保留“只做两期 / 三期全打”两个切换按钮");
   // 选号参考表：14 条线，含状态/命中率/连错/错1后/今年净收益/参考
@@ -52,8 +52,8 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
       return [].map.call(tr.querySelectorAll('td'), function (td) { return td.innerText.replace(/\\n+/g, ' ').trim(); }).join(' | ');
     }));
   })()`));
-  check(refTable.length === 14 && refTable.every((r) => /%/.test(r) && /\|/.test(r)),
-    "选号参考表列出14条线（状态+窗口命中率+连错+错1后+今年净收益+参考）", refTable.slice(0, 3).join("  ;;  "));
+  check(refTable.length === 13 && refTable.every((r) => /%/.test(r) && /\|/.test(r)),
+    "选号参考表列出13条线（状态+窗口命中率+连错+错1后+今年净收益+参考）", refTable.slice(0, 3).join("  ;;  "));
   // 每个窗口记录卡都要带对错标记（连中N/连错N）
   const histCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .exec-hist-card'), function (c) {
     var t = c.innerText.replace(/\\n+/g, ' ');
@@ -70,15 +70,15 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   check(/窗口体检 · (正常下注|轻仓|不下|停|样本不足)/.test(verdicts), "切到体检模式后每条线有体检结论", verdicts.slice(0, 120));
   await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1500);
   const rankCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }).filter(function (t) { return /^#\\d+/.test(t); }))`));
-  check(rankCards.length === 14 && rankCards.slice(0, 5).every((t) => /当前组/.test(t)), "规律排队列出14条并标出当前组5条", rankCards.slice(0, 6).join(" | "));
+  check(rankCards.length === 13 && rankCards.slice(0, 5).every((t) => /当前组/.test(t)), "规律排队列出13条并标出当前组5条", rankCards.slice(0, 6).join(" | "));
   const yearCards = JSON.parse(await ev(`JSON.stringify([].map.call(document.querySelectorAll('#view .wm-hscroll > div'), function (c) { return c.innerText.replace(/\\n+/g, ' '); }).filter(function (t) { return /年最优5条/.test(t); }))`));
-  check(yearCards.length === 6 && yearCards.every((t) => (t.match(/尾\d|追号码|追推荐/g) || []).length >= 5),
+  check(yearCards.length === 6 && yearCards.every((t) => (t.match(/尾\d|追号码|追推荐|概率第/g) || []).length >= 5),
     "年度最优5条按年分开列出（6年×5条）", yearCards.map((t) => t.slice(0, 4)).join(" | "));
   await ev("var b=document.querySelector('[data-bet-lines=\"lastyear\"]'); if(b)b.click(); true"); await sleep(1500);
   const ly = JSON.parse(await read());
   check(ly.cards.length > 0 && ly.cards.length <= 5, "切成“去年最优5条”后只列该组线路", ly.cards.map((c) => c.label).join(","));
   await ev("var b=document.querySelector('[data-bet-lines=\"win5\"]'); if(b)b.click(); true"); await sleep(1500);
-  // 后面的滚动条/命中率断言要在“体检下单(全14条)”模式下看，切回来
+  // 后面的滚动条/命中率断言要在“体检下单(全13条)”模式下看，切回来
   await ev("var b=document.querySelector('[data-bet-lines=\"verdict\"]'); if(b)b.click(); true"); await sleep(1600);
   const withRate = d.cards.filter((c) => c.chips.some((x) => x.indexOf("命中率") >= 0));
   check(withRate.length === d.cards.length, "每条线都标了命中率", withRate.length + "/" + d.cards.length);
@@ -140,22 +140,22 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
 
   await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1800);
   d = JSON.parse(await read());
-  check(d.cards.length === 14, "可切换显示全部14条", String(d.cards.length));
+  check(d.cards.length === 13, "可切换显示全部13条", String(d.cards.length));
   // 回到“只做验证为正的线”，确认只渲染正线条数（D1已剔除，不进场）
   await ev("var b=document.querySelector('[data-bet-lines=\"positive\"]'); if(b)b.click(); true"); await sleep(1500);
   const dp = JSON.parse(await read());
-  check(dp.cards.length === 7 && !dp.cards.some((c) => /D1/.test(c.label)), "只做正线模式只渲染7条（亏损线+D1不进场）", dp.cards.map((c) => c.label).join(","));
+  check(dp.cards.length === 5, "只做配仓模式只渲染5条", dp.cards.map((c) => c.label).join(","));
 
   // 切换到只做正线，两种方案下都应把 D1 排除
   await ev("var b=document.querySelector('[data-bet-lines=\"positive\"]'); if(b)b.click(); true"); await sleep(1500);
   const nine = JSON.parse(await read());
   const nineLabels = nine.cards.map((c) => c.label).join(",");
-  check(nine.cards.length === 7 && !/D1/.test(nineLabels), "正线模式已剔除 D1", nineLabels);
+  check(nine.cards.length === 5, "配仓模式只保留5条验证通过线路", nineLabels);
 
   const txt = await ev("document.querySelector('#view').innerText");
   check(/命中率/.test(txt) && /本期合计/.test(txt), "页面显示命中率与本期合计");
 
-  // 打印两套方案下 14 条线的账，用来核对“正线”名单
+  // 打印两套方案下 13 条线的账，用来核对“正线”名单
   for (const mode of ["two", "three"]) {
     await ev("var b=document.querySelector('[data-bet-lines=\"all\"]'); if(b)b.click(); true"); await sleep(1800);
     await ev("var b=document.querySelector('[data-bet-mode=\"" + mode + "\"]'); if(b)b.click(); true"); await sleep(2200);

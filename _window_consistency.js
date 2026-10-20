@@ -1,4 +1,4 @@
-// 同一条线在不同页面的“当前窗口”是否一致：下注执行表 / 14线规律中心
+// 同一条线在不同页面的“当前窗口”是否一致：下注执行表 / 13线规律中心
 const { spawn } = require("child_process");
 const path = require("path"); const fs = require("fs");
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
@@ -23,20 +23,6 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
   for (let i = 0; i < 30; i++) { if (await ev("!!document.querySelector('.directory-card')")) break; await sleep(400); }
   await ev("document.querySelector('[data-directory-group=\"recommend\"]').click(); true"); await sleep(500);
 
-  // 三期内追号码：D1/D2 顶部当前窗口（与热图共享真实快照窗口）
-  await ev("document.querySelector('.tab[data-tab=\"chasenumber\"]').click(); true"); await sleep(1800);
-  const source = JSON.parse(await ev(`(function () {
-    var out = {};
-    [].forEach.call(document.querySelectorAll('#view .source-window-card'), function (card) {
-      var key = card.getAttribute('data-source-stream');
-      var start = card.getAttribute('data-window-start') || '';
-      var stage = card.getAttribute('data-window-stage') || '';
-      var tail = card.getAttribute('data-window-tail') || '';
-      out[key] = start ? (start + '期/第' + stage + '期/尾' + tail) : '等待重开/无窗口';
-    });
-    return JSON.stringify(out);
-  })()`));
-
   // 公式表：热图最新格金额的唯一口径
   await ev("document.querySelector('.tab[data-tab=\"formulas\"]').click(); true"); await sleep(1200);
   const plans = JSON.parse(await ev(`(function () {
@@ -49,9 +35,9 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     return JSON.stringify(out);
   })()`));
 
-  // 下注执行表（全14条模式）
+  // 下注执行表（全10条模式）
   await ev("document.querySelector('.tab[data-tab=\"betexec\"]').click(); true"); await sleep(1800);
-  // 下注执行表切到“三期全打”，和执行提示/14线同一套窗口口径（两期方案本来就是另一套窗口，不能混比）
+  // 下注执行表切到“三期全打”，和执行提示/10线同一套窗口口径（两期方案本来就是另一套窗口，不能混比）
   await ev("var b=document.querySelector('[data-bet-mode=\"three\"]'); if(b)b.click(); true"); await sleep(1600);
   const bet = JSON.parse(await ev(`(function () {
     var out = {};
@@ -106,7 +92,7 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
         && (requiresAmount ? (!!amount && /\\d+元/.test(amount.innerText)) : !amount);
       return ok ? null : {
         text: cell.innerText.replace(/\\n/g, '/'),
-        gap: Math.round((tdBox.height - cellBox.height) * 10) / 10,
+        gap: Math.round((tdBox.height - cellBox.height) * 10) / 13,
         tdHeight: tdBox.height,
         cellHeight: cellBox.height,
         rowHeight: cell.parentElement.parentElement.getBoundingClientRect().height,
@@ -141,14 +127,14 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     return JSON.stringify(out);
   })()`));
 
-  // 回到模型流程分组，继续核对14线规律中心
+  // 回到模型流程分组，继续核对13线规律中心
   await ev("var bk2=document.querySelector('[data-directory=\"1\"]'); if(bk2)bk2.click(); true"); await sleep(700);
   await ev("var g2=document.querySelector('[data-directory-group=\"recommend\"]'); if(g2)g2.click(); true"); await sleep(700);
-  // 14线规律中心 · 窗口明细（逐条线）
+  // 13线规律中心 · 窗口明细（逐条线）
   await ev("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
   await ev("var b=document.querySelector('.wm-view-tab[data-wm-view=\"windows\"]'); if(b)b.click(); true"); await sleep(900);
-  const lineIds = ["tail0","tail1","tail2","tail3","tail4","tail5","tail6","tail7","tail8","tail9","fixedD1","fixedD2","recD1","recD2"];
-  const lineLabels = ["尾0","尾1","尾2","尾3","尾4","尾5","尾6","尾7","尾8","尾9","追号码 D1","追号码 D2","追推荐 D1","追推荐 D2"];
+  const lineIds = ["tail0","tail1","tail2","tail3","tail4","tail5","tail6","tail7","tail8","tail9","prob1","prob2","prob3"];
+  const lineLabels = ["尾0","尾1","尾2","尾3","尾4","尾5","尾6","尾7","尾8","尾9","概率第1","概率第2","概率第3"];
   const wm = {};
   for (let i = 0; i < lineIds.length; i++) {
     await ev("var l=document.querySelector('.wm-line-selector [data-wm-line=\"" + lineIds[i] + "\"]'); if(l)l.click(); true");
@@ -161,29 +147,22 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     wm[lineLabels[i]] = t ? (start + '期/第' + (done + 1) + '期/' + firstTail) : '等待重开/无窗口';
   }
 
-  console.log("线条 | 下注执行表 | 14线规律中心 | 三期内追号码");
-  console.log("---|---|---|---");
+  console.log("线条 | 下注执行表 | 13线规律中心");
+  console.log("---|---|---");
   let mismatch = 0;
-  let sourceMismatch = 0;
   let amountMismatch = 0;
   lineLabels.forEach((lb) => {
     const a = bet[lb] || '-', c = wm[lb] || '-';
-    const sourceKey = lb === "追号码 D1" ? "D1" : (lb === "追号码 D2" ? "D2" : "");
-    const s = sourceKey ? (source[sourceKey] || '-') : '-';
-    // 只比“同一窗口”：起始期号相同（等待重开时两边都必须写等待重开）
     const same = a !== '-' && c !== '-' && a.split('/')[0] === c.split('/')[0];
-    const sourceSame = !sourceKey || (s !== '-' && c !== '-' && s.split('/')[0] === c.split('/')[0] && s === c);
     const stage = Number((c.match(/第(\d+)期/) || [])[1] || 0);
     const expectedAmount = plans[lb] && stage ? Number(plans[lb][stage - 1] || 0) : 0;
     const amountSame = expectedAmount === Number(hmAmounts[lb] || 0);
     if (!same) mismatch++;
-    if (!sourceSame) sourceMismatch++;
     if (!amountSame) amountMismatch++;
-    console.log(lb + " | " + a + " | " + c + " | " + s + (same ? "" : "  ← 下注/14线不一致") + (sourceSame ? "" : "  ← 快照/14线不一致"));
+    console.log(lb + " | " + a + " | " + c + (same ? "" : "  ← 下注/13线不一致"));
   });
-  console.log("\n不一致条数：" + mismatch + " / 14");
-  console.log("三期内追号码与14线不一致条数：" + sourceMismatch + " / 2");
-  console.log("热图本期金额与公式表不一致：" + amountMismatch + " / 14");
+  console.log("\n不一致条数：" + mismatch + " / 13");
+  console.log("热图本期金额与公式表不一致：" + amountMismatch + " / 13");
   // 额外核对：窗口遗漏热图最底行（当前状态）必须与下注执行表一致
   let hmBad = [];
   lineLabels.forEach(function (lb) {
@@ -196,10 +175,10 @@ async function getJSON(u) { const r = await fetch(u, { signal: AbortSignal.timeo
     const ok = (bWait === hWait) && (bWait || (bStage && bStage === hStage && bTail === hTail));
     if (!ok) hmBad.push(lb + " 下注执行表=" + bv + " 热图=" + hv);
   });
-  console.log("热图底行(当前状态) 与 下注执行表 不一致：" + hmBad.length + " / 14" + (hmBad.length ? " → " + hmBad.join(" ; ") : ""));
+  console.log("热图底行(当前状态) 与 下注执行表 不一致：" + hmBad.length + " / 13" + (hmBad.length ? " → " + hmBad.join(" ; ") : ""));
   console.log("窗口热图布局：" + (hmLayout.ok ? "PASS" : "FAIL") + " · 列间距 " + hmLayout.spacing + "、无格子留白、最新进格显示金额、等待格不显示金额 · 检查 " + hmLayout.count + " 格");
   if (!hmLayout.ok) console.log("窗口热图异常格：" + JSON.stringify(hmLayout.bad));
   ws.close(); chrome.kill(); server.kill(); await sleep(300);
   try { fs.rmSync(userDir, { recursive: true, force: true }); } catch (e) {}
-  process.exit(hmBad.length || sourceMismatch || amountMismatch || !hmLayout.ok ? 1 : 0);
+  process.exit(hmBad.length || amountMismatch || !hmLayout.ok ? 1 : 0);
 })();

@@ -1,0 +1,83 @@
+{
+  "modelVersion": "prob-v1-20261020",
+  "records": [
+    {
+      "modelVersion": "prob-v1-20261020",
+      "generatedAt": "2026-10-20T15:08:15.592Z",
+      "basedOn": 293,
+      "target": 294,
+      "settled": false,
+      "top3": [
+        {
+          "tail": 8,
+          "nextProb": 0.597885,
+          "window3Prob": 0.927064
+        },
+        {
+          "tail": 9,
+          "nextProb": 0.566084,
+          "window3Prob": 0.914336
+        },
+        {
+          "tail": 5,
+          "nextProb": 0.561513,
+          "window3Prob": 0.919558
+        }
+      ],
+      "allTails": [
+        {
+          "tail": 8,
+          "nextProb": 0.597885,
+          "window3Prob": 0.927064
+        },
+        {
+          "tail": 9,
+          "nextProb": 0.566084,
+          "window3Prob": 0.914336
+        },
+        {
+          "tail": 5,
+          "nextProb": 0.561513,
+          "window3Prob": 0.919558
+        },
+        {
+          "tail": 3,
+          "nextProb": 0.559851,
+          "window3Prob": 0.914095
+        },
+        {
+          "tail": 7,
+          "nextProb": 0.555369,
+          "window3Prob": 0.91029
+        },
+        {
+          "tail": 4,
+          "nextProb": 0.547183,
+          "window3Prob": 0.908431
+        },
+        {
+          "tail": 2,
+          "nextProb": 0.544121,
+          "window3Prob": 0.903247
+        },
+        {
+          "tail": 6,
+          "nextProb": 0.536092,
+          "window3Prob": 0.902574
+        },
+        {
+          "tail": 1,
+          "nextProb": 0.534052,
+          "window3Prob": 0.897181
+        },
+        {
+          "tail": 0,
+          "nextProb": 0.478723,
+          "window3Prob": 0.8346
+        }
+      ]
+    }
+  ],
+  "latestPeriod": 293,
+  "updatedAt": "2026-10-20T15:08:15.593Z"
+}

@@ -37,6 +37,7 @@ def main():
     app_path = REPO / "app.js"
     model_core_path = REPO / "model_core.js"
     selector_path = REPO / "model_selector.js"
+    probability_model_path = REPO / "model_probability.js"
     selector_backtest_path = REPO / "selector_backtest.js"
     page_audit_path = REPO / "page_audit.js"
     ultimate_model_path = REPO / "ultimate_model.js"
@@ -197,11 +198,12 @@ def main():
         else:
             pass_("追号/追推荐/追三期下单页面函数存在")
         if (
-            'id: "chasenumber"' in app_text
-            and 'id: "orderlog"' in app_text
+            'id: "pick3"' in app_text
+            and "PROB_MODEL.analyze" in app_text
+            and "动态概率模型" in app_text
             and "window.CAISHEN_ULTIMATE" in app_text
         ):
-            pass_("app.js 含调度/追号/追推荐/追三期下单导航")
+            pass_("app.js 含动态概率模型、追三期下单和旧模型归档入口提示")
         else:
             fail("app.js 缺少调度/追号/追推荐/追三期下单导航")
         if "三期内追号码" in app_text and "三期内追推荐" in app_text and "执行提示" in app_text and "追三期下单" in app_text and "下单记录表" in app_text and "执行规则" in app_text and "双流三期内命中结构" in app_text:
@@ -223,7 +225,7 @@ def main():
             pass_("顶部导航支持粘性定位、位置保持和当前项可见")
         else:
             fail("顶部导航缺少粘性定位、位置保持或当前项可见逻辑")
-        flow_ids = ["pick3", "chasenumber", "betexec", "orderlog"]
+        flow_ids = ["pick3", "betexec", "formulas", "windowmult", "orderlog"]
         flow_pos = [app_text.find(chr(34) + fid + chr(34)) for fid in flow_ids]
         if all(pos >= 0 for pos in flow_pos) and flow_pos == sorted(flow_pos):
             pass_("导航按模型流程排序")
@@ -240,8 +242,8 @@ def main():
             pass_("三期内记录与调度记录均紧接卡片下方展示")
         else:
             fail("三期内记录未紧接卡片下方展示")
-        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "EXEC_LINES" in app_text and "14条独立线路" in app_text and "3期内命中率" in app_text and "首次命中分布" in app_text and "对错滚动记录 · 新→旧 · 已结算" in app_text and "exec-line__scroll" in app_text and "公式（元）" in app_text and "等待尾" in app_text and "重新开出后再开新窗口" in app_text and "金额 ' + planText" not in app_text and "slice(-30).reverse()" not in app_text and "function renderOrderHint" not in app_text and "function renderFunds" not in app_text:
-            pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和14条独立执行线路")
+        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "EXEC_LINES" in app_text and "13条独立线路" in app_text and "3期内命中率" in app_text and "首次命中分布" in app_text and "对错滚动记录 · 新→旧 · 已结算" in app_text and "exec-line__scroll" in app_text and "公式（元）" in app_text and "等待尾" in app_text and "重新开出后再开新窗口" in app_text and "金额 ' + planText" not in app_text and "slice(-30).reverse()" not in app_text and "function renderOrderHint" not in app_text and "function renderFunds" not in app_text:
+            pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和13条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
         if "function renderFunds" not in app_text and "function renderOrderHint" not in app_text and "buildExecWindows" not in app_text and "FUND_CAPITAL" not in app_text and "本金锚定" not in app_text and "本金占用率" not in app_text and "本窗剩余风险" in app_text and "本期不下注（条）" in app_text:
@@ -249,7 +251,7 @@ def main():
         else:
             fail("执行提示/资金调度仍有残留代码或主页面缺少金额与风险")
         if "function renderFormulaTable" in app_text and "EXEC_FORMULA_AUDIT" in app_text and "训练 / 验证" in app_text and "不配仓" in app_text:
-            pass_("公式表页面包含14线训练验证系数和配仓状态")
+            pass_("公式表页面包含13线训练验证系数和配仓状态")
         else:
             fail("公式表页面缺少历史系数或配仓状态")
         if "PAGE_GUIDE_GROUPS" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS" in app_text and 'title: "每日操作"' in app_text and 'title: "公式验证"' in app_text and 'title: "数据参考"' in app_text and 'title: "生肖与辅助"' in app_text and "appendGuideGroup(PAGE_GUIDE_DISPLAY_GROUPS[0])" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS.slice(1).forEach(appendGuideGroup)" in app_text and "PAGE_LABEL_GUIDE" in app_text and "PAGE_GUIDE_TAB_MAP" in app_text and "function pageGuideHTML" in app_text and "页面说明 · 大白话版" in app_text and "页面上的标语怎么看" in app_text and "label-guide-row" in app_text and "overview-page-card--guide" in app_text and "data-overview-tab" in app_text and "pageGuideHTML()" in app_text and "function historyStackHTML" in app_text and "function stepGroupHistory" in app_text and "function stepTabHistory" in app_text and "orderedGroupAt" in app_text and "orderedTabAt" in app_text and "getConfiguredGroups()" in app_text and "getVisibleTabs(state.group)" in app_text and "var SWIPE_X = 28" in app_text and "var SWIPE_Y = 36" in app_text and 'addEventListener("pointermove"' in app_text and "gesture-active" in app_text and "gestureClickGuard" in app_text and 'e.target.closest("input, select, textarea, a, [contenteditable=\'true\']")' in app_text and "pointerdown" in app_text and "pointerup" in app_text and "history-nav-row" not in app_text and "每日选号下单顺序" not in app_text:
@@ -264,20 +266,20 @@ def main():
             pass_("窗口倍投测试按每条线路窗口规律标注正式执行仓位和今年测试仓位")
         else:
             fail("窗口倍投测试未按每条线路窗口规律标注正式执行仓位和今年测试仓位")
-        if "function wmYearStats" in app_text and "14线逐年测试对比" in app_text and "年度稳健最优" in app_text and "全周期收益最高" in app_text and "正收益年" in app_text and "最近3年" in app_text:
-            pass_("窗口倍投测试逐年对比14线并区分年度稳健与全周期最优")
+        if "function wmYearStats" in app_text and "13线逐年测试对比" in app_text and "年度稳健最优" in app_text and "全周期收益最高" in app_text and "正收益年" in app_text and "最近3年" in app_text:
+            pass_("窗口倍投测试逐年对比13线并区分年度稳健与全周期最优")
         else:
             fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
         if "var orderedLines = EXEC_LINES.slice();" in app_text and "wm-formula-panel" in app_text and "wm-formula-row" in app_text and "orderedLines.forEach" in app_text and "正式执行仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text:
             pass_("窗口倍投测试按固定线路顺序合并显示公式和正式仓位")
         else:
             fail("窗口倍投测试公式和仓位仍被拆成过多卡片或未按固定线路顺序显示")
-        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "14线规律中心" in app_text:
+        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "13线规律中心" in app_text:
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
             fail("窗口倍投测试缺少今年最优规律或正式版候选标注")
-        if "function modelPairStrip" in app_text and "model-pair-grid" in app_text and "model-pair-card--d1" in app_text and "model-pair-card--d2" in app_text and "D1 第一推荐" in app_text and "D2 第二推荐" in app_text and "modelPairStrip(latest + 1)" in app_text and "view.innerHTML.indexOf('class=\"model-pair-grid\"') < 0" in app_text and "doubleAmbiguous" in app_text and "当前排序不代表强弱" in app_text:
-            pass_("所有页面用且只用一组独立盒子显示下一期D1和D2推荐号码，并提示同分并列不代表强弱")
+        if "function modelPairStrip" in app_text and "PROB_MODEL.analyze" in app_text and "动态第1" in app_text and "model-pair-card--p3" in app_text and "前三名概率接近" in app_text and "modelPairStrip(latest + 1)" in app_text:
+            pass_("所有页面顶部显示动态概率前三名，旧D1/D2硬排序退出推荐")
         else:
             fail("页面顶部缺少独立D1/D2推荐号码盒或存在重复插入")
         if "function renderBetExec" in app_text and "今日规划 · 第" in app_text and "按固定线路顺序排列" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:
@@ -288,8 +290,8 @@ def main():
             pass_("正式执行仓位统一以公式表line.plan为准")
         else:
             fail("页面正式执行仓位口径不一致")
-        if "function execCurrentTail" in app_text and "追号码 D1" in app_text and "追推荐 D2" in app_text and "D1 第一推荐" in app_text and "D2 第二推荐" in app_text and "execSourceText" not in app_text and "itemSourceText" not in app_text:
-            pass_("当下窗口D1/D2仓位显示尾号且卡片内无重复来源标签")
+        if not 'id: "fixedD1"' in app_text and not 'id: "fixedD2"' in app_text and not 'id: "recD1"' in app_text and not 'id: "recD2"' in app_text:
+            pass_("旧D1/D2四条推荐线已从正式执行线路移除")
         else:
             fail("当下窗口D1/D2仓位缺少尾号或仍重复显示来源标签")
         if "MODEL.bounceCritical " in app_text and "BOUNCE[" not in app_text:
@@ -301,13 +303,13 @@ def main():
         else:
             fail("当前仓位卡片未使用统一尺寸样式")
         if "wm-line-selector" in app_text:
-            pass_("窗口倍投测试14线按钮使用响应式网格容器")
+            pass_("窗口倍投测试13线按钮使用响应式网格容器")
         else:
-            fail("窗口倍投测试14线按钮未使用响应式网格容器")
+            fail("窗口倍投测试13线按钮未使用响应式网格容器")
         if "background:#2563eb;color:#fff;border-color:#1d4ed8" in app_text and "box-shadow:0 0 0 2px #bfdbfe" in app_text:
-            pass_("窗口倍投测试14线按钮选中态使用蓝色高亮")
+            pass_("窗口倍投测试13线按钮选中态使用蓝色高亮")
         else:
-            fail("窗口倍投测试14线按钮选中态仍为黑色或缺少高亮")
+            fail("窗口倍投测试13线按钮选中态仍为黑色或缺少高亮")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
@@ -324,6 +326,7 @@ def main():
         index_text = index_path.read_text(encoding="utf-8")
         core_pos = index_text.find("model_core.js")
         selector_pos = index_text.find("model_selector.js")
+        probability_pos = index_text.find("model_probability.js")
         ultimate_pos = index_text.find("ultimate_model.js")
         snap_pos = index_text.find("snapshots.js")
         app_pos = index_text.find("app.js")
@@ -331,22 +334,24 @@ def main():
             fail("index.html 未加载 model_core.js")
         elif selector_pos < 0:
             fail("index.html 未加载 model_selector.js")
+        elif probability_pos < 0:
+            fail("index.html 未加载 model_probability.js")
         elif ultimate_pos < 0:
             fail("index.html 未加载 ultimate_model.js")
         elif snap_pos < 0:
             fail("index.html 未加载 snapshots.js")
         elif app_pos < 0:
             fail("index.html 未加载 app.js")
-        elif not (core_pos < selector_pos < ultimate_pos < snap_pos < app_pos):
-            fail("index.html 加载顺序必须为 model_core.js → model_selector.js → ultimate_model.js → snapshots.js → app.js")
+        elif not (core_pos < selector_pos < probability_pos < ultimate_pos < snap_pos < app_pos):
+            fail("index.html 加载顺序必须为 model_core.js → model_selector.js → model_probability.js → ultimate_model.js → snapshots.js → app.js")
         else:
-            pass_("model_core.js → model_selector.js → ultimate_model.js → snapshots.js → app.js 加载顺序正确")
+            pass_("model_core.js → model_selector.js → model_probability.js → ultimate_model.js → snapshots.js → app.js 加载顺序正确")
         if "88d2a63" in index_text:
             fail("index.html 仍使用旧缓存版本 88d2a63，请更新为最新构建版本")
         else:
             pass_("index.html 无旧缓存版本 88d2a63")
         # 所有资源版本号必须一致
-        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|model_selector\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
+        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|model_selector\.js|model_probability\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
         if not m_versions:
             fail("index.html 未找到带版本号的资源引用")
         else:
@@ -356,7 +361,7 @@ def main():
             else:
                 pass_(f"index.html 资源版本一致：{m_versions[0]}")
 
-    for js_path in [model_core_path, selector_path, selector_backtest_path, page_audit_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
+    for js_path in [model_core_path, selector_path, probability_model_path, selector_backtest_path, page_audit_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
         if not js_path.exists():
             fail(f"缺少 {js_path.name}")
             continue
