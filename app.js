@@ -14,6 +14,9 @@
   D.forEach(function (e) {
     byYearPeriod.set(e.y + "-" + e.p, e);
   });
+  var DATA_YEARS = D.map(function (row) { return Number(row.y); })
+    .filter(function (year, index, list) { return list.indexOf(year) === index; })
+    .sort(function (a, b) { return b - a; });
 
   function rec(year, period) {
     return byYearPeriod.get(year + "-" + period);
@@ -350,6 +353,8 @@
     rollWindow: 10,
     tail: 0,
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
+    missOrderYear: DATA_YEARS[0] || 2026,
+    windowMissYear: DATA_YEARS[0] || 2026,
     recordPage: 0,
     orderTail: lsGet("v2_order_tail", "all"),
     windowMultLine: "tail1",
@@ -449,7 +454,7 @@
   var NAV_GROUP_ORDER_KEY = "v2_nav_group_order";
   var NAV_PAGE_GROUPS_KEY = "v2_nav_page_groups";
   var NAV_COLLAPSED_KEY = "v2_nav_collapsed";
-  var tabSortMode = false;
+  var TABLE_COL_ORDER_KEY = "v2_table_col_orders";
   var renderedTab = null;
 
   function groupById(groupId) {
@@ -494,10 +499,6 @@
       if (map[id] && groupById(saved[id])) map[id] = saved[id];
     });
     return map;
-  }
-
-  function savePageGroupMap(map) {
-    lsSet(NAV_PAGE_GROUPS_KEY, map);
   }
 
   function groupForTab(tabId) {
@@ -547,6 +548,7 @@
       localStorage.removeItem(NAV_GROUP_ORDER_KEY);
       localStorage.removeItem(NAV_PAGE_GROUPS_KEY);
       localStorage.removeItem(NAV_COLLAPSED_KEY);
+      localStorage.removeItem(TABLE_COL_ORDER_KEY);
     } catch (e) {}
   }
 
@@ -555,62 +557,304 @@
     return tabs.length ? tabs[0].id : "overview";
   }
 
-  function moveTabWithinGroup(tabId, dir) {
-    var tabs = getVisibleTabs(state.group);
-    var idx = tabs.map(function (t) { return t.id; }).indexOf(tabId);
-    if (idx < 0) return;
-    if (dir === "up" && idx > 0) {
-      var tmp = tabs[idx - 1]; tabs[idx - 1] = tabs[idx]; tabs[idx] = tmp;
-    } else if (dir === "down" && idx < tabs.length - 1) {
-      var tmp2 = tabs[idx + 1]; tabs[idx + 1] = tabs[idx]; tabs[idx] = tmp2;
-    } else {
-      return;
-    }
-    var globalIds = getOrderedAllTabs().map(function (t) { return t.id; });
-    var groupIds = tabs.map(function (t) { return t.id; });
-    var positions = [];
-    globalIds.forEach(function (id, pos) {
-      if (groupIds.indexOf(id) >= 0) positions.push(pos);
+  function persistTabOrderFromDom() {
+    var groupIds = [].map.call(tabsEl.querySelectorAll(".nav-subtabs .tab[data-tab]"), function (button) {
+      return button.dataset.tab;
     });
-    positions.forEach(function (pos, i) { globalIds[pos] = groupIds[i]; });
+    var globalIds = getOrderedAllTabs().map(function (tab) { return tab.id; });
+    var positions = [];
+    globalIds.forEach(function (id, position) {
+      if (groupIds.indexOf(id) >= 0) positions.push(position);
+    });
+    positions.forEach(function (position, index) { globalIds[position] = groupIds[index]; });
     saveTabOrderIds(globalIds);
   }
 
-  function moveTabToGroup(tabId, targetGroupId) {
-    var map = getPageGroupMap();
-    if (!map[tabId] || !groupById(targetGroupId) || map[tabId] === targetGroupId) return;
-    map[tabId] = targetGroupId;
-    savePageGroupMap(map);
-    var ids = getOrderedAllTabs().map(function (t) { return t.id; }).filter(function (id) { return id !== tabId; });
-    var insertAt = ids.length;
-    for (var i = 0; i < ids.length; i++) {
-      if (map[ids[i]] === targetGroupId) insertAt = i + 1;
-    }
-    ids.splice(insertAt, 0, tabId);
-    saveTabOrderIds(ids);
-    state.group = targetGroupId;
-    state.tab = tabId;
-    rememberGroup(state.group);
-    rememberTabInGroup(state.group, state.tab);
-    lsSet(NAV_GROUP_KEY, state.group);
-    lsSet("v2_current_tab", state.tab);
-    render();
+  function persistGroupOrderFromDom() {
+    var ids = [].map.call(tabsEl.querySelectorAll(".nav-groups .nav-group[data-nav-group]"), function (button) {
+      return button.dataset.navGroup;
+    });
+    if (ids.length) lsSet(NAV_GROUP_ORDER_KEY, ids);
   }
 
-  function moveGroup(groupId, dir) {
-    var groups = getConfiguredGroups();
-    var ids = groups.map(function (g) { return g.id; });
-    var idx = ids.indexOf(groupId);
-    if (idx < 0) return;
-    if (dir === "up" && idx > 0) {
-      var tmp = ids[idx - 1]; ids[idx - 1] = ids[idx]; ids[idx] = tmp;
-    } else if (dir === "down" && idx < ids.length - 1) {
-      var tmp2 = ids[idx + 1]; ids[idx + 1] = ids[idx]; ids[idx] = tmp2;
-    } else {
+  var navDragState = null;
+  var navDragClickGuard = false;
+
+  function clearNavDragState() {
+    if (!navDragState) return;
+    if (navDragState.timer) clearTimeout(navDragState.timer);
+    if (navDragState.active) navDragState.target.classList.remove("nav-sort-dragging");
+    document.body.classList.remove("nav-sorting-active");
+    navDragState = null;
+  }
+
+  function startNavDrag() {
+    var gesture = navDragState;
+    if (!gesture) return;
+    gesture.active = true;
+    gesture.target.classList.add("nav-sort-dragging");
+    document.body.classList.add("nav-sorting-active");
+    try { gesture.target.setPointerCapture(gesture.pointerId); } catch (e) {}
+  }
+
+  function moveNavDrag(e) {
+    var gesture = navDragState;
+    if (!gesture || e.pointerId !== gesture.pointerId) return;
+    var dx = e.clientX - gesture.startX;
+    var dy = e.clientY - gesture.startY;
+    if (!gesture.active) {
+      if (Math.sqrt(dx * dx + dy * dy) > 8) clearNavDragState();
       return;
     }
-    lsSet(NAV_GROUP_ORDER_KEY, ids);
+    e.preventDefault();
+    var containerRect = gesture.container.getBoundingClientRect();
+    if (e.clientX < containerRect.left + 28) gesture.container.scrollLeft -= 12;
+    else if (e.clientX > containerRect.right - 28) gesture.container.scrollLeft += 12;
+    var under = document.elementFromPoint(e.clientX, e.clientY);
+    if (!under) return;
+    if (gesture.kind === "tab") {
+      var candidate = under.closest(".tab[data-tab]");
+      if (!candidate || candidate === gesture.target || candidate.parentElement !== gesture.container) return;
+      var targetRect = candidate.getBoundingClientRect();
+      gesture.container.insertBefore(gesture.target, e.clientX > targetRect.left + targetRect.width / 2 ? candidate.nextSibling : candidate);
+    } else {
+      var candidateWrap = under.closest(".nav-group-wrap");
+      if (!candidateWrap || candidateWrap === gesture.target || candidateWrap.parentElement !== gesture.container) return;
+      var wrapRect = candidateWrap.getBoundingClientRect();
+      gesture.container.insertBefore(gesture.target, e.clientX > wrapRect.left + wrapRect.width / 2 ? candidateWrap.nextSibling : candidateWrap);
+    }
   }
+
+  function endNavDrag(e) {
+    var gesture = navDragState;
+    if (!gesture || (e && e.pointerId !== gesture.pointerId)) return;
+    if (!gesture.active) {
+      clearNavDragState();
+      return;
+    }
+    if (gesture.kind === "tab") persistTabOrderFromDom();
+    else persistGroupOrderFromDom();
+    gesture.target.classList.remove("nav-sort-dragging");
+    document.body.classList.remove("nav-sorting-active");
+    navDragClickGuard = true;
+    var done = gesture;
+    navDragState = null;
+    if (done.timer) clearTimeout(done.timer);
+    setTimeout(function () { navDragClickGuard = false; }, 450);
+  }
+
+  tabsEl.addEventListener("pointerdown", function (e) {
+    if (e.button != null && e.button !== 0) return;
+    var tabButton = e.target.closest(".tab[data-tab]");
+    var groupButton = e.target.closest(".nav-group[data-nav-group]");
+    var target = tabButton || groupButton;
+    if (!target) return;
+    var kind = tabButton ? "tab" : "group";
+    var container = kind === "tab"
+      ? target.closest(".nav-subtabs")
+      : target.closest(".nav-groups");
+    if (!container) return;
+    var dragTarget = kind === "tab" ? target : target.closest(".nav-group-wrap");
+    clearNavDragState();
+    navDragState = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      kind: kind,
+      target: dragTarget,
+      container: container,
+      active: false,
+      timer: null
+    };
+    navDragState.timer = setTimeout(startNavDrag, 450);
+  }, { passive: true });
+  document.addEventListener("pointermove", moveNavDrag, { passive: false });
+  document.addEventListener("pointerup", endNavDrag, true);
+  document.addEventListener("pointercancel", endNavDrag, true);
+  tabsEl.addEventListener("contextmenu", function (e) {
+    if (navDragState || navDragClickGuard) e.preventDefault();
+  });
+
+  var tableDragState = null;
+  var tableOrderObserver = null;
+
+  function tableColumnOrdersLoad() {
+    var saved = lsGet(TABLE_COL_ORDER_KEY, {});
+    return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  }
+
+  function tableColumnOrdersSave(orders) {
+    lsSet(TABLE_COL_ORDER_KEY, orders);
+  }
+
+  function tableBodyRows(table) {
+    var rows = [];
+    [].forEach.call(table.tBodies || [], function (body) {
+      [].forEach.call(body.rows, function (row) { rows.push(row); });
+    });
+    return rows;
+  }
+
+  function normalizedColumnOrder(order, count) {
+    if (!Array.isArray(order) || order.length !== count) return null;
+    var seen = {};
+    for (var i = 0; i < order.length; i++) {
+      var value = Number(order[i]);
+      if (!Number.isInteger(value) || value < 0 || value >= count || seen[value]) return null;
+      seen[value] = true;
+    }
+    return order.map(Number);
+  }
+
+  function reorderTableColumns(table, order) {
+    var header = table.tHead && table.tHead.rows[0];
+    if (!header) return;
+    var headerMap = {};
+    [].forEach.call(header.cells, function (cell) {
+      if (cell.dataset.colOriginal != null) headerMap[cell.dataset.colOriginal] = cell;
+    });
+    order.forEach(function (original) {
+      if (headerMap[original]) header.appendChild(headerMap[original]);
+    });
+    tableBodyRows(table).forEach(function (row) {
+      var cellMap = {};
+      [].forEach.call(row.cells, function (cell) {
+        if (cell.dataset.colOriginal != null) cellMap[cell.dataset.colOriginal] = cell;
+      });
+      order.forEach(function (original) {
+        if (cellMap[original]) row.appendChild(cellMap[original]);
+      });
+    });
+  }
+
+  function prepareTableColumns(table, tableIndex) {
+    if (!table || table.dataset.colsPrepared === "1") return;
+    if (!table.tHead || table.tHead.rows.length !== 1) return;
+    var header = table.tHead.rows[0];
+    var headerCells = [].slice.call(header.cells);
+    if (headerCells.length < 3) return;
+    if (headerCells.some(function (cell) { return cell.colSpan > 1 || cell.rowSpan > 1; })) return;
+    var rows = tableBodyRows(table);
+    if (rows.some(function (row) {
+      return row.cells.length !== headerCells.length || [].some.call(row.cells, function (cell) {
+        return cell.colSpan > 1 || cell.rowSpan > 1;
+      });
+    })) return;
+    headerCells.forEach(function (cell, index) { cell.dataset.colOriginal = String(index); });
+    rows.forEach(function (row) {
+      [].forEach.call(row.cells, function (cell, index) { cell.dataset.colOriginal = String(index); });
+    });
+    table.dataset.colsPrepared = "1";
+    table.dataset.colOrderKey = state.tab + ":" + tableIndex;
+    table.classList.add("table-cols-draggable");
+    var orders = tableColumnOrdersLoad();
+    var saved = normalizedColumnOrder(orders[table.dataset.colOrderKey], headerCells.length);
+    if (saved && saved[0] === 0) reorderTableColumns(table, saved);
+  }
+
+  function applySavedTableColumnOrders() {
+    if (tableDragState && tableDragState.active) return;
+    var orders = tableColumnOrdersLoad();
+    [].forEach.call(view.querySelectorAll("table"), function (table, index) {
+      prepareTableColumns(table, index);
+      var key = table.dataset.colOrderKey;
+      if (!key || table.dataset.colsPrepared !== "1") return;
+      var order = normalizedColumnOrder(orders[key], table.tHead.rows[0].cells.length);
+      if (order && order[0] === 0) reorderTableColumns(table, order);
+    });
+  }
+
+  function clearTableDrag() {
+    if (!tableDragState) return;
+    if (tableDragState.timer) clearTimeout(tableDragState.timer);
+    if (tableDragState.active) tableDragState.target.classList.remove("table-col-dragging");
+    document.body.classList.remove("table-sorting-active");
+    tableDragState = null;
+  }
+
+  function startTableDrag() {
+    if (!tableDragState) return;
+    tableDragState.active = true;
+    tableDragState.target.classList.add("table-col-dragging");
+    document.body.classList.add("table-sorting-active");
+    try { tableDragState.target.setPointerCapture(tableDragState.pointerId); } catch (e) {}
+  }
+
+  function moveTableDrag(e) {
+    var gesture = tableDragState;
+    if (!gesture || e.pointerId !== gesture.pointerId) return;
+    var dx = e.clientX - gesture.startX;
+    var dy = e.clientY - gesture.startY;
+    if (!gesture.active) {
+      if (Math.sqrt(dx * dx + dy * dy) > 8) clearTableDrag();
+      return;
+    }
+    e.preventDefault();
+    var under = document.elementFromPoint(e.clientX, e.clientY);
+    var candidate = under && under.closest("th");
+    if (!candidate || candidate === gesture.target || candidate.closest("table") !== gesture.table) return;
+    if (Number(candidate.dataset.colOriginal) <= 0) return;
+    var draggedOriginal = gesture.target.dataset.colOriginal;
+    var candidateOriginal = candidate.dataset.colOriginal;
+    var candidateRect = candidate.getBoundingClientRect();
+    var after = e.clientX > candidateRect.left + candidateRect.width / 2;
+    function moveRow(row) {
+      var dragged = row.querySelector('[data-col-original="' + draggedOriginal + '"]');
+      var target = row.querySelector('[data-col-original="' + candidateOriginal + '"]');
+      if (!dragged || !target) return;
+      row.insertBefore(dragged, after ? target.nextSibling : target);
+    }
+    moveRow(gesture.table.tHead.rows[0]);
+    tableBodyRows(gesture.table).forEach(moveRow);
+  }
+
+  function endTableDrag(e) {
+    var gesture = tableDragState;
+    if (!gesture || (e && e.pointerId !== gesture.pointerId)) return;
+    if (!gesture.active) {
+      clearTableDrag();
+      return;
+    }
+    var order = [].map.call(gesture.table.tHead.rows[0].cells, function (cell) {
+      return Number(cell.dataset.colOriginal);
+    });
+    var orders = tableColumnOrdersLoad();
+    orders[gesture.table.dataset.colOrderKey] = order;
+    tableColumnOrdersSave(orders);
+    gesture.target.classList.remove("table-col-dragging");
+    document.body.classList.remove("table-sorting-active");
+    if (gesture.timer) clearTimeout(gesture.timer);
+    tableDragState = null;
+  }
+
+  view.addEventListener("pointerdown", function (e) {
+    if (e.button != null && e.button !== 0) return;
+    var th = e.target.closest("th");
+    var table = th && th.closest("table");
+    if (!table || table.dataset.colsPrepared !== "1") return;
+    if (Number(th.dataset.colOriginal) <= 0) return;
+    clearTableDrag();
+    tableDragState = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      target: th,
+      table: table,
+      active: false,
+      timer: null
+    };
+    tableDragState.timer = setTimeout(startTableDrag, 450);
+  }, { passive: true });
+  document.addEventListener("pointermove", moveTableDrag, { passive: false });
+  document.addEventListener("pointerup", endTableDrag, true);
+  document.addEventListener("pointercancel", endTableDrag, true);
+  view.addEventListener("contextmenu", function (e) {
+    if (tableDragState || e.target.closest("th")) e.preventDefault();
+  });
+  tableOrderObserver = new MutationObserver(function () {
+    requestAnimationFrame(applySavedTableColumnOrders);
+  });
+  tableOrderObserver.observe(view, { childList: true });
 
   function collapsedGroupIds() {
     var arr = lsGet(NAV_COLLAPSED_KEY, []);
@@ -655,15 +899,9 @@
       groupHtml += groups.map(function (g) {
         var collapsed = isGroupCollapsed(g.id);
         var h = '<span class="nav-group-wrap">';
-        if (tabSortMode) {
-          h += '<button class="nav-group-move" type="button" data-group-move="up" data-group-id="' + g.id + '" aria-label="' + g.label + ' 前移">↑</button>';
-        }
         h += '<button class="nav-group' + (collapsed ? " is-collapsed" : "") +
           '" type="button" data-nav-group="' + g.id + '" aria-expanded="' + (!collapsed) + '">' + g.label +
           '<span class="nav-group-caret" aria-hidden="true">' + (collapsed ? "▸" : "▾") + '</span></button>';
-        if (tabSortMode) {
-          h += '<button class="nav-group-move" type="button" data-group-move="down" data-group-id="' + g.id + '" aria-label="' + g.label + ' 后移">↓</button>';
-        }
         h += "</span>";
         return h;
       }).join("");
@@ -672,17 +910,6 @@
     }
     var tabs = directoryActive ? [] : getVisibleTabs(group.id);
     var tabsHtml = tabs.map(function (t) {
-      if (tabSortMode) {
-        var moveOptions = groups.filter(function (g) { return g.id !== state.group; }).map(function (g) {
-          return '<option value="' + g.id + '">移到' + g.label + "</option>";
-        }).join("");
-        return '<span class="sort-item-wrap">' +
-          '<button class="sort-btn" type="button" data-sort="up" data-tab="' + t.id + '" aria-label="' + t.label + ' 前移">↑</button>' +
-          '<button class="tab sort-item' + (state.tab === t.id ? " is-active" : "") + '" type="button" data-tab="' + t.id + '">' + t.label + "</button>" +
-          '<button class="sort-btn" type="button" data-sort="down" data-tab="' + t.id + '" aria-label="' + t.label + ' 后移">↓</button>' +
-          '<select class="tab-move-select" data-move-tab="' + t.id + '" aria-label="移动到其他分类"><option value="">移动</option>' + moveOptions + "</select>" +
-          "</span>";
-      }
       return '<button class="tab ' + (state.tab === t.id ? "is-active" : "") +
         '" type="button" data-tab="' + t.id + '">' + t.label + "</button>";
     }).join("");
@@ -690,15 +917,9 @@
       tabsHtml = '<button class="tab nav-back-tab" type="button" data-directory="1">← 返回目录</button>' + tabsHtml;
     }
 
-    tabsHtml += '<div class="tab-sort-tail">';
-    tabsHtml += '<button class="tab sort-toggle' + (tabSortMode ? " is-on" : "") + '" type="button" data-sort-toggle="1">' +
-      (tabSortMode ? "退出排序" : "导航排序") + "</button>";
-    if (tabSortMode) {
-      tabsHtml += '<button class="tab sort-reset" type="button" data-sort-reset="1">恢复默认</button>';
-    }
-    tabsHtml += "</div>";
+    tabsHtml += '<button class="tab sort-reset nav-sort-reset" type="button" data-sort-reset="1">恢复默认</button>';
 
-    tabsEl.classList.toggle("sorting", tabSortMode);
+    tabsEl.classList.remove("sorting");
     tabsEl.innerHTML = (groupHtml ? '<div class="nav-groups">' + groupHtml + '</div>' : "") +
       '<div class="nav-subtabs">' + tabsHtml + "</div>";
     var nextGroups = tabsEl.querySelector(".nav-groups");
@@ -1080,6 +1301,7 @@
       pagePrefix += modelPairStrip(latest + 1);
     }
     if (pagePrefix) view.innerHTML = pagePrefix + view.innerHTML;
+    applySavedTableColumnOrders();
     scrollToLatest();
     if (tabChanged) {
       renderedTab = state.tab;
@@ -1682,25 +1904,80 @@
     return -1;
   }
 
-  function missOrderTails() {
+  function yearChipsHTML(selectedYear, attrName) {
+    var html = '<div class="chips page-year-chips" style="margin-bottom:8px">';
+    html += '<span style="align-self:center;font-size:12px;font-weight:900;color:#64748b">年份</span>';
+    DATA_YEARS.forEach(function (year) {
+      html += '<button class="chip ' + (Number(selectedYear) === year ? "is-active" : "") + '" type="button" ' + attrName + '="' + year + '">' + year + "</button>";
+    });
+    return html + "</div>";
+  }
+
+  function rowTailsOf(row) {
+    var out = [];
+    (row && row.nums || []).forEach(function (number) {
+      var tail = Number(number) % 10;
+      if (out.indexOf(tail) < 0) out.push(tail);
+    });
+    return out.sort(function (a, b) { return a - b; });
+  }
+
+  function currentMissForRows(rows, tail) {
+    var miss = 0;
+    for (var i = rows.length - 1; i >= 0; i--) {
+      if (rowTailsOf(rows[i]).indexOf(Number(tail)) >= 0) break;
+      miss++;
+    }
+    return miss;
+  }
+
+  function buildMissInfoForRows(rows) {
+    var info = {};
+    var latestPeriod = rows.length ? Number(rows[rows.length - 1].p) : 0;
+    for (var tail = 0; tail < 10; tail++) {
+      info[tail] = {};
+      var lastOpen = -1;
+      rows.forEach(function (row) {
+        var period = Number(row.p);
+        if (rowTailsOf(row).indexOf(tail) < 0) return;
+        if (lastOpen >= 0 && period > lastOpen + 1) {
+          var cycleLen = period - lastOpen - 1;
+          var cls = cycleLen >= 3 ? "cell-miss3" : cycleLen === 2 ? "cell-miss2" : "cell-miss1";
+          for (var p = lastOpen + 1; p < period; p++) info[tail][p] = { cls: cls, mark: 0 };
+          info[tail][period - 1] = { cls: cls, mark: cycleLen };
+        }
+        lastOpen = period;
+      });
+      if (lastOpen >= 0 && latestPeriod > lastOpen) {
+        var openLen = latestPeriod - lastOpen;
+        var openCls = openLen >= 3 ? "cell-miss3" : openLen === 2 ? "cell-miss2" : "cell-miss1";
+        for (var openP = lastOpen + 1; openP <= latestPeriod; openP++) info[tail][openP] = { cls: openCls, mark: 0 };
+        info[tail][latestPeriod] = { cls: openCls, mark: openLen };
+      }
+    }
+    return info;
+  }
+
+  function missOrderTailsForRows(rows) {
     var arr = [];
     for (var t = 0; t < 10; t++) {
       var run = 0, runStart = 0, evStart = -1, evEnd = -1;
-      for (var i = 0; i < periods.length; i++) {
-        if (hit(periods[i], t)) {
+      for (var i = 0; i < rows.length; i++) {
+        var period = Number(rows[i].p);
+        if (rowTailsOf(rows[i]).indexOf(t) >= 0) {
           if (run >= 3) {
             evStart = runStart;
-            evEnd = periods[i - 1];
+            evEnd = Number(rows[i - 1].p);
           }
           run = 0;
         } else {
-          if (run === 0) runStart = periods[i];
+          if (run === 0) runStart = period;
           run++;
         }
       }
       if (run >= 3) {
         evStart = runStart;
-        evEnd = periods[periods.length - 1];
+        evEnd = rows.length ? Number(rows[rows.length - 1].p) : 0;
       }
       arr.push({ tail: t, evStart: evStart, evEnd: evEnd });
     }
@@ -1712,24 +1989,40 @@
     return arr.map(function (x) { return x.tail; });
   }
 
+  function currentYearRows() {
+    var year = (D[D.length - 1] || {}).y;
+    return D.filter(function (row) { return Number(row.y) === Number(year); });
+  }
+
+  function missOrderTails() {
+    return missOrderTailsForRows(currentYearRows());
+  }
+
   function renderMissOrderHeatmap() {
-    var order = missOrderTails();
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏排序热图</h2><span class="section__hint">按最近遗漏满3期排序，最新放最后</span></div>';
+    var year = DATA_YEARS.indexOf(Number(state.missOrderYear)) >= 0 ? Number(state.missOrderYear) : DATA_YEARS[0];
+    state.missOrderYear = year;
+    var rows = D.filter(function (row) { return Number(row.y) === year; });
+    var periodsOfYear = rows.map(function (row) { return Number(row.p); });
+    var order = missOrderTailsForRows(rows);
+    var missInfo = buildMissInfoForRows(rows);
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏排序热图 · ' + year + '年</h2><span class="section__hint">每年独立排序 · 按该年最近遗漏满3期排序，最新放最后</span></div>';
+    html += yearChipsHTML(year, "data-miss-order-year");
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     order.forEach(function (t) {
-      html += '<th>尾' + t + '<span class="heat-order-miss">漏' + currentMiss(t) + '</span></th>';
+      html += '<th>尾' + t + '<span class="heat-order-miss">漏' + currentMissForRows(rows, t) + '</span></th>';
     });
     html += "</tr></thead><tbody>";
 
-    var shownPeriodsMissOrder = perfRows("missorder", periods);
-    shownPeriodsMissOrder.forEach(function (p) {
-      var drawn = tailsOf(p);
+    var shownRows = perfRows("missorder:" + year, rows);
+    shownRows.forEach(function (record) {
+      var p = Number(record.p);
+      var drawn = rowTailsOf(record);
       html += '<tr><td class="row-label">' + p + '</td><td class="open-tails">' + drawn.join(" ") + '</td><td class="open-count">' + drawn.length + "</td>";
       order.forEach(function (d) {
-        if (hit(p, d)) {
+        if (drawn.indexOf(d) >= 0) {
           html += '<td><span class="heat-cell cell-hit">' + d + "</span></td>";
         } else {
-          var mi = MISS_INFO[d][p];
+          var mi = missInfo[d][p];
           var cls = mi ? mi.cls : "cell-miss1";
           var mark = (mi && mi.mark > 0) ? (CN[mi.mark] || mi.mark) : "";
           html += '<td><span class="heat-cell ' + cls + '">' + mark + "</span></td>";
@@ -1739,8 +2032,8 @@
     });
 
     html += "</tbody></table></div></div>";
-    html += perfMoreBtn("missorder", periods.length, shownPeriodsMissOrder.length);
-    html += '<p class="disclaimer">排序规则：按每个尾数最近一次遗漏满 3 期及以上的时间排序，旧的放左、最新的放右；正在遗漏满 3 期及以上的放在最后。</p>';
+    html += perfMoreBtn("missorder:" + year, rows.length, shownRows.length);
+    html += '<p class="disclaimer">' + year + '年独立排序：按该年每个尾数最近一次遗漏满 3 期及以上的时间排序，旧的放左、最新的放右；正在遗漏满 3 期及以上的放在最后。</p>';
     html += fullRunHistoryHTML();
     return html;
   }
@@ -1819,13 +2112,16 @@
 
   // 窗口遗漏热图：单位=窗口（不是期），14条线一屏，绿=中窗、红=错窗（数字=连错到第几窗），可左右上下滚动
   function renderWindowMiss() {
-    var curYear = (D[D.length - 1] || {}).y;
+    var latestYear = Number((D[D.length - 1] || {}).y);
+    var curYear = DATA_YEARS.indexOf(Number(state.windowMissYear)) >= 0 ? Number(state.windowMissYear) : latestYear;
+    state.windowMissYear = curYear;
+    var isCurrentYear = curYear === latestYear;
     // 本页自己的方案开关：两期=一个窗口最多2期。两期/三期各自一套窗口、各自命中率、各自规律，互不引用
     var maxStage = state.windowMissMode === "two" ? 2 : 3;
     var perLine = EXEC_LINES.map(function (line) {
       var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
       var stNow = wmStageNow(line, maxStage);
-      var nextStartFull = stNow && stNow.active ? Number(stNow.active.start) : null;
+      var nextStartFull = isCurrentYear && stNow && stNow.active ? Number(stNow.active.start) : null;
       // 每条线自己的竖排事件流：一窗一格；窗与窗之间“等号重开”的空档单独占一格
       var out = [], streak = 0;
       rows.forEach(function (w, i) {
@@ -1842,14 +2138,14 @@
         if (wait > 0) out.push({ kind: "wait", wait: wait });
       });
       // 现在还在等号重开、还没开出下一窗：最后一格必须是“等”（按已经等了几期算）
-      if (stNow && stNow.waiting && rows.length) {
+      if (isCurrentYear && stNow && stNow.waiting && rows.length) {
         var lastW = rows[rows.length - 1];
         var endP = betLocalPeriod(lastW.start) + ((lastW.attempts || []).length) - 1;
         var waitNow = latest - endP + 1;
         if (waitNow > 0) out.push({ kind: "wait", wait: waitNow, tail: stNow.waiting.tail, amount: 0 });
       }
       // 现在有正在跑的窗口：把“当前跑到第几期”作为最新一件事补一格（还没开奖，不算结果）
-      if (stNow && stNow.active) {
+      if (isCurrentYear && stNow && stNow.active) {
         out.push({
           kind: "live",
           stage: (stNow.active.attempts || []).length + 1,
@@ -1864,11 +2160,13 @@
     var maxN = 0;
     perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
-    var html = '<div class="section"><div class="panel" style="padding:10px;margin-bottom:8px"><div class="wm-view-tabs" style="margin-bottom:6px">';
+    var html = '<div class="section"><div class="panel" style="padding:10px;margin-bottom:8px">';
+    html += yearChipsHTML(curYear, "data-window-miss-year");
+    html += '<div class="wm-view-tabs" style="margin-bottom:6px">';
     html += '<button class="chip wm-view-tab' + (maxStage === 3 ? " is-active" : "") + '" type="button" data-wm-mode="three">三期窗口</button>';
     html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-wm-mode="two">两期窗口</button>';
     html += '</div><div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + (maxStage === 2 ? "两期窗口（一个窗口最多第2期）" : "三期窗口（一个窗口最多第3期）") + '</b> · 本页独立开关，只影响这一页；两期和三期各自一套窗口、命中率、性格规律，互不引用。</div></div></div>';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图</h2><span class="section__hint">' + curYear + ' 年 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图 · ' + curYear + '年</h2><span class="section__hint">每年独立 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
     html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=14条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第2期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
     html += '<div class="panel panel--wmheat"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
@@ -6382,6 +6680,10 @@
 
   document.documentElement.addEventListener("pointermove", function (e) {
     if (!historyPointerStart || e.pointerId !== historyPointerStart.id || historyPointerStart.handled) return;
+    if ((navDragState && navDragState.active) || (tableDragState && tableDragState.active)) {
+      e.preventDefault();
+      return;
+    }
     var dx = e.clientX - historyPointerStart.x;
     var dy = e.clientY - historyPointerStart.y;
     var absX = Math.abs(dx);
@@ -6514,17 +6816,17 @@
   }, { capture: true, passive: true });
 
   tabsEl.addEventListener("click", function (e) {
+    if (navDragClickGuard) {
+      e.preventDefault();
+      e.stopPropagation();
+      navDragClickGuard = false;
+      return;
+    }
     var directoryBtn = e.target.closest("[data-directory]");
     if (directoryBtn) {
       state.tab = "directory";
       lsSet("v2_current_tab", state.tab);
       render();
-      return;
-    }
-    var groupMove = e.target.closest("[data-group-move]");
-    if (groupMove) {
-      moveGroup(groupMove.dataset.groupId, groupMove.dataset.groupMove);
-      renderTabs();
       return;
     }
     var collapseBtn = e.target.closest("[data-collapse-group]");
@@ -6546,7 +6848,7 @@
         render();
         return;
       }
-      if (state.group === nextGroup && !tabSortMode) {
+      if (state.group === nextGroup) {
         toggleGroupCollapsed(nextGroup);
         renderTabs();
         return;
@@ -6559,21 +6861,7 @@
       rememberTabInGroup(state.group, state.tab);
       lsSet(NAV_GROUP_KEY, state.group);
       lsSet("v2_current_tab", state.tab);
-      tabSortMode = false;
       render();
-      return;
-    }
-    // 箭头移动（↑前移 / ↓后移），只在当前分类内调整，立即保存
-    var sortBtn = e.target.closest(".sort-btn");
-    if (sortBtn) {
-      moveTabWithinGroup(sortBtn.dataset.tab, sortBtn.dataset.sort);
-      renderTabs();
-      return;
-    }
-    // 进入/退出排序模式，只重渲染导航，不重渲染页面内容
-    if (e.target.closest(".sort-toggle")) {
-      tabSortMode = !tabSortMode;
-      renderTabs();
       return;
     }
     // 恢复默认顺序
@@ -6597,13 +6885,19 @@
     }
   });
 
-  tabsEl.addEventListener("change", function (e) {
-    var moveSelect = e.target.closest("[data-move-tab]");
-    if (!moveSelect || !moveSelect.value) return;
-    moveTabToGroup(moveSelect.dataset.moveTab, moveSelect.value);
-  });
-
   view.addEventListener("click", function (e) {
+    var missOrderYearBtn = e.target.closest("[data-miss-order-year]");
+    if (missOrderYearBtn) {
+      state.missOrderYear = Number(missOrderYearBtn.dataset.missOrderYear);
+      render();
+      return;
+    }
+    var windowMissYearBtn = e.target.closest("[data-window-miss-year]");
+    if (windowMissYearBtn) {
+      state.windowMissYear = Number(windowMissYearBtn.dataset.windowMissYear);
+      render();
+      return;
+    }
     var perfMore = e.target.closest("[data-perf-more]");
     if (perfMore) {
       perfExpandAll[perfMore.dataset.perfMore] = true;

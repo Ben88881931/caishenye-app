@@ -175,18 +175,21 @@ def main():
         else:
             fail("app.js 缺少两级导航分类")
         if (
-            "function moveTabToGroup" in app_text
-            and "function moveGroup" in app_text
+            "navDragState" in app_text
+            and "function startNavDrag" in app_text
+            and "persistGroupOrderFromDom" in app_text
             and 'data-nav-group="' in app_text
             and 'aria-expanded="' in app_text
-            and 'data-move-tab="' in app_text
             and "NAV_COLLAPSED_KEY" in app_text
-            and "NAV_PAGE_GROUPS_KEY" in app_text
             and "NAV_GROUP_ORDER_KEY" in app_text
+            and "TABLE_COL_ORDER_KEY" in app_text
+            and "applySavedTableColumnOrders" in app_text
+            and "data-sort=\"up\"" not in app_text
+            and "sort-btn" not in app_text
         ):
-            pass_("app.js 支持分类折叠、分类排序和页面跨类移动")
+            pass_("app.js 支持分类折叠、导航长按拖动排序和表头长按拖动排序")
         else:
-            fail("app.js 缺少分类折叠、分类排序或页面跨类移动")
+            fail("app.js 缺少分类折叠、长按导航排序或长按表头排序")
 
         for func in ["renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "hitLogSectionHTML"]:
             if f"function {func}" not in app_text:

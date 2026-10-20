@@ -15,6 +15,8 @@ const CHECKS = [
   { name: "护栏·未来期必须待定", cmd: ["node", "_future_tail_check.js"], blocker: true },
   { name: "护栏·跨页窗口一致", cmd: ["node", "_window_consistency.js"], blocker: true, expect: /不一致条数：0/ },
   { name: "护栏·记录只当年", cmd: ["node", "_record_scope_check.js"], blocker: true },
+  { name: "护栏·年份独立切换", cmd: ["node", "_year_switch_check.js"], blocker: true, expect: /RESULT: ALL PASS/ },
+  { name: "护栏·长按排序", cmd: ["node", "_longpress_sort_check.js"], blocker: true, expect: /RESULT: ALL PASS/ },
   { name: "护栏·当期尾号写全", cmd: ["node", "_hint_tail_check.js"], blocker: true },
   { name: "护栏·下注执行表", cmd: ["node", "_betexec_check.js"], blocker: true },
   { name: "监测·两期三期对比", cmd: ["node", "_twomode_watch.js"], blocker: false },

@@ -152,8 +152,7 @@ body {
 
 .nav-group.is-active .nav-group-caret { opacity: 1; }
 
-.nav-collapse,
-.nav-group-move {
+.nav-collapse {
   width: 36px;
   height: 36px;
   flex: 0 0 auto;
@@ -171,20 +170,7 @@ body {
   touch-action: manipulation;
 }
 
-.nav-collapse:hover,
-.nav-group-move:hover { background: #d1d5db; }
-
-.tab-move-select {
-  min-height: 36px;
-  max-width: 96px;
-  padding: 5px 6px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #fff;
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-}
+.nav-collapse:hover { background: #d1d5db; }
 
 .tab {
   flex: 0 0 auto;
@@ -213,28 +199,15 @@ body {
   box-shadow: 0 2px 7px rgba(37, 99, 235, 0.2);
 }
 
-/* ===== 导航自定义排序 ===== */
-.tab-sort-tail {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  flex: 0 0 auto;
-}
-
-.tab.sort-toggle,
+/* ===== 导航长按拖动排序 ===== */
 .tab.sort-reset {
   flex: 0 0 auto;
   min-width: 0;
+  margin-left: auto;
   white-space: nowrap;
   border-color: #cbd5e1;
   background: #fff;
   color: #64748b;
-}
-
-.tab.sort-toggle.is-on {
-  background: #eef2ff;
-  color: var(--accent);
 }
 
 .tab.sort-reset {
@@ -242,52 +215,45 @@ body {
   color: #b91c1c;
 }
 
-.sort-item-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  flex: 0 0 auto;
+.nav-group,
+.tab[data-tab],
+.nav-group-wrap {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-.tab.sort-item {
-  flex: 0 0 auto;
-  min-width: 64px;
+body.nav-sorting-active {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.sort-btn {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 6px;
-  background: #eef2ff;
-  color: #4338ca;
-  font-size: 17px;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-  touch-action: manipulation;
+.nav-sort-dragging {
+  opacity: 0.55;
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transform: scale(0.97);
 }
 
-.sort-btn:hover { background: #c7d2fe; }
-.sort-btn:active { background: #a5b4fc; }
-
-.tabs.sorting .nav-groups {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
+/* 表头长按拖动排序：第一列业务标签固定，其余列可调整 */
+#view table.table-cols-draggable th[data-col-original]:not([data-col-original="0"]) {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-.tabs.sorting .nav-group-wrap {
-  flex: 0 0 auto;
+body.table-sorting-active {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.tabs.sorting {
-  align-items: stretch;
+th.table-col-dragging {
+  opacity: 0.55;
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+  background: #dbeafe !important;
 }
 
 .tab-group {
