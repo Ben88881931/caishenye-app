@@ -9,6 +9,7 @@ const latest = Math.max(...Object.keys(raw).map(Number));
 const prediction = model.analyze(raw, latest);
 const pending = (snapshots.records || []).filter((record) => !record.settled);
 const target = latest + 1;
+const uiText = fs.readFileSync("app.js", "utf8");
 const failures = [];
 function tailOf(period, tail) {
   return raw[String(period)] && raw[String(period)][tail] === "1";
@@ -37,6 +38,13 @@ check(
   "待开奖影子快照前三名必须与固定模型输出一致"
 );
 check(!("D1" in prediction) && !("D2" in prediction), "动态概率模型不得继续输出旧D1/D2排名");
+check(
+  uiText.includes("function wmProbabilityHistoryRows") &&
+  uiText.includes("PROB_MODEL.windowBacktest(rawYear") &&
+  uiText.includes('if (line.kind === "probability") return wmProbabilityWindows(line, 3)') &&
+  uiText.includes('if (line.kind === "probability") return wmProbabilityWindows(line, 2)'),
+  "概率三线的动态概率、窗口热图、13线和下注执行表必须共用全历史回测窗口"
+);
 
 const appText = fs.readFileSync("data.js", "utf8");
 const appData = JSON.parse(appText.slice(appText.indexOf("{"), appText.lastIndexOf("}") + 1));

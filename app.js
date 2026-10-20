@@ -4206,7 +4206,118 @@
     return rows;
   }
 
+  var wmProbabilityCache = {};
+
+  function wmProbabilityHistoryRows(line, cap) {
+    var rows = [];
+    var firstGlobal = {};
+    D.forEach(function (row, index) {
+      var year = Number(row.y);
+      if (!firstGlobal[year]) firstGlobal[year] = index + 1;
+    });
+    var years = DATA_YEARS.slice().sort(function (a, b) { return a - b; });
+    years.forEach(function (year) {
+      var rawYear = probabilityYearRaw(year);
+      var records = PROB_MODEL.windowBacktest(rawYear, line.rank || 0, cap);
+      var offset = Number(firstGlobal[year] || 0);
+      if (!offset) return;
+      records.forEach(function (record) {
+        rows.push({
+          start: offset + Number(record.startPeriod) - 1,
+          lockedTail: record.tail,
+          attempts: (record.attempts || []).map(function (attempt) {
+            return {
+              period: offset + Number(attempt.period) - 1,
+              tail: attempt.tail,
+              hit: attempt.hit
+            };
+          }),
+          hitIndex: record.hitIndex,
+          sourceKind: "probability-test",
+          testYear: year
+        });
+      });
+    });
+    return rows;
+  }
+
+  function wmProbabilityLiveState(line, cap) {
+    var rows = [];
+    var active = null;
+    var waiting = null;
+    var p = Number(line.startPeriod) || 1;
+    var currentYear = 0;
+    while (p <= D.length + 1) {
+      if (p > D.length) {
+        if (!active && !waiting) {
+          var nextTrigger = windowTriggerForLine(line, p);
+          if (nextTrigger) active = { start: p, lockedTail: nextTrigger.tail, attempts: [] };
+        }
+        break;
+      }
+      var year = wmYearOf(p);
+      if (year && year !== currentYear) {
+        currentYear = year;
+        active = null;
+        waiting = null;
+      }
+      if (waiting) {
+        var waitRow = D[p - 1];
+        var waitTails = waitRow ? (waitRow.nums || []).map(function (num) { return Number(num) % 10; }) : [];
+        if (waitTails.indexOf(Number(waiting.tail)) >= 0) waiting = null;
+        p++;
+        continue;
+      }
+      var trigger = null;
+      if (!active) {
+        trigger = windowTriggerForLine(line, p);
+        if (!trigger) { p++; continue; }
+        active = { start: p, lockedTail: trigger.tail, attempts: [] };
+      }
+      var row = D[p - 1] || {};
+      var actual = (row.nums || []).map(function (num) { return Number(num) % 10; });
+      var tail = active.lockedTail;
+      var hit = tail != null && actual.indexOf(Number(tail)) >= 0;
+      active.attempts.push({ period: p, tail: tail, hit: hit });
+      if (hit) {
+        active.hitIndex = active.attempts.length;
+        rows.push(active);
+        active = null;
+        p++;
+      } else if (active.attempts.length >= cap) {
+        active.hitIndex = 0;
+        rows.push(active);
+        active = null;
+        p++;
+        waiting = { tail: tail };
+      } else {
+        p++;
+      }
+    }
+    return { rows: rows, active: active, waiting: waiting };
+  }
+
+  function wmProbabilityWindows(line, cap) {
+    var stage = cap === 2 ? 2 : 3;
+    var key = line.id + ":" + stage;
+    if (wmProbabilityCache[key]) return wmProbabilityCache[key];
+    var historyRows = wmProbabilityHistoryRows(line, stage);
+    var live = wmProbabilityLiveState(line, stage);
+    var byStart = {};
+    historyRows.forEach(function (row) { byStart[String(row.start)] = row; });
+    live.rows.forEach(function (row) { byStart[String(row.start)] = row; });
+    var rows = Object.keys(byStart).map(Number).sort(function (a, b) { return a - b; }).map(function (start) { return byStart[String(start)]; });
+    wmProbabilityCache[key] = rows;
+    wmStageCache[key] = rows;
+    wmStageState[key] = { active: live.active, waiting: live.waiting };
+    if (stage === 3) {
+      wmWindowCache[line.id] = rows;
+      wmWindowState[line.id] = { active: live.active, waiting: live.waiting };
+    }
+    return rows;
+  }
   function wmWindowsFor(line) {
+    if (line.kind === "probability") return wmProbabilityWindows(line, 3);
     if (wmWindowCache[line.id]) return wmWindowCache[line.id];
     if (line.kind === "fixed" && window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows) && window.APP_SNAPSHOTS.sourceWindows.length) {
       return wmFixedSourceWindows(line);
@@ -4294,6 +4405,7 @@
       return rows3;
     }
     var key = line.id + ":2";
+    if (line.kind === "probability") return wmProbabilityWindows(line, 2);
     if (wmStageCache[key]) return wmStageCache[key];
     var rows = [];
     var active = null;
