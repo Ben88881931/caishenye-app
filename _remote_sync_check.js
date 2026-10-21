@@ -21,7 +21,7 @@ let remote = "";
 try {
   remote = execFileSync("git", ["-c", "safe.directory=" + safeDir, "ls-remote", remoteUrl, "refs/heads/main"],
     { encoding: "utf8", env, stdio: ["ignore", "pipe", "pipe"] }).trim().split(/\s+/)[0];
-} catch (e) { console.log("读取远端失败：" + String(e.message).split("\n")[0].slice(0, 100)); }
+} catch (e) { console.log("读取远端失败：" + (String(e.stderr || e.message).split("\n")[0] || "unknown").slice(0, 400)); }
 // 取不到远端=没验证=不算通过（不允许静默放过）
 check(!!remote, "能读到远端 main（网络/权限正常）", remote ? remote.slice(0, 7) : "读不到");
 if (remote) check(remote === local, "本地 HEAD = 远端 main", "本地 " + local.slice(0, 7) + " / 远端 " + remote.slice(0, 7));
