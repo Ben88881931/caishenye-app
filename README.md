@@ -5,6 +5,7 @@
 仓库：`Ben88881931/caishenye-app`
 
 本地开发工具、测试命令和机器人分工见 [TOOLING.md](TOOLING.md)。
+执行端固定流程见 [EXECUTOR_WORKFLOW.md](EXECUTOR_WORKFLOW.md)，可直接复制的机器人职责提示词见 [AGENT_PROMPTS.md](AGENT_PROMPTS.md)。
 
 ## 当前架构
 
