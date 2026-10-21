@@ -6148,8 +6148,55 @@
         var second = records.filter(function (r) { return r.hitIndex === 2; }).length;
         var third = records.filter(function (r) { return r.hitIndex === 3; }).length;
         var miss = records.filter(function (r) { return r.status === "miss"; }).length;
+        var liveLine = EXEC_LINES.filter(function (item) {
+          return item.kind === "probability" && Number(item.rank) === rank;
+        })[0];
+        var liveState = liveLine ? wmStageNow(liveLine, 3) : null;
+        var liveRecord = null;
+        var latestYear = Number((D[D.length - 1] || {}).y);
+        if (liveState && year === latestYear) {
+          if (liveState.active) {
+            var activeStart = betLocalPeriod(liveState.active.start);
+            var activeYear = wmYearOf(liveState.active.start) || latestYear;
+            if (activeYear === year) {
+              var liveAttempts = [];
+              for (var liveStage = 0; liveStage < 3; liveStage++) {
+                var recorded = liveState.active.attempts[liveStage] || null;
+                liveAttempts.push({
+                  period: activeStart + liveStage,
+                  tail: liveState.active.lockedTail,
+                  hit: recorded ? recorded.hit : null,
+                  pending: !recorded
+                });
+              }
+              liveRecord = {
+                startPeriod: activeStart,
+                tail: liveState.active.lockedTail,
+                status: "pending",
+                hitIndex: null,
+                attempts: liveAttempts,
+                currentStage: liveState.active.attempts.length + 1
+              };
+            }
+          } else if (liveState.waiting) {
+            liveRecord = {
+              startPeriod: null,
+              tail: liveState.waiting.tail,
+              status: "waiting",
+              hitIndex: null,
+              attempts: []
+            };
+          }
+        }
         html += '<div class="prob-test-row"><div class="prob-test-head"><b>' + label + '</b><span>共' + records.length + '窗 · 第1期中' + first + ' · 第2期中' + second + ' · 第3期中' + third + ' · 全错' + miss + '</span></div>';
         html += '<div class="prob-test-strip">';
+        if (liveRecord && liveRecord.status === "pending") {
+          html += '<span class="prob-test-card is-live" data-prob-live-window="1"><b>当前窗口</b><span>' + year + '年第' + liveRecord.startPeriod + '期起 · 锁尾' + liveRecord.tail + ' · 第' + liveRecord.currentStage + '期</span><small>' + liveRecord.attempts.map(function (attempt) {
+            return '第' + (attempt.period - liveRecord.startPeriod + 1) + '期 第' + attempt.period + '期 · 尾' + attempt.tail + ' · ' + (attempt.pending ? (attempt.period === liveRecord.startPeriod + liveRecord.currentStage - 1 ? "待开奖" : "待定") : (attempt.hit ? "中" : "错"));
+          }).join(' | ') + '</small></span>';
+        } else if (liveRecord && liveRecord.status === "waiting") {
+          html += '<span class="prob-test-card is-live" data-prob-live-window="1"><b>当前窗口</b><span>等待重开 · 等尾' + liveRecord.tail + '开出</span><small>该线三期全错后暂停，尾' + liveRecord.tail + '重新开出后的下一期再开新窗</small></span>';
+        }
         if (!records.length) html += '<span class="trend-run-empty">暂无已结算窗口</span>';
         records.slice().reverse().forEach(function (record) {
           var result = record.status === "miss" ? "错窗" : "中" + record.hitIndex;

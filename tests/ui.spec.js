@@ -138,3 +138,30 @@ test("all pages render on a phone viewport without page-level overflow", async (
 
   expect(runtimeErrors, `browser runtime errors:\n${runtimeErrors.join("\n")}`).toEqual([]);
 });
+
+test("dynamic probability page shows the current live window for all three ranks", async ({ page }) => {
+  await page.goto("/");
+
+  const latestPeriod = await page.evaluate(() => {
+    const periods = Object.keys(window.APP_DATA.raw).map(Number);
+    return Math.max(...periods);
+  });
+  const targetPeriod = latestPeriod + 1;
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  const liveWindows = page.locator("[data-prob-live-window]");
+  await expect(liveWindows).toHaveCount(3);
+  for (let index = 0; index < 3; index++) {
+    await expect(liveWindows.nth(index)).toContainText(`第${targetPeriod}期`);
+    await expect(liveWindows.nth(index)).toContainText("当前窗口");
+    await expect(liveWindows.nth(index)).toContainText("待开奖");
+  }
+});

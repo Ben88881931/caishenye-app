@@ -2967,6 +2967,16 @@ body[data-page="windowmiss"] .wm-run-summary__item small {
   background: #fef2f2;
 }
 
+.prob-test-card.is-live {
+  border: 2px solid #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px #dbeafe;
+}
+
+.prob-test-card.is-live b {
+  color: #1d4ed8;
+}
+
 .prob-test-card b {
   color: #15803d;
   font-size: 13px;
