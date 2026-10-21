@@ -89,14 +89,7 @@
       return c;
     }
 
-    function missUntil(d, upto) {
-      var m = 0;
-      for (var p = upto; p >= 1; p--) {
-        if (hit(p, d)) break;
-        m++;
-      }
-      return m;
-    }
+
 
     function pickTopAt(cur, k) {
       var picks = [];

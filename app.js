@@ -50,18 +50,7 @@
     return m;
   }
 
-  function maxMiss(tail) {
-    var m = 0, run = 0;
-    periods.forEach(function (p) {
-      if (hit(p, tail)) {
-        run = 0;
-      } else {
-        run++;
-        if (run > m) m = run;
-      }
-    });
-    return m;
-  }
+
 
   function countWindow(tail, w) {
     var c = 0;
@@ -81,16 +70,7 @@
     };
   }
 
-  function reversalRate(tail) {
-    var total = 0, hits = 0;
-    for (var i = 1; i < periods.length; i++) {
-      if (!hit(periods[i - 1], tail)) {
-        total++;
-        if (hit(periods[i], tail)) hits++;
-      }
-    }
-    return total ? hits / total : 0;
-  }
+
 
   // 理论基准率：1-49 中，尾数 0 只有 4 个号(10/20/30/40)，尾数 1-9 各有 5 个号。
   // 每期开 7 个不同号码，尾数至少出现一次的概率 = 1 - C(49-c,7)/C(49,7)。
@@ -159,20 +139,7 @@
     return segs;
   }
 
-  function futureSegment(w, segs) {
-    var last = segs[segs.length - 1];
-    if (!last || last.len !== w) return null;
-    return {
-      si: periods.length,
-      ei: periods.length + w - 1,
-      s: last.e + 1,
-      e: last.e + w,
-      len: 0,
-      c: 0,
-      rate: 0,
-      future: true
-    };
-  }
+
 
   function countInSeg(tail, a, b) {
     var c = 0;
@@ -189,50 +156,11 @@
     });
   }
 
-  function segColorClass(rate) {
-    if (rate >= 0.7) return "seg-hot";
-    if (rate >= 0.6) return "seg-warm";
-    if (rate >= 0.5) return "seg-norm";
-    if (rate >= 0.4) return "seg-cool";
-    if (rate >= 0.3) return "seg-cold";
-    return "seg-ice";
-  }
 
-  function segTextLabel(rate) {
-    if (rate >= 0.7) return "热";
-    if (rate >= 0.6) return "暖";
-    if (rate >= 0.5) return "平";
-    if (rate >= 0.4) return "凉";
-    if (rate >= 0.3) return "冷";
-    return "冰";
-  }
 
-  function segStats(tail, w) {
-    var arr = tailSegs(tail, w);
-    if (!arr.length) return null;
-    var max = -Infinity, min = Infinity, sum = 0;
-    var maxC = 0, minC = 0;
-    var labels = {};
-    arr.forEach(function (e) {
-      var r = e.rate;
-      if (r > max) { max = r; maxC = e.c; }
-      if (r < min) { min = r; minC = e.c; }
-      sum += r;
-      var l = segTextLabel(r);
-      labels[l] = (labels[l] || 0) + 1;
-    });
-    var most = "", mostCnt = 0;
-    Object.keys(labels).forEach(function (l) {
-      if (labels[l] > mostCnt) { most = l; mostCnt = labels[l]; }
-    });
-    var range = max - min;
-    var rangeLabel = range >= 50 ? "大" : range >= 30 ? "中" : "小";
-    return {
-      max: max, min: min, maxC: maxC, minC: minC, avg: sum / arr.length, most: most, mostCnt: mostCnt,
-      total: arr.length, range: range, rangeLabel: rangeLabel,
-      rule: "最高" + maxC + "/" + w + " 最低" + minC + "/" + w + " 最频" + most + "(" + mostCnt + "/" + arr.length + ")"
-    };
-  }
+
+
+
 
   function segStatus(cnt, w) {
     if (w <= 7) {
@@ -276,14 +204,7 @@
     };
   }
 
-  function missRunAt(tail, upto) {
-    var run = 0;
-    for (var i = upto; i >= 0; i--) {
-      if (hit(periods[i], tail)) break;
-      run++;
-    }
-    return run;
-  }
+
 
   var CN = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
 
@@ -321,16 +242,7 @@
 
   var MISS_INFO = buildMissInfo();
 
-  function statusOf(rate, w) {
-    if (w <= 7) {
-      if (rate <= 0.2) return "冷";
-      if (rate >= 0.7) return "热";
-      return "中";
-    }
-    if (rate <= 0.33) return "冷";
-    if (rate >= 0.66) return "热";
-    return "中";
-  }
+
 
   function rateAt(tail, uptoIndex, w) {
     if (uptoIndex < w - 1) return null;
@@ -413,11 +325,7 @@
   var view = document.getElementById("view");
   var tabsEl = document.getElementById("tabs");
 
-  function el(html) {
-    var t = document.createElement("template");
-    t.innerHTML = html.trim();
-    return t.content.firstElementChild;
-  }
+
 
   function pct(x, digits) {
     return (x * 100).toFixed(digits == null ? 1 : digits) + "%";
@@ -468,7 +376,7 @@
 
   function getConfiguredGroups() {
     var saved = lsGet(NAV_GROUP_ORDER_KEY, null);
-    var defaultIds = NAV_GROUPS.map(function (g) { return g.id; });
+
     if (!Array.isArray(saved) || !saved.length) return NAV_GROUPS.slice();
     var seen = {};
     var result = [];
@@ -536,9 +444,7 @@
     return getOrderedAllTabs().filter(function (t) { return pageGroups[t.id] === group.id; });
   }
 
-  function saveTabOrder(tabs) {
-    lsSet(TAB_ORDER_KEY, tabs.map(function (t) { return t.id; }));
-  }
+
 
   function saveTabOrderIds(ids) {
     lsSet(TAB_ORDER_KEY, ids);
@@ -1053,37 +959,9 @@
     });
   }
 
-  function promoteSectionToTop(title, anchorIds) {
-    var anchor = null;
-    for (var ai = 0; ai < anchorIds.length; ai++) {
-      anchor = view.querySelector("#" + anchorIds[ai]);
-      if (anchor) break;
-    }
-    if (!anchor || anchor.parentNode !== view) return;
-    var sections = view.querySelectorAll(".section");
-    for (var si = 0; si < sections.length; si++) {
-      var heading = sections[si].querySelector(".section__title");
-      if (heading && heading.textContent.indexOf(title) >= 0) {
-        view.insertBefore(sections[si], anchor.nextSibling);
-        sections[si].style.borderTop = "3px solid #2563eb";
-        sections[si].style.paddingTop = "8px";
-        break;
-      }
-    }
-  }
 
-  function moveSectionBeforeAnchor(title, anchorId) {
-    var anchor = view.querySelector("#" + anchorId);
-    if (!anchor || anchor.parentNode !== view) return;
-    var sections = view.querySelectorAll(".section");
-    for (var i = 0; i < sections.length; i++) {
-      var heading = sections[i].querySelector(".section__title");
-      if (heading && heading.textContent.indexOf(title) >= 0) {
-        view.insertBefore(sections[i], anchor);
-        break;
-      }
-    }
-  }
+
+
 
   function modelPairStrip(period) {
     if (!PROB_MODEL || !PROB_MODEL.analyze) return "";
@@ -1104,17 +982,9 @@
     document.getElementById("latestTails").textContent = "尾 " + tailsOf(latest).join(" ");
   }
 
-  function tabLabelById(tabId) {
-    for (var i = 0; i < TABS.length; i++) {
-      if (TABS[i].id === tabId) return TABS[i].label;
-    }
-    return tabId;
-  }
 
-  function groupLabelById(groupId) {
-    var group = groupById(groupId);
-    return group ? group.label : groupId;
-  }
+
+
 
   function rememberGroup(groupId) {
     if (!groupId) return;
@@ -1175,18 +1045,7 @@
     return tabs[index + delta] || null;
   }
 
-  function stepWindowMultView(delta) {
-    var views = ["overview", "windows", "personality", "formula", "years"];
-    var index = views.indexOf(state.windowMultView);
-    if (index < 0) index = 0;
-    var next = index + delta;
-    if (next < 0 || next >= views.length) {
-      stepTabHistory(delta);
-      return;
-    }
-    state.windowMultView = views[next];
-    renderWindowMultiplierTest();
-  }
+
 
   // 在13线按钮上左右滑动即可翻到上一条/下一条线，到两端循环
   function stepWindowMultLine(delta) {
@@ -1817,28 +1676,7 @@
     var html = "";
     html += pageGuideHTML();
 
-    var pageGuides = {
-      overview: ["总览", "查看最新开奖、页面说明和每日操作顺序。", "每天打开小程序时先看。"],
-      pick3: ["动态概率", "每期动态计算10个尾号的下一期概率、三期出现概率、当前遗漏和连出状态；旧D1/D2硬排序不再参与推荐。", "查看每期概率排序和影子验证时看。"],
-      betexec: ["下注执行表", "原来的执行提示和资金调度已并入本页：一条节奏链条走完（① 线方向 ② 窗口选号 ③ 第几期定轻重），含选号参考表、今日规划和逐线对错滚动记录。", "决定今天下不下、每条线下多少时看这一页就够了。"],
-      formulas: ["公式表", "展示13条线的阶段系数、训练/验证结果和最终下注公式，不预测号码。", "核查每条线下注公式是否通过历史验证时看。"],
-      windowmult: ["13线规律中心", "13条线各自的数据规律与窗口性格：逐条列出每个窗口第1/2/3期命中或全错，比较跨窗口1.5倍、2倍、2.5倍、3倍后的收益、回撤和最大倍率，并按窗口给出性格与重投/倍投参考建议。", "检查13条线规律、性格和资金风险时看。"],
-      orderlog: ["追三期下单", "手动记录下单并自动结算，不读取模型自动改号。", "决定下单后使用。"],
-      segments: ["分段对比", "按时间段对比开奖和模型表现。", "复盘阶段表现时看。"],
-      missorder: ["遗漏排序", "按最近遗漏满3期的顺序查看尾号开奖；页面附全部历史的遗漏滚动记录和连出滚动记录。", "找遗漏结构、查看遗漏和连出全历史时看。"],
-      parity: ["单双热图", "单数在左、双数在右，查看逐期开出和遗漏。", "观察单双分布时看。"],
-      trend: ["遗漏热图", "逐期查看尾数开出、遗漏深度和滚动开出率；页面底部附全部历史的遗漏滚动记录和连出滚动记录。", "复盘走势时看。"],
-      zodtrend: ["生肖走势", "按年份查看生肖开出趋势。", "看生肖长期走势时看。"],
-      zodwindow: ["生肖窗口", "按窗口统计生肖热度、遗漏和连出。", "看生肖短中期窗口时看。"],
-      zodmonitor: ["生肖遗漏", "查看生肖当前遗漏、历史最大和最近15次遗漏。", "监控生肖遗漏时看。"],
-      personality: ["尾号性格", "查看每个尾号的遗漏、反弹和连出统计。", "研究单个尾号性格时看。"],
-      datarecord: ["三期规律", "查看三期组合和规律记录。", "研究三期组合时看。"],
-      tails: ["冷热分析", "按窗口比较尾号实际开出率与理论基准。", "判断冷热偏离时看。"],
-      windowk: ["窗口走势", "按不同窗口查看尾号走势变化。", "比较窗口表现时看。"],
-      zodrecords: ["生肖开奖", "按年份查看生肖开奖记录。", "查生肖历史开奖时看。"],
-      backtest: ["策略回测", "查看样本、命中、基准、置信区间和结论。", "检验策略效果时看。"],
-      numtrend: ["号码走势", "按号码查看历史走势和期数变化。", "查看号码级走势时看。"]
-    };
+
     html += '<div class="section">';
     html += '<div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + latest + "</div><div class=\"stat__label\">最新期数</div></div>";
@@ -2180,12 +2018,7 @@
     return html;
   }
 
-  function lastOpenIdx(tail) {
-    for (var i = periods.length - 1; i >= 0; i--) {
-      if (hit(periods[i], tail)) return i;
-    }
-    return -1;
-  }
+
 
   function yearChipsHTML(selectedYear, attrName) {
     var html = '<div class="chips page-year-chips" style="margin-bottom:8px">';
@@ -2285,7 +2118,7 @@
     var year = DATA_YEARS.indexOf(Number(state.missOrderYear)) >= 0 ? Number(state.missOrderYear) : DATA_YEARS[0];
     state.missOrderYear = year;
     var rows = D.filter(function (row) { return Number(row.y) === year; });
-    var periodsOfYear = rows.map(function (row) { return Number(row.p); });
+
     var order = missOrderTailsForRows(rows);
     var missInfo = buildMissInfoForRows(rows);
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏排序热图 · ' + year + '年</h2><span class="section__hint">每年独立排序 · 按该年最近遗漏满3期排序，最新放最后</span></div>';
@@ -2612,76 +2445,7 @@
     host.innerHTML = '<div style="position:relative;width:100%;height:180px">' + svg + markers + "</div>";
   }
 
-  function drawPeriodChart(host, tail, w, count) {
-    if (!host) return;
-    var start = Math.max(0, periods.length - count);
-    var firstP = periods[start];
-    var chartEnd = periods[periods.length - 1];
-    var segStart = Math.floor((firstP - 1) / w) * w + 1;
-    var labels = [], values = [], score = 0;
-    for (var p = segStart; p <= chartEnd; p++) {
-      score += hit(p, tail) ? 1 : -1;
-      if (p >= firstP) {
-        values.push(score);
-        labels.push(p);
-      }
-    }
 
-    var width = 640, height = 180;
-    var padL = 34, padR = 8, padT = 10, padB = 20;
-    var plotW = width - padL - padR;
-    var plotH = height - padT - padB;
-    var maxV = w;
-
-    function yOf(v) { return padT + (w - v) / (2 * w) * plotH; }
-
-    var pts = values.map(function (v, idx) {
-      var x = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
-      return x.toFixed(1) + "," + yOf(v).toFixed(1);
-    }).join(" ");
-
-    var grid = "", ylabels = "";
-    [-w, 0, w].forEach(function (level) {
-      var gy = yOf(level);
-      var isZero = level === 0;
-      grid += '<line x1="' + padL + '" y1="' + gy.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + gy.toFixed(1) + '" stroke="' + (isZero ? "#9aa1ab" : "#eef0f2") + '" stroke-width="' + (isZero ? 1.5 : 1) + '"/>';
-      ylabels += '<text x="' + (padL - 5) + '" y="' + (gy + 3).toFixed(1) + '" font-size="9" fill="#9aa1ab" text-anchor="end">' + (level > 0 ? "+" : "") + level + "</text>";
-    });
-
-    var xlabels = "";
-    var chartStartP = labels[0];
-    var chartEndP = labels[labels.length - 1];
-    var segs = [];
-    for (var ss = chartStartP; ss <= chartEndP; ss += w) {
-      segs.push({ s: ss, e: Math.min(ss + w - 1, chartEndP) });
-    }
-    var step = Math.max(1, Math.ceil(segs.length / 6));
-    var tickMap = {};
-    for (var si = 0; si < segs.length; si += step) {
-      var seg = segs[si];
-      var idx = seg.e - chartStartP;
-      if (idx < 0 || idx >= labels.length) continue;
-      var lx = padL + (values.length === 1 ? 0 : idx / (values.length - 1) * plotW);
-      grid += '<line x1="' + lx.toFixed(1) + '" y1="' + padT + '" x2="' + lx.toFixed(1) + '" y2="' + (padT + plotH) + '" stroke="#f1f3f5" stroke-width="1"/>';
-      xlabels += '<text x="' + lx.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + seg.s + "~" + seg.e + "</text>";
-      tickMap[idx] = true;
-    }
-    var lastSeg = segs[segs.length - 1];
-    var lastIdx = lastSeg.e - chartStartP;
-    if (!tickMap[lastIdx]) {
-      var lx2 = padL + (values.length === 1 ? 0 : lastIdx / (values.length - 1) * plotW);
-      xlabels += '<text x="' + lx2.toFixed(1) + '" y="' + (height - 4) + '" font-size="9" fill="#9aa1ab" text-anchor="middle">' + lastSeg.s + "~" + lastSeg.e + "</text>";
-    }
-
-    var svg = '<svg viewBox="0 0 ' + width + " " + height + '" preserveAspectRatio="none" style="width:100%;height:180px">' +
-      grid +
-      '<polyline points="' + pts + '" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
-      '<text x="' + padL + '" y="9" font-size="9" fill="#9aa1ab">尾 ' + tail + " " + w + "期每期浮动</text>" +
-      ylabels +
-      xlabels +
-      "</svg>";
-    host.innerHTML = svg;
-  }
 
   function renderWindowK() {
     var w = state.windowK || 10;
@@ -2878,7 +2642,7 @@
       html += '<td class="' + cls + '">' + verdict + "</td></tr>";
     });
     html += "</tbody></table></div></div></div>";
-    
+
     // 添加当前信号板块
     var currentIdx = periods.length - 1;
     var currentPeriod = periods[currentIdx];
@@ -2889,10 +2653,10 @@
       if (missedRun(t, currentIdx, 2)) miss2Tails.push(t);
       if (missedRun(t, currentIdx, 3)) miss3Tails.push(t);
     }
-    
+
     html += '<div class="section"><div class="section__head"><h2 class="section__title">当前信号</h2><span class="section__hint">第' + currentPeriod + '期后触发信号的尾数</span></div>';
     html += '<div class="panel"><div class="panel__body">';
-    
+
     // 热号信号
     html += '<div style="margin-bottom:12px"><b style="color:#dc2626">🔥 热号信号（近15期≥10次）</b>';
     if (hotTails.length > 0) {
@@ -2903,7 +2667,7 @@
       html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
     }
     html += '</div>';
-    
+
     // 冷号信号
     html += '<div style="margin-bottom:12px"><b style="color:#2563eb">❄️ 冷号信号（近15期≤5次）</b>';
     if (coldTails.length > 0) {
@@ -2914,7 +2678,7 @@
       html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
     }
     html += '</div>';
-    
+
     // 遗漏2期信号
     html += '<div style="margin-bottom:12px"><b style="color:#ea580c">⏰ 遗漏≥2期信号</b>';
     if (miss2Tails.length > 0) {
@@ -2925,7 +2689,7 @@
       html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
     }
     html += '</div>';
-    
+
     // 遗漏3期信号
     html += '<div style="margin-bottom:0"><b style="color:#7c3aed">⏰ 遗漏≥3期信号</b>';
     if (miss3Tails.length > 0) {
@@ -2936,157 +2700,23 @@
       html += '<div style="margin-top:6px;color:#999">无触发尾数</div>';
     }
     html += '</div>';
-    
+
     html += '</div></div></div>';
-    
+
     html += '<p class="disclaimer">结论依据真实命中率的Wilson 95%区间：区间整体高于理论基准才算有优势，整体低于基准才算偏弱；区间跨过基准时不能判定有优势。样本少于30期统一显示样本不足。</p>';
     view.innerHTML = html;
   }
 
-  function renderSegHistory(w, tails, segCount) {
-    var allSegs = segsOf(w);
-    var tailMap = {};
-    tails.forEach(function (t) { tailMap[t] = tailSegs(t, w); });
-    var viewSegs = (segCount > 0 && segCount < allSegs.length) ? allSegs.slice(-segCount) : allSegs;
-    var nextSeg = futureSegment(w, allSegs);
-    if (nextSeg) viewSegs.push(nextSeg);
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">历史分段</h2><span class="section__hint">第 ' + allSegs[0].s + '-' + allSegs[allSegs.length - 1].e + " 期 · 共 " + allSegs.length + " 段</span></div>";
 
-    html += '<div class="chips" style="margin-bottom:8px">';
-    [[0, "全部"], [20, "近20段"], [15, "近15段"], [10, "近10段"], [8, "近8段"]].forEach(function (opt) {
-      html += '<button class="chip ' + (segCount === opt[0] ? "is-active" : "") + '" data-segcount="' + opt[0] + '">' + opt[1] + "</button>";
-    });
-    html += "</div>";
 
-    html += '<div class="panel"><div class="panel__body seg-hist-scroll"><table class="seg-hist-table"><thead><tr><th class="seg-hist-label">段</th>';
-    tails.forEach(function (t) { html += "<th>尾" + t + "</th>"; });
-    html += "</tr></thead><tbody>";
 
-    viewSegs.forEach(function (seg) {
-      if (seg.future) {
-        html += '<tr><td class="seg-hist-label">' + seg.s + "-" + seg.e + "期</td>";
-        tails.forEach(function (t) {
-          var pr = predictSegmentCount(t, w);
-          html += '<td class="seg-hist-cell seg-ice"><span class="seg-hist-period">' + seg.s + '-' + seg.e + '期</span><span class="seg-hist-arrow">─</span><span class="seg-hist-rate">预估 ' + pr.pred.toFixed(1) + ' 次</span> <b>' + pr.method + '</b><br><b>样本 ' + pr.sample + ' · 0/' + w + '</b></td>';
-        });
-        html += "</tr>";
-        return;
-      }
-      var segIdx = allSegs.indexOf(seg);
-      html += '<tr><td class="seg-hist-label">' + seg.s + "-" + seg.e + "期</td>";
-      tails.forEach(function (t) {
-        var arr = tailMap[t];
-        var e = arr[segIdx];
-        if (!e) { html += "<td>-</td>"; return; }
 
-        var arrow = "", arrowColor = "#555";
-        if (segIdx > 0 && arr[segIdx - 1]) {
-          var prevRate = arr[segIdx - 1].rate;
-          if (e.rate > prevRate + 0.03) { arrow = "▲"; arrowColor = "#15803d"; }
-          else if (e.rate < prevRate - 0.03) { arrow = "▼"; arrowColor = "#b91c1c"; }
-          else { arrow = "─"; arrowColor = "#555"; }
-        }
-        var dot = hit(periods[e.ei], t) ? " ●" : "";
-        var arrowStyle = "color:" + arrowColor;
-        var cell = '<td class="seg-hist-cell ' + segColorClass(e.rate) + '">';
-        cell += '<span class="seg-hist-period">' + e.s + '-' + e.e + '期</span>';
-        cell += '<span class="seg-hist-arrow" style="' + arrowStyle + '">' + arrow + '</span>';
-        var shm = hitMissTxt(e.c, w);
-        cell += '<span class="seg-hist-rate" style="color:' + shm.color + '">' + shm.txt + '</span> <b>' + segTextLabel(e.rate) + '</b><br><b>' + e.c + '/' + w + '</b>' + dot;
-        cell += '</td>';
-        html += cell;
-      });
-      html += "</tr>";
-    });
-
-    html += '</tbody><tfoot><tr class="seg-hist-summary"><td class="seg-hist-label">总数</td>';
-    tails.forEach(function (t) {
-      var totalHits = 0;
-      for (var i = 0; i < periods.length; i++) if (hit(periods[i], t)) totalHits++;
-      html += '<td>' + totalHits + "/" + periods.length + "</td>";
-    });
-    html += "</tr>";
-
-    html += '<tr class="seg-hist-summary"><td class="seg-hist-label">规律</td>';
-    tails.forEach(function (t) {
-      var s = segStats(t, w);
-      html += "<td>" + (s ? s.rule : "-") + "</td>";
-    });
-    html += "</tr>";
-
-    html += '<tr class="seg-hist-summary"><td class="seg-hist-label">波动</td>';
-    tails.forEach(function (t) {
-      var s = segStats(t, w);
-      if (s) {
-        html += '<td>最高' + s.maxC + '/' + w + ' 最低' + s.minC + '/' + w + ' ' + s.rangeLabel + ' ' + s.most + '(' + s.mostCnt + '/' + s.total + ')</td>';
-      } else {
-        html += "<td>-</td>";
-      }
-    });
-    html += "</tr></tfoot></table></div></div></div>";
-
-    return html;
-  }
-
-  function renderWindowSummary() {
-    var windows = [5, 7, 10, 15, 21, 30];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口开出次数统计</h2><span class="section__hint">当前段与最近5段实际次数</span></div>';
-    html += '<div class="panel"><div class="panel__body window-summary-scroll"><table class="table window-summary-table"><thead><tr><th>尾数</th>';
-    windows.forEach(function (w) { html += '<th>' + w + "期</th>"; });
-    html += "</tr></thead><tbody>";
-    for (var t = 0; t < 10; t++) {
-      html += "<tr><td>尾" + t + "</td>";
-      windows.forEach(function (w) {
-        var arr = tailSegs(t, w);
-        var cur = arr[arr.length - 1];
-        var history = arr.slice(-6, -1).map(function (e) { return e.c + '/' + e.len; }).join(" · ");
-        html += '<td><div class="win-cur">' + cur.c + '/' + cur.len + '</div><div class="win-hist">' + history + "</div></td>";
-      });
-      html += "</tr>";
-    }
-    html += "</tbody></table></div></div></div>";
-    return html;
-  }
-
-  function renderFullWindowHistory(w) {
-    var allSegs = segsOf(w);
-    var tailMap = {};
-    for (var mapTail = 0; mapTail < 10; mapTail++) tailMap[mapTail] = tailSegs(mapTail, w);
-
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">全历史分段实际次数</h2><span class="section__hint">' + w + "期窗口 · 从第" + allSegs[0].s + "期到第" + allSegs[allSegs.length - 1].e + "期 · 共" + allSegs.length + "段</span></div>";
-    html += '<div class="panel"><div class="panel__body seg-hist-scroll"><table class="seg-hist-table full-hist-table"><thead><tr><th class="seg-hist-label">尾数</th>';
-    allSegs.forEach(function (seg) { html += '<th>' + seg.s + "~" + seg.e + "</th>"; });
-    html += "</tr></thead><tbody>";
-
-    for (var tailIndex = 0; tailIndex < 10; tailIndex++) {
-      var pr = predictSegmentCount(tailIndex, w);
-      var cur = tailMap[tailIndex][allSegs.length - 1];
-      var curRate = cur.c / cur.len;
-      var predRate = pr.pred / w;
-      var trendText, trendCls;
-      if (predRate - curRate >= 0.05) { trendText = "预计升温"; trendCls = "trend-up"; }
-      else if (curRate - predRate >= 0.05) { trendText = "预计降温"; trendCls = "trend-down"; }
-      else { trendText = "预计平稳"; trendCls = "trend-flat"; }
-
-      html += '<tr><td class="seg-hist-label">尾' + tailIndex + "</td>";
-      allSegs.forEach(function (seg, idx) {
-        var e = tailMap[tailIndex][idx];
-        var cell = '<td class="seg-hist-cell ' + (e ? segColorClass(e.rate) : "") + '">' + (e ? e.c : "-");
-        if (idx === allSegs.length - 1) cell += '<div class="full-hist-trend ' + trendCls + '">' + trendText + "</div>";
-        html += cell + "</td>";
-      });
-      html += "</tr>";
-    }
-
-    html += "</tbody></table></div></div></div>";
-    return html;
-  }
 
   function renderSegments() {
     var w = state.segWindow;
     var segs = segsOf(w);
-    
+
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">分段对比</h2><span class="section__hint">共' + segs.length + '段 · 横向滑动查看</span></div>';
     html += '<div class="chips" style="margin-bottom:12px">';
     [5, 7, 10, 15, 21, 30].forEach(function(n) {
@@ -3098,14 +2728,11 @@
       html += '<th style="text-align:center;min-width:52px">第' + (idx+1) + '段<br><span style="font-size:10px;color:#999">' + seg.s + '-' + seg.e + '期</span></th>';
     });
     html += '<th style="text-align:center;position:sticky;right:0;background:#fff;z-index:2;min-width:50px">预估</th></tr></thead><tbody>';
-    
+
     for (var t = 0; t < 10; t++) {
       html += '<tr><td style="position:sticky;left:0;background:#fff;z-index:1"><b>尾' + t + '</b></td>';
-      var firstCount = 0, lastCount = 0;
       segs.forEach(function(seg, idx) {
         var c = countInSeg(t, seg.si, seg.ei);
-        if (idx === 0) firstCount = c;
-        if (idx === segs.length - 1) lastCount = c;
         var hotThresh = Math.ceil(seg.len * 0.6);
         var coldThresh = Math.floor(seg.len * 0.2);
         var color = c >= hotThresh ? '#16a34a' : c > coldThresh ? '#6b7280' : c > 0 ? '#eab308' : '#dc2626';
@@ -3137,18 +2764,7 @@
   var ULT_ORDER_KEY = "v2_ultimate_order_log";
   var SIMPLE_ORDER_KEY = "v2_simple_order_log";
   var SIMPLE_WINDOW_KEY = "v2_simple_order_windows";
-  var HINT_PLANS = {
-    0: [0, 500, 0],
-    1: [0, 500, 500],
-    2: [500, 500, 0],
-    3: [0, 500, 0],
-    4: [0, 500, 500],
-    5: [0, 500, 500],
-    6: [0, 500, 500],
-    7: [0, 500, 500],
-    8: [0, 500, 0],
-    9: [500, 500, 0],
-  };
+
   var EXEC_LINES = [
     { id: "tail0", label: "尾0", kind: "tail", tail: 0, plan: [0, 0, 0] },
     { id: "tail1", label: "尾1", kind: "tail", tail: 1, plan: [100, 200, 400] },
@@ -3185,11 +2801,7 @@
     prob2: { formula: "影子观察", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
     prob3: { formula: "影子观察", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
   };
-  var ORDER_PATTERNS = {
-    P6: [1, 1.25, 2.8125],
-    P7: [1, 1.5, 3.375],
-    P8: [1, 3, 9]
-  };
+
 
   function ultimateOrdersLoad() {
     var rows = lsGet(ULT_ORDER_KEY, []);
@@ -3234,24 +2846,9 @@
     return rows;
   }
 
-  function ultimateOrderNet(row) {
-    var stakes = ORDER_PATTERNS[row.pattern];
-    if (!stakes) return 0;
-    var base = Number(row.base || 1);
-    if (row.result === "hit1") return +(base * 0.8 * stakes[0]).toFixed(2);
-    if (row.result === "hit2") return +(base * (1.8 * stakes[1] - stakes[0] - stakes[1])).toFixed(2);
-    if (row.result === "hit3") return +(base * (1.8 * stakes[2] - stakes[0] - stakes[1] - stakes[2])).toFixed(2);
-    if (row.result === "miss") return +(-base * (stakes[0] + stakes[1] + stakes[2])).toFixed(2);
-    return null;
-  }
 
-  function ultimateResultLabel(result) {
-    if (result === "hit1") return "第1期中";
-    if (result === "hit2") return "第2期中";
-    if (result === "hit3") return "第3期中";
-    if (result === "miss") return "三期全错";
-    return "待开奖";
-  }
+
+
 
   function simpleOrdersLoad() {
     var rows = lsGet(SIMPLE_ORDER_KEY, []);
@@ -4655,14 +4252,7 @@
     return rows[0] || null;
   }
 
-  function wmAttemptCell(w, index) {
-    if (index >= w.attempts.length) {
-      return '<span style="color:#94a3b8">命中后停止</span>';
-    }
-    var item = w.attempts[index];
-    var color = item.hit ? "#16a34a" : "#dc2626";
-    return '<div style="font-size:10px;color:#64748b">' + wmPeriodLabel(item.period) + '</div>尾<b style="font-size:16px">' + item.tail + '</b><b style="color:' + color + ';margin-left:4px">' + (item.hit ? "中" : "错") + '</b>';
-  }
+
 
   function renderWindowMultiplierTest() {
     var line = null;
@@ -5352,61 +4942,11 @@
     view.innerHTML = html;
   }
 
-  function hitLogSectionHTML(mode) {
-    var rows = ultimateOrdersLoad().filter(function (row) {
-      return row.mode === mode && (row.result === "hit1" || row.result === "hit2" || row.result === "hit3");
-    });
-    var hit1 = rows.filter(function (r) { return r.result === "hit1"; }).length;
-    var hit2 = rows.filter(function (r) { return r.result === "hit2"; }).length;
-    var hit3 = rows.filter(function (r) { return r.result === "hit3"; }).length;
-    var net = rows.reduce(function (sum, r) { return sum + (ultimateOrderNet(r) || 0); }, 0);
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">追中记录</h2><span class="section__hint">' + (mode === "recommend" ? "追推荐模式" : "追号模式") + ' · 只显示命中记录 · 明确标记第几期中</span></div></div>';
-    html += '<div class="section"><div class="grid-2">';
-    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + rows.length + '</div><div class="stat__label">追中总数</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + hit1 + '</div><div class="stat__label">第1期中</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + hit2 + '</div><div class="stat__label">第2期中</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + hit3 + '</div><div class="stat__label">第3期中</div></div>';
-    html += '</div></div>';
-    html += '<div class="section"><div class="grid-2">';
-    html += '<div class="stat"><div class="stat__value" style="color:' + (net >= 0 ? "#16a34a" : "#dc2626") + '">' + (net >= 0 ? "+" : "") + net.toFixed(2) + '</div><div class="stat__label">命中记录净收益（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + (rows.length ? ((hit1 / rows.length * 100).toFixed(1) + "%") : "-") + '</div><div class="stat__label">第1期直接命中占比</div></div>';
-    html += '</div></div>';
-
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="min-width:790px">';
-    html += '<div style="display:grid;grid-template-columns:1.1fr .7fr .6fr .6fr .55fr 1.1fr 1fr .7fr .7fr;gap:6px;padding:7px;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;color:#6b7280">';
-    html += '<span>时间</span><span>模式</span><span>位置</span><span>起始期</span><span>尾号</span><span>倍投</span><span>中在第几期</span><span>结算期</span><span>净收益</span></div>';
-    if (!rows.length) {
-      html += '<div style="padding:18px;text-align:center;color:#9ca3af;font-size:12px">暂无追中记录</div>';
-    } else {
-      rows.slice().sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); }).forEach(function (row) {
-        var hitIndex = row.result === "hit1" ? 1 : row.result === "hit2" ? 2 : 3;
-        var value = ultimateOrderNet(row);
-        html += '<div style="display:grid;grid-template-columns:1.1fr .7fr .6fr .6fr .55fr 1.1fr 1fr .7fr .7fr;gap:6px;padding:8px 7px;border-bottom:1px solid #f0f0f0;font-size:12px;align-items:center">';
-        html += '<span>' + (row.createdAt || "").replace("T", " ").slice(0, 16) + '</span>';
-        html += '<span>' + (row.mode === "recommend" ? "追推荐" : "追号") + '</span>';
-        html += '<span>' + row.position + '</span>';
-        html += '<span>' + row.startPeriod + '</span>';
-        html += '<span>尾' + row.tail + '</span>';
-        html += '<span>' + (ORDER_PATTERNS[row.pattern] || []).join("/") + '</span>';
-        html += '<span style="color:#16a34a;font-weight:800">第' + hitIndex + '期中</span>';
-        html += '<span>' + (Number(row.startPeriod) + hitIndex - 1) + '</span>';
-        html += '<span style="color:' + (value >= 0 ? "#16a34a" : "#dc2626") + '">' + (value >= 0 ? "+" : "") + value.toFixed(2) + '</span>';
-        html += '</div>';
-      });
-    }
-    html += '</div></div></div></div>';
-    html += '<p class="disclaimer">追中记录只读取“追三期下单”中已标记为第1期、第2期或第3期命中的记录；未命中和待开奖记录不会显示在这里。</p>';
-    return html;
-  }
 
   // ===== 预估三层框架 + 下期推荐 =====
   // ===== 动态概率页面（连出惯性分层打分，每期推2个号，避尾0）=====
-  function pickTopAt(cur, k) {
-    return MODEL.pickTopAt(cur, k);
-  }
+
 
   function buildRealtimeSnapshotRateHTML(config) {
     var groups = Array.isArray(config.groups) ? config.groups : [{
@@ -5580,67 +5120,27 @@
     var options = { startPeriod: 31 };
     var isRecommendMode = mode === "recommend";
     var modeLabel = isRecommendMode ? "三期内追推荐" : "三期内追号码";
-    var modeHint = isRecommendMode ? "三期内追推荐 · 每期采用当期最新推荐 · 优先展示真实快照" : "锁定一个推荐号码固定追3期 · 同一时间只跑一条线";
+
     autoSettleUltimateOrders();
     var analysis = UM.analyze(RAW, MODEL, options);
-    var strategyResult = isRecommendMode
-      ? UM.runRecommendationBacktest(RAW, MODEL, options)
-      : UM.runStrategyBacktest(RAW, MODEL, options);
-    var fixedP6 = isRecommendMode
-      ? UM.runOverlappingBacktest(RAW, MODEL, "P6", options)
-      : UM.runFixedBacktest(RAW, MODEL, "P6", options);
-    var fixedP7 = isRecommendMode
-      ? UM.runOverlappingBacktest(RAW, MODEL, "P7", options)
-      : UM.runFixedBacktest(RAW, MODEL, "P7", options);
-    var fixedP8 = isRecommendMode
-      ? UM.runOverlappingBacktest(RAW, MODEL, "P8", options)
-      : UM.runFixedBacktest(RAW, MODEL, "P8", options);
-    var stateColor = { veryStrong: "#b91c1c", strong: "#16a34a", steady: "#2563eb", weak: "#dc2626", sample: "#6b7280" };
+
+
+
+
+
 
     function pctFmt(x) {
       if (x == null) return "-";
       return (x * 100).toFixed(1) + "%";
     }
 
-    function numFmt(x) {
-      return Number(x || 0).toFixed(2);
-    }
 
-    function actionText(item) {
-      var state = item.monitor;
-      if (!item.currentPick) return "无信号";
-      if (!state.pattern) return "观望";
-      return state.pattern + " " + UM.PATTERNS[state.pattern].label;
-    }
 
-    function nextCandidates() {
-      var out = [];
-      if (analysis.endPeriod == null) return out;
-      var prediction = MODEL.buildPrediction(analysis.endPeriod);
-      var picks = prediction.doubleRecommendation || [];
-      UM.KEYS.forEach(function (key, index) {
-        var item = analysis.items[key];
-        var pick = picks[index];
-        if (!item || !pick) return;
-        out.push({
-          key: key,
-          label: item.label,
-          pick: pick,
-          monitor: item.monitor
-        });
-      });
-      return out;
-    }
 
-    function rankedCandidates(candidates) {
-      return candidates.slice().sort(function (a, b) {
-        var aActive = a.monitor.pattern ? 1 : 0;
-        var bActive = b.monitor.pattern ? 1 : 0;
-        if (aActive !== bActive) return bActive - aActive;
-        if (b.monitor.score !== a.monitor.score) return b.monitor.score - a.monitor.score;
-        return UM.KEYS.indexOf(a.key) - UM.KEYS.indexOf(b.key);
-      });
-    }
+
+
+
+
 
     var gateAction = "未加载";
     var gateBlocked = true;
@@ -5689,12 +5189,11 @@
     for (var exi = 0; exi < sourceRows.length; exi++) {
       if (sourceRows[exi].key === executeKey && sourceRows[exi].pick) executePick = sourceRows[exi].pick;
     }
-    var executeLabel = gateAction === "跟双号" ? "双号 D1" : "";
+
     if (!gateBlocked && !executePick) {
       gateBlocked = true;
       gateAction = "观望";
       executeKey = null;
-      executeLabel = "";
     }
     var windowProgressText = "";
     if (isRecommendMode) {
@@ -5892,155 +5391,21 @@
     view.innerHTML = html;
   }
 
-  var selectorHistoryFilter = "ALL";
+
 
   function renderChaseNumber() {
     renderUltimateMode(state.ultimateMode === "recommend" ? "recommend" : "number");
   }
 
-  function renderChaseRecommendation() {
-    renderUltimateMode("recommend");
-  }
 
-  function streamStreakSnapshot(rows, stream) {
-    var hitStreak = 0, missStreak = 0;
-    var maxHit = 0, maxMiss = 0;
-    var hitRun = 0, missRun = 0;
-    var recent = [];
-    rows.forEach(function (row) {
-      var pick = row[stream];
-      if (!pick) return;
-      recent.push(pick.hit ? 1 : 0);
-      if (recent.length > 20) recent.shift();
-      if (pick.hit) {
-        hitRun++;
-        missRun = 0;
-      } else {
-        missRun++;
-        hitRun = 0;
-      }
-      if (hitRun > maxHit) maxHit = hitRun;
-      if (missRun > maxMiss) maxMiss = missRun;
-    });
-    for (var i = rows.length - 1; i >= 0; i--) {
-      var item = rows[i][stream];
-      if (!item) continue;
-      if (item.hit) {
-        if (missStreak) break;
-        hitStreak++;
-      } else {
-        if (hitStreak) break;
-        missStreak++;
-      }
-    }
-    var recentHits = recent.reduce(function (a, b) { return a + b; }, 0);
-    return {
-      hitStreak: hitStreak,
-      missStreak: missStreak,
-      maxHit: maxHit,
-      maxMiss: maxMiss,
-      recent20: recent.length ? recentHits / recent.length : 0
-    };
-  }
 
-  function streakRiskState(snapshot) {
-    var hs = snapshot.hitStreak || 0;
-    var ms = snapshot.missStreak || 0;
-    if (hs >= 8 || ms >= 6) {
-      return {
-        key: "red",
-        label: "红色",
-        color: "#b91c1c",
-        bg: "#fef2f2",
-        border: "#fecaca",
-        text: hs >= 8 ? "连中" + hs + "期，进入历史深水区" : "连错" + ms + "期，进入历史深水区"
-      };
-    }
-    if (hs >= 5 || ms >= 3) {
-      return {
-        key: "orange",
-        label: "橙色",
-        color: "#c2410c",
-        bg: "#fff7ed",
-        border: "#fed7aa",
-        text: hs >= 5 ? "连中" + hs + "期，明显偏热" : "连错" + ms + "期，明显偏弱"
-      };
-    }
-    if (hs >= 3 || ms >= 2) {
-      return {
-        key: "yellow",
-        label: "黄色",
-        color: "#a16207",
-        bg: "#fffbeb",
-        border: "#fde68a",
-        text: hs >= 3 ? "连中" + hs + "期，开始偏热" : "连错" + ms + "期，开始偏弱"
-      };
-    }
-    return {
-      key: "green",
-      label: "绿色",
-      color: "#15803d",
-      bg: "#f0fdf4",
-      border: "#bbf7d0",
-      text: hs > 0 ? "连中" + hs + "期，状态正常" : (ms > 0 ? "连错" + ms + "期，状态正常" : "当前状态正常")
-    };
-  }
 
-  function riskChipHtml(label, snapshot) {
-    var risk = streakRiskState(snapshot);
-    return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border:1px solid ' + risk.border +
-      ';border-radius:999px;background:' + risk.bg + ';color:' + risk.color + ';font-size:11px;font-weight:800">' +
-      label + " " + risk.label + "</span>";
-  }
 
-  function buildMissScrollHTML(records, options) {
-    options = options || {};
-    var fMiss = 0, sMiss = 0, fMax = 0, sMax = 0;
-    var missCells = [];
-    for (var ri = 0; ri < records.length; ri++) {
-      var q = records[ri] || {};
-      var picks = q.picks || [];
-      var actual = q.actual || [];
-      var fh = null, sh = null;
-      if (picks.length && actual.length && !q.live) fh = actual.indexOf(picks[0]) >= 0;
-      if (picks.length > 1 && actual.length && !q.live) sh = actual.indexOf(picks[1]) >= 0;
-      var c1, c2;
-      if (q.live) {
-        // 待开奖当期号码已确定，直接写尾号
-        c1 = (picks.length && picks[0] != null) ? '<span style="color:#2563eb">①尾' + picks[0] + '</span>' : '<span style="color:#2563eb">①待</span>';
-        c2 = (picks.length > 1 && picks[1] != null) ? '<span style="color:#2563eb">②尾' + picks[1] + '</span>' : '<span style="color:#2563eb">②待</span>';
-      } else if (fh === null) {
-        c1 = '<span style="color:#9ca3af">①空</span>';
-        c2 = '<span style="color:#9ca3af">②空</span>';
-      } else {
-        if (fh) { fMiss = 0; c1 = '<span style="color:#16a34a">①中</span>'; }
-        else { fMiss++; if (fMiss > fMax) fMax = fMiss; c1 = '<span style="color:#dc2626">①' + fMiss + '</span>'; }
-        if (sh !== null) {
-          if (sh) { sMiss = 0; c2 = '<span style="color:#16a34a">②中</span>'; }
-          else { sMiss++; if (sMiss > sMax) sMax = sMiss; c2 = '<span style="color:#dc2626">②' + sMiss + '</span>'; }
-        } else {
-          c2 = '<span style="color:#9ca3af">②空</span>';
-        }
-      }
-      missCells.push({ period: q.period, c1: c1, c2: c2 });
-    }
-    var hint = options.hint || ('①第一推荐 最高连错 ' + fMax + ' 期 · ②第二推荐 最高连错 ' + sMax +
-      ' 期 · 当前连错 ①' + fMiss + ' ②' + sMiss + ' · 横向滑动 · 新→旧');
-    var sectionId = options.id || "pick3MissScroll";
-    var html = '<div class="section" id="' + sectionId + '"><div class="section__head"><h2 class="section__title">连错遗漏记录</h2><span class="section__hint">' + hint + '</span></div></div>';
-    html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
-    html += '<div style="display:flex;gap:5px;min-width:max-content">';
-    for (var recordIndex = missCells.length - 1; recordIndex >= 0; recordIndex--) {
-      var record = missCells[recordIndex];
-      html += '<div style="min-width:54px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 3px;background:#fff">';
-      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:3px">' + record.period + '</div>';
-      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + record.c1 + '</div>';
-      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + record.c2 + '</div>';
-      html += '</div>';
-    }
-    html += '</div></div>';
-    return html;
-  }
+
+
+
+
+
 
   function runRecommendationWindowBacktest(raw, model, stream, options) {
     var S = window.CAISHEN_SELECTOR;
@@ -6243,317 +5608,7 @@
     view.innerHTML = modelPairStrip(latest + 1) + html;
   }
 
-  function renderPick3() {
-    var N = latest;
-    var top2 = pickTopAt(N, 2);
-    var riskRows = (window.CAISHEN_SELECTOR && window.CAISHEN_SELECTOR.buildSignals)
-      ? window.CAISHEN_SELECTOR.buildSignals(RAW, MODEL, { startPeriod: 31 })
-      : [];
-    var riskSnaps = {
-      D1: streamStreakSnapshot(riskRows, "D1"),
-      D2: streamStreakSnapshot(riskRows, "D2")
-    };
 
-    var hist = [], cum = 0, peak = 0, maxDD = 0;
-    var actDays = 0, tHits = 0, tPicks = 0;
-    var d0 = 0, d1 = 0, d2 = 0;
-    for (var cur = 1; cur <= N - 1; cur++) {
-      var sel = pickTopAt(cur, 2);
-      var actual = tailsOf(cur + 1);
-      if (!sel.length) {
-        hist.push({ period: cur + 1, picks: [], sig: [], actual: actual, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: false });
-        continue;
-      }
-      var h = 0;
-      for (var i = 0; i < sel.length; i++) if (actual.indexOf(sel[i].d) >= 0) h++;
-      actDays++; tPicks += sel.length; tHits += h;
-      if (h === 0) d0++; else if (h === 1) d1++; else d2++;
-      var pnl = +(h * 0.8 - (sel.length - h) * 1).toFixed(2);
-      cum = +(cum + pnl).toFixed(2);
-      if (cum > peak) peak = cum;
-      var dd = +(peak - cum).toFixed(2);
-      if (dd > maxDD) maxDD = dd;
-      hist.push({ period: cur + 1, picks: sel.map(function (c) { return c.d; }), sig: sel.map(function (c) { return c.tag; }), actual: actual, hits: h, pnl: pnl, cum: cum, dd: dd, live: false });
-    }
-    hist.push({ period: N + 1, picks: top2.map(function (c) { return c.d; }), sig: top2.map(function (c) { return c.tag; }), actual: null, hits: null, pnl: null, cum: cum, dd: +(peak - cum).toFixed(2), live: true });
-
-    var html = '<div class="section" id="pick3RecommendCard"><div class="section__head"><h2 class="section__title">动态概率</h2><span class="section__hint">连出惯性 · 预测第 ' + (N + 1) + ' 期 · 避尾0 · 每期推2号</span></div></div>';
-
-    html += '<div class="section"><div class="panel" style="padding:18px 14px">';
-    if (top2.length === 0) {
-      html += '<div class="empty">本期无满足信号的尾号，建议观望</div>';
-    } else {
-      html += '<div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;justify-content:center">';
-      top2.forEach(function (p, i) {
-        html += '<div style="text-align:center;min-width:96px">';
-        html += '<div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">' + (i === 0 ? '第一推荐' : '第二推荐') + '</div>';
-        html += '<div class="num" style="width:60px;height:60px;font-size:26px;font-weight:800">尾' + p.d + '</div>';
-        html += '<div style="margin-top:8px"><span class="chip">' + p.tag + '</span></div>';
-        html += '<div style="font-size:14px;color:#16a34a;font-weight:700;margin-top:6px">' + p.sc + ' 分 · ' + MODEL.gradeOf(p.sc) + '级</div>';
-        var riskKey = i === 0 ? "D1" : "D2";
-        var riskState = streakRiskState(riskSnaps[riskKey]);
-        html += '<div style="margin-top:7px">' + riskChipHtml(riskKey, riskSnaps[riskKey]) + '</div>';
-        html += '<div style="font-size:11px;color:' + riskState.color + ';margin-top:3px;font-weight:700">' + riskState.text + '</div>';
-        html += '</div>';
-      });
-      html += '</div>';
-    }
-    html += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:11px;color:var(--muted);text-align:center">预警：绿=正常 · 黄=连中3-4/连错2 · 橙=连中5-7/连错3-5 · 红=连中8+/连错6+</div>';
-    html += '</div></div>';
-
-    html += buildMissScrollHTML(hist, { id: "pick3MissScroll" });
-
-    var snapStats = window.APP_SNAPSHOTS || null;
-    if (snapStats && Array.isArray(snapStats.detail)) {
-      var firstSnapshotRows = [], secondSnapshotRows = [];
-      snapStats.detail.filter(function (rec) {
-        return rec && Number.isFinite(Number(rec.target));
-      }).forEach(function (rec) {
-        var target = Number(rec.target);
-        var picks = Array.isArray(rec.picks) ? rec.picks : [];
-        if (picks[0]) firstSnapshotRows.push({ period: target, hit: picks[0].hit === true });
-        if (picks[1]) secondSnapshotRows.push({ period: target, hit: picks[1].hit === true });
-      });
-      var doublePending = "第" + (N + 1) + "期";
-      html += buildRealtimeSnapshotRateHTML({
-        hint: "第一推荐 D1、第二推荐 D2 分别独立统计；单期只作诊断，正式战略成绩只看三期窗口命中，未开奖不计入",
-        groups: [
-          { label: "第一推荐 D1", rows: firstSnapshotRows, pendingText: doublePending, color: "#16a34a" },
-          { label: "第二推荐 D2", rows: secondSnapshotRows, pendingText: doublePending, color: "#2563eb" }
-        ]
-      });
-    }
-    function snapRate(nr, hr) {
-      return nr >= 20 ? (hr / nr * 100).toFixed(1) + '%' : '样本不足';
-    }
-    function snapTime(iso) {
-      return (iso || '').replace('T', ' ').slice(0, 16);
-    }
-    if (snapStats && snapStats.grades) {
-      var confTiers = [
-        { k: "S", label: "S级 &#8805;95.0", color: "#16a34a" },
-        { k: "A", label: "A级 93.5-94.99", color: "#65a30d" },
-        { k: "B", label: "B级 92.8-93.49", color: "#d97706" },
-        { k: "C", label: "C级 92.2-92.79", color: "#ea580c" },
-        { k: "D", label: "D级 <92.2", color: "#6b7280" }
-      ];
-      var gradeRecords = { S: [], A: [], B: [], C: [], D: [] };
-      (snapStats.detail || []).forEach(function (rec) {
-        (rec.picks || []).forEach(function (p) {
-          var g = p.grade;
-          if (gradeRecords[g]) {
-            gradeRecords[g].push({
-              target: rec.target,
-              tail: p.tail,
-              score: p.score,
-              actualTails: rec.actualTails || [],
-              hit: p.hit,
-              settledAt: rec.settledAt
-            });
-          }
-        });
-      });
-
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">五级强度 · 逐期对错</h2><span class="section__hint">真实快照账（开奖前保存·开奖后结算）· 每级累计摘要 + 逐期滚动记录（最新在上）· 样本≥20期才显示命中率</span></div></div>';
-      html += '<div class="section">';
-      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">';
-      confTiers.forEach(function (t) {
-        var st = snapStats.grades[t.k] || { single: { n: 0, hits: 0, miss: 0 } };
-        var missed = (st.single.miss != null) ? st.single.miss : (st.single.n - st.single.hits);
-        var sRate = snapRate(st.single.n, st.single.hits);
-        var recs = gradeRecords[t.k] || [];
-        html += '<div style="border:1px solid #e0e3e8;border-radius:10px;padding:12px;background:#fff;display:flex;flex-direction:column;min-width:0">';
-        html += '<div style="font-size:14px;font-weight:800;color:' + t.color + ';margin-bottom:6px">' + t.label + '</div>';
-        html += '<div style="font-size:12px;color:var(--muted);line-height:1.6">样本 <b>' + st.single.n + '</b> · 命中 <b>' + st.single.hits + '</b> · 未中 <b>' + missed + '</b></div>';
-        html += '<div style="font-size:12px;margin:2px 0 8px">单尾命中率 <b style="color:' + t.color + '">' + sRate + '</b></div>';
-        html += '<div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">逐期对错记录</div>';
-        html += '<div style="max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa">';
-        html += '<div style="position:sticky;top:0;background:#f3f4f6;padding:5px 8px;font-size:11px;font-weight:700;color:#6b7280;z-index:1;border-bottom:1px solid #e5e7eb">期 · 尾 · 分数 · 结果</div>';
-        if (!recs.length) {
-          html += '<div style="padding:14px 8px;font-size:11px;color:#9ca3af;text-align:center">暂无记录</div>';
-        } else {
-          for (var rr = recs.length - 1; rr >= 0; rr--) {
-            var rc = recs[rr];
-            html += '<div style="padding:6px 8px;border-bottom:1px solid #f0f0f0">';
-            html += '<div style="display:flex;align-items:center;gap:8px;font-size:11px;white-space:nowrap">';
-            html += '<span style="font-weight:700">第' + rc.target + '期</span>';
-            html += '<span class="num" style="width:26px;height:26px;font-size:14px;font-weight:800">' + rc.tail + '</span>';
-            html += '<span style="color:var(--muted)">' + rc.score + '分</span>';
-            html += '<span style="margin-left:auto;font-weight:700">' + (rc.hit ? '<span style="color:#16a34a">✅命中</span>' : '<span style="color:#dc2626">❌未中</span>') + '</span>';
-            html += '</div>';
-            html += '<div style="font-size:10px;color:var(--muted);margin-top:2px">实际 ' + rc.actualTails.join(',') + ' · 结算 ' + snapTime(rc.settledAt) + '</div>';
-            html += '</div>';
-          }
-        }
-        html += '</div>';
-        html += '</div>';
-      });
-      html += '</div>';
-      html += '</div>';
-
-      // 唯一命中口径：三期窗口（窗口内命中即中窗）。旧的「每期两号」口径已退役，不再展示。
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">三期窗口命中（唯一口径）</h2><span class="section__hint">窗口=短期策略单元 · 3期内命中即中窗 · 锁号流/每期推荐流分开算 · 真实快照</span></div></div>';
-      html += '<div class="section"><div class="panel" style="padding:12px">';
-      var swSum = snapStats.sourceWindowSummary || null;
-      if (swSum && swSum.byStream) {
-        ["D1", "D2"].forEach(function (sk) {
-          var b = swSum.byStream[sk] || { settled: 0, hits: 0, miss: 0, hit3Rate: 0, pending: 0 };
-          html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
-          html += '<span style="font-size:13px;font-weight:900">双号' + (sk === "D1" ? "首推" : "备选") + " " + sk + "</span>";
-          html += '<span class="chip">中' + (b.hits || 0) + '窗 / 错' + (b.miss || 0) + '窗 · 共' + (b.settled || 0) + '窗</span>';
-          html += '<span style="font-size:13px;color:var(--muted)">窗口命中率 ' + ((b.hit3Rate || 0) * 100).toFixed(1) + '% · 进行中 ' + (b.pending || 0) + ' 窗</span>';
-          html += '</div>';
-        });
-      } else {
-        html += '<span style="color:#9ca3af;font-size:12px">暂无窗口数据</span>';
-      }
-      html += '</div></div>';
-
-      var CM = window.CAISHEN_MODEL || {};
-      var riskOfFn = CM.riskOf || function () { return { label: "样本不足", flag: "insufficient" }; };
-      var pctFn = function (x) { return (x * 100).toFixed(1) + '%'; };
-      var riskColor = { danger: "#dc2626", observe: "#d97706", advantage: "#16a34a", normal: "#6b7280", insufficient: "#9ca3af" };
-
-      var riskRowCard = function (title, stat, rolls) {
-        var n = stat.n || 0;
-        var hits = stat.hits || 0;
-        var miss = (stat.miss != null) ? stat.miss : (n - hits);
-        var r = riskOfFn(n, hits);
-        var flag = r.flag || "insufficient";
-        var color = riskColor[flag] || "#9ca3af";
-        var rateText2 = n >= 20 ? (n ? pctFn(hits / n) : "-") : "样本不足";
-        var missRate = n ? pctFn(miss / n) : "-";
-        var ciText = "";
-        if (n >= 20 && r.ci) ciText = "95%CI " + pctFn(r.ci.lo) + "~" + pctFn(r.ci.hi);
-        var canRoll = (flag === "danger" || flag === "observe") && rolls && rolls.length;
-        var h = '';
-        h += '<div style="border:1px solid #e0e3e8;border-radius:10px;padding:10px 12px;background:#fff;min-width:0">';
-        h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">';
-        h += '<b style="font-size:13px">' + title + '</b>';
-        h += '<span class="chip">' + hits + '/' + n + '</span>';
-        h += '<span style="font-size:12px;color:var(--muted)">未中' + miss + ' · 错误率' + missRate + '</span>';
-        h += '<span style="margin-left:auto;font-size:12px;font-weight:700;color:' + color + '">' + (r.label || "") + '</span>';
-        h += '</div>';
-        h += '<div style="font-size:11px;color:var(--muted)">命中率 ' + rateText2 + (ciText ? ' · ' + ciText : '') + '</div>';
-        if (canRoll) {
-          h += '<div style="margin-top:6px;font-size:11px;color:var(--muted);font-weight:700">逐期对错</div>';
-          h += '<div style="max-height:150px;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa">';
-          h += '<div style="position:sticky;top:0;background:#f3f4f6;padding:4px 8px;font-size:10px;font-weight:700;color:#6b7280;border-bottom:1px solid #e5e7eb">期 · 尾 · 分数 · 结果</div>';
-          for (var ri = rolls.length - 1; ri >= 0; ri--) {
-            var rr = rolls[ri];
-            h += '<div style="padding:4px 8px;border-bottom:1px solid #f0f0f0;font-size:11px;display:flex;gap:8px;align-items:center">';
-            h += '<span style="font-weight:700">第' + rr.target + '期</span>';
-            h += '<span>尾' + rr.tail + '</span>';
-            h += '<span style="color:var(--muted)">' + rr.score + '分</span>';
-            h += '<span style="margin-left:auto;font-weight:700">' + (rr.hit ? '<span style="color:#16a34a">✅</span>' : '<span style="color:#dc2626">❌</span>') + '</span>';
-            h += '</div>';
-          }
-          h += '</div>';
-        }
-        h += '</div>';
-        return h;
-      };
-
-      var sBuckets = snapStats.scoreBuckets || {};
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">分数细分风险表</h2><span class="section__hint">1分一档 · 单尾口径 · 基准55.39% · 样本≥20显示命中率，样本不足不标危险</span></div></div>';
-      html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">';
-      var bucketOrder = (CM.SCORE_BUCKETS || []).slice();
-      if (!bucketOrder.length) bucketOrder = Object.keys(sBuckets);
-      bucketOrder.forEach(function (b) {
-        var st = sBuckets[b] || { n: 0, hits: 0, miss: 0, rolls: [] };
-        html += riskRowCard(b, st, st.rolls || []);
-      });
-      html += '</div></div>';
-
-      var sTags = snapStats.tags || {};
-      var TAG_ORDER = ["连出4", "连出3", "5期3次", "7期4次"];
-      var tagKeys3 = Object.keys(sTags);
-      var orderedTags3 = TAG_ORDER.filter(function (t) { return sTags[t]; }).concat(tagKeys3.filter(function (t) { return TAG_ORDER.indexOf(t) < 0; }).sort());
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">信号标签命中率表</h2><span class="section__hint">按信号标签分组 · 单尾口径 · 基准55.39%</span></div></div>';
-      html += '<div class="section"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">';
-      if (!orderedTags3.length) {
-        html += '<span style="color:#9ca3af;font-size:12px">暂无标签样本</span>';
-      } else {
-        orderedTags3.forEach(function (tg) {
-          var st = sTags[tg] || { n: 0, hits: 0, miss: 0, rolls: [] };
-          html += riskRowCard(tg, st, st.rolls || []);
-        });
-      }
-      html += '</div></div>';
-    }
-
-    var singleRate = tPicks ? (tHits / tPicks * 100).toFixed(2) : '0.00';
-    var atLeast1 = actDays - d0;
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">历史业绩</h2><span class="section__hint">战略主口径=三期窗口命中 · 单期只作诊断 · 第' + (N + 1) + '期实盘待开奖</span></div></div>';
-    html += '<div class="section"><div class="grid-2">';
-    var sws2 = (window.APP_SNAPSHOTS && window.APP_SNAPSHOTS.sourceWindowSummary && window.APP_SNAPSHOTS.sourceWindowSummary.byStream) || {};
-    var swD1 = sws2.D1 || { hits: 0, settled: 0, hit3Rate: 0 };
-    var swD2 = sws2.D2 || { hits: 0, settled: 0, hit3Rate: 0 };
-    html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + ((swD1.hit3Rate || 0) * 100).toFixed(1) + '% / ' + ((swD2.hit3Rate || 0) * 100).toFixed(1) + '%</div><div class="stat__label">战略主口径 · 三期窗口命中率（首推/备选）· 中' + swD1.hits + '/' + swD1.settled + ' 与 ' + swD2.hits + '/' + swD2.settled + ' 窗</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + singleRate + '%</div><div class="stat__label">单期诊断（不下注）· 中' + tHits + '·错' + (tPicks - tHits) + '·共' + tPicks + '</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:' + (cum >= 0 ? '#16a34a' : '#dc2626') + '">' + (cum >= 0 ? '+' : '') + cum.toFixed(2) + '</div><div class="stat__label">累计盈亏（元）</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + maxDD.toFixed(2) + '</div><div class="stat__label">最大回撤（元）</div></div>';
-    html += '</div></div>';
-    html += '<div class="section"><div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value">' + d0 + '</div><div class="stat__label">中0</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + d1 + '</div><div class="stat__label">中1</div></div>';
-    html += '<div class="stat"><div class="stat__value">' + d2 + '</div><div class="stat__label">中2</div></div>';
-    html += '</div></div>';
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期记录</h2><span class="section__hint">第' + (N + 1) + '期~第2期（倒序，最新在上）· ①第一推荐 ②第二推荐 · 绿=中 灰=未中</span></div></div>';
-    html += '<div class="panel">';
-    var histShown = perfExpandAll["pick3hist"] ? hist.length : Math.min(hist.length, 60);
-    var histFloor = hist.length - histShown;
-    for (var ri = hist.length - 1; ri >= histFloor; ri--) {
-      var r = hist[ri];
-      html += '<div class="record">';
-      html += '<div class="record__top">';
-      html += '<span class="record__period">第 ' + r.period + ' 期</span>';
-      html += '<span class="record__meta">' + (r.live ? '<span style="color:#2563eb;font-weight:700">实盘·待开奖</span>' : '<span style="color:#9ca3af">回测</span>') + '</span>';
-      html += '</div>';
-      html += '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">';
-      if (r.picks.length) {
-        for (var pj = 0; pj < r.picks.length; pj++) {
-          var pn = r.picks[pj];
-          var isHit = r.actual && r.actual.indexOf(pn) >= 0;
-          html += '<div style="display:flex;align-items:center;gap:5px">';
-          html += '<span style="font-size:11px;color:var(--muted)">' + (pj === 0 ? '①' : '②') + '</span>';
-          html += '<div class="num" style="' + (isHit ? 'background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;' : '') + '">尾' + pn + '</div>';
-          html += '</div>';
-        }
-      } else {
-        html += '<span style="color:#9ca3af">空仓</span>';
-      }
-      if (r.hits !== null && !r.live) {
-        html += '<div style="margin-left:auto">' + (r.hits >= 1 ? '<span class="hit--yes">中' + r.hits + '</span>' : '<span class="hit--no">未中</span>') + '</div>';
-      }
-      html += '</div>';
-      if (r.sig && r.sig.length) {
-        html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">';
-        r.sig.forEach(function (s) { html += '<span class="chip">' + s + '</span>'; });
-        html += '</div>';
-      }
-      if (r.pnl !== null) {
-        html += '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)">';
-        html += '<span>盈亏 <b style="color:' + (r.pnl >= 0 ? '#16a34a' : '#dc2626') + '">' + (r.pnl >= 0 ? '+' : '') + r.pnl + '</b></span>';
-        html += '<span>累计 <b style="color:var(--accent)">' + r.cum + '</b></span>';
-        html += '<span>回撤 <b style="color:#dc2626">' + r.dd + '</b></span>';
-        html += '</div>';
-      }
-      if (r.actual && r.actual.length) {
-        html += '<div style="margin-top:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">实际尾数</div><div class="num-list">';
-        r.actual.forEach(function (t) { html += '<div class="num">' + t + '</div>'; });
-        html += '</div></div>';
-      }
-      html += '</div>';
-    }
-    html += '</div>';
-    html += perfMoreBtn("pick3hist", hist.length, histShown, "期");
-
-    html += '<p class="disclaimer">动态概率基于连出惯性分层打分，每期动态重算推2个号（第一+第二推荐）。历史业绩为 walk-forward 逐期喂数据（零未来数据），赔率按1.8计（命中1注+0.8、未中-1）。第' + N + '期及以前=回测，第' + (N + 1) + '期起=实盘。仅供参考，不做高命中承诺。</p>';
-    view.innerHTML = html;
-  }
 
 
   // ===== 尾号性格表 =====
@@ -7150,7 +6205,6 @@
       if (bestRate >= 0.98) desc = "完美触发";
       else if (bestRate >= 0.95) desc = "非常稳定";
       else if (bestRate >= 0.90) desc = "稳定可靠";
-      var cls = bestRate >= 0.95 ? "ord-hit" : bestRate >= 0.90 ? "ord-pending" : "ord-miss";
       var edgeTxt, edgeColor;
       if (bestTotal < 10) { edgeTxt = "样本不足"; edgeColor = "#94a3b8"; }
       else { edgeTxt = "中" + bestHit + "·错" + (bestTotal - bestHit); edgeColor = bestTotal < 20 ? "#eab308" : "#16a34a"; }
@@ -7162,7 +6216,7 @@
   }
 
   var SWIPE_X = 28;
-  var SWIPE_Y = 36;
+
   var SWIPE_PRIMARY_X = 20;
   var RETURN_SWIPE_X = 220;
     // 屏幕左右边缘 26px 是“翻页专用区”：从这里起手永远翻页，不会被表格/图表的横向滚动吃掉

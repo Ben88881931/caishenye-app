@@ -191,7 +191,7 @@ def main():
         else:
             fail("app.js 缺少目录长按排序、导航拖动排序或表头长按排序")
 
-        for func in ["renderUltimateMode", "renderChaseNumber", "renderChaseRecommendation", "renderOrderLog", "hitLogSectionHTML"]:
+        for func in ["renderUltimateMode", "renderChaseNumber", "renderOrderLog"]:
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少终极模型函数 {func}")
         else:
@@ -231,9 +231,7 @@ def main():
         else:
             fail("导航未按模型流程排序")
         if (
-            'id="pick3RecommendCard"' in app_text
-            and "function promoteSectionToTop" in app_text
-            and 'id="ultimateLockCard"' in app_text
+'id="ultimateLockCard"' in app_text
             and "ULT_CARD_HISTORY" in app_text
             and "ULT_RECORDS_START" in app_text
             and "card-followup" in app_text
@@ -253,7 +251,7 @@ def main():
             pass_("公式表页面包含13线训练验证系数和配仓状态")
         else:
             fail("公式表页面缺少历史系数或配仓状态")
-        if "PAGE_GUIDE_GROUPS" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS" in app_text and 'title: "每日操作"' in app_text and 'title: "公式验证"' in app_text and 'title: "数据参考"' in app_text and 'title: "生肖与辅助"' in app_text and "appendGuideGroup(PAGE_GUIDE_DISPLAY_GROUPS[0])" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS.slice(1).forEach(appendGuideGroup)" in app_text and "PAGE_LABEL_GUIDE" in app_text and "PAGE_GUIDE_TAB_MAP" in app_text and "function pageGuideHTML" in app_text and "页面说明 · 大白话版" in app_text and "页面上的标语怎么看" in app_text and "label-guide-row" in app_text and "overview-page-card--guide" in app_text and "data-overview-tab" in app_text and "pageGuideHTML()" in app_text and "function historyStackHTML" in app_text and "function stepGroupHistory" in app_text and "function stepTabHistory" in app_text and "orderedGroupAt" in app_text and "orderedTabAt" in app_text and "getConfiguredGroups()" in app_text and "getVisibleTabs(state.group)" in app_text and "var SWIPE_X = 28" in app_text and "var SWIPE_Y = 36" in app_text and 'addEventListener("pointermove"' in app_text and "gesture-active" in app_text and "gestureClickGuard" in app_text and 'e.target.closest("input, select, textarea, a, [contenteditable=\'true\']")' in app_text and "pointerdown" in app_text and "pointerup" in app_text and "history-nav-row" not in app_text and "每日选号下单顺序" not in app_text:
+        if "PAGE_GUIDE_GROUPS" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS" in app_text and 'title: "每日操作"' in app_text and 'title: "公式验证"' in app_text and 'title: "数据参考"' in app_text and 'title: "生肖与辅助"' in app_text and "appendGuideGroup(PAGE_GUIDE_DISPLAY_GROUPS[0])" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS.slice(1).forEach(appendGuideGroup)" in app_text and "PAGE_LABEL_GUIDE" in app_text and "PAGE_GUIDE_TAB_MAP" in app_text and "function pageGuideHTML" in app_text and "页面说明 · 大白话版" in app_text and "页面上的标语怎么看" in app_text and "label-guide-row" in app_text and "overview-page-card--guide" in app_text and "data-overview-tab" in app_text and "pageGuideHTML()" in app_text and "function historyStackHTML" in app_text and "function stepGroupHistory" in app_text and "function stepTabHistory" in app_text and "orderedGroupAt" in app_text and "orderedTabAt" in app_text and "getConfiguredGroups()" in app_text and "getVisibleTabs(state.group)" in app_text and "var SWIPE_X = 28" in app_text and 'addEventListener("pointermove"' in app_text and "gesture-active" in app_text and "gestureClickGuard" in app_text and 'e.target.closest("input, select, textarea, a, [contenteditable=\'true\']")' in app_text and "pointerdown" in app_text and "pointerup" in app_text and "history-nav-row" not in app_text and "每日选号下单顺序" not in app_text:
             pass_("总览页把每日操作放第一并排列说明卡片、标语解释、跳转按钮，排序翻页卡隐藏、按钮密集页面也支持整屏即时手势")
         else:
             fail("总览页未把每日操作放第一，或缺少页面说明、标语解释、跳转按钮、按钮密集页手势或即时整屏手势")

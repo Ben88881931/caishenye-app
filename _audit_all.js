@@ -4,7 +4,7 @@ const { spawnSync } = require("child_process");
 const postPush = process.argv.includes("--post-push");
 
 const CHECKS = [
-  { name: "eslint", cmd: [process.execPath, "node_modules/eslint/bin/eslint.js", "app.js", "model_core.js", "model_selector.js", "model_probability.js", "ultimate_model.js", "snapshots.js"], blocker: true },
+  { name: "eslint", cmd: [process.execPath, "node_modules/eslint/bin/eslint.js", "app.js", "model_core.js", "model_selector.js", "model_probability.js", "ultimate_model.js", "snapshots.js", "--max-warnings=0"], blocker: true },
   { name: "playwright_all_pages", cmd: [process.execPath, "node_modules/@playwright/test/cli.js", "test"], blocker: true, expect: /passed/ },
   { name: "score_calibration", cmd: ["node", "score_calibration.js"], blocker: true },
   { name: "ultimate_backtest", cmd: ["node", "ultimate_backtest.js"], blocker: true, expect: /自检 PASS/ },
