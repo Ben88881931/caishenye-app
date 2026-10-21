@@ -157,19 +157,27 @@ test("dynamic probability page shows the current live window for all three ranks
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
   });
 
-  const expectedTails = await page.evaluate(() => {
-    const periods = Object.keys(window.APP_DATA.raw).map(Number);
-    const latest = Math.max(...periods);
-    return window.CAISHEN_PROBABILITY.analyze(window.APP_DATA.raw, latest).top.map((row) => row.tail);
+  const snapshots = await page.evaluate(async () => {
+    const response = await fetch("probability_snapshots.json");
+    return response.json();
   });
 
   const liveWindows = page.locator("[data-prob-live-window]");
   await expect(liveWindows).toHaveCount(3);
   for (let index = 0; index < 3; index++) {
-    await expect(liveWindows.nth(index)).toContainText(`第${targetPeriod}期`);
-    await expect(liveWindows.nth(index)).toContainText("当前窗口");
-    await expect(liveWindows.nth(index)).toContainText(`锁尾${expectedTails[index]}`);
-    await expect(liveWindows.nth(index)).toContainText("待开奖");
+    const card = liveWindows.nth(index);
+    const text = await card.innerText();
+    const startMatch = text.match(/第(\d+)期起/);
+    expect(startMatch, `window ${index + 1} should expose its start period`).not.toBeNull();
+    const startPeriod = Number(startMatch[1]);
+    const sourceSnapshot = snapshots.records.find((record) => Number(record.target) === startPeriod);
+    expect(sourceSnapshot, `missing source snapshot for period ${startPeriod}`).toBeTruthy();
+    const lockedTail = sourceSnapshot.top3[index].tail;
+
+    await expect(card).toContainText(`第${startPeriod}期`);
+    await expect(card).toContainText("当前窗口");
+    await expect(card).toContainText(`锁尾${lockedTail}`);
+    await expect(card).toContainText("待开奖");
   }
 });
 

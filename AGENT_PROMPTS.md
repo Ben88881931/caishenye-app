@@ -21,18 +21,18 @@ https://github.com/Ben88881931/caishenye-app.git
 “294期：01.02.03.04.05.06.07”这种格式的期号和7个完整号码。
 
 你必须按 EXECUTOR_WORKFLOW.md 执行：
-1. 开奖前概率快照。
+1. 保存开奖前动态概率快照和 D1/D2 诊断快照。
 2. 追加 lottery_data.json。
 3. 追加 号码走势图.html 的 var D。
 4. 运行 python sync.py。
-5. 结算概率快照并生成下一期待开奖快照。
+5. 结算两套快照并生成下一期待开奖记录。
 6. 统一更新 index.html 八处缓存版本。
 7. 检查改动范围。
 8. 只提交指定文件并推送 main。
 
 禁止：
 - 禁止恢复或运行 update_daily.py，旧脚本已删除。
-- 禁止运行或修改 model_supervisor.js、prediction_snapshots.json、snapshots.js。
+- 必须运行 node model_supervisor.js sync 结算 D1/D2 诊断快照；禁止手工修改 prediction_snapshots.json 和 snapshots.js。
 - 禁止修改 app.js、styles.css、模型、公式、阈值或页面结构。
 - 禁止编造号码、跳期、修改历史或事后补预测。
 - 禁止写审计结论和最终签收。
@@ -111,7 +111,7 @@ npm run test:ui
 - 内部横向滚动仍可用。
 - 翻页、返回、刷新定位不回归。
 - 所有页面不空白、无 console error。
-- index.html 七处版本一致。
+- index.html 八处版本一致。
 
 完成后只汇报：
 修改页面：

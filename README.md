@@ -9,7 +9,7 @@
 - 静态单页应用：`index.html`、`app.js`、`styles.css`
 - 前端数据：`data.js`，由 `lottery_data.json` 和 `号码走势图.html` 经 `sync.py` 生成
 - 当前概率快照：`probability_snapshots.json`
-- 旧 D1/D2 证据：`prediction_snapshots.json`、`snapshots.js`，已冻结
+- D1/D2 诊断快照：`prediction_snapshots.json`、`snapshots.js`，每日结算但不作为正式推荐依据
 - 自动化验收入口：`node _audit_all.js`
 
 ## 数据真源
@@ -36,7 +36,7 @@
 - 动态概率第1/2/3名在窗口开始时锁定尾号，追满3期，不中途换号。
 - 三期全错后，必须等锁定尾重新开出，下一期才开新窗。
 - 未来没产生的期数只能写“待定”，不得使用未来数据。
-- D1/D2 仅保留为历史诊断证据，不再作为正式推荐依据。
+- D1/D2 继续作为诊断账每日更新，但不再作为正式推荐依据。
 - 停止新增模型和反复调参；未来训练必须先攒够真实开奖前快照。
 
 ## 每日更新

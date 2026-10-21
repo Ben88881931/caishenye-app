@@ -47,9 +47,14 @@
 
 ```powershell
 node probability_supervisor.js sync
+node model_supervisor.js sync
 ```
 
-确认 `probability_snapshots.json` 中存在目标期且 `settled: false` 的记录。
+确认以下两份文件都存在目标期且 `settled: false` 的记录：
+
+- `probability_snapshots.json`
+- `prediction_snapshots.json`
+
 如果已有目标期快照，保留原记录，禁止覆盖。
 
 ### 第 2 步：更新两个原始数据源
@@ -81,14 +86,16 @@ python sync.py
 
 ```powershell
 node probability_supervisor.js sync
+node model_supervisor.js sync
 ```
 
-该命令会：
+两条命令会：
 
-- 结算本次开奖对应的概率快照。
-- 生成下一期待开奖快照。
+- 结算动态概率快照并生成下一期概率快照。
+- 结算 D1/D2 诊断快照并重新生成 `snapshots.js`。
+- 两条线都只保留下一期的一条待开奖记录。
 
-禁止手工修改 `probability_snapshots.json` 中已经保存的预测值。
+禁止手工修改任何快照中的预测值。
 
 ### 第 5 步：更新缓存版本
 
@@ -106,7 +113,7 @@ node probability_supervisor.js sync
 同日连续更新使用递增序号，例如：
 
 ```text
-20261021-09 -> 20261021-10
+20261021-12 -> 20261021-13
 ```
 
 八处必须完全一致。
@@ -125,6 +132,8 @@ git diff
 - `号码走势图.html`
 - `data.js`
 - `probability_snapshots.json`
+- `prediction_snapshots.json`
+- `snapshots.js`
 - `index.html`
 
 出现任何其他文件改动时立即停止并报告，不得为了“顺手”提交。
@@ -134,7 +143,7 @@ git diff
 只能逐个文件加入：
 
 ```powershell
-git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json index.html
+git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json prediction_snapshots.json snapshots.js index.html
 git commit -m "更新第294期数据并结算概率快照"
 git push origin main
 ```
@@ -144,7 +153,7 @@ git push origin main
 ## 4. 禁止事项
 
 - 禁止恢复或运行 `update_daily.py`。该旧脚本及其旧页面入口已删除。
-- 禁止运行或修改 `model_supervisor.js`、`prediction_snapshots.json`、`snapshots.js`，旧 D1/D2 快照已冻结。
+- 禁止手工修改 `model_supervisor.js`、`prediction_snapshots.json`、`snapshots.js`。只能通过 `node model_supervisor.js sync` 生成和结算。
 - 禁止修改 `app.js`、`styles.css`、模型、公式、阈值、窗口规则或页面结构。
 - 禁止修改历史开奖数据。
 - 禁止事后补写、重算或覆盖开奖前预测。
