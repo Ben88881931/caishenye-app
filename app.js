@@ -5498,6 +5498,47 @@
     return rawYear;
   }
 
+  function probabilityWindowStepsHTML(attempts, startPeriod, currentStage) {
+    var html = '<div class="prob-window-steps">';
+    for (var stage = 1; stage <= 3; stage++) {
+      var attempt = attempts && attempts[stage - 1] ? attempts[stage - 1] : null;
+      var tone = "is-closed";
+      var detail = "未进入";
+      var result = "已关窗";
+      if (attempt) {
+        if (attempt.pending) {
+          var isCurrent = Number(currentStage) === stage;
+          tone = isCurrent ? "is-current" : "is-future";
+          result = isCurrent ? "待开奖" : "待定";
+        } else if (attempt.hit) {
+          tone = "is-hit";
+          result = "中";
+        } else {
+          tone = "is-miss";
+          result = "错";
+        }
+        detail = "第" + attempt.period + "期 · 尾" + attempt.tail;
+      }
+      html += '<div class="prob-window-step ' + tone + '" data-window-stage="' + stage + '">' +
+        '<b>第' + stage + '期</b><span>' + detail + '</span><em>' + result + '</em></div>';
+    }
+    return html + '</div>';
+  }
+
+  function probabilityWindowCardHTML(options) {
+    var cardClass = "prob-test-card" + (options.tone ? " " + options.tone : "");
+    var liveAttr = options.live ? ' data-prob-live-window="1"' : "";
+    var startAttr = options.startPeriod == null ? "" : ' data-prob-window-start="' + options.startPeriod + '"';
+    var meta = options.startPeriod == null
+      ? "等待重开 · 等尾" + options.tail + "开出"
+      : "起始第" + options.startPeriod + "期 · 锁定尾" + options.tail;
+    return '<div class="' + cardClass + '" data-prob-window-card="1"' + liveAttr + startAttr + '>' +
+      '<div class="prob-window-card__head"><b>' + options.label + '</b><span>' + options.state + '</span></div>' +
+      '<div class="prob-window-card__meta">' + meta + '</div>' +
+      probabilityWindowStepsHTML(options.attempts, options.startPeriod, options.currentStage) +
+      "</div>";
+  }
+
   function probabilityTestWindowHTML(selectedYear) {
     var year = Number(selectedYear);
     var rawYear = probabilityYearRaw(year);
@@ -5556,22 +5597,119 @@
         html += '<div class="prob-test-row"><div class="prob-test-head"><b>' + label + '</b><span>共' + records.length + '窗 · 第1期中' + first + ' · 第2期中' + second + ' · 第3期中' + third + ' · 全错' + miss + '</span></div>';
         html += '<div class="prob-test-strip">';
         if (liveRecord && liveRecord.status === "pending") {
-          html += '<span class="prob-test-card is-live" data-prob-live-window="1"><b>当前窗口</b><span>' + year + '年第' + liveRecord.startPeriod + '期起 · 锁尾' + liveRecord.tail + ' · 第' + liveRecord.currentStage + '期</span><small>' + liveRecord.attempts.map(function (attempt) {
-            return '第' + (attempt.period - liveRecord.startPeriod + 1) + '期 第' + attempt.period + '期 · 尾' + attempt.tail + ' · ' + (attempt.pending ? (attempt.period === liveRecord.startPeriod + liveRecord.currentStage - 1 ? "待开奖" : "待定") : (attempt.hit ? "中" : "错"));
-          }).join(' | ') + '</small></span>';
+          html += probabilityWindowCardHTML({
+            label: "当前窗口",
+            state: "进行中 · 第" + liveRecord.currentStage + "/3期",
+            tone: "is-live",
+            live: true,
+            startPeriod: liveRecord.startPeriod,
+            tail: liveRecord.tail,
+            attempts: liveRecord.attempts,
+            currentStage: liveRecord.currentStage
+          });
         } else if (liveRecord && liveRecord.status === "waiting") {
-          html += '<span class="prob-test-card is-live" data-prob-live-window="1"><b>当前窗口</b><span>等待重开 · 等尾' + liveRecord.tail + '开出</span><small>该线三期全错后暂停，尾' + liveRecord.tail + '重新开出后的下一期再开新窗</small></span>';
+          html += probabilityWindowCardHTML({
+            label: "当前窗口",
+            state: "等待重开",
+            tone: "is-live is-waiting",
+            live: true,
+            startPeriod: null,
+            tail: liveRecord.tail,
+            attempts: [],
+            currentStage: 0
+          });
         }
         if (!records.length) html += '<span class="trend-run-empty">暂无已结算窗口</span>';
         records.slice().reverse().forEach(function (record) {
           var result = record.status === "miss" ? "错窗" : "中" + record.hitIndex;
-          html += '<span class="prob-test-card ' + (record.status === "miss" ? "is-miss" : "is-hit") + '"><b>' + result + '</b><span>' + year + '年第' + record.startPeriod + '期起 · 锁定尾' + record.tail + '</span><small>' + record.attempts.map(function (a) { return '第' + (a.period - record.startPeriod + 1) + '期 ' + (a.tail == null ? '待定' : '尾' + a.tail) + ' ' + (a.hit ? '中' : '错'); }).join(' | ') + '</small></span>';
+          html += probabilityWindowCardHTML({
+            label: result,
+            state: "已结束",
+            tone: record.status === "miss" ? "is-miss" : "is-hit",
+            live: false,
+            startPeriod: record.startPeriod,
+            tail: record.tail,
+            attempts: record.attempts,
+            currentStage: 0
+          });
         });
         html += '</div></div>';
       });
     html += '</div></div>';
     html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026为影子观察；切换年份可查看全部历史，所有窗口按每年第1期重新起算，不引用未来开奖。</p>';
     return html;
+  }
+
+  function probabilitySnapshotPct(value) {
+    return (Number(value) * 100).toFixed(1) + "%";
+  }
+
+  function probabilitySnapshotCardHTML(record, currentState) {
+    var rows = Array.isArray(record.allTails) ? record.allTails : [];
+    var actualTails = Array.isArray(record.actualTails) ? record.actualTails.map(Number) : [];
+    var pending = !record.settled;
+    var stateText = pending
+      ? "待开奖"
+      : (record.results && record.results.top1 ? "Top1中" : (record.results && record.results.top3 ? "Top3覆盖" : "未覆盖"));
+    var tone = pending ? "is-pending" : (record.results && record.results.top3 ? "is-covered" : "is-miss");
+    var top3 = (record.top3 || []).map(function (row) { return "尾" + row.tail; }).join(" · ");
+    var rowHTML = rows.map(function (row, index) {
+      var isDrawn = actualTails.indexOf(Number(row.tail)) >= 0;
+      var state = currentState && currentState[String(row.tail)]
+        ? "漏" + currentState[String(row.tail)].currentMiss + " / 连" + currentState[String(row.tail)].currentStreak
+        : "—";
+      return '<div class="prob-snapshot-row' + (index < 3 ? " is-top" : "") + (isDrawn ? " is-drawn" : "") + '">' +
+        '<b class="prob-snapshot-rank">' + (index + 1) + '</b>' +
+        '<span class="prob-snapshot-tail-cell"><strong class="prob-snapshot-tail">尾' + row.tail +
+        '</strong><small>' + state + '</small></span>' +
+        '<span class="prob-snapshot-value">' + probabilitySnapshotPct(row.nextProb) + '</span>' +
+        '<span class="prob-snapshot-value">' + probabilitySnapshotPct(row.window3Prob) + '</span>' +
+        '</div>';
+    }).join("");
+    if (rows.length !== 10) {
+      rowHTML = '<div class="prob-snapshot-incomplete">快照不完整：应为10项，实际' + rows.length + '项</div>';
+    }
+    return '<article class="prob-snapshot-card ' + tone + '" data-prob-target="' + record.target + '">' +
+      '<div class="prob-snapshot-card__head"><b>第' + record.target + '期</b><span>' + stateText + '</span></div>' +
+      '<div class="prob-snapshot-card__meta">基于第' + record.basedOn + '期 · 完整10尾排序</div>' +
+      '<div class="prob-snapshot-columns"><span>排名</span><span>尾号</span><span>下一期</span><span>三期</span></div>' +
+      '<div class="prob-snapshot-rows">' + rowHTML + '</div>' +
+      '<div class="prob-snapshot-card__foot">Top3：' + (top3 || "缺失") +
+      (actualTails.length ? ' · 实开尾' + actualTails.join("/") : "") + '</div>' +
+      '</article>';
+  }
+
+  function probabilitySnapshotStripHTML(records, currentResult) {
+    if (!records.length) return '<div class="trend-run-empty">暂无真实概率快照</div>';
+    var currentState = {};
+    (currentResult.rows || []).forEach(function (row) { currentState[String(row.tail)] = row; });
+    return '<div class="prob-snapshot-strip" data-prob-snapshot-strip="1">' +
+      records.map(function (record) {
+        return probabilitySnapshotCardHTML(record, Number(record.target) === Number(currentResult.target) ? currentState : null);
+      }).join("") +
+      '</div>';
+  }
+
+  function mountProbabilitySnapshots(currentResult) {
+    var mount = document.getElementById("probabilitySnapshotMount");
+    if (!mount) return;
+    fetch("probability_snapshots.json", { cache: "no-store" })
+      .then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.json();
+      })
+      .then(function (data) {
+        if (!mount.isConnected) return;
+        var records = Array.isArray(data.records) ? data.records.slice() : [];
+        records.sort(function (a, b) { return Number(b.target) - Number(a.target); });
+        mount.innerHTML = probabilitySnapshotStripHTML(records, currentResult);
+        var strip = mount.querySelector("[data-prob-snapshot-strip]");
+        if (strip) strip.scrollLeft = 0;
+      })
+      .catch(function (error) {
+        if (!mount.isConnected) return;
+        mount.innerHTML = '<div class="trend-run-empty">概率快照读取失败：' + String(error.message || error) + '</div>';
+      });
   }
 
   function renderProbabilityModel() {
@@ -5596,16 +5734,11 @@
     html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>测试状态 · 未通过正式验证</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>0仓位 · 不进入正式下单</strong></div><div class="prob-summary-note">2026 Top1 ' + delta(sm.nextTop1, sb.next) + '，三期Top1 ' + delta(sm.window3Top1, sb.window3) + '；没有证明稳定优势，只做影子记录。</div></div></div>';
     html += '<div class="section"><div class="panel"><div class="wm-subhead">测试历史年份 · 2021-2026各年独立</div><div class="wm-view-tabs">' + yearTabs + '</div></div></div>';
     html += probabilityTestWindowHTML(selectedYear);
-    html += '<div class="prob-details"><div class="section"><div class="section__head"><h2 class="section__title">全部尾号概率 · 10个号码</h2><span class="section__hint">10个尾号全部直接展示 · 按下一期概率从高到低排序</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px;font-size:12px"><thead><tr><th>排名</th><th>尾号</th><th>下一期概率</th><th>三期出现概率</th><th>当前遗漏</th><th>当前连出</th><th>判断</th></tr></thead><tbody>';
-    result.rows.forEach(function (row, index) {
-      var confidence = row.nextProb >= 0.58 ? "较高" : row.nextProb >= 0.55 ? "中" : "低";
-      var mark = index < 3 ? "前" + (index + 1) : "";
-      html += '<tr><td><b>' + (index + 1) + '</b> ' + mark + '</td><td><b>尾' + row.tail + '</b></td><td>' + pct(row.nextProb) + '</td><td>' + pct(row.window3Prob) + '</td><td>' + row.currentMiss + ' 期</td><td>' + row.currentStreak + ' 期</td><td><b style="color:' + (confidence === "较高" ? "#15803d" : confidence === "中" ? "#2563eb" : "#64748b") + '">' + confidence + '</b></td></tr>';
-    });
-    html += '</tbody></table></div></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">每期10尾完整排序快照</h2><span class="section__hint">真实保存 · 最新在左 · 每期完整10项 · 左右滑动</span></div></div>';
+    html += '<div class="section"><div id="probabilitySnapshotMount" class="panel prob-snapshot-mount"><div class="trend-run-empty">概率快照读取中...</div></div></div>';
     html += '<p class="disclaimer">本页概率为固定权重影子模型，不使用未来数据；训练2021-2024、验证2025、2026仅做开奖前影子记录。历史真实D1/D2快照保留不动，但不再作为推荐依据。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
+    mountProbabilitySnapshots(result);
   }
 
 

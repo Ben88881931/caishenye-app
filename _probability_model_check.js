@@ -34,6 +34,27 @@ check(prediction.rows.every((row) => {
 check(prediction.rows.some((row) => row.currentStreak > 5), "真实连出超过5期时不得在展示数据中封顶");
 check(pending.length === 1 && Number(pending[0].target) === target, "必须只有一条下一期待开奖影子快照");
 check(
+  snapshots.records.every((record) => Array.isArray(record.allTails) && record.allTails.length === 10),
+  "每期真实概率快照必须保存完整10个尾号"
+);
+check(
+  snapshots.records.every((record) => new Set(record.allTails.map((row) => Number(row.tail))).size === 10),
+  "每期真实概率快照的10个尾号不得重复或缺失"
+);
+check(
+  snapshots.records.every((record) => record.allTails.every((row, index, rows) => (
+    index === 0 || Number(rows[index - 1].nextProb) >= Number(row.nextProb)
+  ))),
+  "每期真实概率快照必须按下一期概率从高到低保存"
+);
+check(
+  snapshots.records.every((record) => (
+    record.top3.map((row) => Number(row.tail)).join(",") ===
+    record.allTails.slice(0, 3).map((row) => Number(row.tail)).join(",")
+  )),
+  "每期真实概率快照前三名必须等于完整排序的前三项"
+);
+check(
   pending.length === 1 && pending[0].top3.map((row) => row.tail).join(",") === prediction.top.map((row) => row.tail).join(","),
   "待开奖影子快照前三名必须与固定模型输出一致"
 );

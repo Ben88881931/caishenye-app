@@ -185,9 +185,9 @@ must(workflowText.includes("执行提示、资金调度已彻底删除") && !app
 must(workflowText.includes("第 6 步：执行端结束（不做审计）") && workflowText.includes("执行端不得汇报或生成模型命中率"), "权威工作流必须禁止执行端运行审计、汇报审计结论或生成最终签收意见");
 must(!/mock|demo|sampleData|假数据|模拟数据/i.test(appText), "所有页面都不得内置伪造、演示或模拟数据");
 
-must(appText.includes("测试状态 · 未通过正式验证") && appText.includes("2025验证段") && appText.includes("2026影子段") && appText.includes("下一期Top1") && appText.includes("三期Top1") && appText.includes("row.currentMiss") && appText.includes("row.currentStreak") && appText.includes("function probabilityTestWindowHTML") && appText.includes("prob-test-strip") && appText.includes("测试窗口记录 · 全历史三期窗口") && appText.includes("2021-2026各年独立") && appText.includes("0仓位") && appText.includes("不进入正式下单"), "动态概率页面必须直接显示测试状态、随机基准、真实遗漏/连出、当前未通过结论和0仓位");
+must(appText.includes("测试状态 · 未通过正式验证") && appText.includes("2025验证段") && appText.includes("2026影子段") && appText.includes("下一期Top1") && appText.includes("三期Top1") && appText.includes(".currentMiss") && appText.includes(".currentStreak") && appText.includes("function probabilityTestWindowHTML") && appText.includes("prob-test-strip") && appText.includes("测试窗口记录 · 全历史三期窗口") && appText.includes("2021-2026各年独立") && appText.includes("0仓位") && appText.includes("不进入正式下单"), "动态概率页面必须直接显示测试状态、随机基准、真实遗漏/连出、当前未通过结论和0仓位");
 must(appText.includes("data-prob-live-window") && appText.includes("wmStageNow(liveLine, 3)") && appText.includes("当前窗口"), "动态概率三个排名必须显示共用窗口引擎的当前窗口和待开奖状态");
-must(!appText.includes('<details class="prob-details"') && appText.includes('<div class="prob-details">') && appText.includes("全部尾号概率 · 10个号码") && appText.includes("10个尾号全部直接展示"), "动态概率10个尾号概率必须直接展开，禁止折叠");
+must(appText.includes("每期10尾完整排序快照") && appText.includes("probability_snapshots.json") && appText.includes("data-prob-snapshot-strip") && appText.includes("probabilitySnapshotCardHTML") && appText.includes("rows.length !== 10") && appText.includes("完整10尾排序"), "动态概率必须按每期真实快照横滑显示完整10尾排序，禁止折叠或遗漏");
 
 const versions = [...indexText.matchAll(/(?:styles\.css|data\.js|model_core\.js|model_selector\.js|model_probability\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)/g)].map((m) => m[1]);
 must(versions.length === 8 && new Set(versions).size === 1, "8处资源版本一致");

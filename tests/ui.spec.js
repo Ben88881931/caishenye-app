@@ -180,21 +180,58 @@ test("dynamic probability page shows the current live window for all three ranks
     await expect(card).toContainText("待开奖");
   }
 });
-
-test("dynamic probability shows all ten tail probability rows without expanding", async ({ page }) => {
+test("dynamic probability window cards expose three separate step cells", async ({ page }) => {
   await page.goto("/");
+
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("全部尾号概率");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
   });
 
-  const rows = page.locator(".prob-details tbody tr");
-  await expect(rows).toHaveCount(10);
-  for (let index = 0; index < 10; index++) {
-    await expect(rows.nth(index)).toBeVisible();
+  const rows = page.locator(".prob-test-row");
+  await expect(rows).toHaveCount(3);
+  for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+    const cards = rows.nth(rowIndex).locator(".prob-test-card");
+    const cardCount = await cards.count();
+    expect(cardCount).toBeGreaterThan(3);
+    for (let cardIndex = 0; cardIndex < Math.min(cardCount, 6); cardIndex++) {
+      await expect(cards.nth(cardIndex).locator(".prob-window-step")).toHaveCount(3);
+    }
   }
 });
+
+test("dynamic probability shows every saved ten-tail snapshot newest first", async ({ page }) => {
+  await page.goto("/");
+
+  const snapshots = await page.evaluate(async () => {
+    const response = await fetch("probability_snapshots.json");
+    return response.json();
+  });
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("每期10尾完整排序快照");
+  });
+
+  const expected = snapshots.records.slice().sort((a, b) => Number(b.target) - Number(a.target));
+  const cards = page.locator("[data-prob-snapshot-strip] .prob-snapshot-card");
+  await expect(cards).toHaveCount(expected.length);
+  for (let index = 0; index < expected.length; index++) {
+    const card = cards.nth(index);
+    const record = expected[index];
+    await expect(card).toContainText(`第${record.target}期`);
+    await expect(card.locator(".prob-snapshot-tail")).toHaveCount(10);
+    await expect(card.locator(".prob-snapshot-tail")).toHaveText(
+      record.allTails.map((row) => `尾${row.tail}`),
+    );
+  }
+});
+
