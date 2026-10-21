@@ -7,7 +7,6 @@
   var VERSION = "prob-v1-20261020";
   var META = {
     train: "2021-2024",
-    validation: "2025",
     shadow: "2026",
     samples: { train: 9240, validation: 2310, shadow: 2910 },
     baseline: {

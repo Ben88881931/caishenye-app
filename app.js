@@ -1335,33 +1335,33 @@
     var activeGroup = state.directoryGroup ? groupById(state.directoryGroup) : null;
     if (activeGroup) {
       var tabs = getVisibleTabs(activeGroup.id);
-      var html = '<div class="section"><div class="section__head"><h2 class="section__title">目录 · ' + activeGroup.label + '</h2><span class="section__hint">选择二级页面</span></div></div>';
-      html += '<div style="margin-bottom:10px"><button class="chip" type="button" data-directory-home="1">← 主目录</button></div>';
-      html += '<div class="directory-grid">';
+      var activeGroupHtml = '<div class="section"><div class="section__head"><h2 class="section__title">目录 · ' + activeGroup.label + '</h2><span class="section__hint">选择二级页面</span></div></div>';
+      activeGroupHtml += '<div style="margin-bottom:10px"><button class="chip" type="button" data-directory-home="1">← 主目录</button></div>';
+      activeGroupHtml += '<div class="directory-grid">';
       tabs.forEach(function (tab, index) {
-        html += '<button class="directory-card directory-card--tab" type="button" data-directory-tab="' + tab.id + '">';
-        html += '<span class="directory-card__index">' + (index + 1) + '</span>';
-        html += '<b>' + tab.label + '</b>';
-        html += '<span class="directory-card__pages">进入页面</span>';
-        html += '</button>';
+        activeGroupHtml += '<button class="directory-card directory-card--tab" type="button" data-directory-tab="' + tab.id + '">';
+        activeGroupHtml += '<span class="directory-card__index">' + (index + 1) + '</span>';
+        activeGroupHtml += '<b>' + tab.label + '</b>';
+        activeGroupHtml += '<span class="directory-card__pages">进入页面</span>';
+        activeGroupHtml += '</button>';
       });
-      html += '</div>';
-      view.innerHTML = html;
+      activeGroupHtml += '</div>';
+      view.innerHTML = activeGroupHtml;
       return;
     }
     var active = groupById(state.group) || groups[0];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">目录</h2><span class="section__hint">选择一级类目，进入该类目的页面目录</span></div></div>';
-    html += '<div class="directory-grid">';
+    var homeHtml = '<div class="section"><div class="section__head"><h2 class="section__title">目录</h2><span class="section__hint">选择一级类目，进入该类目的页面目录</span></div></div>';
+    homeHtml += '<div class="directory-grid">';
     groups.forEach(function (group, index) {
       var tabs = getVisibleTabs(group.id);
-      html += '<button class="directory-card' + (group.id === active.id ? " is-active" : "") + '" type="button" data-directory-group="' + group.id + '">';
-      html += '<span class="directory-card__index">' + (index + 1) + '</span>';
-      html += '<b>' + group.label + '</b>';
-      html += '<span class="directory-card__pages">' + tabs.map(function (tab) { return tab.label; }).join(" · ") + '</span>';
-      html += '</button>';
+      homeHtml += '<button class="directory-card' + (group.id === active.id ? " is-active" : "") + '" type="button" data-directory-group="' + group.id + '">';
+      homeHtml += '<span class="directory-card__index">' + (index + 1) + '</span>';
+      homeHtml += '<b>' + group.label + '</b>';
+      homeHtml += '<span class="directory-card__pages">' + tabs.map(function (tab) { return tab.label; }).join(" · ") + '</span>';
+      homeHtml += '</button>';
     });
-    html += '</div>';
-    view.innerHTML = html;
+    homeHtml += '</div>';
+    view.innerHTML = homeHtml;
   }
 
   function scrollToLatest() {
@@ -1419,9 +1419,7 @@
     else if (state.tab === "records") renderRecords();
     else if (state.tab === "history") renderHistory();
     else if (state.tab === "backtest") renderBacktest();
-    else if (state.tab === "predict") renderPredict();
     else if (state.tab === "pick3") renderProbabilityModel();
-    else if (state.tab === "selector") renderSelector();
     else if (state.tab === "betexec") renderBetExec();
     else if (state.tab === "formulas") renderFormulaTable();
     else if (state.tab === "windowmult") renderWindowMultiplierTest();
@@ -3054,16 +3052,16 @@
   function renderFullWindowHistory(w) {
     var allSegs = segsOf(w);
     var tailMap = {};
-    for (var t = 0; t < 10; t++) tailMap[t] = tailSegs(t, w);
+    for (var mapTail = 0; mapTail < 10; mapTail++) tailMap[mapTail] = tailSegs(mapTail, w);
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">全历史分段实际次数</h2><span class="section__hint">' + w + "期窗口 · 从第" + allSegs[0].s + "期到第" + allSegs[allSegs.length - 1].e + "期 · 共" + allSegs.length + "段</span></div>";
     html += '<div class="panel"><div class="panel__body seg-hist-scroll"><table class="seg-hist-table full-hist-table"><thead><tr><th class="seg-hist-label">尾数</th>';
     allSegs.forEach(function (seg) { html += '<th>' + seg.s + "~" + seg.e + "</th>"; });
     html += "</tr></thead><tbody>";
 
-    for (var t = 0; t < 10; t++) {
-      var pr = predictSegmentCount(t, w);
-      var cur = tailMap[t][allSegs.length - 1];
+    for (var tailIndex = 0; tailIndex < 10; tailIndex++) {
+      var pr = predictSegmentCount(tailIndex, w);
+      var cur = tailMap[tailIndex][allSegs.length - 1];
       var curRate = cur.c / cur.len;
       var predRate = pr.pred / w;
       var trendText, trendCls;
@@ -3071,9 +3069,9 @@
       else if (curRate - predRate >= 0.05) { trendText = "预计降温"; trendCls = "trend-down"; }
       else { trendText = "预计平稳"; trendCls = "trend-flat"; }
 
-      html += '<tr><td class="seg-hist-label">尾' + t + "</td>";
+      html += '<tr><td class="seg-hist-label">尾' + tailIndex + "</td>";
       allSegs.forEach(function (seg, idx) {
-        var e = tailMap[t][idx];
+        var e = tailMap[tailIndex][idx];
         var cell = '<td class="seg-hist-cell ' + (e ? segColorClass(e.rate) : "") + '">' + (e ? e.c : "-");
         if (idx === allSegs.length - 1) cell += '<div class="full-hist-trend ' + trendCls + '">' + trendText + "</div>";
         html += cell + "</td>";
@@ -6032,12 +6030,12 @@
     var html = '<div class="section" id="' + sectionId + '"><div class="section__head"><h2 class="section__title">连错遗漏记录</h2><span class="section__hint">' + hint + '</span></div></div>';
     html += '<div class="panel" style="padding:12px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch">';
     html += '<div style="display:flex;gap:5px;min-width:max-content">';
-    for (var ri = missCells.length - 1; ri >= 0; ri--) {
-      var q = missCells[ri];
+    for (var recordIndex = missCells.length - 1; recordIndex >= 0; recordIndex--) {
+      var record = missCells[recordIndex];
       html += '<div style="min-width:54px;text-align:center;border:1px solid #e0e3e8;border-radius:8px;padding:6px 3px;background:#fff">';
-      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:3px">' + q.period + '</div>';
-      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + q.c1 + '</div>';
-      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + q.c2 + '</div>';
+      html += '<div style="font-size:12px;color:var(--muted);margin-bottom:3px">' + record.period + '</div>';
+      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + record.c1 + '</div>';
+      html += '<div style="font-size:16px;font-weight:800;line-height:1.45">' + record.c2 + '</div>';
       html += '</div>';
     }
     html += '</div></div>';
@@ -7466,8 +7464,8 @@
       return;
     }
     if (e.target.closest("[data-numsearch-run]")) {
-      var searchInput = document.getElementById("numSearchInput");
-      state.numSearchQuery = searchInput ? searchInput.value : "";
+      var queryInput = document.getElementById("numSearchInput");
+      state.numSearchQuery = queryInput ? queryInput.value : "";
       var searchResults = document.getElementById("numSearchResults");
       if (searchResults) searchResults.innerHTML = numSearchResultsHTML();
       return;
@@ -7529,12 +7527,6 @@
       lsSet("v2_current_tab", state.tab);
       lsSet(NAV_GROUP_KEY, state.group);
       render();
-      return;
-    }
-    var selectorHistoryBtn = e.target.closest("[data-selector-history-filter]");
-    if (selectorHistoryBtn) {
-      selectorHistoryFilter = selectorHistoryBtn.dataset.selectorHistoryFilter;
-      renderSelector();
       return;
     }
     var wmLineBtn = e.target.closest("[data-wm-line]");

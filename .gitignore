@@ -1,0 +1,22 @@
+node_modules/
+.venv/
+.jupyter/
+.npm-cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+.chrome-*/
+audit_screenshots/
+test-results/
+playwright-report/
+blob-report/
+
+.deploy_key_tmp*
+*.log
+
+# Local diagnostic artifacts
+/NUL
+/_*
+/*.png
+/audit_*.txt

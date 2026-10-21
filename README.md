@@ -4,6 +4,8 @@
 
 仓库：`Ben88881931/caishenye-app`
 
+本地开发工具、测试命令和机器人分工见 [TOOLING.md](TOOLING.md)。
+
 ## 当前架构
 
 这是一个静态单页应用（SPA）。入口是根目录的 `index.html`，主逻辑在 `app.js`，样式在 `styles.css`，开奖数据由根目录 `data.js` 提供。
