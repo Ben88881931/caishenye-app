@@ -20,3 +20,5 @@ blob-report/
 /_*
 /*.png
 /audit_*.txt
+
+/.codex-commit.txt

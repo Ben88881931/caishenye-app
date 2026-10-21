@@ -143,7 +143,7 @@ git push origin main
 
 ## 4. 禁止事项
 
-- 禁止运行 `update_daily.py`。该脚本仍引用已删除的旧页面，不适用于当前仓库。
+- 禁止恢复或运行 `update_daily.py`。该旧脚本及其旧页面入口已删除。
 - 禁止运行或修改 `model_supervisor.js`、`prediction_snapshots.json`、`snapshots.js`，旧 D1/D2 快照已冻结。
 - 禁止修改 `app.js`、`styles.css`、模型、公式、阈值、窗口规则或页面结构。
 - 禁止修改历史开奖数据。

@@ -6231,13 +6231,14 @@
     html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>测试状态 · 未通过正式验证</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>0仓位 · 不进入正式下单</strong></div><div class="prob-summary-note">2026 Top1 ' + delta(sm.nextTop1, sb.next) + '，三期Top1 ' + delta(sm.window3Top1, sb.window3) + '；没有证明稳定优势，只做影子记录。</div></div></div>';
     html += '<div class="section"><div class="panel"><div class="wm-subhead">测试历史年份 · 2021-2026各年独立</div><div class="wm-view-tabs">' + yearTabs + '</div></div></div>';
     html += probabilityTestWindowHTML(selectedYear);
-    html += '<details class="prob-details"><summary>全部尾号概率 · 10个号码</summary><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px;font-size:12px"><thead><tr><th>排名</th><th>尾号</th><th>下一期概率</th><th>三期出现概率</th><th>当前遗漏</th><th>当前连出</th><th>判断</th></tr></thead><tbody>';
+    html += '<div class="prob-details"><div class="section"><div class="section__head"><h2 class="section__title">全部尾号概率 · 10个号码</h2><span class="section__hint">10个尾号全部直接展示 · 按下一期概率从高到低排序</span></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:760px;font-size:12px"><thead><tr><th>排名</th><th>尾号</th><th>下一期概率</th><th>三期出现概率</th><th>当前遗漏</th><th>当前连出</th><th>判断</th></tr></thead><tbody>';
     result.rows.forEach(function (row, index) {
       var confidence = row.nextProb >= 0.58 ? "较高" : row.nextProb >= 0.55 ? "中" : "低";
       var mark = index < 3 ? "前" + (index + 1) : "";
       html += '<tr><td><b>' + (index + 1) + '</b> ' + mark + '</td><td><b>尾' + row.tail + '</b></td><td>' + pct(row.nextProb) + '</td><td>' + pct(row.window3Prob) + '</td><td>' + row.currentMiss + ' 期</td><td>' + row.currentStreak + ' 期</td><td><b style="color:' + (confidence === "较高" ? "#15803d" : confidence === "中" ? "#2563eb" : "#64748b") + '">' + confidence + '</b></td></tr>';
     });
-    html += '</tbody></table></div></details>';
+    html += '</tbody></table></div></div></div>';
     html += '<p class="disclaimer">本页概率为固定权重影子模型，不使用未来数据；训练2021-2024、验证2025、2026仅做开奖前影子记录。历史真实D1/D2快照保留不动，但不再作为推荐依据。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
   }

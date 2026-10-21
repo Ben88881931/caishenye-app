@@ -31,7 +31,7 @@ https://github.com/Ben88881931/caishenye-app.git
 8. 只提交指定文件并推送 main。
 
 禁止：
-- 禁止运行 update_daily.py。
+- 禁止恢复或运行 update_daily.py，旧脚本已删除。
 - 禁止运行或修改 model_supervisor.js、prediction_snapshots.json、snapshots.js。
 - 禁止修改 app.js、styles.css、模型、公式、阈值或页面结构。
 - 禁止编造号码、跳期、修改历史或事后补预测。

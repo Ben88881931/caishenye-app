@@ -12,6 +12,9 @@ module.exports = defineConfig({
   use: {
     baseURL: "http://127.0.0.1:4173",
     channel: "chrome",
+    launchOptions: {
+      executablePath: process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    },
     headless: true,
     viewport: { width: 390, height: 844 },
     screenshot: "only-on-failure",

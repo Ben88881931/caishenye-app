@@ -157,11 +157,36 @@ test("dynamic probability page shows the current live window for all three ranks
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
   });
 
+  const expectedTails = await page.evaluate(() => {
+    const periods = Object.keys(window.APP_DATA.raw).map(Number);
+    const latest = Math.max(...periods);
+    return window.CAISHEN_PROBABILITY.analyze(window.APP_DATA.raw, latest).top.map((row) => row.tail);
+  });
+
   const liveWindows = page.locator("[data-prob-live-window]");
   await expect(liveWindows).toHaveCount(3);
   for (let index = 0; index < 3; index++) {
     await expect(liveWindows.nth(index)).toContainText(`第${targetPeriod}期`);
     await expect(liveWindows.nth(index)).toContainText("当前窗口");
+    await expect(liveWindows.nth(index)).toContainText(`锁尾${expectedTails[index]}`);
     await expect(liveWindows.nth(index)).toContainText("待开奖");
+  }
+});
+
+test("dynamic probability shows all ten tail probability rows without expanding", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("全部尾号概率");
+  });
+
+  const rows = page.locator(".prob-details tbody tr");
+  await expect(rows).toHaveCount(10);
+  for (let index = 0; index < 10; index++) {
+    await expect(rows.nth(index)).toBeVisible();
   }
 });
