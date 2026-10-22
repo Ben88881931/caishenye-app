@@ -389,6 +389,74 @@ test("13-line center pages do not change from horizontal swipes", async ({ page 
   expect(result).toEqual({ before: "windowmult", after: "windowmult" });
 });
 
+test("long right swipe on the first page does not open the directory", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  const result = await page.locator("#view .panel").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 94,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    const before = document.body.dataset.page;
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX + 260));
+    return { before, after: document.body.dataset.page };
+  });
+
+  expect(result).toEqual({ before: "pick3", after: "pick3" });
+});
+
+test("long right swipe on a later page returns one page", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("今日规划");
+  });
+
+  const result = await page.locator("#view .panel").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 95,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    const before = document.body.dataset.page;
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX + 260));
+    return { before, after: document.body.dataset.page };
+  });
+
+  expect(result).toEqual({ before: "betexec", after: "pick3" });
+});
+
 test("dynamic probability ranks have independent single-period hit records", async ({ page }) => {
   await page.goto("/");
   const snapshots = await page.evaluate(async () => {

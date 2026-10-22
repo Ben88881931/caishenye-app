@@ -6499,9 +6499,9 @@
   var SWIPE_X = 28;
 
   var SWIPE_PRIMARY_X = 20;
-  var RETURN_SWIPE_X = 220;
-    // 屏幕左右边缘 36px 是“翻页专用区”：从滚动条区域起手也不会被中间滚动逻辑吃掉
-    var EDGE_FLIP_ZONE = 36;
+  // 左手模式：右侧使用更宽的感应区，方便拇指从边缘翻页
+  var LEFT_EDGE_FLIP_ZONE = 36;
+  var RIGHT_EDGE_FLIP_ZONE = 56;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   var gestureClickGuardTimer = null;
@@ -6521,10 +6521,6 @@
       historyPointerStart = null;
       return;
     }
-    if (state.tab === "windowmult") {
-      historyPointerStart = null;
-      return;
-    }
     var gestureInfo = horizontalGestureInfoAt(e);
     if (gestureInfo.onVerticalScrollbar) {
       historyPointerStart = null;
@@ -6536,8 +6532,9 @@
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       onHorizontalScrollbar: gestureInfo.onHorizontalScrollbar,
-      edgeSwipe: (e.clientX <= EDGE_FLIP_ZONE || e.clientX >= window.innerWidth - EDGE_FLIP_ZONE),
+      edgeSwipe: (e.clientX <= LEFT_EDGE_FLIP_ZONE || e.clientX >= window.innerWidth - RIGHT_EDGE_FLIP_ZONE),
       lineStrip: !!e.target.closest(".wm-line-selector"),
+      pageSwipeDisabled: state.tab === "windowmult",
       handled: false
     };
     document.documentElement.classList.add("gesture-active");
@@ -6563,22 +6560,7 @@
       stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
-    // 只有已经滑到本级第一页，长右滑才返回上一级（目录）；中间页长右滑=回上一页（抖音/电商手感）
-    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6 && (function () { var ts = getVisibleTabs(state.group); return ts.length > 0 && ts[0].id === state.tab; })()) {
-      historyPointerStart.handled = true;
-      armGestureClickGuard();
-      e.preventDefault();
-      state.tab = "directory";
-      state.directoryGroup = null;
-      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
-      lsSet("v2_current_tab", state.tab);
-      render();
-      return;
-    }
-    // 短右滑=回上一页（和左滑对称）；只有已经在本级第一页（没有上一页）时短右滑才什么都不做
-    if (level === "tab" && dx > 0 && absX > absY * 1.05 && absX < RETURN_SWIPE_X && !orderedTabAt(-1)) {
-      return;
-    }
+    if (historyPointerStart.pageSwipeDisabled) return;
     if (absX >= swipeX && absX > absY * 1.05) {
       historyPointerStart.handled = true;
       armGestureClickGuard();
@@ -6610,14 +6592,7 @@
       stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
-    if (level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6 && (function () { var ts = getVisibleTabs(state.group); return ts.length > 0 && ts[0].id === state.tab; })()) {
-      state.tab = "directory";
-      state.directoryGroup = null;
-      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
-      lsSet("v2_current_tab", state.tab);
-      render();
-      return;
-    }
+    if (gesture.pageSwipeDisabled) return;
     if (absX < swipeX || absX < absY * 1.1) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
     else stepTabHistory(dx > 0 ? -1 : 1);
@@ -6635,45 +6610,6 @@
     e.preventDefault();
     e.stopPropagation();
   }, true);
-
-  var touchReturnStart = null;
-  document.documentElement.addEventListener("touchstart", function (e) {
-    if (e.touches.length !== 1 || state.tab === "directory" || state.tab === "windowmult") {
-      touchReturnStart = null;
-      return;
-    }
-    if (e.target.closest("input, select, textarea, a, [contenteditable='true']")) {
-      touchReturnStart = null;
-      return;
-    }
-    touchReturnStart = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-      onLineStrip: !!e.target.closest(".wm-line-selector"),
-      returned: false
-    };
-  }, { capture: true, passive: true });
-
-  document.documentElement.addEventListener("touchmove", function (e) {
-    if (!touchReturnStart || touchReturnStart.returned || e.touches.length !== 1) return;
-    if (historyPointerStart) return; // 指针路径已在处理，避免同一手势触发两次
-    if (touchReturnStart.onLineStrip) return;
-    var dx = e.touches[0].clientX - touchReturnStart.x;
-    var dy = e.touches[0].clientY - touchReturnStart.y;
-    if (dx >= RETURN_SWIPE_X && Math.abs(dx) > Math.abs(dy) * 1.6) {
-      touchReturnStart.returned = true;
-      e.preventDefault();
-      state.tab = "directory";
-      state.directoryGroup = null;
-      try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
-      lsSet("v2_current_tab", state.tab);
-      render();
-    }
-  }, { capture: true, passive: false });
-
-  document.documentElement.addEventListener("touchend", function () {
-    touchReturnStart = null;
-  }, { capture: true, passive: true });
 
   tabsEl.addEventListener("click", function (e) {
     if (navDragClickGuard) {
