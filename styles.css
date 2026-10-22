@@ -2969,9 +2969,6 @@ body[data-page="windowmiss"] .wm-run-summary__item small {
 }
 
 .prob-test-card.is-live {
-  position: sticky;
-  left: 0;
-  z-index: 2;
   border: 2px solid #3b82f6;
   background: #eff6ff;
   box-shadow: 0 0 0 2px #dbeafe;
@@ -3228,9 +3225,6 @@ body[data-page="windowmiss"] .trend-run-row__head span {
 }
 
 .prob-snapshot-card.is-pending {
-  position: sticky;
-  left: 0;
-  z-index: 2;
   border: 2px solid #3b82f6;
   background: #eff6ff;
   box-shadow: 0 0 0 2px #dbeafe;

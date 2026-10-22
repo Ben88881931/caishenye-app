@@ -235,3 +235,39 @@ test("dynamic probability shows every saved ten-tail snapshot newest first", asy
   }
 });
 
+test("dynamic probability cards move with their horizontal strips", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement &&
+      view.innerText.includes("测试窗口记录") &&
+      view.innerText.includes("每期10尾完整排序快照") &&
+      view.querySelectorAll(".prob-snapshot-card").length > 0;
+  });
+
+  const strips = [
+    page.locator(".prob-test-strip").first(),
+    page.locator("[data-prob-snapshot-strip]").first(),
+  ];
+  for (const strip of strips) {
+    await strip.evaluate((element) => {
+      element.scrollLeft = element.scrollWidth;
+    });
+    const geometry = await strip.evaluate((element) => {
+      const stripRect = element.getBoundingClientRect();
+      const cardRect = element.firstElementChild.getBoundingClientRect();
+      return {
+        scrollLeft: element.scrollLeft,
+        stripLeft: stripRect.left,
+        cardLeft: cardRect.left,
+      };
+    });
+    expect(geometry.scrollLeft).toBeGreaterThan(0);
+    expect(geometry.cardLeft).toBeLessThan(geometry.stripLeft - 100);
+  }
+});
+
