@@ -511,7 +511,7 @@ test("long right swipe on a later page returns one page", async ({ page }) => {
   expect(result).toEqual({ before: "betexec", after: "pick3" });
 });
 
-test("daily report ranks all 13 lines by recent three completed windows", async ({ page }) => {
+test("daily report ranks all 13 lines by the combined analysis score", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
@@ -528,10 +528,52 @@ test("daily report ranks all 13 lines by recent three completed windows", async 
   await expect(page.locator("[data-daily-report-card]")).toHaveCount(13);
   await expect(page.locator("[data-weight-model]")).toHaveCount(2);
 
-  const rates = await page.locator("[data-daily-report-row]").evaluateAll((rows) => (
-    rows.map((row) => Number(row.getAttribute("data-report-rate")))
+  const scores = await page.locator("[data-daily-report-row]").evaluateAll((rows) => (
+    rows.map((row) => Number(row.getAttribute("data-report-score")))
   ));
-  expect(rates.every((rate, index) => index === 0 || rates[index - 1] >= rate)).toBe(true);
+  expect(scores.every((score, index) => index === 0 || scores[index - 1] >= score)).toBe(true);
+});
+
+test("daily reports synthesize every analysis section for all 13 lines", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const cards = document.querySelectorAll("[data-daily-report-card]");
+    return cards.length === 13;
+  });
+
+  const required = ["conclusion", "reason", "window", "recent", "longterm", "formula", "risk"];
+  const report = await page.locator("[data-daily-report-card]").evaluateAll((cards, sectionNames) => {
+    return cards.map((card) => {
+      const sections = sectionNames.map((name) => {
+        const node = card.querySelector(`[data-report-section="${name}"]`);
+        return { name, present: Boolean(node), text: node?.innerText?.trim() || "" };
+      });
+      const advice = card.querySelector("[data-report-advice]");
+      return {
+        id: card.getAttribute("data-line-id"),
+        advice: advice?.innerText?.trim() || "",
+        sections,
+      };
+    });
+  }, required);
+
+  expect(report).toHaveLength(13);
+  for (const card of report) {
+    expect(card.id).toBeTruthy();
+    expect(card.advice.length).toBeGreaterThan(4);
+    for (const section of card.sections) {
+      expect(section.present, `${card.id} missing ${section.name}`).toBe(true);
+      expect(section.text.length, `${card.id} empty ${section.name}`).toBeGreaterThan(8);
+    }
+  }
+
+  const rows = page.locator("[data-daily-report-row]");
+  await expect(rows.locator("[data-report-advice]")).toHaveCount(13);
+  await expect(rows.locator("[data-report-reason]")).toHaveCount(13);
 });
 
 test("dynamic probability ranks have independent single-period hit records", async ({ page }) => {
