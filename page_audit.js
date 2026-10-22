@@ -184,12 +184,25 @@ must(flowPositions.every((pos, i) => pos >= 0 && (i === 0 || pos > flowPositions
 must(!appText.includes('{ id: "orderhint", label: "执行提示" }') && !appText.includes('{ id: "funds", label: "资金调度" }') && appText.includes('if (state.tab === "orderhint" || state.tab === "funds")') && appText.includes('state.tab = "betexec"'), "执行提示与资金调度必须已从导航撤掉（内容并入下注执行表），老入口一律重定向到下注执行表");
 
 const workflowText = read("SUPERVISOR_WORKFLOW.md");
+const executorWorkflowText = read("EXECUTOR_WORKFLOW.md");
+const executorPromptText = read("AGENT_PROMPTS.md");
 must(workflowText.includes("五道闸门") && workflowText.includes("不得事后补造快照") && workflowText.includes("资金调度只做倍率"), "权威工作流必须包含数据真实性五道闸门和资金调度只做倍率规则");
 must(workflowText.includes("停止模型探索") && workflowText.includes("未来模型训练门槛") && workflowText.includes("只准用真实快照当训练集") && workflowText.includes("≥ 400 期") && workflowText.includes("55.56%") && workflowText.includes("锁定段在模型定稿前") && workflowText.includes("262 期起"), "权威工作流必须锁定：停止模型探索、只用真实快照训练、单线样本≥400期、时间切分锁定段、打平线55.56%");
 must(appText.includes("function betRegimeFor") && appText.includes("var ps = betPersonalitySeries(line, maxStage);") && appText.includes("var states = ps.states;") && !appText.includes("function rollOf(nets)") && appText.includes("只看窗口对错，不看金额") && appText.includes("连中第") && appText.includes("连错第") && workflowText.includes("「性格」只看窗口对错") && workflowText.includes("盈亏只是模拟账"), "性格必须只按窗口对错算（连中N/连错N，不看金额），与逐窗标记/参考表同源；盈亏只能作模拟账并写明，禁止当成用户真账");
 must(appText.includes("exec-seq__cell") && appText.includes("窗口对错序列 · ' + WINDOW_RECORD_FORMAT") && appText.includes("连中段") && appText.includes("连错段") && appText.includes("连中几个窗口会断开") && appText.includes("错的时候连错几个窗口") && appText.includes("长度出现频率") && appText.includes("年 1 次") && appText.includes("看危险不要只看最长") && cssText.includes(".exec-seq__cell.is-hit") && cssText.includes(".exec-seq__cell.is-miss"), "下注执行表必须逐线给出窗口对错序列（中/错方块条，标期号）和连中/连错段长分布，且段长必须带出现频率（多少年一次），禁止只看最长就判危险");
 must(workflowText.includes("执行提示、资金调度已彻底删除") && !appText.includes("function renderOrderHint") && !appText.includes("function renderFunds"), "权威工作流必须写明执行提示/资金调度已彻底删除（连代码一起删），且 app.js 不得残留");
 must(workflowText.includes("第 6 步：执行端结束（不做审计）") && workflowText.includes("执行端不得汇报或生成模型命中率"), "权威工作流必须禁止执行端运行审计、汇报审计结论或生成最终签收意见");
+must(
+  executorWorkflowText.includes("executor-v3-20261022") &&
+  executorWorkflowText.includes("不得超过六行") &&
+  executorWorkflowText.includes("禁止运行 `score_calibration.js`") &&
+  executorPromptText.includes("每日完整审计由监督线程独立执行一次") &&
+  executorPromptText.includes("不得超过六行") &&
+  !["score_calibration.js", "ultimate_backtest.js", "selector_backtest.js", "page_audit.js", "check_app.py", "health_check.js", "_probability_model_check.js"].some((name) => (
+    new RegExp("^(?:node|python) " + name.replace(/\./g, "\\."), "m").test(executorWorkflowText)
+  )),
+  "执行端工作流只能更新数据，不得重复运行审计脚本或生成第二份报告"
+);
 must(!/mock|demo|sampleData|假数据|模拟数据/i.test(appText), "所有页面都不得内置伪造、演示或模拟数据");
 
 must(appText.includes("生产状态 · 用户已切换新方法") && appText.includes("2025验证段") && appText.includes("2026影子段") && appText.includes("下一期Top1") && appText.includes("三期Top1") && appText.includes(".currentMiss") && appText.includes(".currentStreak") && appText.includes("function probabilityTestWindowHTML") && appText.includes("prob-test-strip") && appText.includes("测试窗口记录 · 全历史三期窗口") && appText.includes("2021-2026各年独立") && appText.includes("5/7/15/21/30") && appText.includes("研究提示：2025验证段仍弱于旧方法") && appText.includes("继续跟踪风险"), "动态概率页面必须显示新方法生产状态、验证风险、随机基准和真实遗漏/连出");
