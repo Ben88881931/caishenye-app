@@ -1092,9 +1092,7 @@
     var el = e.target;
     var info = {
       onHorizontalScrollbar: false,
-      onVerticalScrollbar: false,
-      inHorizontalScroll: false,
-      scrollEl: null
+      onVerticalScrollbar: false
     };
     while (el && el.nodeType === 1 && el !== document.documentElement) {
       var hasX = el.scrollWidth > el.clientWidth + 1;
@@ -1106,8 +1104,6 @@
         if (xScroll || yScroll) {
           var rect = el.getBoundingClientRect();
           if (xScroll) {
-            if (!info.inHorizontalScroll) info.inHorizontalScroll = true;
-            if (!info.scrollEl) info.scrollEl = el;
             if (e.clientY >= rect.top + el.clientHeight) info.onHorizontalScrollbar = true;
           }
           if (yScroll && e.clientX >= rect.left + el.clientWidth) info.onVerticalScrollbar = true;
@@ -6525,6 +6521,10 @@
       historyPointerStart = null;
       return;
     }
+    if (state.tab === "windowmult") {
+      historyPointerStart = null;
+      return;
+    }
     var gestureInfo = horizontalGestureInfoAt(e);
     if (gestureInfo.onVerticalScrollbar) {
       historyPointerStart = null;
@@ -6535,9 +6535,7 @@
       y: e.clientY,
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
-      inHorizontalScroll: gestureInfo.inHorizontalScroll,
       onHorizontalScrollbar: gestureInfo.onHorizontalScrollbar,
-      scrollEl: gestureInfo.scrollEl,
       edgeSwipe: (e.clientX <= EDGE_FLIP_ZONE || e.clientX >= window.innerWidth - EDGE_FLIP_ZONE),
       lineStrip: !!e.target.closest(".wm-line-selector"),
       handled: false
@@ -6558,13 +6556,6 @@
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (historyPointerStart.onHorizontalScrollbar && !historyPointerStart.edgeSwipe) return;
-    // 横向容器只在“还能往这个方向继续滑”时才吃掉手势；滑到头了就让页面翻页，避免不灵敏
-    if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) {
-      var se = historyPointerStart.scrollEl;
-      var isReturnSwipe = level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6;
-      var canScrollDir = se ? (dx < 0 ? (se.scrollLeft + se.clientWidth < se.scrollWidth - 2) : (se.scrollLeft > 2)) : true;
-      if (canScrollDir && !isReturnSwipe) return;
-    }
     if (historyPointerStart.lineStrip && absX >= swipeX && absX > absY * 1.05) {
       historyPointerStart.handled = true;
       armGestureClickGuard();
@@ -6593,7 +6584,6 @@
       armGestureClickGuard();
       e.preventDefault();
       if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-      // 13线规律中心：三级子页不再用左右滑动切换（用户要求取消），滑动只翻二级页面；子页仍可点按钮切换
       else stepTabHistory(dx > 0 ? -1 : 1);
     }
   }, true);
@@ -6615,10 +6605,7 @@
     var level = gesture.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (isVertical) return;
-    if (gesture.inHorizontalScroll && !gesture.edgeSwipe &&
-        !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6)) {
-      return;
-    }
+    if (gesture.onHorizontalScrollbar && !gesture.edgeSwipe) return;
     if (gesture.lineStrip && absX >= swipeX && absX > absY * 1.05) {
       stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
@@ -6633,7 +6620,6 @@
     }
     if (absX < swipeX || absX < absY * 1.1) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-    // 13线规律中心：三级子页不再用左右滑动切换（用户要求取消）
     else stepTabHistory(dx > 0 ? -1 : 1);
   }, true);
 
@@ -6652,7 +6638,7 @@
 
   var touchReturnStart = null;
   document.documentElement.addEventListener("touchstart", function (e) {
-    if (e.touches.length !== 1 || state.tab === "directory") {
+    if (e.touches.length !== 1 || state.tab === "directory" || state.tab === "windowmult") {
       touchReturnStart = null;
       return;
     }

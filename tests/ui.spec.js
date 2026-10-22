@@ -318,6 +318,77 @@ test("horizontal scrollbar swipes from the right screen edge advance the page", 
   expect(result).toEqual({ before: "pick3", after: "betexec" });
 });
 
+test("horizontal swipes on scrollable content advance the page immediately", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  const strip = page.locator(".prob-test-strip").first();
+  const result = await strip.evaluate((element) => {
+    element.scrollLeft = 0;
+    const card = element.firstElementChild;
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + 120;
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 92,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    const before = document.body.dataset.page;
+    card.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
+    return { before, after: document.body.dataset.page };
+  });
+
+  expect(result).toEqual({ before: "pick3", after: "betexec" });
+});
+
+test("13-line center pages do not change from horizontal swipes", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("13线规律中心");
+  });
+
+  const result = await page.locator("#view .wm-card").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 93,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    const before = document.body.dataset.page;
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
+    return { before, after: document.body.dataset.page };
+  });
+
+  expect(result).toEqual({ before: "windowmult", after: "windowmult" });
+});
+
 test("dynamic probability ranks have independent single-period hit records", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {

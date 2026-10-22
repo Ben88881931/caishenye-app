@@ -30,6 +30,8 @@ const appText = read("app.js");
 const stylesText = read("styles.css");
 must(appText.includes('var WINDOW_RECORD_FORMAT') && appText.includes('class="record-format"') && appText.includes('horizontalGestureInfoAt') && !appText.includes('function isInsideHorizontalScroll') && stylesText.includes('统一横向记录') && stylesText.includes('.prob-test-strip::-webkit-scrollbar') && stylesText.includes('.exec-seq::-webkit-scrollbar') && !stylesText.includes('html.gesture-active *'), "所有窗口记录必须统一滚动样式、统一格式说明，并用单次遍历处理滑动手势");
 must(!/touch-action:\s*pan-x\s*;/.test(stylesText) && (stylesText.match(/touch-action:\s*pan-x pan-y/g) || []).length >= 6, "所有横向滚动区必须同时允许纵向页面滚动");
+must(appText.includes("if (historyPointerStart.onHorizontalScrollbar && !historyPointerStart.edgeSwipe) return;") && appText.includes("if (gesture.onHorizontalScrollbar && !gesture.edgeSwipe) return;") && !appText.includes("inHorizontalScroll") && !appText.includes("canScrollDir"), "内容区横向滑动必须直接翻页，只有滚动条中间区域用于滚动");
+must(appText.includes('if (state.tab === "windowmult")') && appText.includes('state.tab === "windowmult"'), "13线规律中心三级页面必须禁用页面左右滑动");
 must(appText.includes('directory-card[data-directory-group]') && appText.includes('data-directory-tab') && appText.includes('directoryGroup') && appText.includes('v2_directory_group') && appText.includes('startDirectoryGroupSort') && !appText.includes('groupHtml += groups.map'), "目录必须分级：主目录选一级类目、类目目录选二级页面，顶部不得重复铺一级滚动导航");
 must(appText.includes('{ id: "prob1"') && appText.includes('{ id: "prob2"') && appText.includes('{ id: "prob3"') && /function renderWindowMiss\(\)[\s\S]*EXEC_LINES\.map/.test(appText), "窗口遗漏热图必须包含概率第1/2/3三条影子线并共用窗口口径");
 
