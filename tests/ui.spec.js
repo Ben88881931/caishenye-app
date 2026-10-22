@@ -318,3 +318,49 @@ test("horizontal scrollbar swipes from the right screen edge advance the page", 
   expect(result).toEqual({ before: "pick3", after: "betexec" });
 });
 
+test("dynamic probability ranks have independent single-period hit records", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement &&
+      view.innerText.includes("单期对错") &&
+      view.querySelectorAll(".prob-single-period-strip").length === 3;
+  });
+
+  const strips = page.locator(".prob-single-period-strip");
+  await expect(strips).toHaveCount(3);
+  const expected = [
+    { rank: "0", tail: "尾8", settledClass: "is-hit", settledText: "中" },
+    { rank: "1", tail: "尾9", settledClass: "is-hit", settledText: "中" },
+    { rank: "2", tail: "尾5", settledClass: "is-miss", settledText: "错" },
+  ];
+
+  for (let index = 0; index < expected.length; index++) {
+    const strip = strips.nth(index);
+    const item = expected[index];
+    const chips = strip.locator(".prob-single-period-chip");
+    await expect(strip).toHaveAttribute("data-prob-single-rank", item.rank);
+    await expect(chips).toHaveCount(295);
+    await expect(chips.first()).toHaveClass(/is-pending/);
+    await expect(chips.first()).toContainText("第295期");
+    await expect(chips.first()).toContainText(item.tail);
+    await expect(chips.first()).toContainText("待开奖");
+    await expect(chips.nth(1)).toHaveClass(new RegExp(item.settledClass));
+    await expect(chips.nth(1)).toContainText("第294期");
+    await expect(chips.nth(1)).toContainText(item.tail);
+    await expect(chips.nth(1)).toContainText(item.settledText);
+
+    const periods = await chips.evaluateAll((nodes) => nodes.map((node) => Number(node.dataset.period)));
+    expect(periods[0]).toBe(295);
+    expect(periods[1]).toBe(294);
+    expect(periods[periods.length - 1]).toBe(1);
+    expect(periods.every((period, periodIndex) => (
+      periodIndex === 0 || period === periods[periodIndex - 1] - 1
+    ))).toBe(true);
+  }
+});
+

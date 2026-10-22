@@ -188,6 +188,7 @@ must(!/mock|demo|sampleData|假数据|模拟数据/i.test(appText), "所有页�
 must(appText.includes("测试状态 · 未通过正式验证") && appText.includes("2025验证段") && appText.includes("2026影子段") && appText.includes("下一期Top1") && appText.includes("三期Top1") && appText.includes(".currentMiss") && appText.includes(".currentStreak") && appText.includes("function probabilityTestWindowHTML") && appText.includes("prob-test-strip") && appText.includes("测试窗口记录 · 全历史三期窗口") && appText.includes("2021-2026各年独立") && appText.includes("0仓位") && appText.includes("不进入正式下单"), "动态概率页面必须直接显示测试状态、随机基准、真实遗漏/连出、当前未通过结论和0仓位");
 must(appText.includes("data-prob-live-window") && appText.includes("wmStageNow(liveLine, 3)") && appText.includes("当前窗口"), "动态概率三个排名必须显示共用窗口引擎的当前窗口和待开奖状态");
 must(appText.includes("每期10尾完整排序快照") && appText.includes("probability_snapshots.json") && appText.includes("data-prob-snapshot-strip") && appText.includes("probabilitySnapshotCardHTML") && appText.includes("rows.length !== 10") && appText.includes("完整10尾排序"), "动态概率必须按每期真实快照横滑显示完整10尾排序，禁止折叠或遗漏");
+must(appText.includes("probabilitySinglePeriodByRank") && appText.includes("PROB_MODEL.analyze(rawYear, period - 1)") && appText.includes("单期对错") && appText.includes("data-prob-single-rank") && appText.includes("prob-single-period-chip"), "动态概率三个排名必须各自提供单期对错滚动记录");
 
 const versions = [...indexText.matchAll(/(?:styles\.css|data\.js|model_core\.js|model_selector\.js|model_probability\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)/g)].map((m) => m[1]);
 must(versions.length === 8 && new Set(versions).size === 1, "8处资源版本一致");

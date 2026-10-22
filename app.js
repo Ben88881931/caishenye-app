@@ -5503,6 +5503,150 @@
     return rawYear;
   }
 
+  var probabilitySinglePeriodCache = {};
+  var probabilitySinglePeriodBuilds = {};
+
+  function probabilityIdle(callback) {
+    if (typeof window.requestIdleCallback === "function") {
+      return window.requestIdleCallback(callback, { timeout: 400 });
+    }
+    return setTimeout(callback, 16);
+  }
+
+  function probabilitySinglePeriodByRankAsync(year, callback) {
+    var cacheKey = String(year);
+    if (probabilitySinglePeriodCache[cacheKey]) {
+      callback(probabilitySinglePeriodCache[cacheKey]);
+      return;
+    }
+    if (probabilitySinglePeriodBuilds[cacheKey]) {
+      probabilitySinglePeriodBuilds[cacheKey].callbacks.push(callback);
+      return;
+    }
+    var rawYear = probabilityYearRaw(year);
+    var periods = Object.keys(rawYear).map(Number).sort(function (a, b) { return a - b; });
+    var byRank = [[], [], []];
+    var build = { callbacks: [callback] };
+    probabilitySinglePeriodBuilds[cacheKey] = build;
+    var index = 0;
+    function processChunk() {
+      var end = Math.min(periods.length, index + 24);
+      while (index < end) {
+        var period = periods[index++];
+        var prediction = PROB_MODEL.analyze(rawYear, period - 1);
+        var bits = rawYear[String(period)] || "";
+        var actualTails = [];
+        for (var tail = 0; tail < bits.length; tail++) {
+          if (bits.charAt(tail) === "1") actualTails.push(tail);
+        }
+        prediction.top.forEach(function (pick, rank) {
+          byRank[rank].push({
+            period: period,
+            tail: pick.tail,
+            actualTails: actualTails,
+            hit: actualTails.indexOf(Number(pick.tail)) >= 0,
+            source: Number(year) === 2026 && period >= 294 ? "snapshot" : "backtest"
+          });
+        });
+      }
+      if (index < periods.length) {
+        probabilityIdle(processChunk);
+        return;
+      }
+      probabilitySinglePeriodCache[cacheKey] = byRank;
+      delete probabilitySinglePeriodBuilds[cacheKey];
+      build.callbacks.forEach(function (done) { done(byRank); });
+    }
+    probabilityIdle(processChunk);
+  }
+
+  function probabilitySinglePeriodRows(year, rank, history, pendingResult) {
+    var rows = history.slice();
+    var latestYear = Number((D[D.length - 1] || {}).y);
+    if (pendingResult && Number(year) === latestYear && pendingResult.top && pendingResult.top[rank]) {
+      rows.push({
+        period: Number(pendingResult.target),
+        tail: pendingResult.top[rank].tail,
+        actualTails: [],
+        hit: null,
+        pending: true,
+        source: "snapshot"
+      });
+    }
+    return rows;
+  }
+
+  function probabilitySinglePeriodChipHTML(year, row) {
+    var tone = row.pending ? "is-pending" : (row.hit ? "is-hit" : "is-miss");
+    var result = row.pending ? "待开奖" : (row.hit ? "中" : "错");
+    var title = Number(year) + "年第" + row.period + "期 · 尾" + row.tail + " · " + result +
+      (row.actualTails && row.actualTails.length ? " · 实开尾" + row.actualTails.join("/") : "");
+    return '<span class="prob-single-period-chip ' + tone + '" data-period="' + row.period +
+      '" data-source="' + row.source + '" title="' + title + '"><b>' + result +
+      '</b><span>第' + row.period + '期 · 尾' + row.tail + '</span></span>';
+  }
+
+  function probabilitySinglePeriodSourceNote(year) {
+    return Number(year) === 2026
+      ? "历史回测 · 294期起真实快照"
+      : (Number(year) === 2025 ? "验证回测" : "训练回测");
+  }
+
+  function probabilitySinglePeriodHTML(year, rank, pendingResult) {
+    var pendingRows = probabilitySinglePeriodRows(year, rank, [], pendingResult);
+    var chips = pendingRows.map(function (row) {
+      return probabilitySinglePeriodChipHTML(year, row);
+    }).join("");
+    return '<div class="prob-single-period"><div class="prob-single-period__head"><b>单期对错</b>' +
+      '<span>' + probabilitySinglePeriodSourceNote(year) + ' · 单期统计生成中</span></div>' +
+      '<div class="prob-single-period-strip record-scroll" data-prob-single-rank="' + rank +
+      '" data-prob-single-year="' + year + '" data-prob-single-total="0" data-prob-single-rendered="' +
+      pendingRows.length + '">' +
+      chips + '</div></div>';
+  }
+
+  function hydrateProbabilitySinglePeriods(year, pendingResult) {
+    var strips = [].slice.call(document.querySelectorAll('[data-prob-single-year="' + year + '"]'));
+    if (!strips.length) return;
+    probabilitySinglePeriodByRankAsync(year, function (byRank) {
+      if (!strips[0].isConnected) return;
+      var jobs = strips.map(function (strip) {
+        var rank = Number(strip.dataset.probSingleRank);
+        var rows = probabilitySinglePeriodRows(year, rank, byRank[rank], pendingResult);
+        var settled = rows.filter(function (row) { return !row.pending; });
+        var hits = settled.filter(function (row) { return row.hit; }).length;
+        var misses = settled.length - hits;
+        var rate = settled.length ? (hits / settled.length * 100).toFixed(1) + "%" : "-";
+        var head = strip.parentElement.querySelector(".prob-single-period__head span");
+        if (head) {
+          head.textContent = probabilitySinglePeriodSourceNote(year) + " · 已开奖" + settled.length +
+            "期 · 中" + hits + " · 错" + misses + " · 命中率" + rate;
+        }
+        strip.dataset.probSingleTotal = String(rows.length);
+        return { strip: strip, rows: byRank[rank], next: byRank[rank].length };
+      });
+      function appendNextChunk() {
+        var active = false;
+        jobs.forEach(function (job) {
+          if (job.next <= 0 || !job.strip.isConnected) return;
+          active = true;
+          var start = Math.max(0, job.next - 42);
+          var html = job.rows.slice(start, job.next).reverse().map(function (row) {
+            return probabilitySinglePeriodChipHTML(year, row);
+          }).join("");
+          job.strip.insertAdjacentHTML("beforeend", html);
+          job.next = start;
+          job.strip.dataset.probSingleRendered = String(job.rows.length - job.next + (
+            Number(job.strip.dataset.probSingleTotal) > job.rows.length ? 1 : 0
+          ));
+          if (job.next === 0) job.strip.dataset.probSingleComplete = "1";
+        });
+        if (active) probabilityIdle(appendNextChunk);
+      }
+      probabilityIdle(appendNextChunk);
+    });
+  }
+
   function probabilityWindowStepsHTML(attempts, startPeriod, currentStage) {
     var html = '<div class="prob-window-steps">';
     for (var stage = 1; stage <= 3; stage++) {
@@ -5544,7 +5688,7 @@
       "</div>";
   }
 
-  function probabilityTestWindowHTML(selectedYear) {
+  function probabilityTestWindowHTML(selectedYear, pendingResult) {
     var year = Number(selectedYear);
     var rawYear = probabilityYearRaw(year);
     var trainingYear = year >= 2021 && year <= 2024;
@@ -5638,7 +5782,9 @@
             currentStage: 0
           });
         });
-        html += '</div></div>';
+        html += '</div>';
+        html += probabilitySinglePeriodHTML(year, rank, pendingResult);
+        html += '</div>';
       });
     html += '</div></div>';
     html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026为影子观察；切换年份可查看全部历史，所有窗口按每年第1期重新起算，不引用未来开奖。</p>';
@@ -5738,12 +5884,13 @@
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · 第' + result.target + '期影子预测</h2><span class="section__hint">模型 ' + result.version + ' · 每期重算10个尾号 · 当前状态：未通过正式验证</span></div></div>';
     html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>测试状态 · 未通过正式验证</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>0仓位 · 不进入正式下单</strong></div><div class="prob-summary-note">2026 Top1 ' + delta(sm.nextTop1, sb.next) + '，三期Top1 ' + delta(sm.window3Top1, sb.window3) + '；没有证明稳定优势，只做影子记录。</div></div></div>';
     html += '<div class="section"><div class="panel"><div class="wm-subhead">测试历史年份 · 2021-2026各年独立</div><div class="wm-view-tabs">' + yearTabs + '</div></div></div>';
-    html += probabilityTestWindowHTML(selectedYear);
+    html += probabilityTestWindowHTML(selectedYear, result);
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每期10尾完整排序快照</h2><span class="section__hint">真实保存 · 最新在左 · 每期完整10项 · 左右滑动</span></div></div>';
     html += '<div class="section"><div id="probabilitySnapshotMount" class="panel prob-snapshot-mount"><div class="trend-run-empty">概率快照读取中...</div></div></div>';
     html += '<p class="disclaimer">本页概率为固定权重影子模型，不使用未来数据；训练2021-2024、验证2025、2026仅做开奖前影子记录。历史真实D1/D2快照保留不动，但不再作为推荐依据。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
     mountProbabilitySnapshots(result);
+    hydrateProbabilitySinglePeriods(selectedYear, result);
   }
 
 

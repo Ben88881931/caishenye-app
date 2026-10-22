@@ -3098,6 +3098,94 @@ body[data-page="windowmiss"] .wm-run-summary__item small {
   color: #94a3b8;
 }
 
+.prob-single-period {
+  min-width: 0;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px dashed #dbe3ec;
+}
+
+.prob-single-period__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 9px;
+  margin-bottom: 5px;
+}
+
+.prob-single-period__head b {
+  color: #334155;
+  font-size: 11px;
+}
+
+.prob-single-period__head span {
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.prob-single-period-strip {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  touch-action: pan-x;
+  contain: layout paint style;
+}
+
+.prob-single-period-chip {
+  flex: 0 0 94px;
+  min-height: 43px;
+  padding: 5px 6px;
+  border: 1px solid #dbe3ec;
+  border-radius: 5px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #f8fafc;
+}
+
+.prob-single-period-chip b {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.prob-single-period-chip span {
+  color: #475569;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.prob-single-period-chip.is-hit {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.prob-single-period-chip.is-hit b {
+  color: #15803d;
+}
+
+.prob-single-period-chip.is-miss {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.prob-single-period-chip.is-miss b {
+  color: #b91c1c;
+}
+
+.prob-single-period-chip.is-pending {
+  border-color: #60a5fa;
+  background: #eff6ff;
+}
+
+.prob-single-period-chip.is-pending b {
+  color: #1d4ed8;
+}
+
 body[data-page="windowmiss"] .trend-run-row__head {
   align-items: flex-start;
   flex-direction: column;
