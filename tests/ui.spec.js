@@ -364,3 +364,29 @@ test("dynamic probability ranks have independent single-period hit records", asy
   }
 });
 
+test("horizontal record strips preserve vertical page panning", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement &&
+      view.querySelectorAll(".prob-single-period-strip").length === 3 &&
+      view.querySelectorAll(".prob-snapshot-strip").length > 0;
+  });
+
+  const selectors = [
+    ".prob-test-strip",
+    ".prob-single-period-strip",
+    ".prob-snapshot-strip",
+  ];
+  for (const selector of selectors) {
+    const touchAction = await page.locator(selector).first().evaluate((element) => (
+      getComputedStyle(element).touchAction
+    ));
+    expect(touchAction.split(/\s+/)).toEqual(expect.arrayContaining(["pan-x", "pan-y"]));
+  }
+});
+
