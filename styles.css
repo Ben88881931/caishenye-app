@@ -3630,13 +3630,15 @@ body[data-page="dailyreport"] .daily-report-strip {
 }
 
 body[data-page="dailyreport"] .daily-report-line-card {
-  flex: 0 0 min(340px, calc(100vw - 48px));
-  width: min(340px, calc(100vw - 48px));
+  flex: 0 0 286px;
+  width: 286px;
   min-width: 0;
+  max-width: calc(100vw - 84px);
   padding: 12px;
   border: 1px solid #dbe3ee;
   border-radius: 8px;
   background: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
   scroll-snap-align: start;
   overflow-wrap: anywhere;
 }

@@ -528,6 +528,19 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator("[data-daily-report-card]")).toHaveCount(13);
   await expect(page.locator("[data-weight-model]")).toHaveCount(2);
 
+  const cardLayout = await page.locator("[data-daily-report-strip]").evaluate((strip) => {
+    const card = strip.querySelector("[data-daily-report-card]");
+    const rect = card.getBoundingClientRect();
+    return {
+      cardWidth: rect.width,
+      stripWidth: strip.clientWidth,
+      scrollable: strip.scrollWidth > strip.clientWidth,
+    };
+  });
+  expect(cardLayout.cardWidth).toBeLessThanOrEqual(300);
+  expect(cardLayout.cardWidth).toBeLessThan(cardLayout.stripWidth);
+  expect(cardLayout.scrollable).toBe(true);
+
   const scores = await page.locator("[data-daily-report-row]").evaluateAll((rows) => (
     rows.map((row) => Number(row.getAttribute("data-report-score")))
   ));
