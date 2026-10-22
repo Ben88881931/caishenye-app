@@ -318,7 +318,7 @@ test("horizontal scrollbar swipes from the right screen edge advance the page", 
   expect(result).toEqual({ before: "pick3", after: "betexec" });
 });
 
-test("horizontal swipes on scrollable content advance the page immediately", async ({ page }) => {
+test("horizontal scroll region swipes in the center keep the same page", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
@@ -352,7 +352,7 @@ test("horizontal swipes on scrollable content advance the page immediately", asy
     return { before, after: document.body.dataset.page };
   });
 
-  expect(result).toEqual({ before: "pick3", after: "betexec" });
+  expect(result).toEqual({ before: "pick3", after: "pick3" });
 });
 
 test("13-line center pages do not change from horizontal swipes", async ({ page }) => {

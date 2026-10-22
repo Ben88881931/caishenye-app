@@ -1091,8 +1091,8 @@
   function horizontalGestureInfoAt(e) {
     var el = e.target;
     var info = {
-      onHorizontalScrollbar: false,
-      onVerticalScrollbar: false
+      onVerticalScrollbar: false,
+      inHorizontalScroll: false
     };
     while (el && el.nodeType === 1 && el !== document.documentElement) {
       var hasX = el.scrollWidth > el.clientWidth + 1;
@@ -1104,7 +1104,7 @@
         if (xScroll || yScroll) {
           var rect = el.getBoundingClientRect();
           if (xScroll) {
-            if (e.clientY >= rect.top + el.clientHeight) info.onHorizontalScrollbar = true;
+            info.inHorizontalScroll = true;
           }
           if (yScroll && e.clientX >= rect.left + el.clientWidth) info.onVerticalScrollbar = true;
         }
@@ -6531,7 +6531,7 @@
       y: e.clientY,
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
-      onHorizontalScrollbar: gestureInfo.onHorizontalScrollbar,
+      inHorizontalScroll: gestureInfo.inHorizontalScroll,
       edgeSwipe: (e.clientX <= LEFT_EDGE_FLIP_ZONE || e.clientX >= window.innerWidth - RIGHT_EDGE_FLIP_ZONE),
       lineStrip: !!e.target.closest(".wm-line-selector"),
       pageSwipeDisabled: state.tab === "windowmult",
@@ -6552,7 +6552,6 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (historyPointerStart.onHorizontalScrollbar && !historyPointerStart.edgeSwipe) return;
     if (historyPointerStart.lineStrip && absX >= swipeX && absX > absY * 1.05) {
       historyPointerStart.handled = true;
       armGestureClickGuard();
@@ -6560,6 +6559,7 @@
       stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
+    if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) return;
     if (historyPointerStart.pageSwipeDisabled) return;
     if (absX >= swipeX && absX > absY * 1.05) {
       historyPointerStart.handled = true;
@@ -6587,11 +6587,11 @@
     var level = gesture.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (isVertical) return;
-    if (gesture.onHorizontalScrollbar && !gesture.edgeSwipe) return;
     if (gesture.lineStrip && absX >= swipeX && absX > absY * 1.05) {
       stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
+    if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return;
     if (gesture.pageSwipeDisabled) return;
     if (absX < swipeX || absX < absY * 1.1) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);

@@ -89,21 +89,18 @@ async function main() {
   check(t3o.during === "none" && t3o.before === "none", "拖动时页面不整体位移（不晃屏）", t3);
   await sleep(400);
 
-  // 4a2) 中间页长右滑 → 只回上一页，不回目录（滑到第一页才能返回上一级）
+  // 4) 长右滑永远只做层级内上一页，不再跳回目录
   await evalJS("var cb=document.querySelector('.tab[data-tab=\"betexec\"]'); if(cb)cb.click(); true"); await sleep(900);
   await gesture("#view .section__title", [80, 150, 240], null, 25);
   await sleep(900);
   const midTab = await evalJS("(document.querySelector('.tab.is-active')||{}).innerText||''");
   check((await evalJS("!!document.querySelector('.directory-grid')")) === false && midTab === "动态概率", "中间页长右滑 → 只回上一页，不回目录", "当前=" + midTab);
-  await evalJS("var cb2=document.querySelector('.tab[data-tab=\"betexec\"]'); if(cb2)cb2.click(); true"); await sleep(700);
-  // 4a) 右滑 200px 不够 → 不该回目录（门槛已提到 220px）
-  await gesture("#view .section__title", [60, 130, 200], null, 25);
-  await sleep(700);
-  check(await evalJS("!!document.querySelector('.directory-grid')") === false, "右滑 200px 不够 → 不会误回目录");
-  // 4b) 右滑 ≥220px 且明显横向 → 回目录
+  await evalJS("var first=document.querySelector('.tab[data-tab=\"pick3\"]'); if(first)first.click(); true"); await sleep(700);
+  const firstBefore = await evalJS("document.body.dataset.page||''");
   await gesture("#view .section__title", [80, 150, 240], null, 25);
   await sleep(700);
-  check(await evalJS("!!document.querySelector('.directory-grid')") === true, "右滑 ≥220px 且明显横向 → 回到目录");
+  const firstAfter = await evalJS("document.body.dataset.page||''");
+  check(firstBefore === firstAfter && (await evalJS("!!document.querySelector('.directory-grid')")) === false, "第一页长右滑 → 停在第一页，不回目录");
 
   // 5) 横向滚动条内滑动不翻页
   await evalJS("var bk9=document.querySelector('[data-directory=\"1\"]'); if(bk9)bk9.click(); true"); await sleep(500);
@@ -115,6 +112,15 @@ async function main() {
   await sleep(500);
   const after5 = await activeTab();
   check(after5 === before5 && (await viewT()) === "none", "横向滚动条内滑动不翻页");
+  await evalJS("var p3=document.querySelector('.tab[data-tab=\"pick3\"]'); if(p3)p3.click(); true"); await sleep(1200);
+  const edgeBefore = await evalJS("document.body.dataset.page||''");
+  const edgeAfter = await evalJS(
+    "(function(){var el=document.querySelector('.prob-test-strip');if(!el)return 'missing';" +
+    "var r=el.getBoundingClientRect();var x=Math.min(window.innerWidth-2,r.right-2);var y=r.top+20;" +
+    "var p=function(t,cx){return new PointerEvent(t,{bubbles:true,cancelable:true,clientX:cx,clientY:y,pointerId:31,pointerType:'touch',isPrimary:true,button:0});};" +
+    "el.dispatchEvent(p('pointerdown',x));document.documentElement.dispatchEvent(p('pointermove',x-100));" +
+    "document.documentElement.dispatchEvent(p('pointerup',x-100));return document.body.dataset.page||'';})()");
+  check(edgeBefore !== edgeAfter && edgeAfter !== "missing", "横向滚动区从屏幕边缘起手 → 正常翻页（" + edgeBefore + " → " + edgeAfter + "）");
 
   // 6) 竖滑不翻页
   const before6 = await activeTab();
