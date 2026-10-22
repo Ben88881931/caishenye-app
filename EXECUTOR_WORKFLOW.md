@@ -1,8 +1,8 @@
 # 财神爷小程序执行端工作流
 
-版本：`executor-v1-20261021`
+版本：`executor-v2-20261022`
 
-本文件只定义执行端。执行端只更新数据，不做审计、不签收、不改模型或页面。
+本文件只定义执行端。执行端只更新数据、运行既定命令、提交推送和汇报执行结果，不做审计、不签收、不做模型判断、不改模型或页面。命令输出只是执行证据，不代表审计通过。
 
 ## 1. 工作区规则
 
@@ -23,7 +23,7 @@
 例如：
 
 ```text
-294期：01.02.03.04.05.06.07
+295期：01.02.03.04.05.06.07
 ```
 
 执行端自己计算：
@@ -69,7 +69,7 @@ node model_supervisor.js sync
    - 在 `var D = [...]` 末尾追加一条：
 
 ```json
-{"y":2026,"p":294,"nums":[1,2,3,4,5,6,7],"zods":["马","蛇","龙","兔","虎","牛","鼠"],"tai":"马"}
+{"y":2026,"p":295,"nums":[1,2,3,4,5,6,7],"zods":["马","蛇","龙","兔","虎","牛","鼠"],"tai":"马"}
 ```
 
 `y`、`p`、`nums`、`zods`、`tai` 五项必须完整。
@@ -118,7 +118,26 @@ node model_supervisor.js sync
 
 八处必须完全一致。
 
-### 第 6 步：检查改动范围
+### 第 6 步：运行既定检查命令
+
+按以下顺序运行：
+
+```powershell
+node score_calibration.js
+node ultimate_backtest.js
+node selector_backtest.js
+node page_audit.js
+python check_app.py
+node health_check.js
+node model_supervisor.js report
+node _probability_model_check.js
+```
+
+这些命令只用于生成执行证据。执行端只记录原始结果，不得写“审计通过”“模型正常”“可以发布”或最终签收结论。
+
+任何命令返回非0，立即停止，不得提交或推送。禁止为了让检查通过而修改测试、规则、模型、历史数据或断言。
+
+### 第 7 步：检查改动范围
 
 ```powershell
 git status --short
@@ -138,13 +157,13 @@ git diff
 
 出现任何其他文件改动时立即停止并报告，不得为了“顺手”提交。
 
-### 第 7 步：提交和推送
+### 第 8 步：提交和推送
 
 只能逐个文件加入：
 
 ```powershell
 git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json prediction_snapshots.json snapshots.js index.html
-git commit -m "更新第294期数据并结算概率快照"
+git commit -m "更新第<期号>期数据并结算快照"
 git push origin main
 ```
 
@@ -172,6 +191,7 @@ git push origin main
 尾数：
 二进制：
 生肖：
+检查命令：全部返回0
 版本：
 commit：
 修改文件：
