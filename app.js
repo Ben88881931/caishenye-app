@@ -1090,7 +1090,12 @@
   // 一次遍历同时判断滚动条、横向容器和最内层滚动元素，避免每次触摸重复扫描三遍。
   function horizontalGestureInfoAt(e) {
     var el = e.target;
-    var info = { onScrollbar: false, inHorizontalScroll: false, scrollEl: null };
+    var info = {
+      onHorizontalScrollbar: false,
+      onVerticalScrollbar: false,
+      inHorizontalScroll: false,
+      scrollEl: null
+    };
     while (el && el.nodeType === 1 && el !== document.documentElement) {
       var hasX = el.scrollWidth > el.clientWidth + 1;
       var hasY = el.scrollHeight > el.clientHeight + 1;
@@ -1103,9 +1108,9 @@
           if (xScroll) {
             if (!info.inHorizontalScroll) info.inHorizontalScroll = true;
             if (!info.scrollEl) info.scrollEl = el;
-            if (e.clientY >= rect.top + el.clientHeight) info.onScrollbar = true;
+            if (e.clientY >= rect.top + el.clientHeight) info.onHorizontalScrollbar = true;
           }
-          if (yScroll && e.clientX >= rect.left + el.clientWidth) info.onScrollbar = true;
+          if (yScroll && e.clientX >= rect.left + el.clientWidth) info.onVerticalScrollbar = true;
         }
       }
       el = el.parentElement;
@@ -6352,8 +6357,8 @@
 
   var SWIPE_PRIMARY_X = 20;
   var RETURN_SWIPE_X = 220;
-    // 屏幕左右边缘 26px 是“翻页专用区”：从这里起手永远翻页，不会被表格/图表的横向滚动吃掉
-    var EDGE_FLIP_ZONE = 26;
+    // 屏幕左右边缘 36px 是“翻页专用区”：从滚动条区域起手也不会被中间滚动逻辑吃掉
+    var EDGE_FLIP_ZONE = 36;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   var gestureClickGuardTimer = null;
@@ -6374,7 +6379,7 @@
       return;
     }
     var gestureInfo = horizontalGestureInfoAt(e);
-    if (gestureInfo.onScrollbar) {
+    if (gestureInfo.onVerticalScrollbar) {
       historyPointerStart = null;
       return;
     }
@@ -6384,6 +6389,7 @@
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: gestureInfo.inHorizontalScroll,
+      onHorizontalScrollbar: gestureInfo.onHorizontalScrollbar,
       scrollEl: gestureInfo.scrollEl,
       edgeSwipe: (e.clientX <= EDGE_FLIP_ZONE || e.clientX >= window.innerWidth - EDGE_FLIP_ZONE),
       lineStrip: !!e.target.closest(".wm-line-selector"),
@@ -6404,6 +6410,7 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
+    if (historyPointerStart.onHorizontalScrollbar && !historyPointerStart.edgeSwipe) return;
     // 横向容器只在“还能往这个方向继续滑”时才吃掉手势；滑到头了就让页面翻页，避免不灵敏
     if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) {
       var se = historyPointerStart.scrollEl;
@@ -6461,7 +6468,7 @@
     var level = gesture.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (isVertical) return;
-    if (gesture.inHorizontalScroll &&
+    if (gesture.inHorizontalScroll && !gesture.edgeSwipe &&
         !(level === "tab" && dx > 0 && absX >= RETURN_SWIPE_X && absX > absY * 1.6)) {
       return;
     }

@@ -271,3 +271,50 @@ test("dynamic probability cards move with their horizontal strips", async ({ pag
   }
 });
 
+async function swipeHorizontalScrollbar(page, fromRightEdge) {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  const strip = page.locator(".prob-test-strip").first();
+  await strip.evaluate((element) => {
+    element.scrollLeft = element.scrollWidth;
+  });
+
+  return strip.evaluate((element, rightEdge) => {
+    const before = document.body.dataset.page;
+    const rect = element.getBoundingClientRect();
+    const startX = rightEdge ? rect.right - 6 : rect.left + rect.width * 0.5;
+    const y = rect.top + element.clientHeight + 4;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 91,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
+    return { before, after: document.body.dataset.page };
+  }, fromRightEdge);
+}
+
+test("horizontal scrollbar swipes in the middle stay on the same page", async ({ page }) => {
+  const result = await swipeHorizontalScrollbar(page, false);
+  expect(result).toEqual({ before: "pick3", after: "pick3" });
+});
+
+test("horizontal scrollbar swipes from the right screen edge advance the page", async ({ page }) => {
+  const result = await swipeHorizontalScrollbar(page, true);
+  expect(result).toEqual({ before: "pick3", after: "betexec" });
+});
+
