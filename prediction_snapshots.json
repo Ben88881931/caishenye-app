@@ -2086,7 +2086,7 @@
       "generatedAt": "2026-10-21T13:40:09.086Z",
       "basedOn": 294,
       "target": 295,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -2106,11 +2106,76 @@
             }
           ]
         }
+      },
+      "actualTails": [
+        2,
+        3,
+        5,
+        7,
+        8
+      ],
+      "actualPeriod": 295,
+      "settledAt": "2026-10-22T13:51:44.710Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            3,
+            9
+          ],
+          "perPick": [
+            {
+              "tail": 3,
+              "score": 93.9,
+              "tag": "连出3",
+              "grade": "A",
+              "hit": true
+            },
+            {
+              "tail": 9,
+              "score": 93.9,
+              "tag": "连出3",
+              "grade": "A",
+              "hit": false
+            }
+          ],
+          "hits": [
+            3
+          ],
+          "count": 1,
+          "hit": true
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-10-22T13:51:44.710Z",
+      "basedOn": 295,
+      "target": 296,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "ambiguous": false,
+          "picks": [
+            {
+              "tail": 3,
+              "score": 95.3,
+              "tag": "连出4",
+              "grade": "S"
+            },
+            {
+              "tail": 2,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 294,
-  "updatedAt": "2026-10-21T13:40:09.095Z",
+  "latestPeriod": 295,
+  "updatedAt": "2026-10-22T13:51:44.738Z",
   "threePeriodRecords": [
     {
       "target": 273,
@@ -2779,6 +2844,37 @@
       "tail": 3,
       "score": 93.9,
       "grade": "A",
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 295,
+          "tail": 3,
+          "actualTails": [
+            2,
+            3,
+            5,
+            7,
+            8
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 295,
+      "settledAt": "2026-10-22T13:51:44.709Z"
+    },
+    {
+      "target": 296,
+      "basedOn": 295,
+      "generatedAt": "2026-10-22T13:51:44.737Z",
+      "action": "跟双号",
+      "source": "double",
+      "rule": "P1/P6",
+      "reason": "双号达到A级且未触发过热或备选连中限制",
+      "stream": "D1",
+      "tail": 3,
+      "score": 95.3,
+      "grade": "S",
       "status": "pending",
       "attempts": [],
       "hitIndex": null,
@@ -3981,11 +4077,24 @@
       "score": 93.9,
       "grade": "A",
       "tag": "连出3",
-      "status": "pending",
-      "attempts": [],
-      "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 295,
+          "tail": 3,
+          "actualTails": [
+            2,
+            3,
+            5,
+            7,
+            8
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 295,
+      "settledAt": "2026-10-22T13:51:44.710Z"
     },
     {
       "target": 295,
@@ -3997,6 +4106,35 @@
       "score": 93.9,
       "grade": "A",
       "tag": "连出3",
+      "status": "pending",
+      "attempts": [
+        {
+          "period": 295,
+          "tail": 9,
+          "actualTails": [
+            2,
+            3,
+            5,
+            7,
+            8
+          ],
+          "hit": false
+        }
+      ],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
+    },
+    {
+      "target": 296,
+      "basedOn": 295,
+      "generatedAt": "2026-10-22T13:51:44.710Z",
+      "stream": "D1",
+      "model": "双号追热",
+      "tail": 3,
+      "score": 95.3,
+      "grade": "S",
+      "tag": "连出4",
       "status": "pending",
       "attempts": [],
       "hitIndex": null,
