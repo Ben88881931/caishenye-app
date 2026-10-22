@@ -734,6 +734,18 @@ html.gesture-active body {
   color: #fff;
 }
 
+body[data-page="windowmult"] .wm-view-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow-x: hidden;
+  touch-action: pan-y;
+}
+
+body[data-page="windowmult"] .wm-view-tabs > .wm-view-tab {
+  width: 100%;
+  min-width: 0;
+}
+
 .wm-hscroll {
   overflow-x: auto;
   overflow-y: hidden;
@@ -741,6 +753,12 @@ html.gesture-active body {
   padding-bottom: 8px;
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #e2e8f0;
+}
+
+@media (min-width: 720px) {
+  body[data-page="windowmult"] .wm-view-tabs {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }
 
 .wm-hscroll::-webkit-scrollbar {

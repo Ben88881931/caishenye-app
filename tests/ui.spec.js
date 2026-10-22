@@ -389,6 +389,60 @@ test("13-line center pages do not change from horizontal swipes", async ({ page 
   expect(result).toEqual({ before: "windowmult", after: "windowmult" });
 });
 
+test("13-line center subtabs are fixed and cannot swipe like pages", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("13线规律中心");
+  });
+
+  const state = await page.locator("#view .wm-view-tabs").evaluate((strip) => {
+    const before = {
+      page: document.body.dataset.page,
+      activeView: strip.querySelector(".is-active")?.getAttribute("data-wm-view"),
+    };
+    const tabs = [...strip.querySelectorAll(".wm-view-tab")];
+    const firstTop = tabs[0].getBoundingClientRect().top;
+    const wraps = tabs.some((tab) => Math.abs(tab.getBoundingClientRect().top - firstTop) > 2);
+    const rect = strip.getBoundingClientRect();
+    const startX = rect.right - 6;
+    const y = rect.top + rect.height / 2;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 96,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    strip.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 120));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 120));
+    return {
+      ...before,
+      pageAfter: document.body.dataset.page,
+      activeViewAfter: strip.querySelector(".is-active")?.getAttribute("data-wm-view"),
+      horizontalOverflow: strip.scrollWidth - strip.clientWidth,
+      wraps,
+    };
+  });
+
+  expect(state).toEqual({
+    page: "windowmult",
+    activeView: "overview",
+    pageAfter: "windowmult",
+    activeViewAfter: "overview",
+    horizontalOverflow: 0,
+    wraps: true,
+  });
+});
+
 test("long right swipe on the first page does not open the directory", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
