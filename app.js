@@ -1117,6 +1117,36 @@
     return info;
   }
 
+  function horizontalWheelTargetAt(e) {
+    var el = e.target;
+    while (el && el.nodeType === 1 && el !== document.documentElement) {
+      var hasX = el.scrollWidth > el.clientWidth + 1;
+      var hasY = el.scrollHeight > el.clientHeight + 1;
+      if (hasX) {
+        var style = window.getComputedStyle(el);
+        var xScroll = /(auto|scroll)/.test(style.overflowX);
+        var yScroll = hasY && /(auto|scroll)/.test(style.overflowY);
+        if (xScroll) {
+          // 横向容器内部若还有独立纵向滚动，优先让容器自己处理。
+          return yScroll ? null : el;
+        }
+      }
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function verticalWheelScrollsPage(e) {
+    if (e.ctrlKey || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return false;
+    if (!horizontalWheelTargetAt(e)) return false;
+    var amount = e.deltaMode === 1 ? e.deltaY * 16 : (e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY);
+    e.preventDefault();
+    window.scrollTo(0, window.scrollY + amount);
+    return true;
+  }
+
+  document.documentElement.addEventListener("wheel", verticalWheelScrollsPage, { capture: true, passive: false });
+
   function parseSearchNumbers(text, minValue, maxValue) {
     var seen = {};
     var rawValues = state.numSearchType === "tail"

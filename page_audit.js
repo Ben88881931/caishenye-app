@@ -32,6 +32,7 @@ const appText = read("app.js");
 const stylesText = read("styles.css");
 must(appText.includes('var WINDOW_RECORD_FORMAT') && appText.includes('class="record-format"') && appText.includes('horizontalGestureInfoAt') && !appText.includes('function isInsideHorizontalScroll') && stylesText.includes('统一横向记录') && stylesText.includes('.prob-test-strip::-webkit-scrollbar') && stylesText.includes('.exec-seq::-webkit-scrollbar') && !stylesText.includes('html.gesture-active *'), "所有窗口记录必须统一滚动样式、统一格式说明，并用单次遍历处理滑动手势");
 must(!/touch-action:\s*pan-x\s*;/.test(stylesText) && (stylesText.match(/touch-action:\s*pan-x pan-y/g) || []).length >= 6, "所有横向滚动区必须同时允许纵向页面滚动");
+must(appText.includes("horizontalWheelTargetAt") && appText.includes('addEventListener("wheel"') && appText.includes("verticalWheelScrollsPage"), "横向滚动区内的纵向滚轮必须滚动整个页面");
 must(appText.includes("if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) return;") && appText.includes("if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return;") && !appText.includes("canScrollDir"), "横向滚动区中间只滚动内容，屏幕边缘起手才能翻页");
 must(appText.includes('if (state.tab === "windowmult")') && appText.includes('state.tab === "windowmult"'), "13线规律中心三级页面必须禁用页面左右滑动");
 must(stylesText.includes('body[data-page="windowmult"] .wm-view-tabs') && stylesText.includes("grid-template-columns: repeat(3, minmax(0, 1fr))") && stylesText.includes("overflow-x: hidden"), "13线规律中心三级页签必须固定换行，不得保留横向翻页");

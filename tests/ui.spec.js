@@ -576,6 +576,25 @@ test("daily reports synthesize every analysis section for all 13 lines", async (
   await expect(rows.locator("[data-report-reason]")).toHaveCount(13);
 });
 
+test("vertical wheel over a horizontal report strip scrolls the page", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-daily-report-card]").length === 13);
+
+  const strip = page.locator("[data-daily-report-strip]");
+  await strip.scrollIntoViewIfNeeded();
+  const before = await page.evaluate(() => window.scrollY);
+  await strip.hover();
+  await page.mouse.wheel(0, 320);
+  await page.waitForTimeout(250);
+  const after = await page.evaluate(() => window.scrollY);
+
+  expect(after).toBeGreaterThan(before);
+});
+
 test("dynamic probability ranks have independent single-period hit records", async ({ page }) => {
   await page.goto("/");
   const snapshots = await page.evaluate(async () => {
