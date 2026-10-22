@@ -5,6 +5,7 @@ const fs = require("fs");
 const probability = require("./model_probability.js");
 const raw = require("./lottery_data.json");
 const SNAPSHOT_PATH = "probability_snapshots.json";
+const SNAPSHOT_JS_PATH = "probability_snapshots.js";
 
 function tailsOf(period) {
   return [...(raw[String(period)] || "")].reduce((out, bit, tail) => {
@@ -18,6 +19,14 @@ function loadState() {
     return { modelVersion: probability.VERSION, records: [], latestPeriod: null };
   }
   return JSON.parse(fs.readFileSync(SNAPSHOT_PATH, "utf8"));
+}
+
+function writeSnapshotJs(state) {
+  fs.writeFileSync(
+    SNAPSHOT_JS_PATH,
+    "window.APP_PROBABILITY_SNAPSHOTS = " + JSON.stringify(state, null, 2) + ";\n",
+    "utf8"
+  );
 }
 
 function sync() {
@@ -47,6 +56,7 @@ function sync() {
       generatedAt: new Date().toISOString(),
       basedOn: latest,
       target,
+      rankingMetric: "window3Prob",
       settled: false,
       top3: prediction.top.map((row) => ({
         tail: row.tail,
@@ -64,12 +74,13 @@ function sync() {
   state.latestPeriod = latest;
   state.updatedAt = new Date().toISOString();
   fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(state, null, 2), "utf8");
+  writeSnapshotJs(state);
   const pending = state.records.filter((record) => !record.settled);
   const settled = state.records.filter((record) => record.settled);
   const top1Hits = settled.filter((record) => record.results && record.results.top1).length;
   const top3Hits = settled.filter((record) => record.results && record.results.top3).length;
   console.log(
-    `动态概率影子已同步：已结算 ${settled.length} 期，待开奖 ${pending.length} 期，` +
+    `动态概率快照已同步：已结算 ${settled.length} 期，待开奖 ${pending.length} 期，` +
     `Top1 ${top1Hits}/${settled.length}，Top3覆盖 ${top3Hits}/${settled.length}，下一期 ${target}`
   );
 }

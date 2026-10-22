@@ -290,6 +290,7 @@
   var TABS = [
     { id: "directory", label: "目录" },
     { id: "overview", label: "总览" },
+    { id: "dailyreport", label: "每日最终报告" },
     { id: "pick3", label: "动态概率" },
     { id: "betexec", label: "下注执行表" },
     { id: "formulas", label: "公式表" },
@@ -315,7 +316,7 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["pick3", "betexec", "formulas", "windowmult", "orderlog"] },
+    { id: "recommend", label: "模型流程", tabs: ["dailyreport", "pick3", "betexec", "formulas", "windowmult", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
     { id: "miss", label: "遗漏分析", tabs: ["trend", "missorder", "windowmiss", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
@@ -967,7 +968,9 @@
     if (!PROB_MODEL || !PROB_MODEL.analyze) return "";
     var result = PROB_MODEL.analyze(RAW, period - 1);
     var picks = result.top || [];
-    var labels = ["动态第1 · 影子", "动态第2 · 影子", "动态第3 · 影子"];
+    var labels = result.legacyLocked
+      ? ["锁定第1 · 296快照", "锁定第2 · 296快照", "锁定第3 · 296快照"]
+      : ["三期第1 · 正式", "三期第2 · 正式", "三期第3 · 正式"];
     var tones = ["model-pair-card--p1", "model-pair-card--p2", "model-pair-card--p3"];
     return '<div class="model-pair-grid">' +
       picks.map(function (row, index) {
@@ -1264,6 +1267,7 @@
     renderTabs();
     if (state.tab === "directory") renderDirectory();
     else if (state.tab === "overview") renderOverview();
+    else if (state.tab === "dailyreport") renderDailyReport();
     else if (state.tab === "tails") renderTails();
     else if (state.tab === "segments") renderSegments();
     else if (state.tab === "trend") renderTrend();
@@ -1314,12 +1318,20 @@
       desc: "这一组是每天真正用来选号、排仓、跟窗口和记录下单的页面。",
       items: [
         {
+          name: "每日最终报告",
+          summary: "把13条线的真实窗口状态、近3窗命中、窗口性格和7期/10期独立权重集中成一份每日报告。",
+          look: ["13线可执行性排名", "每条线最近3个已完成窗口", "7期与10期各自训练权重和完整三期结果"],
+          use: "每天先看这一页，判断哪些线正在稳定、哪些线刚走弱或等待重开。",
+          source: "真实开奖窗口、真实快照、训练2021-2024 / 验证2025 / 影子2026的独立权重模型。",
+          note: "排名只按最近3个已完成窗口，不按金额；用户已决定切换5/7/15/21/30新方法，研究风险继续保留在报告中。"
+        },
+        {
           name: "动态概率",
-          summary: "每期动态计算10个尾号的下一期概率和三期出现概率，旧D1/D2硬排序退出正式推荐。",
-          look: ["10个尾号下一期概率", "三期出现概率", "当前遗漏、连出和置信度"],
+          summary: "按5/7/15/21/30五个期数窗口分别训练权重，以完整三期内概率排序10个尾号；旧D1/D2退出正式推荐。",
+          look: ["10个尾号三期概率和下一期概率", "5/7/15/21/30独立权重", "当前遗漏、连出和置信度"],
           use: "先看概率候选，再进入下注执行表检查真实窗口和仓位。",
           source: "2021-2024训练、2025验证、2026影子记录；只使用目标期之前的数据。",
-          note: "影子模型尚未证明稳定跑赢随机，不进入正式下单。"
+          note: "用户已要求切换到新方法；2025验证段仍弱于旧方法，页面继续保留风险提示，已锁定的296期快照不改写。"
         },
         {
           name: "下注执行表",
@@ -1504,7 +1516,7 @@
     {
       title: "每日操作",
       desc: "每天按这个顺序走：先选号，再看窗口和执行，最后记录下单。",
-      names: ["动态概率", "下注执行表", "公式表", "13线规律中心", "追三期下单"]
+      names: ["每日最终报告", "动态概率", "下注执行表", "公式表", "13线规律中心", "追三期下单"]
     },
     {
       title: "公式验证",
@@ -1581,6 +1593,7 @@
   ];
 
   var PAGE_GUIDE_TAB_MAP = {
+    "每日最终报告": "dailyreport",
     "动态概率": "pick3",
     "下注执行表": "betexec",
     "公式表": "formulas",
@@ -1643,6 +1656,214 @@
     html += '</div></div>';
     PAGE_GUIDE_DISPLAY_GROUPS.slice(1).forEach(appendGuideGroup);
     return html;
+  }
+
+  function dailyReportResult(w) {
+    var hitIndex = Number(w && w.hitIndex);
+    if (hitIndex >= 1 && hitIndex <= 3) {
+      return { hit: true, label: "第" + hitIndex + "期中", color: "#15803d", soft: "#dcfce7" };
+    }
+    return { hit: false, label: "三期全错", color: "#b91c1c", soft: "#fee2e2" };
+  }
+
+  function dailyReportLineStats(line, order) {
+    var windows = wmWindowsForStage(line, 3).filter(function (w) {
+      return w && w.hitIndex != null && Number(w.hitIndex) >= 0 &&
+        (Number(w.hitIndex) > 0 || (w.attempts || []).length === 3);
+    });
+    var recent = windows.slice(-3);
+    var previous = windows.slice(-6, -3);
+    var hits = recent.filter(function (w) { return Number(w.hitIndex) > 0; }).length;
+    var previousHits = previous.filter(function (w) { return Number(w.hitIndex) > 0; }).length;
+    var first = recent.filter(function (w) { return Number(w.hitIndex) === 1; }).length;
+    var second = recent.filter(function (w) { return Number(w.hitIndex) === 2; }).length;
+    var third = recent.filter(function (w) { return Number(w.hitIndex) === 3; }).length;
+    var historyHits = windows.filter(function (w) { return Number(w.hitIndex) > 0; }).length;
+    var live = wmCurrentState(line);
+    var status = "可开新窗";
+    var color = "#15803d";
+    var tail = null;
+    var period = null;
+    if (live.waiting) {
+      tail = Number(live.waiting.tail);
+      status = "等待尾" + tail + "重开";
+      color = "#b45309";
+    } else if (live.active) {
+      var checked = (live.active.attempts || []).length;
+      tail = live.active.lockedTail;
+      period = live.active.start + checked;
+      status = checked ? ("下期第" + Math.min(3, checked + 1) + "期") : "第1期待开奖";
+      color = "#1d4ed8";
+    }
+    var rate = recent.length ? hits / recent.length : -1;
+    var previousRate = previous.length ? previousHits / previous.length : null;
+    var trend = "样本不足";
+    if (previousRate != null) {
+      if (rate > previousRate + 0.15) trend = "回暖";
+      else if (rate < previousRate - 0.15) trend = "走弱";
+      else trend = "平稳";
+    }
+    return {
+      line: line,
+      order: order,
+      windows: windows,
+      recent: recent,
+      recentHits: hits,
+      recentRate: rate,
+      previousRate: previousRate,
+      first: first,
+      second: second,
+      third: third,
+      historyHits: historyHits,
+      historyRate: windows.length ? historyHits / windows.length : 0,
+      trend: trend,
+      status: status,
+      color: color,
+      tail: tail,
+      period: period,
+    };
+  }
+
+  function dailyReportWindowChipHTML(w) {
+    var result = dailyReportResult(w);
+    return '<div class="daily-report-window-chip" style="--chip-color:' + result.color + ';--chip-soft:' + result.soft + '">' +
+      '<b>' + wmPeriodLabel(w.start) + '</b>' +
+      '<span>' + result.label + '</span>' +
+      '<small>' + (w.attempts || []).map(function (attempt) {
+        return "第" + (Number(attempt.period) - Number(w.start) + 1) + "期尾" + attempt.tail + (attempt.hit ? "中" : "错");
+      }).join(" · ") + '</small></div>';
+  }
+
+  function dailyReportConclusion(row) {
+    if (row.line.kind === "probability") return "5/7/15/21/30新方法已用于正式选号；仓位公式尚未验证，当前只看窗口是否命中。";
+    if (row.status.indexOf("等待尾") === 0) return "上一窗三期全错，先等锁定尾重新开出，本期不追。";
+    if (!row.recent.length) return "已完成窗口不足3个，样本不足，暂不排强弱。";
+    if (row.recentRate >= 2 / 3 && row.trend !== "走弱") return "最近3个完整窗口保持在" + row.recentHits + "/" + row.recent.length + "，窗口状态稳定。";
+    if (row.trend === "回暖") return "最近3个完整窗口命中" + row.recentHits + "/" + row.recent.length + "，比前3窗回暖，继续观察下一窗。";
+    if (row.trend === "走弱") return "最近3个完整窗口命中" + row.recentHits + "/" + row.recent.length + "，比前3窗走弱，先降级观察。";
+    return "最近3个完整窗口命中" + row.recentHits + "/" + row.recent.length + "，暂未形成明显方向。";
+  }
+
+  function dailyReportWeightRows(model) {
+    var names = model.windows.map(function (window) { return window + "期"; }).concat(["遗漏", "连出"]);
+    return names.map(function (name, index) {
+      return {
+        name: name,
+        next: Number(model.next.weights[index + 1] || 0),
+        window3: Number(model.window3.weights[index + 1] || 0),
+      };
+    });
+  }
+
+  function renderDailyReport() {
+    var research = window.CAISHEN_PROBABILITY_WEIGHT_RESEARCH || null;
+    var rows = EXEC_LINES.map(function (line, index) {
+      return dailyReportLineStats(line, index);
+    });
+    rows.sort(function (a, b) {
+      return b.recentRate - a.recentRate ||
+        b.recentHits - a.recentHits ||
+        a.order - b.order;
+    });
+
+    var latestRow = D[D.length - 1] || {};
+    var html = '<div class="section"><div class="panel daily-report-panel">';
+    html += '<div class="daily-report-head">' +
+      '<div><span class="daily-report-kicker">每日最终报告</span>' +
+      '<h2>13线真实窗口日报</h2>' +
+      '<p>数据截至第' + latestRow.p + '期 · 已开奖尾数 ' + tailsOf(latest).join(" ") + ' · 下一期待开奖第' + (Number(latestRow.p) + 1) + '期</p></div>' +
+      '<strong>排名只看最近3个已完成三期窗口<br>不按金额、不按下一期Top1</strong></div>';
+
+    var totalHits = rows.reduce(function (sum, row) { return sum + row.recentHits; }, 0);
+    var totalWindows = rows.reduce(function (sum, row) { return sum + row.recent.length; }, 0);
+    var activeCount = rows.filter(function (row) { return row.status !== "可开新窗"; }).length;
+    html += '<div class="daily-report-metrics">' +
+      '<div><b>' + (totalWindows ? (totalHits / totalWindows * 100).toFixed(1) : "0.0") + '%</b><span>13线近3窗合计命中率</span></div>' +
+      '<div><b>' + totalHits + ' / ' + totalWindows + '</b><span>近3窗命中 / 样本</span></div>' +
+      '<div><b>' + activeCount + ' / 13</b><span>当前进行中或等待重开</span></div>' +
+      '<div><b>' + rows.filter(function (row) { return row.trend === "走弱"; }).length + '</b><span>近3窗转弱线路</span></div>' +
+      '</div>';
+
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线可执行性排名</h3><span>同分时保持固定线路顺序；不使用金额和短期单期结果</span></div>';
+    html += '<div class="daily-report-table-wrap"><table class="table daily-report-rank-table"><thead><tr>' +
+      '<th>排名</th><th>线路</th><th>近3窗</th><th>近3窗命中率</th><th>第1 / 2 / 3期中</th><th>当前状态</th><th>当前窗口</th><th>性格</th></tr></thead><tbody>';
+    rows.forEach(function (row, index) {
+      var rateText = row.recent.length ? (row.recentRate * 100).toFixed(1) + "%" : "-";
+      var rateColor = row.recent.length && row.recentRate >= 2 / 3 ? "#15803d" : "#b91c1c";
+      html += '<tr data-daily-report-row data-report-rate="' + (row.recent.length ? row.recentRate.toFixed(6) : "-1") + '">' +
+        '<td><b>#' + (index + 1) + '</b></td>' +
+        '<td><b>' + row.line.label + '</b></td>' +
+        '<td><b>' + row.recentHits + ' / ' + row.recent.length + '</b></td>' +
+        '<td><b style="color:' + rateColor + '">' + rateText + '</b></td>' +
+        '<td>' + row.first + ' / ' + row.second + ' / ' + row.third + '</td>' +
+        '<td><b style="color:' + row.color + '">' + row.status + '</b></td>' +
+        '<td>' + (row.period ? wmPeriodLabel(row.period) : "-") + (row.tail != null ? '<br><span style="color:#64748b">尾' + row.tail + '</span>' : "") + '</td>' +
+        '<td><b>' + row.trend + '</b></td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13份单线报告</h3><span>固定线路顺序 · 新窗口在左 · 左右滑动查看</span></div>';
+    html += '<div class="daily-report-strip" data-daily-report-strip>';
+    EXEC_LINES.forEach(function (line) {
+      var row = rows.filter(function (item) { return item.line.id === line.id; })[0];
+      html += '<article class="daily-report-line-card" data-daily-report-card data-line-id="' + line.id + '">' +
+        '<div class="daily-report-line-card__head"><div><span>' + (line.kind === "probability" ? "新方法概率线" : "真实窗口线") + '</span><h3>' + line.label + '</h3></div><b style="color:' + row.color + '">' + row.status + '</b></div>' +
+        '<div class="daily-report-line-card__summary"><b>' + (row.recent.length ? row.recentHits + "/" + row.recent.length : "-") + '</b><span>最近3个完整窗口</span><em>' + row.trend + '</em></div>' +
+        '<div class="daily-report-window-list">';
+      if (row.recent.length) {
+        row.recent.slice().reverse().forEach(function (w) { html += dailyReportWindowChipHTML(w); });
+      } else {
+        html += '<div class="daily-report-empty">暂无已完成窗口</div>';
+      }
+      html += '</div>';
+      html += '<p class="daily-report-conclusion">' + dailyReportConclusion(row) + '</p>';
+      html += '<div class="daily-report-line-card__foot"><span>历史 ' + row.historyHits + '/' + row.windows.length + ' 窗 · ' + (row.historyRate * 100).toFixed(1) + '%</span><span>近6窗对比：' + row.trend + '</span></div>';
+      html += '</article>';
+    });
+    html += '</div></div>';
+
+    html += '<div class="daily-report-block daily-report-weights">';
+    html += '<div class="daily-report-block__head"><h3>新方法已设为生产</h3><span>5 / 7 / 15 / 21 / 30 五项分别训练权重；旧10期仅保留为对比</span></div>';
+    if (!research) {
+      html += '<p class="daily-report-empty">权重研究数据未加载，暂不能显示。</p>';
+    } else {
+      html += '<details class="daily-report-professional"><summary>展开专业明细：两套权重、年度结果和统计检验</summary>';
+      var modelOrder = ["p10", "p57152130"];
+      html += '<div class="daily-report-weight-grid">';
+      modelOrder.forEach(function (key) {
+        var model = research.models[key];
+        var isChallenger = key === "p57152130";
+        html += '<section class="daily-report-weight-model" data-weight-model="' + key + '">' +
+          '<div class="daily-report-weight-model__head"><span>' + (isChallenger ? "5/7/15/21/30 · 生产" : "5/10/20/30 · 对照") + '</span><b>' + model.label + '</b>' +
+          '<small>训练样本 ' + model.sampleCount + ' · L2=' + research.l2 + '</small></div>' +
+          '<table class="table"><thead><tr><th>特征</th><th>下一期权重</th><th>三期权重</th></tr></thead><tbody>';
+        dailyReportWeightRows(model).forEach(function (item) {
+          html += '<tr><td><b>' + item.name + '</b></td><td>' + item.next.toFixed(4) + '</td><td>' + item.window3.toFixed(4) + '</td></tr>';
+        });
+        html += '<tr><td>截距</td><td>' + Number(model.next.weights[0]).toFixed(4) + '</td><td>' + Number(model.window3.weights[0]).toFixed(4) + '</td></tr>';
+        html += '</tbody></table></section>';
+      });
+      html += '</div>';
+      html += '<div class="daily-report-weight-result"><div class="daily-report-weight-result__head"><b>完整三期内结果</b><span>排名按各自三期权重降序；2025验证、2026影子，不混训练样本</span></div>';
+      html += '<div class="daily-report-table-wrap"><table class="table"><thead><tr><th>年份</th><th>10期三期命中</th><th>7期挑战三期命中</th><th>差值</th><th>McNemar p</th><th>判定</th></tr></thead><tbody>';
+      research.annualComparison.forEach(function (row) {
+        var delta = row.delta * 100;
+        var yearLabel = row.year + "年" + (row.year === 2025 ? " · 验证" : (row.year === 2026 ? " · 影子" : " · 训练"));
+        html += '<tr><td><b>' + yearLabel + '</b></td><td>' + (row.baseRate * 100).toFixed(2) + '%</td><td>' + (row.challengerRate * 100).toFixed(2) + '%</td>' +
+          '<td style="color:' + (delta >= 0 ? "#15803d" : "#b91c1c") + ';font-weight:900">' + (delta >= 0 ? "+" : "") + delta.toFixed(2) + 'pp</td>' +
+          '<td>' + row.pValue.toFixed(4) + '</td><td>' + (row.challengerRate > row.baseRate ? "7期较好" : (row.challengerRate < row.baseRate ? "10期较好" : "持平")) + '</td></tr>';
+      });
+      html += '</tbody></table></div></div>';
+      html += '</details>';
+      html += '<div class="daily-report-decision"><b>生产：5 / 7 / 15 / 21 / 30 新方法</b>' +
+        '<span>2025验证 新方法 ' + (research.comparison.validation2025.challengerRate * 100).toFixed(2) + '%，旧方法 ' + (research.comparison.validation2025.baseRate * 100).toFixed(2) + '%；' +
+        '2026影子 新方法 ' + (research.comparison.shadow2026.challengerRate * 100).toFixed(2) + '%，旧方法 ' + (research.comparison.shadow2026.baseRate * 100).toFixed(2) + '%。' +
+        '研究风险保留：验证段仍少0.87个百分点，不能因为2026暂时领先就取消监控。</span></div>';
+      html += '</div>';
+    }
+    html += '<p class="disclaimer">本页只解读真实开奖窗口、真实快照和独立训练权重，不保证中奖，不自动生成金额。排名口径是每条线最近3个已完成三期窗口；概率三线使用新方法选号，仓位公式仍需单独验证。</p>';
+    html += '</div></div>';
+    view.innerHTML = html;
   }
 
   function renderOverview() {
@@ -2777,9 +2998,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
-    { id: "prob1", label: "概率第1·影子", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
-    { id: "prob2", label: "概率第2·影子", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
-    { id: "prob3", label: "概率第3·影子", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "动态概率影子线：294期起固定追3期，暂不建仓" },
+    { id: "prob1", label: "概率第1", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob2", label: "概率第2", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob3", label: "概率第3", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
   ];
 
   // 公式来源：2021-2023训练段 + 2024-2026验证段，两段均为正的阶段系数才配仓。
@@ -2798,9 +3019,9 @@
     fixedD2: { formula: "阶段公式", train: [0.0594, 0.0198, -0.0078], valid: [-0.0599, 0.0035, 0.0079], fullNet: 2700, fullRoi: 0.0256410256, trainNet: 2280, validNet: 420, maxDrawdown: 4380, miss: 67 },
     recD1: { formula: "连追100", train: [0.0246, 0.0262, 0.0031], valid: [0.0378, 0.0158, 0.0014], fullNet: 4400, fullRoi: 0.0339244410, trainNet: 2100, validNet: 2300, maxDrawdown: 2980, miss: 63 },
     recD2: { formula: "阶段公式", train: [0.1122, 0.0333, -0.0084], valid: [-0.0618, 0.0060, 0.0015], fullNet: 4740, fullRoi: 0.0456647399, trainNet: 4020, validNet: 720, maxDrawdown: 3720, miss: 66 },
-    prob1: { formula: "影子观察", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
-    prob2: { formula: "影子观察", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
-    prob3: { formula: "影子观察", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
+    prob1: { formula: "正式选号·仓位待验证", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
+    prob2: { formula: "正式选号·仓位待验证", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
+    prob3: { formula: "正式选号·仓位待验证", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
   };
 
 
@@ -3668,7 +3889,7 @@
       html += "</div></div>";
     });
 
-    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。下单主口径=三期窗口（三期命中或三期全错才关窗）。10条尾号线窗口由真实开奖算出；3条概率线从294期起按动态模型第1/2/3名各锁一号固定追3期，当前只做影子记录、仓位均为0。正线筛选属按 2026 年结果事后选线，跨年是否成立需继续观察。</p>';
+    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。下单主口径=三期窗口（三期命中或三期全错才关窗）。10条尾号线窗口由真实开奖算出；3条概率线使用5/7/15/21/30新方法正式选号并继续按三期窗口记录，仓位公式尚未验证，暂不配仓。第294-296期保留切换前真实快照。</p>';
     view.innerHTML = html;
   }
 
@@ -3742,7 +3963,20 @@
     return (wmFullPickCache[period].doubleRecommendation || [])[stream === "D1" ? 0 : 1] || null;
   }
 
+  function probabilitySnapshotRecord(target) {
+    var snapshots = window.APP_PROBABILITY_SNAPSHOTS;
+    var records = snapshots && Array.isArray(snapshots.records) ? snapshots.records : [];
+    return records.filter(function (record) {
+      return Number(record.target) === Number(target);
+    })[0] || null;
+  }
+
   function probabilityPickAt(period, rank) {
+    var saved = probabilitySnapshotRecord(period);
+    if (saved && saved.top3 && saved.top3[rank || 0]) {
+      var savedRow = saved.top3[rank || 0];
+      return { tail: savedRow.tail, score: savedRow.nextProb, window3Prob: savedRow.window3Prob, role: "probability-snapshot" };
+    }
     if (!PROB_MODEL || !PROB_MODEL.analyze || period <= 1) return null;
     var localPeriod = betLocalPeriod(period);
     var result = PROB_MODEL.analyze(RAW, localPeriod - 1);
@@ -5529,19 +5763,24 @@
       var end = Math.min(periods.length, index + 24);
       while (index < end) {
         var period = periods[index++];
-        var prediction = PROB_MODEL.analyze(rawYear, period - 1);
+        var saved = probabilitySnapshotRecord(period);
+        var prediction = saved
+          ? { top: (saved.top3 || []).slice() }
+          : PROB_MODEL.analyze(rawYear, period - 1, { method: "new" });
         var bits = rawYear[String(period)] || "";
         var actualTails = [];
         for (var tail = 0; tail < bits.length; tail++) {
           if (bits.charAt(tail) === "1") actualTails.push(tail);
         }
         prediction.top.forEach(function (pick, rank) {
+          var pending = !!saved && !saved.settled;
           byRank[rank].push({
             period: period,
             tail: pick.tail,
             actualTails: actualTails,
-            hit: actualTails.indexOf(Number(pick.tail)) >= 0,
-            source: Number(year) === 2026 && period >= 294 ? "snapshot" : "backtest"
+            hit: pending ? null : actualTails.indexOf(Number(pick.tail)) >= 0,
+            pending: pending,
+            source: saved ? "snapshot" : "backtest"
           });
         });
       }
@@ -5559,9 +5798,11 @@
   function probabilitySinglePeriodRows(year, rank, history, pendingResult) {
     var rows = history.slice();
     var latestYear = Number((D[D.length - 1] || {}).y);
-    if (pendingResult && Number(year) === latestYear && pendingResult.top && pendingResult.top[rank]) {
+    var pendingTarget = pendingResult ? Number(pendingResult.target) : null;
+    var alreadyPresent = rows.some(function (row) { return Number(row.period) === pendingTarget; });
+    if (!alreadyPresent && pendingResult && Number(year) === latestYear && pendingResult.top && pendingResult.top[rank]) {
       rows.push({
-        period: Number(pendingResult.target),
+        period: pendingTarget,
         tail: pendingResult.top[rank].tail,
         actualTails: [],
         hit: null,
@@ -5688,9 +5929,9 @@
     var year = Number(selectedYear);
     var rawYear = probabilityYearRaw(year);
     var trainingYear = year >= 2021 && year <= 2024;
-    var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "影子");
-    var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026仅观察");
-    var labels = ["概率第1·影子", "概率第2·影子", "概率第3·影子"];
+    var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "正式");
+    var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026正式记录 · 294-296保留切换前快照");
+    var labels = ["概率第1", "概率第2", "概率第3"];
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">' + year + segment + '窗口 · 切换年份查看全部历史 · ' + WINDOW_RECORD_FORMAT + '</span></div></div>';
     html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '窗口</b><span>' + segmentNote + '</span></div>';
     labels.forEach(function (label, rank) {
@@ -5783,7 +6024,7 @@
         html += '</div>';
       });
     html += '</div></div>';
-    html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026为影子观察；切换年份可查看全部历史，所有窗口按每年第1期重新起算，不引用未来开奖。</p>';
+    html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026记录最终结果。当前生产切换为5/7/15/21/30新方法；切换年份只做历史研究，所有窗口按每年第1期重新起算，不引用未来开奖。</p>';
     return html;
   }
 
@@ -5800,6 +6041,7 @@
       : (record.results && record.results.top1 ? "Top1中" : (record.results && record.results.top3 ? "Top3覆盖" : "未覆盖"));
     var tone = pending ? "is-pending" : (record.results && record.results.top3 ? "is-covered" : "is-miss");
     var top3 = (record.top3 || []).map(function (row) { return "尾" + row.tail; }).join(" · ");
+    var rankingLabel = record.rankingMetric === "window3Prob" ? "三期概率" : "下一期概率";
     var rowHTML = rows.map(function (row, index) {
       var isDrawn = actualTails.indexOf(Number(row.tail)) >= 0;
       var state = currentState && currentState[String(row.tail)]
@@ -5818,7 +6060,7 @@
     }
     return '<article class="prob-snapshot-card ' + tone + '" data-prob-target="' + record.target + '">' +
       '<div class="prob-snapshot-card__head"><b>第' + record.target + '期</b><span>' + stateText + '</span></div>' +
-      '<div class="prob-snapshot-card__meta">基于第' + record.basedOn + '期 · 完整10尾排序</div>' +
+      '<div class="prob-snapshot-card__meta">基于第' + record.basedOn + '期 · ' + rankingLabel + '排序 · ' + (record.modelVersion || "") + '</div>' +
       '<div class="prob-snapshot-columns"><span>排名</span><span>尾号</span><span>下一期</span><span>三期</span></div>' +
       '<div class="prob-snapshot-rows">' + rowHTML + '</div>' +
       '<div class="prob-snapshot-card__foot">Top3：' + (top3 || "缺失") +
@@ -5840,18 +6082,25 @@
   function mountProbabilitySnapshots(currentResult) {
     var mount = document.getElementById("probabilitySnapshotMount");
     if (!mount) return;
+    function render(data) {
+      if (!mount.isConnected) return;
+      var records = Array.isArray(data.records) ? data.records.slice() : [];
+      records.sort(function (a, b) { return Number(b.target) - Number(a.target); });
+      mount.innerHTML = probabilitySnapshotStripHTML(records, currentResult);
+      var strip = mount.querySelector("[data-prob-snapshot-strip]");
+      if (strip) strip.scrollLeft = 0;
+    }
+    if (window.APP_PROBABILITY_SNAPSHOTS) {
+      render(window.APP_PROBABILITY_SNAPSHOTS);
+      return;
+    }
     fetch("probability_snapshots.json", { cache: "no-store" })
       .then(function (response) {
         if (!response.ok) throw new Error("HTTP " + response.status);
         return response.json();
       })
       .then(function (data) {
-        if (!mount.isConnected) return;
-        var records = Array.isArray(data.records) ? data.records.slice() : [];
-        records.sort(function (a, b) { return Number(b.target) - Number(a.target); });
-        mount.innerHTML = probabilitySnapshotStripHTML(records, currentResult);
-        var strip = mount.querySelector("[data-prob-snapshot-strip]");
-        if (strip) strip.scrollLeft = 0;
+        render(data);
       })
       .catch(function (error) {
         if (!mount.isConnected) return;
@@ -5874,16 +6123,20 @@
     var selectedYear = years.indexOf(Number(state.probYear)) >= 0 ? Number(state.probYear) : years[0];
     state.probYear = selectedYear;
     var yearTabs = years.map(function (year) {
-      var tag = year <= 2024 ? "训练" : year === 2025 ? "验证" : "影子";
+      var tag = year <= 2024 ? "训练" : year === 2025 ? "验证" : "正式";
       return '<button class="chip wm-view-tab ' + (year === selectedYear ? "is-active" : "") + '" type="button" data-prob-year="' + year + '">' + year + ' ' + tag + '</button>';
     }).join("");
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · 第' + result.target + '期影子预测</h2><span class="section__hint">模型 ' + result.version + ' · 每期重算10个尾号 · 当前状态：未通过正式验证</span></div></div>';
-    html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>测试状态 · 未通过正式验证</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>0仓位 · 不进入正式下单</strong></div><div class="prob-summary-note">2026 Top1 ' + delta(sm.nextTop1, sb.next) + '，三期Top1 ' + delta(sm.window3Top1, sb.window3) + '；没有证明稳定优势，只做影子记录。</div></div></div>';
+    var heading = result.legacyLocked ? "第" + result.target + "期锁定快照" : "第" + result.target + "期三期优先预测";
+    var methodHint = result.legacyLocked
+      ? "旧10期权重已于开奖前锁定，保留原预测不改写；新方法从第297期开始"
+      : "生产方法 " + PROB_MODEL.META.productionMethod.windows.join(" / ") + " 期 · 三期概率排序 · 下一期概率作诊断";
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · ' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
+    html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
     html += '<div class="section"><div class="panel"><div class="wm-subhead">测试历史年份 · 2021-2026各年独立</div><div class="wm-view-tabs">' + yearTabs + '</div></div></div>';
     html += probabilityTestWindowHTML(selectedYear, result);
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">每期10尾完整排序快照</h2><span class="section__hint">真实保存 · 最新在左 · 每期完整10项 · 左右滑动</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">每期10尾完整排序快照</h2><span class="section__hint">真实保存 · 最新在左 · 完整10尾排序 · 每期10项 · 左右滑动</span></div></div>';
     html += '<div class="section"><div id="probabilitySnapshotMount" class="panel prob-snapshot-mount"><div class="trend-run-empty">概率快照读取中...</div></div></div>';
-    html += '<p class="disclaimer">本页概率为固定权重影子模型，不使用未来数据；训练2021-2024、验证2025、2026仅做开奖前影子记录。历史真实D1/D2快照保留不动，但不再作为推荐依据。</p>';
+    html += '<p class="disclaimer">生产权重改为5/7/15/21/30期，各自使用训练段学出的系数并按完整三期内概率排序。第294-296期真实快照保持原样；第296期开奖前已锁定的旧模型前三名不得事后改写，新方法从第297期开始生成生产快照。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
     mountProbabilitySnapshots(result);
     hydrateProbabilitySinglePeriods(selectedYear, result);

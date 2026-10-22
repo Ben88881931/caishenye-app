@@ -139,3 +139,11 @@ if (Math.min(winD1.length, winD2.length) < 20) {
 console.log('【健康检查结果】战略主口径=三期窗口命中 D1 ' +
   winD1Hit + '/' + winD1.length + '、D2 ' + winD2Hit + '/' + winD2.length +
   '；单期 ' + pct(live.rate) + '（样本 ' + liveSettled.length + ' 期，仅诊断，不参与下单判断）');
+
+const probSnapshots = JSON.parse(fs.readFileSync("probability_snapshots.json", "utf8"));
+const probSettled = (probSnapshots.records || []).filter((record) => record.settled);
+const probPending = (probSnapshots.records || []).filter((record) => !record.settled);
+const probTop1 = probSettled.filter((record) => record.results && record.results.top1).length;
+console.log("\n--- 动态概率新方法快照 ---");
+console.log("模型版本: " + probSnapshots.modelVersion + "；已结算 " + probSettled.length + " 期，待开奖 " + probPending.length + " 期");
+console.log("Top1: " + probTop1 + "/" + probSettled.length + "；294-296期保留切换前旧快照，新方法从297期开始");

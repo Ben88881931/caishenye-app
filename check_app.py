@@ -37,6 +37,7 @@ def main():
     app_path = REPO / "app.js"
     model_core_path = REPO / "model_core.js"
     selector_path = REPO / "model_selector.js"
+    probability_research_path = REPO / "probability_weight_research.js"
     probability_model_path = REPO / "model_probability.js"
     selector_backtest_path = REPO / "selector_backtest.js"
     page_audit_path = REPO / "page_audit.js"
@@ -46,6 +47,7 @@ def main():
     snapshots_path = REPO / "prediction_snapshots.json"
     score_calibration_path = REPO / "score_calibration.js"
     snapshots_js_path = REPO / "snapshots.js"
+    probability_snapshots_js_path = REPO / "probability_snapshots.js"
 
     if not raw_path.exists():
         fail("缺少 lottery_data.json")
@@ -275,10 +277,10 @@ def main():
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
             fail("窗口倍投测试缺少今年最优规律或正式版候选标注")
-        if "function modelPairStrip" in app_text and "PROB_MODEL.analyze" in app_text and "动态第1" in app_text and "model-pair-card--p3" in app_text and "前三名概率接近" in app_text and "modelPairStrip(latest + 1)" in app_text:
-            pass_("所有页面顶部显示动态概率前三名，旧D1/D2硬排序退出推荐")
+        if "function modelPairStrip" in app_text and "PROB_MODEL.analyze" in app_text and "三期第1 · 正式" in app_text and "锁定第1 · 296快照" in app_text and "model-pair-card--p3" in app_text and "前三名概率接近" in app_text and "modelPairStrip(latest + 1)" in app_text:
+            pass_("所有页面顶部显示新方法三期前三名，并保留296期锁定快照")
         else:
-            fail("页面顶部缺少独立D1/D2推荐号码盒或存在重复插入")
+            fail("页面顶部缺少新方法三期前三名或296期锁定快照")
         if "function renderBetExec" in app_text and "今日规划 · 第" in app_text and "按固定线路顺序排列" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:
             pass_("下注执行表今日规划按固定线路顺序显示并汇总金额与风险")
         else:
@@ -323,32 +325,38 @@ def main():
         index_text = index_path.read_text(encoding="utf-8")
         core_pos = index_text.find("model_core.js")
         selector_pos = index_text.find("model_selector.js")
+        probability_research_pos = index_text.find("probability_weight_research.js")
         probability_pos = index_text.find("model_probability.js")
         ultimate_pos = index_text.find("ultimate_model.js")
         snap_pos = index_text.find("snapshots.js")
+        probability_snap_pos = index_text.find("probability_snapshots.js")
         app_pos = index_text.find("app.js")
         if core_pos < 0:
             fail("index.html 未加载 model_core.js")
         elif selector_pos < 0:
             fail("index.html 未加载 model_selector.js")
+        elif probability_research_pos < 0:
+            fail("index.html 未加载 probability_weight_research.js")
         elif probability_pos < 0:
             fail("index.html 未加载 model_probability.js")
         elif ultimate_pos < 0:
             fail("index.html 未加载 ultimate_model.js")
         elif snap_pos < 0:
             fail("index.html 未加载 snapshots.js")
+        elif probability_snap_pos < 0:
+            fail("index.html 未加载 probability_snapshots.js")
         elif app_pos < 0:
             fail("index.html 未加载 app.js")
-        elif not (core_pos < selector_pos < probability_pos < ultimate_pos < snap_pos < app_pos):
-            fail("index.html 加载顺序必须为 model_core.js → model_selector.js → model_probability.js → ultimate_model.js → snapshots.js → app.js")
+        elif not (core_pos < selector_pos < probability_research_pos < probability_pos < ultimate_pos < snap_pos < probability_snap_pos < app_pos):
+            fail("index.html 加载顺序必须为 model_core.js → model_selector.js → probability_weight_research.js → model_probability.js → ultimate_model.js → snapshots.js → probability_snapshots.js → app.js")
         else:
-            pass_("model_core.js → model_selector.js → model_probability.js → ultimate_model.js → snapshots.js → app.js 加载顺序正确")
+            pass_("模型脚本、普通快照和概率快照加载顺序正确")
         if "88d2a63" in index_text:
             fail("index.html 仍使用旧缓存版本 88d2a63，请更新为最新构建版本")
         else:
             pass_("index.html 无旧缓存版本 88d2a63")
         # 所有资源版本号必须一致
-        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|model_selector\.js|model_probability\.js|ultimate_model\.js|snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
+        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|model_selector\.js|probability_weight_research\.js|model_probability\.js|ultimate_model\.js|snapshots\.js|probability_snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
         if not m_versions:
             fail("index.html 未找到带版本号的资源引用")
         else:
@@ -358,7 +366,7 @@ def main():
             else:
                 pass_(f"index.html 资源版本一致：{m_versions[0]}")
 
-    for js_path in [model_core_path, selector_path, probability_model_path, selector_backtest_path, page_audit_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
+    for js_path in [model_core_path, selector_path, probability_research_path, probability_model_path, probability_snapshots_js_path, selector_backtest_path, page_audit_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
         if not js_path.exists():
             fail(f"缺少 {js_path.name}")
             continue

@@ -99,15 +99,17 @@ node model_supervisor.js sync
 
 ### 第 5 步：更新缓存版本
 
-统一修改 `index.html` 中八处 `?v=`：
+统一修改 `index.html` 中十处 `?v=`：
 
 - `styles.css`
 - `data.js`
 - `model_core.js`
 - `model_selector.js`
+- `probability_weight_research.js`
 - `model_probability.js`
 - `ultimate_model.js`
 - `snapshots.js`
+- `probability_snapshots.js`
 - `app.js`
 
 同日连续更新使用递增序号，例如：
@@ -116,7 +118,7 @@ node model_supervisor.js sync
 20261021-12 -> 20261021-13
 ```
 
-八处必须完全一致。
+十处必须完全一致。
 
 ### 第 6 步：运行既定检查命令
 
@@ -151,6 +153,7 @@ git diff
 - `号码走势图.html`
 - `data.js`
 - `probability_snapshots.json`
+- `probability_snapshots.js`
 - `prediction_snapshots.json`
 - `snapshots.js`
 - `index.html`
@@ -162,7 +165,7 @@ git diff
 只能逐个文件加入：
 
 ```powershell
-git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json prediction_snapshots.json snapshots.js index.html
+git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json probability_snapshots.js prediction_snapshots.json snapshots.js index.html
 git commit -m "更新第<期号>期数据并结算快照"
 git push origin main
 ```

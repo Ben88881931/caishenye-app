@@ -1,35 +1,63 @@
 (function (root, factory) {
-  if (typeof module === "object" && module.exports) module.exports = factory();
-  else root.CAISHEN_PROBABILITY = factory();
-})(typeof self !== "undefined" ? self : this, function () {
+  if (typeof module === "object" && module.exports) {
+    module.exports = factory(require("./probability_weight_research.js"));
+  } else {
+    root.CAISHEN_PROBABILITY = factory(root.CAISHEN_PROBABILITY_WEIGHT_RESEARCH);
+  }
+})(typeof self !== "undefined" ? self : this, function (WEIGHT_RESEARCH) {
   "use strict";
 
-  var VERSION = "prob-v1-20261020";
+  var VERSION = "prob-v2-20261022-57152130";
+  var LEGACY_VERSION = "prob-v1-20261020";
+  var PRODUCTION_MODEL_KEY = "p57152130";
+  var LEGACY_LOCK = { basedOn: 295, target: 296 };
+  var PRODUCTION_MODEL = WEIGHT_RESEARCH.models[PRODUCTION_MODEL_KEY];
+  var VALIDATION = PRODUCTION_MODEL.evaluation[2025];
+  var SHADOW = PRODUCTION_MODEL.evaluation[2026];
   var META = {
     train: "2021-2024",
+    validationYear: 2025,
     shadow: "2026",
-    samples: { train: 9240, validation: 2310, shadow: 2910 },
+    samples: {
+      train: PRODUCTION_MODEL.sampleCount,
+      validation: VALIDATION.periods,
+      shadow: SHADOW.periods
+    },
     baseline: {
-      validation: { next: 0.5428571428571428, window3: 0.9103896103896104 },
-      shadow2026: { next: 0.5474226804123712, window3: 0.9030927835051546 }
+      validation: { next: VALIDATION.nextBaseline, window3: VALIDATION.baseline },
+      shadow2026: { next: SHADOW.nextBaseline, window3: SHADOW.baseline }
     },
     validation: {
-      nextTop1: 136 / 231,
-      nextTop3Coverage: 214 / 231,
-      window3Top1: 212 / 231,
-      window3CoverageTop3: 231 / 231
+      nextTop1: VALIDATION.first / VALIDATION.periods,
+      nextTop3Coverage: VALIDATION.nextTop3CoverageHits / VALIDATION.periods,
+      window3Top1: VALIDATION.hits / VALIDATION.periods,
+      window3CoverageTop3: VALIDATION.window3Top3CoverageHits / VALIDATION.periods
     },
     shadow2026: {
-      nextTop1: 160 / 291,
-      nextTop3Coverage: 279 / 291,
-      window3Top1: 261 / 291,
-      window3CoverageTop3: 291 / 291
-    }
+      nextTop1: SHADOW.first / SHADOW.periods,
+      nextTop3Coverage: SHADOW.nextTop3CoverageHits / SHADOW.periods,
+      window3Top1: SHADOW.hits / SHADOW.periods,
+      window3CoverageTop3: SHADOW.window3Top3CoverageHits / SHADOW.periods
+    },
+    productionMethod: {
+      key: PRODUCTION_MODEL_KEY,
+      windows: PRODUCTION_MODEL.windows,
+      ranking: "window3Prob descending, then nextProb descending, then tail ascending",
+      researchRecommendation: WEIGHT_RESEARCH.researchRecommendation,
+      decision: WEIGHT_RESEARCH.decision,
+      override: WEIGHT_RESEARCH.override
+    },
+    legacyLock: LEGACY_LOCK
   };
-  var MEAN = [1, 0.1, 0.5406277056277154, 0.5346969696969679, 0.5228192640692708, 0.5109920634920567, 0.08581168831169216, 0.2350000000000066];
-  var SD = [1, 0.29999999999998567, 0.2353656911766265, 0.18044442235191768, 0.15036609659599928, 0.14621742471589189, 0.1329281908875932, 0.2926814751354063];
-  var NEXT_W = [0.19029309294887506, -0.12530924983240235, 0.03316944549864856, 0.026108260684124224, -0.04153563674658185, -0.0029537304122937732, -0.01450090578656891, 0.028530663826202226];
-  var WINDOW_W = [2.251916669082404, -0.26660959188369804, 0.06632032531575861, 0.051851421476236205, -0.1444534827590099, 0.024303114488335727, -0.06840156899215752, 0.011659888691652215];
+
+  // 296期快照在切换前已经锁定，保留旧模型重算同一结果，禁止开奖后换号。
+  var LEGACY = {
+    windows: [5, 10, 20, 30],
+    mean: [1, 0.1, 0.5406277056277154, 0.5346969696969679, 0.5228192640692708, 0.5109920634920567, 0.08581168831169216, 0.2350000000000066],
+    sd: [1, 0.29999999999998567, 0.2353656911766265, 0.18044442235191768, 0.15036609659599928, 0.14621742471589189, 0.1329281908875932, 0.2926814751354063],
+    nextWeights: [0.19029309294887506, -0.12530924983240235, 0.03316944549864856, 0.026108260684124224, -0.04153563674658185, -0.0029537304122937732, -0.01450090578656891, 0.028530663826202226],
+    window3Weights: [2.251916669082404, -0.26660959188369804, 0.06632032531575861, 0.051851421476236205, -0.1444534827590099, 0.024303114488335727, -0.06840156899215752, 0.011659888691652215]
+  };
 
   function periodsOf(raw) {
     return Object.keys(raw).map(Number).filter(Number.isFinite).sort(function (a, b) { return a - b; });
@@ -40,42 +68,35 @@
     return !!bits && bits[tail] === "1";
   }
 
-  function featuresAt(raw, basedOn, tail) {
+  function featuresAt(raw, basedOn, tail, windows, legacyBias) {
     var periods = periodsOf(raw).filter(function (period) { return period <= basedOn; });
-    var yearPeriods = periods;
-    var c5 = 0, c10 = 0, c20 = 0, c30 = 0;
-    yearPeriods.slice(-30).forEach(function (period) {
-      var age = basedOn - period + 1;
-      var hit = hasTail(raw, period, tail);
-      if (age <= 5 && hit) c5++;
-      if (age <= 10 && hit) c10++;
-      if (age <= 20 && hit) c20++;
-      if (age <= 30 && hit) c30++;
+    var values = legacyBias ? [1, tail === 0 ? 1 : 0] : [];
+    windows.forEach(function (window) {
+      var count = 0;
+      var start = Math.max(1, basedOn - window + 1);
+      for (var period = start; period <= basedOn; period++) {
+        if (hasTail(raw, period, tail)) count++;
+      }
+      values.push(count / window);
     });
-    var miss = 0, streak = 0;
-    for (var i = yearPeriods.length - 1; i >= 0; i--) {
-      if (!hasTail(raw, yearPeriods[i], tail)) miss++;
+    var miss = 0;
+    var streak = 0;
+    for (var i = periods.length - 1; i >= 0; i--) {
+      if (!hasTail(raw, periods[i], tail)) miss++;
       else break;
     }
-    for (var j = yearPeriods.length - 1; j >= 0; j--) {
-      if (hasTail(raw, yearPeriods[j], tail)) streak++;
+    for (var j = periods.length - 1; j >= 0; j--) {
+      if (hasTail(raw, periods[j], tail)) streak++;
       else break;
     }
-    return [
-      1,
-      tail === 0 ? 1 : 0,
-      c5 / 5,
-      c10 / 10,
-      c20 / 20,
-      c30 / 30,
-      Math.min(10, miss) / 10,
-      Math.min(5, streak) / 5
-    ];
+    values.push(Math.min(10, miss) / 10, Math.min(5, streak) / 5);
+    return values;
   }
 
   function rawStateAt(raw, basedOn, tail) {
     var periods = periodsOf(raw).filter(function (period) { return period <= basedOn; });
-    var miss = 0, streak = 0;
+    var miss = 0;
+    var streak = 0;
     for (var i = periods.length - 1; i >= 0; i--) {
       if (!hasTail(raw, periods[i], tail)) miss++;
       else break;
@@ -92,31 +113,46 @@
     return 1 / (1 + Math.exp(-z));
   }
 
-  function predictWith(features, weights) {
+  function predictWith(features, mean, sd, weights, legacyBias) {
     var z = weights[0];
-    for (var i = 1; i < weights.length; i++) z += weights[i] * (features[i] - MEAN[i]) / SD[i];
+    for (var i = 1; i < weights.length; i++) {
+      var index = legacyBias ? i : i - 1;
+      z += weights[i] * (features[index] - mean[index]) / sd[index];
+    }
     return sigmoid(z);
   }
 
-  function analyze(raw, basedOn) {
+  function analyze(raw, basedOn, options) {
+    var forceNew = options && options.method === "new";
+    var legacyLocked = !forceNew && Number(basedOn) === LEGACY_LOCK.basedOn;
+    var windows = legacyLocked ? LEGACY.windows : PRODUCTION_MODEL.windows;
+    var mean = legacyLocked ? LEGACY.mean : PRODUCTION_MODEL.window3.mean;
+    var sd = legacyLocked ? LEGACY.sd : PRODUCTION_MODEL.window3.sd;
+    var nextWeights = legacyLocked ? LEGACY.nextWeights : PRODUCTION_MODEL.next.weights;
+    var window3Weights = legacyLocked ? LEGACY.window3Weights : PRODUCTION_MODEL.window3.weights;
     var rows = [];
     for (var tail = 0; tail <= 9; tail++) {
-      var features = featuresAt(raw, basedOn, tail);
+      var features = featuresAt(raw, basedOn, tail, windows, legacyLocked);
       var state = rawStateAt(raw, basedOn, tail);
       rows.push({
         tail: tail,
-        nextProb: predictWith(features, NEXT_W),
-        window3Prob: predictWith(features, WINDOW_W),
+        nextProb: predictWith(features, mean, sd, nextWeights, legacyLocked),
+        window3Prob: predictWith(features, mean, sd, window3Weights, legacyLocked),
         currentMiss: state.miss,
         currentStreak: state.streak,
         features: features
       });
     }
-    rows.sort(function (a, b) { return b.nextProb - a.nextProb || a.tail - b.tail; });
+    rows.sort(function (a, b) {
+      if (legacyLocked) return b.nextProb - a.nextProb || a.tail - b.tail;
+      return b.window3Prob - a.window3Prob || b.nextProb - a.nextProb || a.tail - b.tail;
+    });
     var top = rows.slice(0, 3);
-    var spread = top[0].nextProb - top[2].nextProb;
+    var spread = top[0].window3Prob - top[2].window3Prob;
     return {
-      version: VERSION,
+      version: legacyLocked ? LEGACY_VERSION : VERSION,
+      modelKey: legacyLocked ? "legacy-p10" : PRODUCTION_MODEL_KEY,
+      legacyLocked: legacyLocked,
       meta: META,
       basedOn: basedOn,
       target: basedOn + 1,
@@ -149,7 +185,7 @@
         waitingTail = null;
         continue;
       }
-      var prediction = analyze(raw, period - 1);
+      var prediction = analyze(raw, period - 1, { method: "new" });
       var pick = prediction.top[rank || 0];
       if (!pick) {
         period++;
@@ -167,22 +203,10 @@
         }
       }
       if (hitIndex > 0) {
-        records.push({
-          startPeriod: period,
-          tail: pick.tail,
-          status: "hit",
-          hitIndex: hitIndex,
-          attempts: attempts
-        });
+        records.push({ startPeriod: period, tail: pick.tail, status: "hit", hitIndex: hitIndex, attempts: attempts });
         period += hitIndex;
       } else if (attempts.length === cap) {
-        records.push({
-          startPeriod: period,
-          tail: pick.tail,
-          status: "miss",
-          hitIndex: 0,
-          attempts: attempts
-        });
+        records.push({ startPeriod: period, tail: pick.tail, status: "miss", hitIndex: 0, attempts: attempts });
         waitingTail = pick.tail;
         period += cap;
       } else {
@@ -192,5 +216,11 @@
     return records;
   }
 
-  return { VERSION: VERSION, META: META, analyze: analyze, windowBacktest: windowBacktest };
+  return {
+    VERSION: VERSION,
+    LEGACY_VERSION: LEGACY_VERSION,
+    META: META,
+    analyze: analyze,
+    windowBacktest: windowBacktest
+  };
 });

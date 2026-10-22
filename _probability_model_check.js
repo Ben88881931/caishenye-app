@@ -7,6 +7,7 @@ const raw = require("./lottery_data.json");
 const snapshots = JSON.parse(fs.readFileSync("probability_snapshots.json", "utf8"));
 const latest = Math.max(...Object.keys(raw).map(Number));
 const prediction = model.analyze(raw, latest);
+const freshPrediction = model.analyze(raw, latest, { method: "new" });
 const pending = (snapshots.records || []).filter((record) => !record.settled);
 const target = latest + 1;
 const uiText = fs.readFileSync("app.js", "utf8");
@@ -26,6 +27,10 @@ check(new Set(prediction.top.map((row) => row.tail)).size === 3, "概率前三�
 check(prediction.rows.every((row) => Number.isFinite(row.nextProb) && row.nextProb > 0 && row.nextProb < 1), "下一期概率必须在0到1之间");
 check(prediction.rows.every((row) => Number.isFinite(row.window3Prob) && row.window3Prob > 0 && row.window3Prob < 1), "三期概率必须在0到1之间");
 check(prediction.rows.every((row, index, rows) => index === 0 || rows[index - 1].nextProb >= row.nextProb), "概率结果必须按下一期概率降序排列");
+check(prediction.legacyLocked && prediction.version === model.LEGACY_VERSION, "第296期必须保留切换前旧模型锁定结果");
+check(freshPrediction.version === model.VERSION && !freshPrediction.legacyLocked, "新方法必须使用新版本");
+check(freshPrediction.rows.every((row, index, rows) => index === 0 || rows[index - 1].window3Prob >= row.window3Prob), "新方法必须按三期概率降序排列");
+check(model.META.productionMethod.windows.join(",") === "5,7,15,21,30", "生产方法必须使用5/7/15/21/30窗口");
 check(prediction.rows.every((row) => {
   let streak = 0;
   for (let period = latest; period >= 1 && tailOf(period, row.tail); period--) streak++;
@@ -42,10 +47,13 @@ check(
   "每期真实概率快照的10个尾号不得重复或缺失"
 );
 check(
-  snapshots.records.every((record) => record.allTails.every((row, index, rows) => (
-    index === 0 || Number(rows[index - 1].nextProb) >= Number(row.nextProb)
-  ))),
-  "每期真实概率快照必须按下一期概率从高到低保存"
+  snapshots.records.every((record) => {
+    const metric = record.rankingMetric === "window3Prob" ? "window3Prob" : "nextProb";
+    return record.allTails.every((row, index, rows) => (
+      index === 0 || Number(rows[index - 1][metric]) >= Number(row[metric])
+    ));
+  }),
+  "每期真实概率快照必须按该期声明的排序指标从高到低保存"
 );
 check(
   snapshots.records.every((record) => (
@@ -92,6 +100,6 @@ for (const year of testYears) {
   }
 }
 
-console.log(`模型版本：${model.VERSION} · 目标期：${target} · 前三名：尾${prediction.top.map((row) => row.tail).join("/尾")}`);
+console.log(`模型版本：${model.VERSION} · 当前锁定：${prediction.version} · 目标期：${target} · 前三名：尾${prediction.top.map((row) => row.tail).join("/尾")}`);
 console.log(`RESULT: ${failures.length ? "FAILED " + failures.length : "ALL PASS"}`);
 process.exit(failures.length ? 1 : 0);

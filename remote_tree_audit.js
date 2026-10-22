@@ -14,6 +14,9 @@ const criticalFiles = [
   "data.js",
   "prediction_snapshots.json",
   "snapshots.js",
+  "probability_snapshots.json",
+  "probability_snapshots.js",
+  "probability_weight_research.js",
   "号码走势图.html"
 ];
 

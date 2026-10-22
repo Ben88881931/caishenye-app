@@ -55,11 +55,11 @@ https://github.com/Ben88881931/caishenye-app.git
 
 工作规则：
 1. 使用独立分支或独立 worktree。
-2. 不修改 main 上的 lottery_data.json、号码走势图.html、data.js、probability_snapshots.json、snapshots.js、app.js、styles.css。
+2. 不修改 main 上的 lottery_data.json、号码走势图.html、data.js、probability_snapshots.json、probability_snapshots.js、snapshots.js、app.js、styles.css。
 3. 不产生“稳定盈利”“开奖号码可预测”一类结论。
 4. 不允许未来数据泄漏、同一批数据反复调参、事后改指标。
 5. 所有实验必须写清：假设、数据截止期、训练/验证/锁定区间、样本量、评估指标、代码路径、结果和风险。
-6. 新规则只能提出影子观察方案，不能直接进入生产。
+6. 新规则默认只能提出影子观察方案；只有用户明确书面决定切换生产时，才能由监督线程记录版本、风险、评估区间和回滚点后进入生产。
 
 输出格式：
 研究问题：

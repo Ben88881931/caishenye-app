@@ -457,6 +457,29 @@ test("long right swipe on a later page returns one page", async ({ page }) => {
   expect(result).toEqual({ before: "betexec", after: "pick3" });
 });
 
+test("daily report ranks all 13 lines by recent three completed windows", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement &&
+      view.innerText.includes("每日最终报告") &&
+      view.querySelectorAll("[data-daily-report-row]").length === 13;
+  });
+
+  await expect(page.locator("[data-daily-report-row]")).toHaveCount(13);
+  await expect(page.locator("[data-daily-report-card]")).toHaveCount(13);
+  await expect(page.locator("[data-weight-model]")).toHaveCount(2);
+
+  const rates = await page.locator("[data-daily-report-row]").evaluateAll((rows) => (
+    rows.map((row) => Number(row.getAttribute("data-report-rate")))
+  ));
+  expect(rates.every((rate, index) => index === 0 || rates[index - 1] >= rate)).toBe(true);
+});
+
 test("dynamic probability ranks have independent single-period hit records", async ({ page }) => {
   await page.goto("/");
   const snapshots = await page.evaluate(async () => {
