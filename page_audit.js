@@ -37,6 +37,7 @@ must(appText.includes("if (historyPointerStart.inHorizontalScroll && !historyPoi
 must(appText.includes('if (state.tab === "windowmult")') && appText.includes('state.tab === "windowmult"'), "13线规律中心三级页面必须禁用页面左右滑动");
 must(stylesText.includes('body[data-page="windowmult"] .wm-view-tabs') && stylesText.includes("grid-template-columns: repeat(3, minmax(0, 1fr))") && stylesText.includes("overflow-x: hidden"), "13线规律中心三级页签必须固定换行，不得保留横向翻页");
 must(appText.includes("var LEFT_EDGE_FLIP_ZONE = 36") && appText.includes("var RIGHT_EDGE_FLIP_ZONE = 56") && !appText.includes("RETURN_SWIPE_X") && !appText.includes("touchReturnStart"), "左手模式必须使用非对称边缘区，并取消长右滑返回上级");
+must(appText.includes("LEFT_ONE_HAND_ZONE = 96") && appText.includes("RIGHT_ONE_HAND_ZONE = 44") && appText.includes("ONE_HAND_ZONE_START = 0.42") && appText.includes("function edgeFlipZoneAt") && appText.includes("edgeFlipZoneAt(e.clientX, e.clientY)"), "左手单手模式必须扩大左下拇指区并使用较小的右下辅助区");
 must(appText.includes('directory-card[data-directory-group]') && appText.includes('data-directory-tab') && appText.includes('directoryGroup') && appText.includes('v2_directory_group') && appText.includes('startDirectoryGroupSort') && !appText.includes('groupHtml += groups.map'), "目录必须分级：主目录选一级类目、类目目录选二级页面，顶部不得重复铺一级滚动导航");
 must(appText.includes('{ id: "prob1"') && appText.includes('{ id: "prob2"') && appText.includes('{ id: "prob3"') && /function renderWindowMiss\(\)[\s\S]*EXEC_LINES\.map/.test(appText), "窗口遗漏热图必须包含概率第1/2/3三条线并共用窗口口径");
 

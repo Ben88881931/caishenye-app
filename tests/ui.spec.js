@@ -318,6 +318,72 @@ test("horizontal scrollbar swipes from the right screen edge advance the page", 
   expect(result).toEqual({ before: "pick3", after: "betexec" });
 });
 
+test("left-bottom one-hand the thumb zone flips from inside a horizontal scroll region", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  const result = await page.locator(".prob-test-strip").first().evaluate((element) => {
+    const before = document.body.dataset.page;
+    const startX = 80;
+    const y = window.innerHeight * 0.76;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 97,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
+    return { before, after: document.body.dataset.page };
+  });
+
+  expect(result).toEqual({ before: "pick3", after: "betexec" });
+});
+
+test("bottom-center swipes inside a horizontal scroll region never flip pages", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  const result = await page.locator(".prob-test-strip").first().evaluate((element) => {
+    const before = document.body.dataset.page;
+    const startX = window.innerWidth * 0.5;
+    const y = window.innerHeight * 0.76;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 98,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
+    return { before, after: document.body.dataset.page };
+  });
+
+  expect(result).toEqual({ before: "pick3", after: "pick3" });
+});
+
 test("horizontal scroll region swipes in the center keep the same page", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
