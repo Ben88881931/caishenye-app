@@ -2151,7 +2151,7 @@
       "generatedAt": "2026-10-22T13:51:44.710Z",
       "basedOn": 295,
       "target": 296,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -2171,11 +2171,76 @@
             }
           ]
         }
+      },
+      "actualTails": [
+        1,
+        3,
+        4,
+        5,
+        6
+      ],
+      "actualPeriod": 296,
+      "settledAt": "2026-10-23T13:48:48.630Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            3,
+            2
+          ],
+          "perPick": [
+            {
+              "tail": 3,
+              "score": 95.3,
+              "tag": "连出4",
+              "grade": "S",
+              "hit": true
+            },
+            {
+              "tail": 2,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C",
+              "hit": false
+            }
+          ],
+          "hits": [
+            3
+          ],
+          "count": 1,
+          "hit": true
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-10-23T13:48:48.630Z",
+      "basedOn": 296,
+      "target": 297,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "ambiguous": true,
+          "picks": [
+            {
+              "tail": 4,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            },
+            {
+              "tail": 5,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 295,
-  "updatedAt": "2026-10-22T13:51:44.738Z",
+  "latestPeriod": 296,
+  "updatedAt": "2026-10-23T13:48:48.671Z",
   "threePeriodRecords": [
     {
       "target": 273,
@@ -2875,11 +2940,42 @@
       "tail": 3,
       "score": 95.3,
       "grade": "S",
-      "status": "pending",
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 296,
+          "tail": 3,
+          "actualTails": [
+            1,
+            3,
+            4,
+            5,
+            6
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 296,
+      "settledAt": "2026-10-23T13:48:48.623Z"
+    },
+    {
+      "target": 297,
+      "basedOn": 296,
+      "generatedAt": "2026-10-23T13:48:48.669Z",
+      "action": "观望",
+      "source": null,
+      "rule": "P5/P6",
+      "reason": "双号未确认，空仓观望",
+      "stream": null,
+      "tail": null,
+      "score": null,
+      "grade": null,
+      "status": "skip",
       "attempts": [],
       "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "settledPeriod": 297,
+      "settledAt": "2026-10-23T13:48:48.669Z"
     }
   ],
   "sourceWindows": [
@@ -4119,6 +4215,18 @@
             8
           ],
           "hit": false
+        },
+        {
+          "period": 296,
+          "tail": 9,
+          "actualTails": [
+            1,
+            3,
+            4,
+            5,
+            6
+          ],
+          "hit": false
         }
       ],
       "hitIndex": null,
@@ -4135,6 +4243,35 @@
       "score": 95.3,
       "grade": "S",
       "tag": "连出4",
+      "status": "hit",
+      "attempts": [
+        {
+          "period": 296,
+          "tail": 3,
+          "actualTails": [
+            1,
+            3,
+            4,
+            5,
+            6
+          ],
+          "hit": true
+        }
+      ],
+      "hitIndex": 1,
+      "settledPeriod": 296,
+      "settledAt": "2026-10-23T13:48:48.630Z"
+    },
+    {
+      "target": 297,
+      "basedOn": 296,
+      "generatedAt": "2026-10-23T13:48:48.630Z",
+      "stream": "D1",
+      "model": "双号追热",
+      "tail": 4,
+      "score": 92.5,
+      "grade": "C",
+      "tag": "5期3次",
       "status": "pending",
       "attempts": [],
       "hitIndex": null,
