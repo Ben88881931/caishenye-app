@@ -7027,10 +7027,11 @@
     view.innerHTML = html;
   }
 
-  var SWIPE_X = 56;
-  var SWIPE_PRIMARY_X = 44;
-  var WM_LINE_SWIPE_X = 36;
-  var SWIPE_DIRECTION_RATIO = 1.18;
+  var SWIPE_X = 28;
+  var SWIPE_PRIMARY_X = 22;
+  var WM_LINE_SWIPE_X = 24;
+  var SWIPE_CANCEL_X = 20;
+  var SWIPE_DIRECTION_RATIO = 1.12;
   // 左手模式：上半屏保持窄边缘，下半屏扩大左下拇指区，右下只留辅助区
   var LEFT_EDGE_FLIP_ZONE = 36;
   var RIGHT_EDGE_FLIP_ZONE = 56;
@@ -7040,6 +7041,7 @@
   var historyPointerStart = null;
   var gestureClickGuard = false;
   var gestureClickGuardTimer = null;
+  var gestureCommitTimer = null;
   // 滑动后页面会整块重渲染，pointerup 可能丢失；用定时器兜底，避免下一次点击被吞掉
   function armGestureClickGuard() {
     gestureClickGuard = true;
@@ -7054,7 +7056,67 @@
     return x <= LEFT_EDGE_FLIP_ZONE || x >= window.innerWidth - RIGHT_EDGE_FLIP_ZONE;
   }
 
+  function commitGestureIntent(intent) {
+    if (!intent) return;
+    if (intent.type === "line") stepWindowMultLine(intent.delta);
+    else if (intent.type === "page") {
+      if (intent.level === "group") stepGroupHistory(intent.delta);
+      else stepTabHistory(intent.delta);
+    }
+  }
+
+  function clearGestureCommitTimer() {
+    if (!gestureCommitTimer) return;
+    clearTimeout(gestureCommitTimer);
+    gestureCommitTimer = null;
+  }
+
+  function scheduleGestureIntent(gesture, delay) {
+    if (gestureCommitTimer) clearTimeout(gestureCommitTimer);
+    gestureCommitTimer = setTimeout(function () {
+      gestureCommitTimer = null;
+      if (!historyPointerStart || historyPointerStart !== gesture || !gesture.intent) return;
+      var intent = gesture.intent;
+      gesture.intent = null;
+      historyPointerStart = null;
+      document.documentElement.classList.remove("gesture-active");
+      commitGestureIntent(intent);
+    }, delay == null ? 120 : delay);
+  }
+
+  function gestureIntentAt(gesture, x, y, threshold) {
+    var dx = x - gesture.x;
+    var dy = y - gesture.y;
+    var absX = Math.abs(dx);
+    var absY = Math.abs(dy);
+    if (absX > 10 || absY > 10) armGestureClickGuard();
+    if (gesture.lineStrip && absX >= threshold && absX > absY * SWIPE_DIRECTION_RATIO) {
+      return { type: "line", delta: dx > 0 ? -1 : 1 };
+    }
+    if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return null;
+    if (gesture.pageSwipeDisabled) return null;
+    if (absX < threshold || absX < absY * SWIPE_DIRECTION_RATIO) return null;
+    return { type: "page", level: gesture.level, delta: dx > 0 ? -1 : 1 };
+  }
+
+  function finishHistoryGesture(x, y, cancelled) {
+    if (!historyPointerStart) return;
+    clearGestureCommitTimer();
+    var gesture = historyPointerStart;
+    historyPointerStart = null;
+    document.documentElement.classList.remove("gesture-active");
+    var normalThreshold = gesture.lineStrip
+      ? WM_LINE_SWIPE_X
+      : (gesture.level === "group" ? SWIPE_PRIMARY_X : SWIPE_X);
+    var threshold = cancelled ? Math.min(normalThreshold, SWIPE_CANCEL_X) : normalThreshold;
+    var intent = gesture.intent || gestureIntentAt(gesture, x, y, threshold);
+    if (!intent) return;
+    armGestureClickGuard();
+    commitGestureIntent(intent);
+  }
+
   document.documentElement.addEventListener("pointerdown", function (e) {
+    clearGestureCommitTimer();
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) {
       historyPointerStart = null;
       return;
@@ -7100,6 +7162,7 @@
       historyPointerStart.intent = { type: "line", delta: dx > 0 ? -1 : 1 };
       armGestureClickGuard();
       e.preventDefault();
+      scheduleGestureIntent(historyPointerStart);
       return;
     }
     if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) return;
@@ -7109,48 +7172,22 @@
       historyPointerStart.intent = { type: "page", level: level, delta: dx > 0 ? -1 : 1 };
       armGestureClickGuard();
       e.preventDefault();
+      scheduleGestureIntent(historyPointerStart);
     }
   }, true);
 
   document.documentElement.addEventListener("pointerup", function (e) {
     if (!historyPointerStart || e.pointerId !== historyPointerStart.id) return;
-    var gesture = historyPointerStart;
-    historyPointerStart = null;
-    document.documentElement.classList.remove("gesture-active");
-    if (gesture.handled) {
-      armGestureClickGuard();
-      if (gesture.handled && gesture.intent) {
-        if (gesture.intent.type === "line") stepWindowMultLine(gesture.intent.delta);
-        else if (gesture.intent.type === "page") {
-          if (gesture.intent.level === "group") stepGroupHistory(gesture.intent.delta);
-          else stepTabHistory(gesture.intent.delta);
-        }
-      }
-      setTimeout(function () { gestureClickGuard = false; }, 400);
-      return;
-    }
-    var dx = e.clientX - gesture.x;
-    var dy = e.clientY - gesture.y;
-    var absX = Math.abs(dx);
-    var absY = Math.abs(dy);
-    var isVertical = absY > absX;
-    var level = gesture.level;
-    var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (isVertical) return;
-    if (gesture.lineStrip && absX >= WM_LINE_SWIPE_X && absX > absY * SWIPE_DIRECTION_RATIO) {
-      stepWindowMultLine(dx > 0 ? -1 : 1);
-      return;
-    }
-    if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return;
-    if (gesture.pageSwipeDisabled) return;
-    if (absX < swipeX || absX < absY * SWIPE_DIRECTION_RATIO) return;
-    if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-    else stepTabHistory(dx > 0 ? -1 : 1);
+    finishHistoryGesture(e.clientX, e.clientY, false);
   }, true);
 
-  document.documentElement.addEventListener("pointercancel", function () {
-    historyPointerStart = null;
-    gestureClickGuard = false;
+  document.documentElement.addEventListener("pointercancel", function (e) {
+    if (historyPointerStart) {
+      if (e.pointerId !== historyPointerStart.id) return;
+      finishHistoryGesture(e.clientX, e.clientY, true);
+      return;
+    }
+    clearGestureCommitTimer();
     document.documentElement.classList.remove("gesture-active");
   }, true);
 

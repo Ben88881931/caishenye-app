@@ -452,8 +452,8 @@ test("page swipes require a longer full-screen gesture", async ({ page }) => {
     });
     const before = document.body.dataset.page;
     element.dispatchEvent(pointer("pointerdown", startX));
-    document.documentElement.dispatchEvent(pointer("pointermove", startX - 40));
-    document.documentElement.dispatchEvent(pointer("pointerup", startX - 40));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 24));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 24));
     return { before, after: document.body.dataset.page };
   });
   expect(short).toEqual({ before: "pick3", after: "pick3" });
@@ -473,12 +473,81 @@ test("page swipes require a longer full-screen gesture", async ({ page }) => {
       clientY: y,
     });
     element.dispatchEvent(pointer("pointerdown", startX));
-    document.documentElement.dispatchEvent(pointer("pointermove", startX - 80));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
     const during = document.body.dataset.page;
-    document.documentElement.dispatchEvent(pointer("pointerup", startX - 80));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 60));
     return { during, after: document.body.dataset.page };
   });
   expect(long).toEqual({ during: "pick3", after: "betexec" });
+});
+
+test("a page swipe still commits when the touch system omits pointerup", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  await page.locator("#view .panel").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 101,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
+  });
+  await page.waitForFunction(() => document.body.dataset.page === "betexec");
+  expect(await page.evaluate(() => document.body.dataset.page)).toBe("betexec");
+});
+
+test("a short touch swipe commits once when the browser cancels the pointer stream", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  const result = await page.locator("#view .panel").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 102,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    const before = document.body.dataset.page;
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 28));
+    document.documentElement.dispatchEvent(pointer("pointercancel", startX - 28));
+    return { before, after: document.body.dataset.page };
+  });
+
+  expect(result).toEqual({ before: "pick3", after: "betexec" });
+  await page.waitForTimeout(180);
+  expect(await page.evaluate(() => document.body.dataset.page)).toBe("betexec");
 });
 
 test("13-line center pages do not change from horizontal swipes", async ({ page }) => {
