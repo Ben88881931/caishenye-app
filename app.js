@@ -1050,18 +1050,6 @@
 
 
 
-  // 在13线按钮上左右滑动即可翻到上一条/下一条线，到两端循环
-  function stepWindowMultLine(delta) {
-    var index = -1;
-    for (var i = 0; i < EXEC_LINES.length; i++) {
-      if (EXEC_LINES[i].id === state.windowMultLine) { index = i; break; }
-    }
-    if (index < 0) index = 0;
-    var next = (index + delta + EXEC_LINES.length) % EXEC_LINES.length;
-    state.windowMultLine = EXEC_LINES[next].id;
-    renderWindowMultiplierTest();
-  }
-
   function stepGroupHistory(delta) {
     var group = orderedGroupAt(delta);
     if (!group) return;
@@ -7029,7 +7017,6 @@
 
   var SWIPE_X = 28;
   var SWIPE_PRIMARY_X = 22;
-  var WM_LINE_SWIPE_X = 24;
   var SWIPE_CANCEL_X = 20;
   var SWIPE_DIRECTION_RATIO = 1.12;
   // 左手模式：上半屏保持窄边缘，下半屏扩大左下拇指区，右下只留辅助区
@@ -7058,8 +7045,7 @@
 
   function commitGestureIntent(intent) {
     if (!intent) return;
-    if (intent.type === "line") stepWindowMultLine(intent.delta);
-    else if (intent.type === "page") {
+    if (intent.type === "page") {
       if (intent.level === "group") stepGroupHistory(intent.delta);
       else stepTabHistory(intent.delta);
     }
@@ -7090,9 +7076,6 @@
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
     if (absX > 10 || absY > 10) armGestureClickGuard();
-    if (gesture.lineStrip && absX >= threshold && absX > absY * SWIPE_DIRECTION_RATIO) {
-      return { type: "line", delta: dx > 0 ? -1 : 1 };
-    }
     if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return null;
     if (gesture.pageSwipeDisabled) return null;
     if (absX < threshold || absX < absY * SWIPE_DIRECTION_RATIO) return null;
@@ -7105,9 +7088,7 @@
     var gesture = historyPointerStart;
     historyPointerStart = null;
     document.documentElement.classList.remove("gesture-active");
-    var normalThreshold = gesture.lineStrip
-      ? WM_LINE_SWIPE_X
-      : (gesture.level === "group" ? SWIPE_PRIMARY_X : SWIPE_X);
+    var normalThreshold = gesture.level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     var threshold = cancelled ? Math.min(normalThreshold, SWIPE_CANCEL_X) : normalThreshold;
     var intent = gesture.intent || gestureIntentAt(gesture, x, y, threshold);
     if (!intent) return;
@@ -7137,7 +7118,6 @@
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: gestureInfo.inHorizontalScroll,
       edgeSwipe: edgeFlipZoneAt(e.clientX, e.clientY),
-      lineStrip: !!e.target.closest(".wm-line-selector"),
       pageSwipeDisabled: state.tab === "windowmult",
       intent: null,
       handled: false
@@ -7157,14 +7137,6 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (historyPointerStart.lineStrip && absX >= WM_LINE_SWIPE_X && absX > absY * SWIPE_DIRECTION_RATIO) {
-      historyPointerStart.handled = true;
-      historyPointerStart.intent = { type: "line", delta: dx > 0 ? -1 : 1 };
-      armGestureClickGuard();
-      e.preventDefault();
-      scheduleGestureIntent(historyPointerStart);
-      return;
-    }
     if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) return;
     if (historyPointerStart.pageSwipeDisabled) return;
     if (absX >= swipeX && absX > absY * SWIPE_DIRECTION_RATIO) {

@@ -585,6 +585,46 @@ test("13-line center pages do not change from horizontal swipes", async ({ page 
   expect(result).toEqual({ before: "windowmult", after: "windowmult" });
 });
 
+test("13-line selector numbers never change lines from horizontal swipes", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("13线规律中心");
+  });
+
+  const before = await page.evaluate(() => (
+    document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null
+  ));
+  await page.locator(".wm-line-selector .chip").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.right - 6;
+    const y = rect.top + rect.height / 2;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 103,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 60));
+  });
+  await page.waitForTimeout(180);
+
+  const after = await page.evaluate(() => (
+    document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null
+  ));
+  expect(after).toBe(before);
+});
+
 test("13-line center subtabs are fixed and cannot swipe like pages", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {

@@ -128,13 +128,13 @@ async function main() {
   await sleep(500);
   check((await activeTab()) === before6, "竖向滑动不翻页");
 
-  // 7) 13线按钮排左滑 → 切下一条线
+  // 7) 13线数字区只能点击，横滑不得换线
   await evalJS("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
   const lineBefore = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
   await gesture(".wm-line-selector [data-wm-line]", [-30, -60], null, 20);
   await sleep(700);
   const lineAfter = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
-  check(lineBefore !== lineAfter, "13线按钮排左滑 → 切到下一条线（" + lineBefore + " → " + lineAfter + "）");
+  check(lineBefore === lineAfter, "13线数字区横滑不换线，只能点击（" + lineBefore + " → " + lineAfter + "）");
 
   check(errs.length === 0, "控制台无报错" + (errs.length ? " → " + errs.join(",") : ""));
   console.log(results.join("\n"));
