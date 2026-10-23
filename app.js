@@ -1064,6 +1064,17 @@
     render();
   }
 
+  var WM_VIEW_ORDER = ["overview", "windows", "personality", "formula", "years"];
+  function stepWindowMultView(delta) {
+    var current = state.windowMultView || "overview";
+    var index = WM_VIEW_ORDER.indexOf(current);
+    if (index < 0) index = 0;
+    var next = WM_VIEW_ORDER[index + delta];
+    if (!next) return;
+    state.windowMultView = next;
+    renderWindowMultiplierTest();
+  }
+
   function stepTabHistory(delta) {
     if (state.tab === "directory") return;
     var tab = orderedTabAt(delta);
@@ -7045,7 +7056,8 @@
 
   function commitGestureIntent(intent) {
     if (!intent) return;
-    if (intent.type === "page") {
+    if (intent.type === "window-view") stepWindowMultView(intent.delta);
+    else if (intent.type === "page") {
       if (intent.level === "group") stepGroupHistory(intent.delta);
       else stepTabHistory(intent.delta);
     }
@@ -7077,6 +7089,10 @@
     var absY = Math.abs(dy);
     if (absX > 10 || absY > 10) armGestureClickGuard();
     if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return null;
+    if (gesture.windowViewSwipe) {
+      if (absX < threshold || absX < absY * SWIPE_DIRECTION_RATIO) return null;
+      return { type: "window-view", delta: dx > 0 ? -1 : 1 };
+    }
     if (gesture.pageSwipeDisabled) return null;
     if (absX < threshold || absX < absY * SWIPE_DIRECTION_RATIO) return null;
     return { type: "page", level: gesture.level, delta: dx > 0 ? -1 : 1 };
@@ -7118,6 +7134,7 @@
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: gestureInfo.inHorizontalScroll,
       edgeSwipe: edgeFlipZoneAt(e.clientX, e.clientY),
+      windowViewSwipe: state.tab === "windowmult" && !e.target.closest(".wm-line-selector, .wm-view-tabs"),
       pageSwipeDisabled: state.tab === "windowmult",
       intent: null,
       handled: false
@@ -7138,6 +7155,16 @@
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) return;
+    if (historyPointerStart.windowViewSwipe) {
+      if (absX >= swipeX && absX > absY * SWIPE_DIRECTION_RATIO) {
+        historyPointerStart.handled = true;
+        historyPointerStart.intent = { type: "window-view", delta: dx > 0 ? -1 : 1 };
+        armGestureClickGuard();
+        e.preventDefault();
+        scheduleGestureIntent(historyPointerStart);
+      }
+      return;
+    }
     if (historyPointerStart.pageSwipeDisabled) return;
     if (absX >= swipeX && absX > absY * SWIPE_DIRECTION_RATIO) {
       historyPointerStart.handled = true;

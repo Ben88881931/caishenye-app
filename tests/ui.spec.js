@@ -550,7 +550,7 @@ test("a short touch swipe commits once when the browser cancels the pointer stre
   expect(await page.evaluate(() => document.body.dataset.page)).toBe("betexec");
 });
 
-test("13-line center pages do not change from horizontal swipes", async ({ page }) => {
+test("13-line center content swipes across third-level pages", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
@@ -575,14 +575,26 @@ test("13-line center pages do not change from horizontal swipes", async ({ page 
       clientX,
       clientY: y,
     });
-    const before = document.body.dataset.page;
+    const before = {
+      page: document.body.dataset.page,
+      view: document.querySelector(".wm-view-tab.is-active")?.getAttribute("data-wm-view"),
+    };
     element.dispatchEvent(pointer("pointerdown", startX));
-    document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
-    document.documentElement.dispatchEvent(pointer("pointerup", startX - 90));
-    return { before, after: document.body.dataset.page };
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 60));
+    return {
+      before,
+      after: {
+        page: document.body.dataset.page,
+        view: document.querySelector(".wm-view-tab.is-active")?.getAttribute("data-wm-view"),
+      },
+    };
   });
 
-  expect(result).toEqual({ before: "windowmult", after: "windowmult" });
+  expect(result).toEqual({
+    before: { page: "windowmult", view: "overview" },
+    after: { page: "windowmult", view: "windows" },
+  });
 });
 
 test("13-line selector numbers never change lines from horizontal swipes", async ({ page }) => {
@@ -597,7 +609,10 @@ test("13-line selector numbers never change lines from horizontal swipes", async
   });
 
   const before = await page.evaluate(() => (
-    document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null
+    {
+      line: document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null,
+      view: document.querySelector(".wm-view-tab.is-active")?.getAttribute("data-wm-view") || null,
+    }
   ));
   await page.locator(".wm-line-selector .chip").first().evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -620,7 +635,10 @@ test("13-line selector numbers never change lines from horizontal swipes", async
   await page.waitForTimeout(180);
 
   const after = await page.evaluate(() => (
-    document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null
+    {
+      line: document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null,
+      view: document.querySelector(".wm-view-tab.is-active")?.getAttribute("data-wm-view") || null,
+    }
   ));
   expect(after).toBe(before);
 });

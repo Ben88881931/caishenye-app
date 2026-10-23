@@ -128,13 +128,21 @@ async function main() {
   await sleep(500);
   check((await activeTab()) === before6, "竖向滑动不翻页");
 
-  // 7) 13线数字区只能点击，横滑不得换线
+  // 7) 13线内容区横滑切三级页；数字区只能点击，横滑不得换线
   await evalJS("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
+  const viewBefore = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
+  await gesture("#view .wm-card", [-30, -60], null, 20);
+  await sleep(700);
+  const viewAfter = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
+  check(viewBefore !== viewAfter, "13线内容区左滑 → 切换下一个三级页（" + viewBefore + " → " + viewAfter + "）");
   const lineBefore = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
+  const lineViewBefore = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
   await gesture(".wm-line-selector [data-wm-line]", [-30, -60], null, 20);
   await sleep(700);
   const lineAfter = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
+  const lineViewAfter = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
   check(lineBefore === lineAfter, "13线数字区横滑不换线，只能点击（" + lineBefore + " → " + lineAfter + "）");
+  check(lineViewBefore === lineViewAfter, "13线数字区横滑不切换三级页（" + lineViewBefore + " → " + lineViewAfter + "）");
 
   check(errs.length === 0, "控制台无报错" + (errs.length ? " → " + errs.join(",") : ""));
   console.log(results.join("\n"));
