@@ -3173,8 +3173,11 @@
 
 
 
-  function renderSegments() {
-    var w = state.segWindow;
+  var segmentsPageCache = {};
+
+  function segmentsHTMLFor(w) {
+    var cacheKey = String(w) + "|" + D.length;
+    if (segmentsPageCache[cacheKey]) return segmentsPageCache[cacheKey];
     var segs = segsOf(w);
 
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">分段对比</h2><span class="section__hint">共' + segs.length + '段 · 横向滑动查看</span></div>';
@@ -3204,7 +3207,12 @@
     }
     html += '</tbody></table></div></div></div>';
     html += '<p class="disclaimer">数字=开出次数 · <span style="color:#16a34a">绿≥60%</span> <span style="color:#6b7280">灰中间</span> <span style="color:#eab308">黄偏冷</span> <span style="color:#dc2626">红≤20%</span> · 预估=下一段预计开出次数 · 可横向滑动</p>';
-    view.innerHTML = html;
+    segmentsPageCache[cacheKey] = html;
+    return html;
+  }
+
+  function renderSegments() {
+    view.innerHTML = segmentsHTMLFor(state.segWindow);
     // 自动滚动到最新位置（最右边）
     var scrollContainer = view.querySelector('.panel__body');
     if (scrollContainer) {
@@ -4169,6 +4177,7 @@
   var wmWindowCache = {};
   var wmWindowState = {};
   var wmSourceCache = {};
+  var wmLineBestCache = { key: null, lineBest: null, currentYear: null, ytdBestByLine: null };
   var WM_BASE = 100;
 
   function wmPlanFor(n) {
@@ -4673,8 +4682,8 @@
     };
   }
 
-  function wmYearStats(line, n) {
-    var sim = wmSimulate(line, n);
+  function wmYearStats(line, n, simIn) {
+    var sim = simIn || wmSimulate(line, n);
     var byYear = {};
     sim.records.forEach(function (item) {
       var year = wmYearOf(item.window.start);
@@ -4725,6 +4734,48 @@
     return rows[0] || null;
   }
 
+  function wmLineBestData() {
+    var currentYear = Number((D[D.length - 1] || {}).y) || new Date().getFullYear();
+    var sourceWindowCount = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.sourceWindows)
+      ? window.APP_SNAPSHOTS.sourceWindows.length
+      : 0;
+    var cacheKey = D.length + "|" + latest + "|" + sourceWindowCount;
+    if (wmLineBestCache.key === cacheKey) return wmLineBestCache;
+    var ns = [1, 1.5, 2, 2.5, 3];
+    var lineBest = {};
+    EXEC_LINES.forEach(function (item) {
+      var itemSimulations = ns.map(function (n) { return wmSimulate(item, n); });
+      var itemRobust = itemSimulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
+      var itemAnnual = {};
+      itemSimulations.forEach(function (simulation) {
+        itemAnnual[simulation.n] = wmYearStats(item, simulation.n, simulation);
+      });
+      var itemStable = itemRobust.slice().sort(function (a, b) {
+        return itemAnnual[b.n].stableScore - itemAnnual[a.n].stableScore || b.net - a.net || a.maxDD - b.maxDD;
+      });
+      var itemNetBest = itemRobust.slice().sort(function (a, b) {
+        return b.net - a.net || a.maxDD - b.maxDD;
+      })[0] || null;
+      lineBest[item.id] = {
+        best: itemStable[0] || null,
+        netBest: itemNetBest,
+        simulations: itemSimulations,
+        annual: itemAnnual
+      };
+    });
+    var ytdBestByLine = {};
+    EXEC_LINES.forEach(function (item) {
+      ytdBestByLine[item.id] = wmYearBest(lineBest[item.id], currentYear);
+    });
+    wmLineBestCache = {
+      key: cacheKey,
+      lineBest: lineBest,
+      currentYear: currentYear,
+      ytdBestByLine: ytdBestByLine
+    };
+    return wmLineBestCache;
+  }
+
 
 
   function renderWindowMultiplierTest() {
@@ -4734,22 +4785,11 @@
     });
     if (!line) line = EXEC_LINES[0];
     state.windowMultLine = line.id;
+    var cachedLineData = wmLineBestData();
     var ns = [1, 1.5, 2, 2.5, 3];
-    var lineBest = {};
-    EXEC_LINES.forEach(function (item) {
-      var itemSimulations = ns.map(function (n) { return wmSimulate(item, n); });
-      var itemRobust = itemSimulations.filter(function (s) { return s.trainNet > 0 && s.validNet > 0; });
-      var itemAnnual = {};
-      itemSimulations.forEach(function (s) { itemAnnual[s.n] = wmYearStats(item, s.n); });
-      var itemStable = itemRobust.slice().sort(function (a, b) {
-        return itemAnnual[b.n].stableScore - itemAnnual[a.n].stableScore || b.net - a.net || a.maxDD - b.maxDD;
-      });
-      var itemNetBest = itemRobust.slice().sort(function (a, b) { return b.net - a.net || a.maxDD - b.maxDD; })[0] || null;
-      lineBest[item.id] = { best: itemStable[0] || null, netBest: itemNetBest, simulations: itemSimulations, annual: itemAnnual };
-    });
-    var currentYear = Number((D[D.length - 1] || {}).y) || new Date().getFullYear();
-    var ytdBestByLine = {};
-    EXEC_LINES.forEach(function (item) { ytdBestByLine[item.id] = wmYearBest(lineBest[item.id], currentYear); });
+    var lineBest = cachedLineData.lineBest;
+    var currentYear = cachedLineData.currentYear;
+    var ytdBestByLine = cachedLineData.ytdBestByLine;
     var orderedLines = EXEC_LINES.slice();
     // 真实快照样本（只有开奖前存过快照、开奖后已结算的期才算），用于标注回测与真实口径
     var snapDetailRows = window.APP_SNAPSHOTS && Array.isArray(window.APP_SNAPSHOTS.detail) ? window.APP_SNAPSHOTS.detail : [];
@@ -6987,9 +7027,10 @@
     view.innerHTML = html;
   }
 
-  var SWIPE_X = 28;
-
-  var SWIPE_PRIMARY_X = 20;
+  var SWIPE_X = 56;
+  var SWIPE_PRIMARY_X = 44;
+  var WM_LINE_SWIPE_X = 36;
+  var SWIPE_DIRECTION_RATIO = 1.18;
   // 左手模式：上半屏保持窄边缘，下半屏扩大左下拇指区，右下只留辅助区
   var LEFT_EDGE_FLIP_ZONE = 36;
   var RIGHT_EDGE_FLIP_ZONE = 56;
@@ -7036,6 +7077,7 @@
       edgeSwipe: edgeFlipZoneAt(e.clientX, e.clientY),
       lineStrip: !!e.target.closest(".wm-line-selector"),
       pageSwipeDisabled: state.tab === "windowmult",
+      intent: null,
       handled: false
     };
     document.documentElement.classList.add("gesture-active");
@@ -7053,21 +7095,20 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (historyPointerStart.lineStrip && absX >= swipeX && absX > absY * 1.05) {
+    if (historyPointerStart.lineStrip && absX >= WM_LINE_SWIPE_X && absX > absY * SWIPE_DIRECTION_RATIO) {
       historyPointerStart.handled = true;
+      historyPointerStart.intent = { type: "line", delta: dx > 0 ? -1 : 1 };
       armGestureClickGuard();
       e.preventDefault();
-      stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
     if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) return;
     if (historyPointerStart.pageSwipeDisabled) return;
-    if (absX >= swipeX && absX > absY * 1.05) {
+    if (absX >= swipeX && absX > absY * SWIPE_DIRECTION_RATIO) {
       historyPointerStart.handled = true;
+      historyPointerStart.intent = { type: "page", level: level, delta: dx > 0 ? -1 : 1 };
       armGestureClickGuard();
       e.preventDefault();
-      if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
-      else stepTabHistory(dx > 0 ? -1 : 1);
     }
   }, true);
 
@@ -7077,6 +7118,14 @@
     historyPointerStart = null;
     document.documentElement.classList.remove("gesture-active");
     if (gesture.handled) {
+      armGestureClickGuard();
+      if (gesture.handled && gesture.intent) {
+        if (gesture.intent.type === "line") stepWindowMultLine(gesture.intent.delta);
+        else if (gesture.intent.type === "page") {
+          if (gesture.intent.level === "group") stepGroupHistory(gesture.intent.delta);
+          else stepTabHistory(gesture.intent.delta);
+        }
+      }
       setTimeout(function () { gestureClickGuard = false; }, 400);
       return;
     }
@@ -7088,13 +7137,13 @@
     var level = gesture.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
     if (isVertical) return;
-    if (gesture.lineStrip && absX >= swipeX && absX > absY * 1.05) {
+    if (gesture.lineStrip && absX >= WM_LINE_SWIPE_X && absX > absY * SWIPE_DIRECTION_RATIO) {
       stepWindowMultLine(dx > 0 ? -1 : 1);
       return;
     }
     if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return;
     if (gesture.pageSwipeDisabled) return;
-    if (absX < swipeX || absX < absY * 1.1) return;
+    if (absX < swipeX || absX < absY * SWIPE_DIRECTION_RATIO) return;
     if (level === "group") stepGroupHistory(dx > 0 ? -1 : 1);
     else stepTabHistory(dx > 0 ? -1 : 1);
   }, true);

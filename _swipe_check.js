@@ -62,19 +62,19 @@ async function main() {
   const hasMerged = navLabels.indexOf("执行提示") < 0 && navLabels.indexOf("资金调度") < 0 && navLabels.indexOf("下注执行表") >= 0;
   check(hasMerged, "导航已无「执行提示 / 资金调度」，只留下注执行表", navLabels);
 
-  // 1) 短距离左滑就该翻页（原阈值 28px）
+  // 1) 全屏页面使用更长阈值，避免轻滑误翻
   const before1 = await activeTab();
-  await gesture("#view .section__title", [-10, -30, -50], null, 20);
+  await gesture("#view .section__title", [-20, -40, -70], null, 20);
   await sleep(500);
   const after1 = await activeTab();
-  check(before1 !== after1 && after1 !== "", "短距离左滑 → 翻到下一页（" + before1 + " → " + after1 + "）");
+  check(before1 !== after1 && after1 !== "", "长距离左滑 → 翻到下一页（" + before1 + " → " + after1 + "）");
 
   // 2) 短距离右滑 → 回上一页
   const before2 = await activeTab();
-  await gesture("#view .section__title", [10, 30, 50], null, 20);
+  await gesture("#view .section__title", [20, 40, 70], null, 20);
   await sleep(500);
   const after2 = await activeTab();
-  check(before2 !== after2 && after2 === before1, "短距离右滑 → 回上一页（" + before2 + " → " + after2 + "）");
+  check(before2 !== after2 && after2 === before1, "长距离右滑 → 回上一页（" + before2 + " → " + after2 + "）");
 
   // 3) 页面不跟手位移（不该有 transform，避免晃屏）
   const t3 = await evalJS(

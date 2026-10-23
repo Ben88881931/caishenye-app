@@ -304,6 +304,7 @@ async function swipeHorizontalScrollbar(page, fromRightEdge) {
     });
     element.dispatchEvent(pointer("pointerdown", startX));
     document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 90));
     return { before, after: document.body.dataset.page };
   }, fromRightEdge);
 }
@@ -345,6 +346,7 @@ test("left-bottom one-hand the thumb zone flips from inside a horizontal scroll 
     });
     element.dispatchEvent(pointer("pointerdown", startX));
     document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 60));
     return { before, after: document.body.dataset.page };
   });
 
@@ -378,6 +380,7 @@ test("bottom-center swipes inside a horizontal scroll region never flip pages", 
     });
     element.dispatchEvent(pointer("pointerdown", startX));
     document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 90));
     return { before, after: document.body.dataset.page };
   });
 
@@ -415,10 +418,67 @@ test("horizontal scroll region swipes in the center keep the same page", async (
     const before = document.body.dataset.page;
     card.dispatchEvent(pointer("pointerdown", startX));
     document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 90));
     return { before, after: document.body.dataset.page };
   });
 
   expect(result).toEqual({ before: "pick3", after: "pick3" });
+});
+
+test("page swipes require a longer full-screen gesture", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+
+  const short = await page.locator("#view .panel").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 99,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    const before = document.body.dataset.page;
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 40));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 40));
+    return { before, after: document.body.dataset.page };
+  });
+  expect(short).toEqual({ before: "pick3", after: "pick3" });
+
+  const long = await page.locator("#view .panel").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 100,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 80));
+    const during = document.body.dataset.page;
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 80));
+    return { during, after: document.body.dataset.page };
+  });
+  expect(long).toEqual({ during: "pick3", after: "betexec" });
 });
 
 test("13-line center pages do not change from horizontal swipes", async ({ page }) => {
@@ -449,6 +509,7 @@ test("13-line center pages do not change from horizontal swipes", async ({ page 
     const before = document.body.dataset.page;
     element.dispatchEvent(pointer("pointerdown", startX));
     document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - 90));
     return { before, after: document.body.dataset.page };
   });
 
@@ -537,6 +598,7 @@ test("long right swipe on the first page does not open the directory", async ({ 
     const before = document.body.dataset.page;
     element.dispatchEvent(pointer("pointerdown", startX));
     document.documentElement.dispatchEvent(pointer("pointermove", startX + 260));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX + 260));
     return { before, after: document.body.dataset.page };
   });
 
@@ -571,6 +633,7 @@ test("long right swipe on a later page returns one page", async ({ page }) => {
     const before = document.body.dataset.page;
     element.dispatchEvent(pointer("pointerdown", startX));
     document.documentElement.dispatchEvent(pointer("pointermove", startX + 260));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX + 260));
     return { before, after: document.body.dataset.page };
   });
 
