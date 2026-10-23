@@ -7019,12 +7019,7 @@
   var SWIPE_PRIMARY_X = 22;
   var SWIPE_CANCEL_X = 20;
   var SWIPE_DIRECTION_RATIO = 1.12;
-  // 左手模式：上半屏保持窄边缘，下半屏扩大左下拇指区，右下只留辅助区
-  var LEFT_EDGE_FLIP_ZONE = 36;
-  var RIGHT_EDGE_FLIP_ZONE = 56;
-  var LEFT_ONE_HAND_ZONE = 96;
-  var RIGHT_ONE_HAND_ZONE = 44;
-  var ONE_HAND_ZONE_START = 0.42;
+  var HORIZONTAL_EDGE_FLIP_ZONE = 56;
   var historyPointerStart = null;
   var gestureClickGuard = false;
   var gestureClickGuardTimer = null;
@@ -7036,11 +7031,8 @@
     gestureClickGuardTimer = setTimeout(function () { gestureClickGuard = false; }, 450);
   }
 
-  function edgeFlipZoneAt(x, y) {
-    if (y >= window.innerHeight * ONE_HAND_ZONE_START) {
-      return x <= LEFT_ONE_HAND_ZONE || x >= window.innerWidth - RIGHT_ONE_HAND_ZONE;
-    }
-    return x <= LEFT_EDGE_FLIP_ZONE || x >= window.innerWidth - RIGHT_EDGE_FLIP_ZONE;
+  function horizontalScrollEdgeAt(x) {
+    return x <= HORIZONTAL_EDGE_FLIP_ZONE || x >= window.innerWidth - HORIZONTAL_EDGE_FLIP_ZONE;
   }
 
   function commitGestureIntent(intent) {
@@ -7116,7 +7108,7 @@
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: gestureInfo.inHorizontalScroll,
-      edgeSwipe: edgeFlipZoneAt(e.clientX, e.clientY),
+      edgeSwipe: horizontalScrollEdgeAt(e.clientX),
       intent: null,
       handled: false
     };

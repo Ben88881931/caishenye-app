@@ -271,7 +271,7 @@ test("dynamic probability cards move with their horizontal strips", async ({ pag
   }
 });
 
-async function swipeHorizontalScrollbar(page, fromRightEdge) {
+async function swipeHorizontalScrollbar(page, side) {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
@@ -287,10 +287,14 @@ async function swipeHorizontalScrollbar(page, fromRightEdge) {
     element.scrollLeft = element.scrollWidth;
   });
 
-  return strip.evaluate((element, rightEdge) => {
+  return strip.evaluate((element, edgeSide) => {
     const before = document.body.dataset.page;
     const rect = element.getBoundingClientRect();
-    const startX = rightEdge ? rect.right - 6 : rect.left + rect.width * 0.5;
+    const startX = edgeSide === "left"
+      ? rect.left + 50
+      : edgeSide === "right"
+        ? rect.right - 50
+        : rect.left + rect.width * 0.5;
     const y = rect.top + element.clientHeight + 4;
     const pointer = (type, clientX) => new PointerEvent(type, {
       bubbles: true,
@@ -306,16 +310,21 @@ async function swipeHorizontalScrollbar(page, fromRightEdge) {
     document.documentElement.dispatchEvent(pointer("pointermove", startX - 90));
     document.documentElement.dispatchEvent(pointer("pointerup", startX - 90));
     return { before, after: document.body.dataset.page };
-  }, fromRightEdge);
+  }, side);
 }
 
 test("horizontal scrollbar swipes in the middle stay on the same page", async ({ page }) => {
-  const result = await swipeHorizontalScrollbar(page, false);
+  const result = await swipeHorizontalScrollbar(page, "center");
   expect(result).toEqual({ before: "pick3", after: "pick3" });
 });
 
+test("horizontal scrollbar left edge swipes advance the page", async ({ page }) => {
+  const result = await swipeHorizontalScrollbar(page, "left");
+  expect(result).toEqual({ before: "pick3", after: "betexec" });
+});
+
 test("horizontal scrollbar swipes from the right screen edge advance the page", async ({ page }) => {
-  const result = await swipeHorizontalScrollbar(page, true);
+  const result = await swipeHorizontalScrollbar(page, "right");
   expect(result).toEqual({ before: "pick3", after: "betexec" });
 });
 
@@ -332,7 +341,7 @@ test("left-bottom one-hand scrollbar-edge swipe flips pages", async ({ page }) =
 
   const result = await page.locator(".prob-test-strip").first().evaluate((element) => {
     const before = document.body.dataset.page;
-    const startX = 80;
+    const startX = 30;
     const y = window.innerHeight * 0.76;
     const pointer = (type, clientX) => new PointerEvent(type, {
       bubbles: true,
