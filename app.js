@@ -7076,7 +7076,7 @@
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
     if (absX > 10 || absY > 10) armGestureClickGuard();
-    if (!gesture.pageSwipeEligible) return null;
+    if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return null;
     if (absX < threshold || absX < absY * SWIPE_DIRECTION_RATIO) return null;
     return { type: "page", level: gesture.level, delta: dx > 0 ? -1 : 1 };
   }
@@ -7110,14 +7110,13 @@
       historyPointerStart = null;
       return;
     }
-    var navSwipeEdge = !!e.target.closest(".nav-groups, .nav-subtabs") && edgeFlipZoneAt(e.clientX, e.clientY);
-    var horizontalSwipeEdge = gestureInfo.inHorizontalScroll && edgeFlipZoneAt(e.clientX, e.clientY);
     historyPointerStart = {
       x: e.clientX,
       y: e.clientY,
       id: e.pointerId,
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
-      pageSwipeEligible: navSwipeEdge || horizontalSwipeEdge,
+      inHorizontalScroll: gestureInfo.inHorizontalScroll,
+      edgeSwipe: edgeFlipZoneAt(e.clientX, e.clientY),
       intent: null,
       handled: false
     };
@@ -7136,7 +7135,7 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
-    if (!historyPointerStart.pageSwipeEligible) return;
+    if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) return;
     if (absX >= swipeX && absX > absY * SWIPE_DIRECTION_RATIO) {
       historyPointerStart.handled = true;
       historyPointerStart.intent = { type: "page", level: level, delta: dx > 0 ? -1 : 1 };

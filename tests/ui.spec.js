@@ -309,47 +309,6 @@ async function swipeHorizontalScrollbar(page, fromRightEdge) {
   }, fromRightEdge);
 }
 
-async function swipeSecondaryNav(page, options = {}) {
-  await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
-  });
-  await page.reload();
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
-
-  return page.locator(".nav-subtabs").evaluate((element, settings) => {
-    const rect = element.getBoundingClientRect();
-    const fromEdge = settings.fromEdge !== false;
-    const distance = Number(settings.distance || 60);
-    const pointerId = Number(settings.pointerId || 111);
-    const startX = fromEdge ? rect.right - 8 : rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const pointer = (type, clientX) => new PointerEvent(type, {
-      bubbles: true,
-      cancelable: true,
-      isPrimary: true,
-      pointerId,
-      pointerType: "touch",
-      button: 0,
-      clientX,
-      clientY: y,
-    });
-    const before = document.body.dataset.page;
-    element.dispatchEvent(pointer("pointerdown", startX));
-    document.documentElement.dispatchEvent(pointer("pointermove", startX - distance));
-    const during = document.body.dataset.page;
-    if (settings.end === "cancel") {
-      document.documentElement.dispatchEvent(pointer("pointercancel", startX - distance));
-    } else if (settings.end !== "none") {
-      document.documentElement.dispatchEvent(pointer("pointerup", startX - distance));
-    }
-    return { before, during, after: document.body.dataset.page };
-  }, options);
-}
-
 test("horizontal scrollbar swipes in the middle stay on the same page", async ({ page }) => {
   const result = await swipeHorizontalScrollbar(page, false);
   expect(result).toEqual({ before: "pick3", after: "pick3" });
@@ -466,31 +425,109 @@ test("horizontal scroll region swipes in the center keep the same page", async (
   expect(result).toEqual({ before: "pick3", after: "pick3" });
 });
 
-test("only secondary-nav edge swipes flip pages", async ({ page }) => {
-  const center = await swipeSecondaryNav(page, { fromEdge: false, pointerId: 99 });
-  expect(center).toEqual({ before: "pick3", during: "pick3", after: "pick3" });
+test("full-screen content swipes flip navigation pages", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
 
-  const short = await swipeSecondaryNav(page, { distance: 24, pointerId: 100 });
-  expect(short).toEqual({ before: "pick3", during: "pick3", after: "pick3" });
+  const swipe = (distance, pointerId) => page.locator("#view .panel").first().evaluate((element, settings) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: settings.pointerId,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    const before = document.body.dataset.page;
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - settings.distance));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - settings.distance));
+    return { before, after: document.body.dataset.page };
+  }, { distance, pointerId });
 
-  const edge = await swipeSecondaryNav(page, { distance: 60, pointerId: 101 });
-  expect(edge).toEqual({ before: "pick3", during: "pick3", after: "betexec" });
+  expect(await swipe(24, 99)).toEqual({ before: "pick3", after: "pick3" });
+  expect(await swipe(60, 100)).toEqual({ before: "pick3", after: "betexec" });
 });
 
 test("a page swipe still commits when the touch system omits pointerup", async ({ page }) => {
-  await swipeSecondaryNav(page, { end: "none", pointerId: 102 });
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+  await page.locator("#view .panel").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 101,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
+  });
   await page.waitForFunction(() => document.body.dataset.page === "betexec");
   expect(await page.evaluate(() => document.body.dataset.page)).toBe("betexec");
 });
 
 test("a short touch swipe commits once when the browser cancels the pointer stream", async ({ page }) => {
-  const result = await swipeSecondaryNav(page, { distance: 28, end: "cancel", pointerId: 103 });
-  expect(result).toEqual({ before: "pick3", during: "pick3", after: "betexec" });
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+  });
+  const result = await page.locator("#view .panel").first().evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const startX = rect.left + Math.min(120, rect.width / 2);
+    const y = rect.top + 20;
+    const pointer = (type, clientX) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 102,
+      pointerType: "touch",
+      button: 0,
+      clientX,
+      clientY: y,
+    });
+    const before = document.body.dataset.page;
+    element.dispatchEvent(pointer("pointerdown", startX));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 28));
+    document.documentElement.dispatchEvent(pointer("pointercancel", startX - 28));
+    return { before, after: document.body.dataset.page };
+  });
+  expect(result).toEqual({ before: "pick3", after: "betexec" });
   await page.waitForTimeout(180);
   expect(await page.evaluate(() => document.body.dataset.page)).toBe("betexec");
 });
 
-test("13-line center content swipes never change pages", async ({ page }) => {
+test("13-line center content swipes flip main navigation pages", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
@@ -533,11 +570,11 @@ test("13-line center content swipes never change pages", async ({ page }) => {
 
   expect(result).toEqual({
     before: { page: "windowmult", view: "overview" },
-    after: { page: "windowmult", view: "overview" },
+    after: { page: "orderlog", view: null },
   });
 });
 
-test("13-line selector numbers never change lines from horizontal swipes", async ({ page }) => {
+test("13-line selector swipes flip main pages without changing the selected line", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
@@ -548,42 +585,49 @@ test("13-line selector numbers never change lines from horizontal swipes", async
     return view instanceof HTMLElement && view.innerText.includes("13线规律中心");
   });
 
-  const before = await page.evaluate(() => (
-    {
+  const result = await page.evaluate(() => {
+    const selected = () => ({
       line: document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null,
       view: document.querySelector(".wm-view-tab.is-active")?.getAttribute("data-wm-view") || null,
-    }
-  ));
-  await page.locator(".wm-line-selector .chip").first().evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    const startX = rect.right - 6;
-    const y = rect.top + rect.height / 2;
-    const pointer = (type, clientX) => new PointerEvent(type, {
-      bubbles: true,
-      cancelable: true,
-      isPrimary: true,
-      pointerId: 103,
-      pointerType: "touch",
-      button: 0,
-      clientX,
-      clientY: y,
     });
-    element.dispatchEvent(pointer("pointerdown", startX));
-    document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
-    document.documentElement.dispatchEvent(pointer("pointerup", startX - 60));
+    const swipe = (target, pointerId, distance) => {
+      const rect = target.getBoundingClientRect();
+      const startX = rect.left + rect.width / 2;
+      const y = rect.top + Math.min(20, rect.height / 2);
+      const pointer = (type, clientX) => new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        isPrimary: true,
+        pointerId,
+        pointerType: "touch",
+        button: 0,
+        clientX,
+        clientY: y,
+      });
+      target.dispatchEvent(pointer("pointerdown", startX));
+      document.documentElement.dispatchEvent(pointer("pointermove", startX + distance));
+      document.documentElement.dispatchEvent(pointer("pointerup", startX + distance));
+    };
+    const before = selected();
+    swipe(document.querySelector(".wm-line-selector .chip"), 103, -60);
+    const pageAfterSwipe = document.body.dataset.page;
+    swipe(document.querySelector("#view"), 104, 60);
+    return {
+      before,
+      pageAfterSwipe,
+      pageAfterReturn: document.body.dataset.page,
+      after: selected(),
+    };
   });
-  await page.waitForTimeout(180);
-
-  const after = await page.evaluate(() => (
-    {
-      line: document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null,
-      view: document.querySelector(".wm-view-tab.is-active")?.getAttribute("data-wm-view") || null,
-    }
-  ));
-  expect(after).toBe(before);
+  expect(result).toEqual({
+    before: { line: "tail1", view: "overview" },
+    pageAfterSwipe: "orderlog",
+    pageAfterReturn: "windowmult",
+    after: { line: "tail1", view: "overview" },
+  });
 });
 
-test("13-line center subtabs are fixed and cannot swipe like pages", async ({ page }) => {
+test("13-line center subtabs are fixed and clickable", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
@@ -594,47 +638,18 @@ test("13-line center subtabs are fixed and cannot swipe like pages", async ({ pa
     return view instanceof HTMLElement && view.innerText.includes("13线规律中心");
   });
 
-  const state = await page.locator("#view .wm-view-tabs").evaluate((strip) => {
-    const before = {
-      page: document.body.dataset.page,
-      activeView: strip.querySelector(".is-active")?.getAttribute("data-wm-view"),
-    };
+  const layout = await page.locator("#view .wm-view-tabs").evaluate((strip) => {
     const tabs = [...strip.querySelectorAll(".wm-view-tab")];
     const firstTop = tabs[0].getBoundingClientRect().top;
     const wraps = tabs.some((tab) => Math.abs(tab.getBoundingClientRect().top - firstTop) > 2);
-    const rect = strip.getBoundingClientRect();
-    const startX = rect.right - 6;
-    const y = rect.top + rect.height / 2;
-    const pointer = (type, clientX) => new PointerEvent(type, {
-      bubbles: true,
-      cancelable: true,
-      isPrimary: true,
-      pointerId: 96,
-      pointerType: "touch",
-      button: 0,
-      clientX,
-      clientY: y,
-    });
-    strip.dispatchEvent(pointer("pointerdown", startX));
-    document.documentElement.dispatchEvent(pointer("pointermove", startX - 120));
-    document.documentElement.dispatchEvent(pointer("pointerup", startX - 120));
     return {
-      ...before,
-      pageAfter: document.body.dataset.page,
-      activeViewAfter: strip.querySelector(".is-active")?.getAttribute("data-wm-view"),
       horizontalOverflow: strip.scrollWidth - strip.clientWidth,
       wraps,
     };
   });
-
-  expect(state).toEqual({
-    page: "windowmult",
-    activeView: "overview",
-    pageAfter: "windowmult",
-    activeViewAfter: "overview",
-    horizontalOverflow: 0,
-    wraps: true,
-  });
+  expect(layout).toEqual({ horizontalOverflow: 0, wraps: true });
+  await page.locator('[data-wm-view="windows"]').click();
+  await expect(page.locator(".wm-view-tab.is-active")).toHaveAttribute("data-wm-view", "windows");
 });
 
 test("long right swipe on the first page does not open the directory", async ({ page }) => {
@@ -672,7 +687,7 @@ test("long right swipe on the first page does not open the directory", async ({ 
   expect(result).toEqual({ before: "pick3", after: "pick3" });
 });
 
-test("long right swipe on page content never returns one page", async ({ page }) => {
+test("long right swipe on a later page returns one navigation page", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
@@ -704,7 +719,7 @@ test("long right swipe on page content never returns one page", async ({ page })
     return { before, after: document.body.dataset.page };
   });
 
-  expect(result).toEqual({ before: "betexec", after: "betexec" });
+  expect(result).toEqual({ before: "betexec", after: "pick3" });
 });
 
 test("daily report ranks all 13 lines by the combined analysis score", async ({ page }) => {

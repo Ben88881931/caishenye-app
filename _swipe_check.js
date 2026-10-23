@@ -62,16 +62,16 @@ async function main() {
   const hasMerged = navLabels.indexOf("执行提示") < 0 && navLabels.indexOf("资金调度") < 0 && navLabels.indexOf("下注执行表") >= 0;
   check(hasMerged, "导航已无「执行提示 / 资金调度」，只留下注执行表", navLabels);
 
-  // 1) 二级导航右边缘左滑 → 下一页
+  // 1) 正文左滑 → 下一页
   const before1 = await activeTab();
-  await gesture(".nav-subtabs", [-20, -40, -70], null, 20, true);
+  await gesture("#view .section__title", [-20, -40, -70], null, 20);
   await sleep(500);
   const after1 = await activeTab();
   check(before1 !== after1 && after1 !== "", "长距离左滑 → 翻到下一页（" + before1 + " → " + after1 + "）");
 
-  // 2) 二级导航右边缘右滑 → 上一页
+  // 2) 正文右滑 → 上一页
   const before2 = await activeTab();
-  await gesture(".nav-subtabs", [20, 40, 70], null, 20, true);
+  await gesture("#view .section__title", [20, 40, 70], null, 20);
   await sleep(500);
   const after2 = await activeTab();
   check(before2 !== after2 && after2 === before1, "长距离右滑 → 回上一页（" + before2 + " → " + after2 + "）");
@@ -91,13 +91,13 @@ async function main() {
 
   // 4) 长右滑永远只做层级内上一页，不再跳回目录
   await evalJS("var cb=document.querySelector('.tab[data-tab=\"betexec\"]'); if(cb)cb.click(); true"); await sleep(900);
-  await gesture(".nav-subtabs", [80, 150, 240], null, 25, true);
+  await gesture("#view .section__title", [80, 150, 240], null, 25);
   await sleep(900);
   const midTab = await evalJS("(document.querySelector('.tab.is-active')||{}).innerText||''");
   check((await evalJS("!!document.querySelector('.directory-grid')")) === false && midTab === "动态概率", "中间页长右滑 → 只回上一页，不回目录", "当前=" + midTab);
   await evalJS("var first=document.querySelector('.tab[data-tab=\"pick3\"]'); if(first)first.click(); true"); await sleep(700);
   const firstBefore = await evalJS("document.body.dataset.page||''");
-  await gesture(".nav-subtabs", [80, 150, 240], null, 25, true);
+  await gesture("#view .section__title", [80, 150, 240], null, 25);
   await sleep(700);
   const firstAfter = await evalJS("document.body.dataset.page||''");
   check(firstBefore === firstAfter && (await evalJS("!!document.querySelector('.directory-grid')")) === false, "第一页长右滑 → 停在第一页，不回目录");
@@ -128,21 +128,27 @@ async function main() {
   await sleep(500);
   check((await activeTab()) === before6, "竖向滑动不翻页");
 
-  // 7) 13线内容区不切三级页；数字区只能点击，横滑不得换线
+  // 7) 13线正文横滑只翻主页面；三级页和线路数字都不得被横滑切换
   await evalJS("document.querySelector('.tab[data-tab=\"windowmult\"]').click(); true"); await sleep(1600);
-  const viewBefore = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
+  const lineBefore = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
   await gesture("#view .wm-card", [-30, -60], null, 20);
   await sleep(700);
-  const viewAfter = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
-  check(viewBefore === viewAfter, "13线内容区左滑不切换三级页（" + viewBefore + " → " + viewAfter + "）");
-  const lineBefore = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
-  const lineViewBefore = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
+  const contentPageAfter = await evalJS("document.body.dataset.page || ''");
+  check(contentPageAfter !== "windowmult", "13线内容区横滑 → 切换主页面（windowmult → " + contentPageAfter + "）");
+  await gesture("#view", [30, 60], null, 20);
+  await sleep(700);
+  const lineAfterContentSwipe = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
+  check(lineBefore === lineAfterContentSwipe, "13线内容区横滑只翻主页面，不换线路（" + lineBefore + " → " + lineAfterContentSwipe + "）");
+  const viewBefore = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
   await gesture(".wm-line-selector [data-wm-line]", [-30, -60], null, 20);
   await sleep(700);
+  const linePageAfter = await evalJS("document.body.dataset.page || ''");
+  await gesture("#view", [30, 60], null, 20);
+  await sleep(700);
   const lineAfter = await evalJS("(document.querySelector('.wm-line-selector [data-wm-line][style*=\"2563eb\"]')||{}).dataset.wmLine");
-  const lineViewAfter = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
-  check(lineBefore === lineAfter, "13线数字区横滑不换线，只能点击（" + lineBefore + " → " + lineAfter + "）");
-  check(lineViewBefore === lineViewAfter, "13线数字区横滑不切换三级页（" + lineViewBefore + " → " + lineViewAfter + "）");
+  const viewAfter = await evalJS("(document.querySelector('.wm-view-tab.is-active')||{}).dataset ? document.querySelector('.wm-view-tab.is-active').dataset.wmView : ''");
+  check(linePageAfter !== "windowmult" && lineAfter === lineBefore, "13线数字区横滑翻主页面但不换线（" + lineBefore + " → " + lineAfter + "）");
+  check(viewBefore === viewAfter, "13线数字区横滑不切换三级页（" + viewBefore + " → " + viewAfter + "）");
 
   check(errs.length === 0, "控制台无报错" + (errs.length ? " → " + errs.join(",") : ""));
   console.log(results.join("\n"));
