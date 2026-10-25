@@ -1988,21 +1988,22 @@
       '</div>';
 
     html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线综合优秀度排名</h3><span>各项分析综合评分；同分时保持固定线路顺序</span></div>';
-    html += '<div class="daily-report-table-wrap"><table class="table daily-report-rank-table"><thead><tr>' +
-      '<th>排名</th><th>线路</th><th>综合分</th><th>当下建议</th><th>核心原因</th><th>近3窗</th><th>第1 / 2 / 3期中</th><th>当前窗口</th></tr></thead><tbody>';
+    html += '<div class="daily-report-rank-card" data-daily-report-rank-card>';
     rows.forEach(function (row, index) {
-      html += '<tr data-daily-report-row data-report-rate="' + (row.recent.length ? row.recentRate.toFixed(6) : "-1") + '" data-report-score="' + row.score.toFixed(3) + '">' +
-        '<td><b>#' + (index + 1) + '</b></td>' +
-        '<td><b>' + row.line.label + '</b></td>' +
-        '<td><b style="color:' + row.advice.color + '">' + row.score.toFixed(1) + '</b></td>' +
-        '<td><b data-report-advice style="color:' + row.advice.color + '">' + row.advice.label + '</b></td>' +
-        '<td data-report-reason style="min-width:240px;line-height:1.55">' + row.reason + '</td>' +
-        '<td><b>' + row.recentHits + ' / ' + row.recent.length + '</b><div style="font-size:10px;color:#64748b">近6窗 ' + row.recent6Hits + '/' + row.recent6.length + '</div></td>' +
-        '<td>' + row.first + ' / ' + row.second + ' / ' + row.third + '</td>' +
-        '<td><b style="color:' + row.color + '">' + row.status + '</b><div style="font-size:10px;color:#64748b">' +
-          (row.period ? wmPeriodLabel(row.period) : "-") + (row.tail != null ? ' · 尾' + row.tail : "") + '</div></td></tr>';
+      html += '<div class="daily-report-rank-item" data-daily-report-row data-daily-report-rank-item data-report-rate="' +
+        (row.recent.length ? row.recentRate.toFixed(6) : "-1") + '" data-report-score="' + row.score.toFixed(3) + '">' +
+        '<span class="daily-report-rank-item__no">#' + (index + 1) + '</span>' +
+        '<div class="daily-report-rank-item__main">' +
+          '<div class="daily-report-rank-item__top"><b>' + row.line.label + '</b>' +
+            '<strong style="color:' + row.advice.color + '">' + row.score.toFixed(1) + '</strong>' +
+            '<em data-report-advice style="color:' + row.advice.color + '">' + row.advice.label + '</em></div>' +
+          '<div class="daily-report-rank-item__reason" data-report-reason title="' + row.reason + '">' + row.reason + '</div>' +
+        '</div>' +
+        '<div class="daily-report-rank-item__side"><b style="color:' + row.color + '">' + row.status + '</b>' +
+          '<small>近3 ' + row.recentHits + '/' + row.recent.length + ' · 1/2/3 ' +
+          row.first + '/' + row.second + '/' + row.third + '</small></div></div>';
     });
-    html += '</tbody></table></div></div>';
+    html += '</div></div>';
 
     html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13份单线综合报告</h3><span>固定线路顺序 · 每卡综合全部分析页面 · 左右滑动查看</span></div>';
     html += '<div class="daily-report-strip" data-daily-report-strip>';
