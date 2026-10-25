@@ -2033,18 +2033,26 @@
       };
     }
     var current = row.personality.current;
-    if (current.edge > 0) {
-      return { label: "长期偏强·观察", tier: "strong", color: "#15803d",
-        reason: "这条线当前状态的三期预测为" + (current.predictedRate * 100).toFixed(1) +
-          "%，高于自身历史随机基准" + (current.edge * 100).toFixed(1) + "个百分点。" };
+    var forward = current.directionPredictions.forward.riskLevels.map(function (level) {
+      return level === "safe" ? "安" : "险";
+    }).join("→");
+    var reverse = current.directionPredictions.reverse.riskLevels.map(function (level) {
+      return level === "safe" ? "安" : "险";
+    }).join("→");
+    var detail = "最终分" + (current.predictedRate * 100).toFixed(1) +
+      "%，自身基准" + (current.baseline * 100).toFixed(1) +
+      "%，增量" + (current.edge >= 0 ? "+" : "") + (current.edge * 100).toFixed(1) +
+      "个百分点；正向" + forward + "，反向" + reverse + "。";
+    if (current.cascadeDecision === "双向全安全·高分") {
+      return { label: "双安全·高分", tier: "strong", color: "#15803d", reason: detail };
     }
-    if (current.edge < 0) {
-      return { label: "长期偏弱·观察", tier: "risk", color: "#b45309",
-        reason: "这条线当前状态的三期预测为" + (current.predictedRate * 100).toFixed(1) +
-          "%，低于自身历史随机基准" + Math.abs(current.edge * 100).toFixed(1) + "个百分点。" };
+    if (current.cascadeDecision === "双向全风险·低分") {
+      return { label: "双风险·低分", tier: "risk", color: "#b91c1c", reason: detail };
     }
-    return { label: "长期中性·观察", tier: "watch", color: "#1d4ed8",
-      reason: "这条线当前状态的三期预测与自身历史随机基准接近，暂不视为优势线路。" };
+    if (current.cascadeDecision === "方向分歧·中性") {
+      return { label: "方向分歧·中性", tier: "watch", color: "#1d4ed8", reason: detail };
+    }
+    return { label: "混合·观察", tier: "watch", color: "#b45309", reason: detail };
   }
 
   function dailyReportReason(row) {
@@ -2309,7 +2317,7 @@
       '</div>';
     html += dailyReportPersonalitySnapshotHTML();
 
-    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线每期独立选线排名</h3><span>每期重新开一个三期观察窗口 · 按各自下一窗口命中概率排序 · 不追号</span></div>';
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>下一独立三期窗口预测排名</h3><span>每条线按自身一期 / 两期 / 三期性格独立预测新窗口命中概率 · 不追号</span></div>';
     html += '<div class="daily-report-rank-card" data-daily-report-rank-card>';
     rows.forEach(function (row, index) {
       var personality = row.personality;

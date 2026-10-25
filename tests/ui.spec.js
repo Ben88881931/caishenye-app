@@ -827,7 +827,10 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator("[data-report-ranking-card]")).toHaveCount(1);
   await expect(page.locator("[data-report-ranking-card]").first()).toContainText("第299期");
   await expect(page.locator("[data-report-ranking-card]").first()).toContainText("A1");
+  await expect(page.locator("#view")).toContainText("下一独立三期窗口预测排名");
   await expect(page.locator("#view")).not.toContainText("概率第1");
+  await expect(page.locator("#view")).not.toContainText("长期偏强");
+  await expect(page.locator("#view")).not.toContainText("长期偏弱");
   await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
   await expect(page.locator("#view")).toContainText("逐线长期性格模型");
   await expect(page.locator("#view")).not.toContainText("20% / 30% / 40%");
@@ -917,6 +920,7 @@ test("daily reports synthesize every analysis section for all 13 lines", async (
   for (const card of report) {
     expect(card.id).toBeTruthy();
     expect(card.advice.length).toBeGreaterThan(4);
+    expect(card.advice).toMatch(/双安全|双风险|方向分歧|混合/);
     expect(card.modes).toHaveLength(3);
     expect(card.modes.map((item) => item.mode)).toEqual(["one", "two", "three"]);
     for (const section of card.sections) {
