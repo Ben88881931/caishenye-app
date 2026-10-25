@@ -1861,6 +1861,15 @@
       };
     }
     if (line.kind === "probability") {
+      var personality = dailyReportPersonalityFor(line);
+      if (personality) {
+        return {
+          source: "逐线下一窗口模型",
+          text: "第" + personality.current.target + "期独立新窗口锁定尾" +
+            personality.current.tail + "，预测三期命中" +
+            (personality.current.predictedRate * 100).toFixed(1) + "%。"
+        };
+      }
       var signal = probabilitySignal || dailyReportProbabilitySignal(line, live);
       var pick = signal.pick;
       var probabilityText = pick && pick.window3Prob != null
@@ -1897,8 +1906,19 @@
     var latestRow = D[D.length - 1] || {};
     return PERSONALITY_SNAPSHOTS.records.filter(function (record) {
       return Number(record.year) === Number(latestRow.y) &&
-        Number(record.target) === Number(latestRow.p) + 1;
-    })[0] || null;
+        Number(record.target) === Number(latestRow.p) + 1 &&
+        !record.superseded &&
+        (!PERSONALITY_MODEL || record.version === PERSONALITY_MODEL.version);
+    }).slice(-1)[0] || null;
+  }
+
+  function dailyReportSelectionValidationText() {
+    if (!PERSONALITY_MODEL || !Array.isArray(PERSONALITY_MODEL.selectionValidation)) return "选线验证未加载";
+    return PERSONALITY_MODEL.selectionValidation.map(function (item) {
+      return item.year + "年 前2 " + (item.top2.rate * 100).toFixed(1) +
+        "% / 前3 " + (item.top3.rate * 100).toFixed(1) +
+        "% / 全部 " + (item.all.rate * 100).toFixed(1) + "%";
+    }).join(" · ");
   }
 
   function dailyReportPersonalitySnapshotHTML() {
@@ -1916,7 +1936,8 @@
       (snapshot.top3 || []).join("|") + '"><b>真实开奖前快照</b>' +
       '<p>第' + snapshot.target + '期候选已冻结：' + (top3 || "无可开新窗线路") + '。</p>' +
       '<small>基于第' + snapshot.basedOn + '期及以前数据生成；候选 ' + (snapshot.candidates || []).length +
-      ' 条，后续开奖只结算这份快照，不改写候选号。</small></div>';
+      ' 条，后续开奖只结算这份快照，不改写候选号。每期前2/3选线走步验证：' +
+      dailyReportSelectionValidationText() + '。</small></div>';
   }
 
   function dailyReportPersonalityHTML(row) {
@@ -1943,10 +1964,6 @@
   }
 
   function dailyReportAdviceFor(row) {
-    if (row.live.waiting) {
-      return { label: "等待重开中", tier: "risk", color: "#b45309",
-        reason: "上一窗三期全错，当前处于等待期，必须先等尾" + row.live.waiting.tail + "重新开出。" };
-    }
     if (!row.personality) {
       return {
         label: "模型未加载",
@@ -1973,14 +1990,12 @@
   function dailyReportReason(row) {
     var parts = [];
     if (row.personality) {
-      parts.push(row.personality.current.reason);
+      parts.push(String(row.personality.current.reason || "").replace(/。$/, ""));
     }
     [row.modes.one, row.modes.two, row.modes.three].forEach(function (mode) {
       parts.push("诊断：" + mode.label + "近3" + mode.unit + " " + mode.recentHits + "/" + mode.recent.length +
         "，" + mode.run.text + "，近期" + (mode.trend || "样本不足"));
     });
-    if (row.live.waiting) parts.push("当前等尾" + row.live.waiting.tail + "重新开出");
-    else if (row.live.active) parts.push("当前窗口已走到第" + Math.min(3, row.live.active.attempts.length + 1) + "期");
     if (row.line.kind === "probability") {
       parts.push(String(row.probabilitySignal && row.probabilitySignal.boundary || "").replace(/。$/, ""));
     }
@@ -2012,7 +2027,6 @@
       }
     }
     if (row.windows.length < 20) risks.push("已完成窗口样本不足20个");
-    if (row.live.waiting) risks.push("当前窗口未重开，马上追会破坏窗口规则");
     if (row.recent.length && row.recentRate < row.historyRate - 0.08) risks.push("近期明显低于长期命中率");
     if (row.third > row.first + row.second) risks.push("过度依赖第3期命中");
     var modeRates = [row.modes.one.recentRate, row.modes.two.recentRate, row.modes.three.recentRate];
@@ -2111,9 +2125,7 @@
     };
     result.signals = dailyReportSignalSummary(result);
     result.score = personality ? personality.current.predictedRate * 100 : 0;
-    result.entryEligible = !!(personality &&
-      personality.current.status === "active" &&
-      Number(personality.current.windowStart) === D.length + 1);
+    result.entryEligible = !!personality;
     result.advice = dailyReportAdviceFor(result);
     result.reason = dailyReportReason(result);
     result.interpretation = dailyReportInterpretation(result);
@@ -2159,10 +2171,8 @@
       formulaText = trainPositive && validPositive ? "训练/验证同时为正" : ((trainPositive || validPositive) ? "训练/验证仅一段为正" : "训练/验证未通过");
     }
     var windowText = "可开新窗";
-    if (row.live.waiting) {
-      windowText = "等待尾" + row.live.waiting.tail + "重开";
-    } else if (row.live.active) {
-      windowText = "窗口第" + Math.min(3, row.live.active.attempts.length + 1) + "期";
+    if (row.personality) {
+      windowText = "第" + row.personality.current.target + "期新窗口 · 锁尾" + row.personality.current.tail;
     }
     var underlyingText = row.underlying.text;
     var sampleText = row.personality
@@ -2230,17 +2240,16 @@
 
     var totalHits = rows.reduce(function (sum, row) { return sum + row.recentHits; }, 0);
     var totalWindows = rows.reduce(function (sum, row) { return sum + row.recent.length; }, 0);
-    var activeCount = rows.filter(function (row) { return row.status !== "可开新窗"; }).length;
     var averagePrediction = rows.reduce(function (sum, row) { return sum + row.score; }, 0) / Math.max(1, rows.length);
     html += '<div class="daily-report-metrics">' +
       '<div><b>' + averagePrediction.toFixed(1) + '%</b><span>13线平均三期预测</span></div>' +
-      '<div><b>' + totalHits + ' / ' + totalWindows + '</b><span>近3窗命中 / 样本</span></div>' +
-      '<div><b>' + activeCount + ' / 13</b><span>当前进行中或等待重开</span></div>' +
+      '<div><b>' + totalHits + ' / ' + totalWindows + '</b><span>近期历史窗口命中 / 样本</span></div>' +
+      '<div><b>13 / 13</b><span>每期全部独立候选</span></div>' +
       '<div><b>' + rows.filter(function (row) { return row.personality && row.personality.current.edge > 0; }).length + '</b><span>预测高于自身基准</span></div>' +
       '</div>';
     html += dailyReportPersonalitySnapshotHTML();
 
-    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线长期性格三期排名</h3><span>逐线长期性格模型 · 按各自下一三期窗口命中概率排序 · 一期/两期只作诊断</span></div>';
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线每期独立选线排名</h3><span>每期重新开一个三期观察窗口 · 按各自下一窗口命中概率排序 · 不追号</span></div>';
     html += '<div class="daily-report-rank-card" data-daily-report-rank-card>';
     rows.forEach(function (row, index) {
       var personality = row.personality;
@@ -2262,7 +2271,7 @@
             '<em data-report-advice style="color:' + row.advice.color + '">' + row.advice.label + '</em></div>' +
           '<div class="daily-report-rank-item__reason" data-report-reason title="' + row.reason + '">' + row.reason + '</div>' +
         '</div>' +
-        '<div class="daily-report-rank-item__side"><b style="color:' + row.color + '">' + row.status + '</b>' +
+        '<div class="daily-report-rank-item__side"><b style="color:' + row.advice.color + '">本期候选</b>' +
           '<small title="预测三期命中率 / 自身随机基准 / 模型增量">模型 ' +
           (Number(current.predictedRate || 0) * 100).toFixed(1) + '% / 基准 ' +
           (Number(current.baseline || 0) * 100).toFixed(1) + '%</small></div></div>';
@@ -2273,16 +2282,10 @@
     html += '<div class="daily-report-strip" data-daily-report-strip>';
     EXEC_LINES.forEach(function (line) {
       var row = rows.filter(function (item) { return item.line.id === line.id; })[0];
-      var active = row.live.active;
-      var waiting = row.live.waiting;
-      var stage = active ? Math.min(3, (active.attempts || []).length + 1) : null;
-      var nextPeriod = active ? active.start + (active.attempts || []).length : null;
-      var currentWindowText = waiting
-        ? "等待尾" + waiting.tail + "重新开出后，下一期才开新窗。"
-        : (active
-          ? "起始" + wmPeriodLabel(active.start) + "，现在第" + stage + "/3期，锁定尾" +
-            (active.lockedTail != null ? active.lockedTail : "每期推荐") + "，下一次检查" + wmPeriodLabel(nextPeriod) + "。"
-          : "当前没有进行中的窗口，下一期按规则检查是否开窗。");
+      var currentWindowText = row.personality
+        ? "第" + row.personality.current.target + "期重新开一个独立三期窗口，锁定尾" +
+          row.personality.current.tail + "；每期重新选线，不沿袭上一期。"
+        : "逐线下一窗口模型未加载。";
       var yearText = row.yearStats.slice(0, 3).map(function (item) {
         return item.year + "年 " + item.stats.hits + "/" + item.stats.n + "（" + (item.stats.rate * 100).toFixed(1) + "%）";
       }).join(" · ") || "年度已完成窗口不足";
@@ -2321,9 +2324,10 @@
         (row.personality ? row.personality.longTerm.hits + '/' + row.personality.longTerm.windows +
           ' 窗（' + (row.personality.longTerm.rate * 100).toFixed(1) + '%），自身随机基准 ' +
           (row.personality.longTerm.baseline * 100).toFixed(1) + '%' : '未加载') +
-        '；首次命中分布 第1期' + row.allFirst + ' / 第2期' + row.allSecond + ' / 第3期' + row.allThird + '。</p><small>' +
-        personalityYearText + '。' + yearText + '。' +
-        (row.currentRun.kind === "hit" ? "当前年度已完成窗口连中" + row.currentRun.len + "窗。" : (row.currentRun.kind === "miss" ? "当前年度已完成窗口连错" + row.currentRun.len + "窗。" : "")) + '</small></div>' +
+        '；三期窗口结束分布 第1期' + (row.personality ? row.personality.longTerm.stageCounts.first : 0) +
+        ' / 第2期' + (row.personality ? row.personality.longTerm.stageCounts.second : 0) +
+        ' / 第3期' + (row.personality ? row.personality.longTerm.stageCounts.third : 0) + '。</p><small>' +
+        personalityYearText + '。历史窗口对照：' + yearText + '。</small></div>' +
         '<div class="daily-report-section" data-report-section="formula"><b>公式验证</b><p>' + auditText + '。</p><small>正式公式 ' + planText + ' · 只验证训练/验证表现，仓位和金额不参与综合报告。</small></div>' +
         '<div class="daily-report-section daily-report-section--risk" data-report-section="risk"><b>风险与解读</b><p>' + row.risk + '</p><small>' + row.interpretation + '</small></div>' +
         '</article>';

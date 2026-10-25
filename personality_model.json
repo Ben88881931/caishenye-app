@@ -1,8 +1,9 @@
 {
-  "version": "personality-v1-20261025",
-  "method": "per-line-long-term-personality-v1",
-  "generatedAt": "2026-10-25T16:03:39.242Z",
+  "version": "next-window-v2-20261026",
+  "method": "per-line-next-window-personality-v2",
+  "generatedAt": "2026-10-25T16:47:03.721Z",
   "asOfPeriod": 1463,
+  "target": 1464,
   "trainingYears": [
     2021,
     2022,
@@ -18,145 +19,127 @@
   "uniformWeightsUsed": false,
   "oneTwoThreeWeightMix": false,
   "lookAheadUsed": false,
+  "overlappingWindows": true,
   "lines": [
     {
       "id": "tail0",
       "label": "尾0",
       "kind": "tail",
       "longTerm": {
-        "windows": 696,
-        "hits": 604,
-        "misses": 92,
-        "rate": 0.867816091954023,
-        "baseline": 0.8252645080511333,
-        "edge": 0.04255158390288971,
+        "windows": 1451,
+        "hits": 1216,
+        "misses": 235,
+        "rate": 0.8380427291523087,
+        "baseline": 0.8208724008077456,
+        "edge": 0.017170328344563113,
         "stageShare": {
-          "first": 0.5579470198675497,
-          "second": 0.30960264900662254,
-          "third": 0.13245033112582782
+          "first": 0.5657894736842105,
+          "second": 0.2935855263157895,
+          "third": 0.140625
         },
         "stageCounts": {
-          "first": 337,
-          "second": 187,
-          "third": 80
-        },
-        "hitRuns": {
-          "1": 75,
-          "2": 68,
-          "3": 56,
-          "4": 405
-        },
-        "missRuns": {
-          "1": 74,
-          "2": 14,
-          "3": 3,
-          "4": 1
+          "first": 688,
+          "second": 357,
+          "third": 171
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
-          "after_hit": {
-            "windows": 601,
-            "hits": 527
-          },
           "after_one_miss": {
-            "windows": 73,
-            "hits": 59
+            "n": 358,
+            "hits": 306
           },
           "after_two_misses": {
-            "windows": 12,
-            "hits": 9
+            "n": 171,
+            "hits": 141
+          },
+          "after_hit": {
+            "n": 687,
+            "hits": 595
           },
           "after_three_plus_misses": {
-            "windows": 4,
-            "hits": 3
+            "n": 229,
+            "hits": 168
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 99,
-          "hits": 83,
-          "rate": 0.8383838383838383
+          "windows": 231,
+          "hits": 176,
+          "rate": 0.7619047619047619
         },
         {
           "year": 2022,
-          "windows": 96,
-          "hits": 74,
-          "rate": 0.7708333333333334
+          "windows": 231,
+          "hits": 179,
+          "rate": 0.7748917748917749
         },
         {
           "year": 2023,
-          "windows": 105,
-          "hits": 87,
-          "rate": 0.8285714285714286
+          "windows": 231,
+          "hits": 188,
+          "rate": 0.8138528138528138
         },
         {
           "year": 2024,
-          "windows": 118,
-          "hits": 106,
-          "rate": 0.8983050847457628
+          "windows": 231,
+          "hits": 195,
+          "rate": 0.8441558441558441
         },
         {
           "year": 2025,
-          "windows": 123,
-          "hits": 112,
-          "rate": 0.9105691056910569
+          "windows": 231,
+          "hits": 213,
+          "rate": 0.922077922077922
         },
         {
           "year": 2026,
-          "windows": 155,
-          "hits": 142,
-          "rate": 0.9161290322580645
+          "windows": 296,
+          "hits": 265,
+          "rate": 0.8952702702702703
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 123,
-          "hits": 112,
-          "rate": 0.9105691056910569,
-          "baseline": 0.8417500016096142,
-          "brier": 0.0853614298009695,
-          "baselineBrier": 0.0869314765023921,
-          "brierSkill": 0.018060738924403186,
-          "logLoss": 0.31816149866247784,
-          "baselineLogLoss": 0.3245619313413587
+          "predictions": 231,
+          "hits": 213,
+          "rate": 0.922077922077922,
+          "baseline": 0.8419641649355917,
+          "brier": 0.08464199935975993,
+          "baselineBrier": 0.07883755317389056,
+          "brierSkill": -0.07362539744310181
         },
         {
           "year": 2026,
-          "predictions": 155,
-          "hits": 142,
-          "rate": 0.9161290322580645,
-          "baseline": 0.851668619026523,
-          "brier": 0.07986285383679054,
-          "baselineBrier": 0.0811823997697322,
-          "brierSkill": 0.016254088776439857,
-          "logLoss": 0.3020148999598204,
-          "baselineLogLoss": 0.30788491761392994
+          "predictions": 296,
+          "hits": 265,
+          "rate": 0.8952702702702703,
+          "baseline": 0.8515905895932288,
+          "brier": 0.09623333685014983,
+          "baselineBrier": 0.09599562915087342,
+          "brierSkill": -0.00247623460962787
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 0,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 0,
-        "waitingTail": null,
-        "samples": 601,
-        "hits": 527,
-        "lineRate": 0.8660577620406805,
-        "predictedRate": 0.8765235994216,
-        "baseline": 0.8252645080511333,
-        "edge": 0.05125909137046669,
-        "lower": 0.8586838671305267,
-        "upper": 0.8930106813748458,
-        "confidence": "高于基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 86.8%（604/696），第1/2/3期结束 56/31/13%，当前状态“上一窗命中”历史 527/601。"
+        "stateLabel": "上一期开出",
+        "samples": 687,
+        "hits": 595,
+        "lineRate": 0.8383930977761314,
+        "predictedRate": 0.8653010777305837,
+        "baseline": 0.8553392602150206,
+        "edge": 0.009961817515563132,
+        "lower": 0.8485790788760227,
+        "upper": 0.8818478040860659,
+        "confidence": "接近基准",
+        "reason": "长期新三期窗口 83.8%（1216/1451），第1/2/3期结束 57/29/14%，当前上一期开出历史 595/687。"
       }
     },
     {
@@ -164,133 +147,120 @@
       "label": "尾1",
       "kind": "tail",
       "longTerm": {
-        "windows": 806,
-        "hits": 743,
-        "misses": 63,
-        "rate": 0.9218362282878412,
-        "baseline": 0.9121253645804503,
-        "edge": 0.009710863707390827,
+        "windows": 1451,
+        "hits": 1322,
+        "misses": 129,
+        "rate": 0.9110957960027567,
+        "baseline": 0.9096241521538668,
+        "edge": 0.0014716438488898698,
         "stageShare": {
-          "first": 0.5921938088829072,
-          "second": 0.2772543741588156,
-          "third": 0.13055181695827725
+          "first": 0.6043872919818457,
+          "second": 0.2745839636913767,
+          "third": 0.12102874432677761
         },
         "stageCounts": {
-          "first": 440,
-          "second": 206,
-          "third": 97
-        },
-        "hitRuns": {
-          "1": 61,
-          "2": 54,
-          "3": 51,
-          "4": 577
-        },
-        "missRuns": {
-          "1": 60,
-          "2": 3
+          "first": 799,
+          "second": 363,
+          "third": 160
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
-          "after_hit": {
-            "windows": 738,
-            "hits": 678
-          },
           "after_one_miss": {
-            "windows": 60,
-            "hits": 57
+            "n": 363,
+            "hits": 329
+          },
+          "after_hit": {
+            "n": 795,
+            "hits": 732
           },
           "after_two_misses": {
-            "windows": 2,
-            "hits": 2
+            "n": 160,
+            "hits": 141
+          },
+          "after_three_plus_misses": {
+            "n": 127,
+            "hits": 114
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 133,
-          "hits": 121,
-          "rate": 0.9097744360902256
+          "windows": 231,
+          "hits": 205,
+          "rate": 0.8874458874458875
         },
         {
           "year": 2022,
-          "windows": 124,
-          "hits": 113,
-          "rate": 0.9112903225806451
+          "windows": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918
         },
         {
           "year": 2023,
-          "windows": 138,
-          "hits": 129,
-          "rate": 0.9347826086956522
+          "windows": 231,
+          "hits": 216,
+          "rate": 0.935064935064935
         },
         {
           "year": 2024,
-          "windows": 123,
-          "hits": 112,
-          "rate": 0.9105691056910569
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2025,
-          "windows": 122,
-          "hits": 114,
-          "rate": 0.9344262295081968
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2026,
-          "windows": 166,
-          "hits": 154,
-          "rate": 0.927710843373494
+          "windows": 296,
+          "hits": 276,
+          "rate": 0.9324324324324325
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 122,
-          "hits": 114,
-          "rate": 0.9344262295081968,
-          "baseline": 0.9089884717957136,
-          "brier": 0.061586383077313185,
-          "baselineBrier": 0.061989622275097064,
-          "brierSkill": 0.00650494684407632,
-          "logLoss": 0.24417754658614582,
-          "baselineLogLoss": 0.2467407709412592
+          "predictions": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048,
+          "baseline": 0.9089090356805571,
+          "brier": 0.08620694950223605,
+          "baselineBrier": 0.08637437409156325,
+          "brierSkill": 0.0019383595086861494
         },
         {
           "year": 2026,
-          "predictions": 166,
-          "hits": 154,
-          "rate": 0.927710843373494,
-          "baseline": 0.9101579578352639,
-          "brier": 0.06704137883972987,
-          "baselineBrier": 0.06737077620098254,
-          "brierSkill": 0.004889321154175286,
-          "logLoss": 0.2592211526865499,
-          "baselineLogLoss": 0.2615168651059419
+          "predictions": 296,
+          "hits": 276,
+          "rate": 0.9324324324324325,
+          "baseline": 0.9100719331581135,
+          "brier": 0.06400035139790704,
+          "baselineBrier": 0.06352503917262321,
+          "brierSkill": -0.007482281498358612
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 1,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 1,
-        "waitingTail": null,
-        "samples": 738,
-        "hits": 678,
-        "lineRate": 0.9214877523174803,
-        "predictedRate": 0.9187727639133899,
-        "baseline": 0.9121253645804503,
-        "edge": 0.006647399332939563,
-        "lower": 0.904875550878989,
-        "upper": 0.93066787142034,
+        "stateLabel": "上一期开出",
+        "samples": 795,
+        "hits": 732,
+        "lineRate": 0.9110621423806138,
+        "predictedRate": 0.9205168623897083,
+        "baseline": 0.9094344288563013,
+        "edge": 0.011082433533406988,
+        "lower": 0.9076087944063557,
+        "upper": 0.932169955902442,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 92.2%（743/806），第1/2/3期结束 59/28/13%，当前状态“上一窗命中”历史 678/738。"
+        "reason": "长期新三期窗口 91.1%（1322/1451），第1/2/3期结束 60/27/12%，当前上一期开出历史 732/795。"
       }
     },
     {
@@ -298,133 +268,120 @@
       "label": "尾2",
       "kind": "tail",
       "longTerm": {
-        "windows": 848,
-        "hits": 778,
-        "misses": 70,
-        "rate": 0.9174528301886793,
-        "baseline": 0.9391595451149473,
-        "edge": -0.021706714926267967,
+        "windows": 1451,
+        "hits": 1329,
+        "misses": 122,
+        "rate": 0.9159200551343901,
+        "baseline": 0.9383701484416478,
+        "edge": -0.022450093307257668,
         "stageShare": {
-          "first": 0.6529562982005142,
-          "second": 0.2416452442159383,
-          "third": 0.10539845758354756
+          "first": 0.6320541760722348,
+          "second": 0.254326561324304,
+          "third": 0.11361926260346125
         },
         "stageCounts": {
-          "first": 508,
-          "second": 188,
-          "third": 82
-        },
-        "hitRuns": {
-          "1": 66,
-          "2": 61,
-          "3": 55,
-          "4": 596
-        },
-        "missRuns": {
-          "1": 66,
-          "2": 4
+          "first": 840,
+          "second": 338,
+          "third": 151
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 773,
-            "hits": 707
+            "n": 837,
+            "hits": 767
           },
           "after_one_miss": {
-            "windows": 65,
-            "hits": 61
+            "n": 337,
+            "hits": 305
           },
           "after_two_misses": {
-            "windows": 4,
-            "hits": 4
+            "n": 150,
+            "hits": 139
+          },
+          "after_three_plus_misses": {
+            "n": 121,
+            "hits": 112
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 141,
-          "hits": 131,
-          "rate": 0.9290780141843972
+          "windows": 231,
+          "hits": 215,
+          "rate": 0.9307359307359307
         },
         {
           "year": 2022,
-          "windows": 143,
-          "hits": 136,
-          "rate": 0.951048951048951
+          "windows": 231,
+          "hits": 222,
+          "rate": 0.961038961038961
         },
         {
           "year": 2023,
-          "windows": 136,
-          "hits": 125,
-          "rate": 0.9191176470588235
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2024,
-          "windows": 140,
-          "hits": 132,
-          "rate": 0.9428571428571428
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2025,
-          "windows": 129,
-          "hits": 115,
-          "rate": 0.8914728682170543
+          "windows": 231,
+          "hits": 213,
+          "rate": 0.922077922077922
         },
         {
           "year": 2026,
-          "windows": 159,
-          "hits": 139,
-          "rate": 0.8742138364779874
+          "windows": 296,
+          "hits": 257,
+          "rate": 0.8682432432432432
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 129,
-          "hits": 115,
-          "rate": 0.8914728682170543,
-          "baseline": 0.9342574246779254,
-          "brier": 0.09864640052583896,
-          "baselineBrier": 0.09871208120441453,
-          "brierSkill": 0.0006653762920827422,
-          "logLoss": 0.35634490984453115,
-          "baselineLogLoss": 0.3571314132888073
+          "predictions": 231,
+          "hits": 213,
+          "rate": 0.922077922077922,
+          "baseline": 0.9341438982351735,
+          "brier": 0.07197799285468132,
+          "baselineBrier": 0.07210203565371867,
+          "brierSkill": 0.001720378598367045
         },
         {
           "year": 2026,
-          "predictions": 159,
-          "hits": 139,
-          "rate": 0.8742138364779874,
-          "baseline": 0.9286509918637921,
-          "brier": 0.11218661038333617,
-          "baselineBrier": 0.11305331177187004,
-          "brierSkill": 0.007666306939179135,
-          "logLoss": 0.39147210109397035,
-          "baselineLogLoss": 0.39778114350729854
+          "predictions": 296,
+          "hits": 257,
+          "rate": 0.8682432432432432,
+          "baseline": 0.9285614428890097,
+          "brier": 0.1184308159578144,
+          "baselineBrier": 0.11814682728216891,
+          "brierSkill": -0.002403692779385791
         }
       ],
       "current": {
-        "state": "after_one_miss",
-        "stateLabel": "上一窗全错1次",
-        "status": "waiting",
-        "lockedTail": 2,
-        "waitingTail": 2,
-        "samples": 65,
-        "hits": 61,
-        "lineRate": 0.9181945174868433,
-        "predictedRate": 0.9336928276439631,
-        "baseline": 0.9391595451149473,
-        "edge": -0.00546671747098415,
-        "lower": 0.8884880321061045,
-        "upper": 0.9668746416675754,
-        "confidence": "等待重开",
-        "windowStart": null,
-        "windowAttempts": 0,
-        "reason": "长期 91.7%（778/848），第1/2/3期结束 65/24/11%，当前状态“上一窗全错1次”历史 61/65。"
+        "target": 1464,
+        "tail": 2,
+        "state": "after_three_plus_misses",
+        "stateLabel": "连续遗漏3期以上",
+        "samples": 121,
+        "hits": 112,
+        "lineRate": 0.916111145511415,
+        "predictedRate": 0.9242710844697043,
+        "baseline": 0.9253535500801866,
+        "edge": -0.0010824656104823083,
+        "lower": 0.8890774382859613,
+        "upper": 0.9507900094302516,
+        "confidence": "接近基准",
+        "reason": "长期新三期窗口 91.6%（1329/1451），第1/2/3期结束 63/25/11%，当前连续遗漏3期以上历史 112/121。"
       }
     },
     {
@@ -432,138 +389,120 @@
       "label": "尾3",
       "kind": "tail",
       "longTerm": {
-        "windows": 812,
-        "hits": 747,
-        "misses": 65,
-        "rate": 0.9199507389162561,
-        "baseline": 0.9159713472271525,
-        "edge": 0.003979391689103662,
+        "windows": 1451,
+        "hits": 1316,
+        "misses": 135,
+        "rate": 0.906960716747071,
+        "baseline": 0.9146376918400867,
+        "edge": -0.007676975093015681,
         "stageShare": {
-          "first": 0.6117804551539491,
-          "second": 0.2637215528781794,
-          "third": 0.12449799196787148
+          "first": 0.6101823708206687,
+          "second": 0.26975683890577506,
+          "third": 0.12006079027355623
         },
         "stageCounts": {
-          "first": 457,
-          "second": 197,
-          "third": 93
-        },
-        "hitRuns": {
-          "1": 61,
-          "2": 57,
-          "3": 56,
-          "4": 573
-        },
-        "missRuns": {
-          "1": 60,
-          "2": 4,
-          "3": 1
+          "first": 803,
+          "second": 355,
+          "third": 158
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
-          "after_hit": {
-            "windows": 741,
-            "hits": 681
-          },
           "after_one_miss": {
-            "windows": 60,
-            "hits": 56
+            "n": 354,
+            "hits": 321
+          },
+          "after_hit": {
+            "n": 800,
+            "hits": 735
           },
           "after_two_misses": {
-            "windows": 4,
-            "hits": 3
+            "n": 156,
+            "hits": 138
           },
           "after_three_plus_misses": {
-            "windows": 1,
-            "hits": 1
+            "n": 135,
+            "hits": 116
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 129,
-          "hits": 118,
-          "rate": 0.9147286821705426
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2022,
-          "windows": 134,
-          "hits": 124,
-          "rate": 0.9253731343283582
+          "windows": 231,
+          "hits": 211,
+          "rate": 0.9134199134199135
         },
         {
           "year": 2023,
-          "windows": 120,
-          "hits": 111,
-          "rate": 0.925
+          "windows": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918
         },
         {
           "year": 2024,
-          "windows": 139,
-          "hits": 130,
-          "rate": 0.935251798561151
+          "windows": 231,
+          "hits": 218,
+          "rate": 0.9437229437229437
         },
         {
           "year": 2025,
-          "windows": 142,
-          "hits": 133,
-          "rate": 0.9366197183098591
+          "windows": 231,
+          "hits": 219,
+          "rate": 0.948051948051948
         },
         {
           "year": 2026,
-          "windows": 148,
-          "hits": 131,
-          "rate": 0.8851351351351351
+          "windows": 296,
+          "hits": 252,
+          "rate": 0.8513513513513513
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 142,
-          "hits": 133,
-          "rate": 0.9366197183098591,
-          "baseline": 0.9191390623142818,
-          "brier": 0.059757928932397425,
-          "baselineBrier": 0.05974407397672953,
-          "brierSkill": -0.0002319051036474562,
-          "logLoss": 0.2392219575449622,
-          "baselineLogLoss": 0.23887801224851452
+          "predictions": 231,
+          "hits": 219,
+          "rate": 0.948051948051948,
+          "baseline": 0.9191288645846455,
+          "brier": 0.0506222364104259,
+          "baselineBrier": 0.05014791876744616,
+          "brierSkill": -0.009458371446666058
         },
         {
           "year": 2026,
-          "predictions": 148,
-          "hits": 131,
-          "rate": 0.8851351351351351,
-          "baseline": 0.9158862452105304,
-          "brier": 0.10337634613548599,
-          "baselineBrier": 0.10270912980104191,
-          "brierSkill": -0.006496173570319952,
-          "logLoss": 0.36737285938866737,
-          "baselineLogLoss": 0.36273698735996557
+          "predictions": 296,
+          "hits": 252,
+          "rate": 0.8513513513513513,
+          "baseline": 0.9157914275599968,
+          "brier": 0.12999433136049396,
+          "baselineBrier": 0.13068684044173132,
+          "brierSkill": 0.005298996279171075
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 3,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 3,
-        "waitingTail": null,
-        "samples": 741,
-        "hits": 681,
-        "lineRate": 0.9198089553643878,
-        "predictedRate": 0.9190488555943334,
-        "baseline": 0.9159713472271525,
-        "edge": 0.0030775083671809034,
-        "lower": 0.9052575367386819,
-        "upper": 0.9309502327491335,
+        "stateLabel": "上一期开出",
+        "samples": 800,
+        "hits": 735,
+        "lineRate": 0.9070606297074246,
+        "predictedRate": 0.9184648934074982,
+        "baseline": 0.9118930865565257,
+        "edge": 0.0065718068509724725,
+        "lower": 0.9055127144036271,
+        "upper": 0.930275591146606,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 92.0%（747/812），第1/2/3期结束 61/26/12%，当前状态“上一窗命中”历史 681/741。"
+        "reason": "长期新三期窗口 90.7%（1316/1451），第1/2/3期结束 61/27/12%，当前上一期开出历史 735/800。"
       }
     },
     {
@@ -571,133 +510,120 @@
       "label": "尾4",
       "kind": "tail",
       "longTerm": {
-        "windows": 779,
-        "hits": 707,
-        "misses": 72,
-        "rate": 0.9075738125802311,
-        "baseline": 0.906104136074455,
-        "edge": 0.0014696765057761185,
+        "windows": 1451,
+        "hits": 1309,
+        "misses": 142,
+        "rate": 0.9021364576154376,
+        "baseline": 0.9052091722283556,
+        "edge": -0.003072714612918026,
         "stageShare": {
-          "first": 0.5898161244695899,
-          "second": 0.26025459688826025,
-          "third": 0.14992927864214992
+          "first": 0.5889992360580596,
+          "second": 0.2750190985485103,
+          "third": 0.1359816653934301
         },
         "stageCounts": {
-          "first": 417,
-          "second": 184,
-          "third": 106
-        },
-        "hitRuns": {
-          "1": 68,
-          "2": 61,
-          "3": 57,
-          "4": 521
-        },
-        "missRuns": {
-          "1": 67,
-          "2": 5
+          "first": 771,
+          "second": 360,
+          "third": 178
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 702,
-            "hits": 635
+            "n": 768,
+            "hits": 696
           },
           "after_one_miss": {
-            "windows": 66,
-            "hits": 61
+            "n": 360,
+            "hits": 321
           },
           "after_two_misses": {
-            "windows": 5,
-            "hits": 5
+            "n": 176,
+            "hits": 160
+          },
+          "after_three_plus_misses": {
+            "n": 141,
+            "hits": 126
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 126,
-          "hits": 112,
-          "rate": 0.8888888888888888
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
         },
         {
           "year": 2022,
-          "windows": 137,
-          "hits": 131,
-          "rate": 0.9562043795620438
+          "windows": 231,
+          "hits": 220,
+          "rate": 0.9523809523809523
         },
         {
           "year": 2023,
-          "windows": 122,
-          "hits": 111,
-          "rate": 0.9098360655737705
+          "windows": 231,
+          "hits": 203,
+          "rate": 0.8787878787878788
         },
         {
           "year": 2024,
-          "windows": 120,
-          "hits": 107,
-          "rate": 0.8916666666666667
+          "windows": 231,
+          "hits": 200,
+          "rate": 0.8658008658008658
         },
         {
           "year": 2025,
-          "windows": 113,
-          "hits": 98,
-          "rate": 0.8672566371681416
+          "windows": 231,
+          "hits": 204,
+          "rate": 0.8831168831168831
         },
         {
           "year": 2026,
-          "windows": 161,
-          "hits": 148,
-          "rate": 0.9192546583850931
+          "windows": 296,
+          "hits": 274,
+          "rate": 0.9256756756756757
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 113,
-          "hits": 98,
-          "rate": 0.8672566371681416,
-          "baseline": 0.9004328501429397,
-          "brier": 0.11685378012735534,
-          "baselineBrier": 0.11639761685953307,
-          "brierSkill": -0.00391900865438477,
-          "logLoss": 0.400904084466745,
-          "baselineLogLoss": 0.3981721581666
+          "predictions": 231,
+          "hits": 204,
+          "rate": 0.8831168831168831,
+          "baseline": 0.9002478996307975,
+          "brier": 0.10434663135641319,
+          "baselineBrier": 0.10359967091892772,
+          "brierSkill": -0.007210065735343996
         },
         {
           "year": 2026,
-          "predictions": 161,
-          "hits": 148,
-          "rate": 0.9192546583850931,
-          "baseline": 0.8967289525250441,
-          "brier": 0.07461783796416595,
-          "baselineBrier": 0.07483842100399214,
-          "brierSkill": 0.00294745715993161,
-          "logLoss": 0.2829903311900042,
-          "baselineLogLoss": 0.2840937744613131
+          "predictions": 296,
+          "hits": 274,
+          "rate": 0.9256756756756757,
+          "baseline": 0.8965979077734645,
+          "brier": 0.06968740407970668,
+          "baselineBrier": 0.06972221887090527,
+          "brierSkill": 0.0004993356746584299
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 4,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 4,
-        "waitingTail": null,
-        "samples": 702,
-        "hits": 635,
-        "lineRate": 0.9075193128334161,
-        "predictedRate": 0.9046404241782109,
-        "baseline": 0.906104136074455,
-        "edge": -0.0014637118962440576,
-        "lower": 0.8894069031232135,
-        "upper": 0.91782590281802,
+        "stateLabel": "上一期开出",
+        "samples": 768,
+        "hits": 696,
+        "lineRate": 0.9020486900141818,
+        "predictedRate": 0.9061433677668573,
+        "baseline": 0.8978036637001049,
+        "edge": 0.00833970406675244,
+        "lower": 0.8919088259214333,
+        "upper": 0.9188615306512117,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 90.8%（707/779），第1/2/3期结束 59/26/15%，当前状态“上一窗命中”历史 635/702。"
+        "reason": "长期新三期窗口 90.2%（1309/1451），第1/2/3期结束 59/28/14%，当前上一期开出历史 696/768。"
       }
     },
     {
@@ -705,139 +631,120 @@
       "label": "尾5",
       "kind": "tail",
       "longTerm": {
-        "windows": 809,
-        "hits": 739,
-        "misses": 70,
-        "rate": 0.9134734239802225,
-        "baseline": 0.9123544168352413,
-        "edge": 0.0011190071449811434,
+        "windows": 1451,
+        "hits": 1322,
+        "misses": 129,
+        "rate": 0.9110957960027567,
+        "baseline": 0.9115538391207002,
+        "edge": -0.0004580431179435074,
         "stageShare": {
-          "first": 0.6129905277401895,
-          "second": 0.2557510148849797,
-          "third": 0.13125845737483086
+          "first": 0.6059001512859304,
+          "second": 0.26777609682299547,
+          "third": 0.12632375189107414
         },
         "stageCounts": {
-          "first": 453,
-          "second": 189,
-          "third": 97
-        },
-        "hitRuns": {
-          "1": 61,
-          "2": 58,
-          "3": 55,
-          "4": 565
-        },
-        "missRuns": {
-          "1": 60,
-          "2": 7,
-          "3": 2,
-          "4": 1
+          "first": 801,
+          "second": 354,
+          "third": 167
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 733,
-            "hits": 673
+            "n": 796,
+            "hits": 726
           },
           "after_one_miss": {
-            "windows": 60,
-            "hits": 53
+            "n": 353,
+            "hits": 324
           },
           "after_two_misses": {
-            "windows": 7,
-            "hits": 5
+            "n": 167,
+            "hits": 151
           },
           "after_three_plus_misses": {
-            "windows": 3,
-            "hits": 2
+            "n": 129,
+            "hits": 115
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 133,
-          "hits": 121,
-          "rate": 0.9097744360902256
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2022,
-          "windows": 120,
-          "hits": 109,
-          "rate": 0.9083333333333333
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2023,
-          "windows": 126,
-          "hits": 116,
-          "rate": 0.9206349206349206
+          "windows": 231,
+          "hits": 213,
+          "rate": 0.922077922077922
         },
         {
           "year": 2024,
-          "windows": 145,
-          "hits": 134,
-          "rate": 0.9241379310344827
+          "windows": 231,
+          "hits": 217,
+          "rate": 0.9393939393939394
         },
         {
           "year": 2025,
-          "windows": 134,
-          "hits": 125,
-          "rate": 0.9328358208955224
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
         },
         {
           "year": 2026,
-          "windows": 151,
-          "hits": 134,
-          "rate": 0.8874172185430463
+          "windows": 296,
+          "hits": 262,
+          "rate": 0.8851351351351351
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 134,
-          "hits": 125,
-          "rate": 0.9328358208955224,
-          "baseline": 0.9161733198973884,
-          "brier": 0.06330303509526376,
-          "baselineBrier": 0.06297023567058806,
-          "brierSkill": -0.0052850274599043345,
-          "logLoss": 0.25090563649810227,
-          "baselineLogLoss": 0.24842401210753579
+          "predictions": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005,
+          "baseline": 0.9160271011339205,
+          "brier": 0.09122619665965706,
+          "baselineBrier": 0.08990699581094128,
+          "brierSkill": -0.01467294993917756
         },
         {
           "year": 2026,
-          "predictions": 151,
-          "hits": 134,
-          "rate": 0.8874172185430463,
-          "baseline": 0.9133653581713106,
-          "brier": 0.10101202470659004,
-          "baselineBrier": 0.10059501695572678,
-          "brierSkill": -0.004145411606688132,
-          "logLoss": 0.3588943674259242,
-          "baselineLogLoss": 0.3558806839312841
+          "predictions": 296,
+          "hits": 262,
+          "rate": 0.8851351351351351,
+          "baseline": 0.9133118398471041,
+          "brier": 0.1029106550038176,
+          "baselineBrier": 0.10243544074707525,
+          "brierSkill": -0.004639158608354288
         }
       ],
       "current": {
-        "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 5,
-        "waitingTail": null,
-        "samples": 733,
-        "hits": 673,
-        "lineRate": 0.9134334118057893,
-        "predictedRate": 0.9180194797292375,
-        "baseline": 0.9123544168352413,
-        "edge": 0.005665062893996153,
-        "lower": 0.9042320178421858,
-        "upper": 0.9301921015613194,
+        "target": 1464,
+        "tail": 5,
+        "state": "after_one_miss",
+        "stateLabel": "连续遗漏1期",
+        "samples": 353,
+        "hits": 324,
+        "lineRate": 0.9110871586115468,
+        "predictedRate": 0.9174845661453913,
+        "baseline": 0.9106693967900266,
+        "edge": 0.0068151693553647474,
+        "lower": 0.8971526491068075,
+        "upper": 0.9346805646681248,
         "confidence": "接近基准",
-        "windowStart": 1463,
-        "windowAttempts": 1,
-        "reason": "长期 91.3%（739/809），第1/2/3期结束 61/26/13%，当前状态“上一窗命中”历史 673/733。"
+        "reason": "长期新三期窗口 91.1%（1322/1451），第1/2/3期结束 61/27/13%，当前连续遗漏1期历史 324/353。"
       }
     },
     {
@@ -845,133 +752,120 @@
       "label": "尾6",
       "kind": "tail",
       "longTerm": {
-        "windows": 826,
-        "hits": 763,
-        "misses": 63,
-        "rate": 0.923728813559322,
-        "baseline": 0.9176399067400087,
-        "edge": 0.006088906819313289,
+        "windows": 1451,
+        "hits": 1346,
+        "misses": 105,
+        "rate": 0.9276361130254996,
+        "baseline": 0.9169227508380364,
+        "edge": 0.010713362187463216,
         "stageShare": {
-          "first": 0.6107470511140236,
-          "second": 0.2503276539973788,
-          "third": 0.13892529488859764
+          "first": 0.6092124814264487,
+          "second": 0.2659732540861813,
+          "third": 0.12481426448736999
         },
         "stageCounts": {
-          "first": 466,
-          "second": 191,
-          "third": 106
-        },
-        "hitRuns": {
-          "1": 59,
-          "2": 54,
-          "3": 48,
-          "4": 602
-        },
-        "missRuns": {
-          "1": 58,
-          "2": 5
+          "first": 820,
+          "second": 358,
+          "third": 168
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 5
           },
           "after_hit": {
-            "windows": 758,
-            "hits": 701
+            "n": 815,
+            "hits": 753
           },
           "after_one_miss": {
-            "windows": 57,
-            "hits": 52
+            "n": 359,
+            "hits": 336
           },
           "after_two_misses": {
-            "windows": 5,
-            "hits": 5
+            "n": 168,
+            "hits": 158
+          },
+          "after_three_plus_misses": {
+            "n": 103,
+            "hits": 94
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 131,
-          "hits": 122,
-          "rate": 0.9312977099236641
+          "windows": 231,
+          "hits": 216,
+          "rate": 0.935064935064935
         },
         {
           "year": 2022,
-          "windows": 137,
-          "hits": 129,
-          "rate": 0.9416058394160584
+          "windows": 231,
+          "hits": 219,
+          "rate": 0.948051948051948
         },
         {
           "year": 2023,
-          "windows": 130,
-          "hits": 119,
-          "rate": 0.9153846153846154
+          "windows": 231,
+          "hits": 211,
+          "rate": 0.9134199134199135
         },
         {
           "year": 2024,
-          "windows": 131,
-          "hits": 119,
-          "rate": 0.9083969465648855
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2025,
-          "windows": 117,
-          "hits": 106,
-          "rate": 0.905982905982906
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
         },
         {
           "year": 2026,
-          "windows": 180,
-          "hits": 168,
-          "rate": 0.9333333333333333
+          "windows": 296,
+          "hits": 280,
+          "rate": 0.9459459459459459
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 117,
-          "hits": 106,
-          "rate": 0.905982905982906,
-          "baseline": 0.9141986286585667,
-          "brier": 0.08627096053862214,
-          "baselineBrier": 0.0853987115050674,
-          "brierSkill": -0.010213843021542157,
-          "logLoss": 0.32065745748230307,
-          "baselineLogLoss": 0.3131173124281605
+          "predictions": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005,
+          "baseline": 0.914101679464,
+          "brier": 0.0909150308972192,
+          "baselineBrier": 0.0898989285526357,
+          "brierSkill": -0.011302719186342403
         },
         {
           "year": 2026,
-          "predictions": 180,
-          "hits": 168,
-          "rate": 0.9333333333333333,
-          "baseline": 0.9138397385445555,
-          "brier": 0.06270472325159505,
-          "baselineBrier": 0.06273883600361647,
-          "brierSkill": 0.0005437262498694251,
-          "logLoss": 0.24853149529812668,
-          "baselineLogLoss": 0.24839628290195018
+          "predictions": 296,
+          "hits": 280,
+          "rate": 0.9459459459459459,
+          "baseline": 0.9136963923294065,
+          "brier": 0.05176311977584207,
+          "baselineBrier": 0.05227905474204874,
+          "brierSkill": 0.00986886562414635
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 6,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 6,
-        "waitingTail": null,
-        "samples": 758,
-        "hits": 701,
-        "lineRate": 0.92351541729229,
-        "predictedRate": 0.9247690338635549,
-        "baseline": 0.9176399067400087,
-        "edge": 0.007129127123546186,
-        "lower": 0.9116045535057661,
-        "upper": 0.9361672284368002,
+        "stateLabel": "上一期开出",
+        "samples": 815,
+        "hits": 753,
+        "lineRate": 0.9274220123996265,
+        "predictedRate": 0.9240101080814281,
+        "baseline": 0.9170666787949012,
+        "edge": 0.006943429286526914,
+        "lower": 0.9111705263237647,
+        "upper": 0.9349812098669409,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 92.4%（763/826），第1/2/3期结束 61/25/14%，当前状态“上一窗命中”历史 701/758。"
+        "reason": "长期新三期窗口 92.8%（1346/1451），第1/2/3期结束 61/27/12%，当前上一期开出历史 753/815。"
       }
     },
     {
@@ -979,133 +873,120 @@
       "label": "尾7",
       "kind": "tail",
       "longTerm": {
-        "windows": 807,
-        "hits": 740,
-        "misses": 67,
-        "rate": 0.9169764560099133,
-        "baseline": 0.9147892623228175,
-        "edge": 0.0021871936870957454,
+        "windows": 1451,
+        "hits": 1329,
+        "misses": 122,
+        "rate": 0.9159200551343901,
+        "baseline": 0.9139582480980566,
+        "edge": 0.0019618070363335294,
         "stageShare": {
-          "first": 0.6,
-          "second": 0.26216216216216215,
-          "third": 0.13783783783783785
+          "first": 0.6019563581640331,
+          "second": 0.2708803611738149,
+          "third": 0.127163280662152
         },
         "stageCounts": {
-          "first": 444,
-          "second": 194,
-          "third": 102
-        },
-        "hitRuns": {
-          "1": 64,
-          "2": 56,
-          "3": 53,
-          "4": 567
-        },
-        "missRuns": {
-          "1": 63,
-          "2": 4
+          "first": 800,
+          "second": 360,
+          "third": 169
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 5
           },
           "after_hit": {
-            "windows": 736,
-            "hits": 674
+            "n": 798,
+            "hits": 732
           },
           "after_one_miss": {
-            "windows": 61,
-            "hits": 57
+            "n": 360,
+            "hits": 328
           },
           "after_two_misses": {
-            "windows": 4,
-            "hits": 4
+            "n": 169,
+            "hits": 152
+          },
+          "after_three_plus_misses": {
+            "n": 118,
+            "hits": 112
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 140,
-          "hits": 134,
-          "rate": 0.9571428571428572
+          "windows": 231,
+          "hits": 219,
+          "rate": 0.948051948051948
         },
         {
           "year": 2022,
-          "windows": 123,
-          "hits": 113,
-          "rate": 0.9186991869918699
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2023,
-          "windows": 130,
-          "hits": 117,
-          "rate": 0.9
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2024,
-          "windows": 119,
-          "hits": 108,
-          "rate": 0.907563025210084
+          "windows": 231,
+          "hits": 204,
+          "rate": 0.8831168831168831
         },
         {
           "year": 2025,
-          "windows": 126,
-          "hits": 113,
-          "rate": 0.8968253968253969
+          "windows": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918
         },
         {
           "year": 2026,
-          "windows": 169,
-          "hits": 155,
-          "rate": 0.9171597633136095
+          "windows": 296,
+          "hits": 279,
+          "rate": 0.9425675675675675
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 126,
-          "hits": 113,
-          "rate": 0.8968253968253969,
-          "baseline": 0.9077100396628711,
-          "brier": 0.0931764151749414,
-          "baselineBrier": 0.09278985032992174,
-          "brierSkill": -0.004166025094826553,
-          "logLoss": 0.3360668392717886,
-          "baselineLogLoss": 0.3335336314102712
+          "predictions": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918,
+          "baseline": 0.9075738715881736,
+          "brier": 0.09714222227619354,
+          "baselineBrier": 0.09682614881175577,
+          "brierSkill": -0.003264339936231986
         },
         {
           "year": 2026,
-          "predictions": 169,
-          "hits": 155,
-          "rate": 0.9171597633136095,
-          "baseline": 0.9092023965103547,
-          "brier": 0.07617426908350876,
-          "baselineBrier": 0.07614452244839788,
-          "brierSkill": -0.00039066020974831694,
-          "logLoss": 0.2870543023815295,
-          "baselineLogLoss": 0.28667727359194184
+          "predictions": 296,
+          "hits": 279,
+          "rate": 0.9425675675675675,
+          "baseline": 0.9091160281059779,
+          "brier": 0.0555317326809501,
+          "baselineBrier": 0.05532154560804748,
+          "brierSkill": -0.003799370942955793
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 7,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 7,
-        "waitingTail": null,
-        "samples": 736,
-        "hits": 674,
-        "lineRate": 0.9168980619709493,
-        "predictedRate": 0.9157909540203955,
-        "baseline": 0.9147892623228175,
-        "edge": 0.001001691697577911,
-        "lower": 0.9017149758388526,
-        "upper": 0.9279598350169812,
+        "stateLabel": "上一期开出",
+        "samples": 798,
+        "hits": 732,
+        "lineRate": 0.915797042697314,
+        "predictedRate": 0.9172566514106922,
+        "baseline": 0.9098473411574023,
+        "edge": 0.007409310253289947,
+        "lower": 0.903941206774862,
+        "upper": 0.92893525338513,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 91.7%（740/807），第1/2/3期结束 60/26/14%，当前状态“上一窗命中”历史 674/736。"
+        "reason": "长期新三期窗口 91.6%（1329/1451），第1/2/3期结束 60/27/13%，当前上一期开出历史 732/798。"
       }
     },
     {
@@ -1113,138 +994,120 @@
       "label": "尾8",
       "kind": "tail",
       "longTerm": {
-        "windows": 799,
-        "hits": 724,
-        "misses": 75,
-        "rate": 0.9061326658322904,
-        "baseline": 0.8963078059223887,
-        "edge": 0.009824859909901673,
+        "windows": 1451,
+        "hits": 1298,
+        "misses": 153,
+        "rate": 0.8945554789800138,
+        "baseline": 0.8923966865205613,
+        "edge": 0.0021587924594524965,
         "stageShare": {
-          "first": 0.6146408839779005,
-          "second": 0.27348066298342544,
-          "third": 0.11187845303867404
+          "first": 0.6093990755007704,
+          "second": 0.2711864406779661,
+          "third": 0.11941448382126348
         },
         "stageCounts": {
-          "first": 445,
-          "second": 198,
-          "third": 81
-        },
-        "hitRuns": {
-          "1": 65,
-          "2": 59,
-          "3": 55,
-          "4": 545
-        },
-        "missRuns": {
-          "1": 65,
-          "2": 9,
-          "3": 1
+          "first": 791,
+          "second": 352,
+          "third": 155
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 4
           },
           "after_one_miss": {
-            "windows": 65,
-            "hits": 57
+            "n": 351,
+            "hits": 313
           },
           "after_two_misses": {
-            "windows": 8,
-            "hits": 7
-          },
-          "after_hit": {
-            "windows": 719,
-            "hits": 655
+            "n": 154,
+            "hits": 133
           },
           "after_three_plus_misses": {
-            "windows": 1,
-            "hits": 1
+            "n": 152,
+            "hits": 133
+          },
+          "after_hit": {
+            "n": 788,
+            "hits": 715
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 122,
-          "hits": 110,
-          "rate": 0.9016393442622951
+          "windows": 231,
+          "hits": 203,
+          "rate": 0.8787878787878788
         },
         {
           "year": 2022,
-          "windows": 133,
-          "hits": 121,
-          "rate": 0.9097744360902256
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2023,
-          "windows": 128,
-          "hits": 117,
-          "rate": 0.9140625
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
         },
         {
           "year": 2024,
-          "windows": 115,
-          "hits": 100,
-          "rate": 0.8695652173913043
+          "windows": 231,
+          "hits": 200,
+          "rate": 0.8658008658008658
         },
         {
           "year": 2025,
-          "windows": 133,
-          "hits": 125,
-          "rate": 0.9398496240601504
+          "windows": 231,
+          "hits": 216,
+          "rate": 0.935064935064935
         },
         {
           "year": 2026,
-          "windows": 168,
-          "hits": 151,
-          "rate": 0.8988095238095238
+          "windows": 296,
+          "hits": 261,
+          "rate": 0.8817567567567568
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 133,
-          "hits": 125,
-          "rate": 0.9398496240601504,
-          "baseline": 0.9014706302007506,
-          "brier": 0.057817649524212464,
-          "baselineBrier": 0.05806525475336098,
-          "brierSkill": 0.004264258035209689,
-          "logLoss": 0.23554914489296752,
-          "baselineLogLoss": 0.23721553624864292
+          "predictions": 231,
+          "hits": 216,
+          "rate": 0.935064935064935,
+          "baseline": 0.9013688074555959,
+          "brier": 0.06249658529696634,
+          "baselineBrier": 0.0619397447428287,
+          "brierSkill": -0.00899003630786055
         },
         {
           "year": 2026,
-          "predictions": 168,
-          "hits": 151,
-          "rate": 0.8988095238095238,
-          "baseline": 0.9054485298240221,
-          "brier": 0.09149095536351186,
-          "baselineBrier": 0.09111877116447074,
-          "brierSkill": -0.00408460511796549,
-          "logLoss": 0.33098032207546174,
-          "baselineLogLoss": 0.32866700689597633
+          "predictions": 296,
+          "hits": 261,
+          "rate": 0.8817567567567568,
+          "baseline": 0.9053692928872304,
+          "brier": 0.10502426696459419,
+          "baselineBrier": 0.10497734128956011,
+          "brierSkill": -0.00044700765381966434
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 8,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 8,
-        "waitingTail": null,
-        "samples": 719,
-        "hits": 655,
-        "lineRate": 0.9057771220478549,
-        "predictedRate": 0.910846471503325,
-        "baseline": 0.8963078059223887,
-        "edge": 0.014538665580936305,
-        "lower": 0.8964430600581536,
-        "upper": 0.9236631124688727,
-        "confidence": "高于基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 90.6%（724/799），第1/2/3期结束 61/27/11%，当前状态“上一窗命中”历史 655/719。"
+        "stateLabel": "上一期开出",
+        "samples": 788,
+        "hits": 715,
+        "lineRate": 0.8947890408484938,
+        "predictedRate": 0.9070492336843686,
+        "baseline": 0.9060856498873028,
+        "edge": 0.0009635837970658478,
+        "lower": 0.8932817761988342,
+        "upper": 0.919748593144906,
+        "confidence": "接近基准",
+        "reason": "长期新三期窗口 89.5%（1298/1451），第1/2/3期结束 61/27/12%，当前上一期开出历史 715/788。"
       }
     },
     {
@@ -1252,138 +1115,120 @@
       "label": "尾9",
       "kind": "tail",
       "longTerm": {
-        "windows": 826,
-        "hits": 744,
-        "misses": 82,
-        "rate": 0.9007263922518159,
-        "baseline": 0.9082880076373938,
-        "edge": -0.007561615385577869,
+        "windows": 1451,
+        "hits": 1317,
+        "misses": 134,
+        "rate": 0.9076498966230186,
+        "baseline": 0.906020073908593,
+        "edge": 0.0016298227144256883,
         "stageShare": {
-          "first": 0.6411290322580645,
-          "second": 0.26344086021505375,
-          "third": 0.09543010752688172
+          "first": 0.621867881548975,
+          "second": 0.2627182991647684,
+          "third": 0.11541381928625664
         },
         "stageCounts": {
-          "first": 477,
-          "second": 196,
-          "third": 71
-        },
-        "hitRuns": {
-          "1": 76,
-          "2": 65,
-          "3": 64,
-          "4": 539
-        },
-        "missRuns": {
-          "1": 75,
-          "2": 6,
-          "3": 1
+          "first": 819,
+          "second": 346,
+          "third": 152
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
-          "after_hit": {
-            "windows": 739,
-            "hits": 664
-          },
           "after_one_miss": {
-            "windows": 74,
-            "hits": 68
+            "n": 346,
+            "hits": 315
           },
           "after_two_misses": {
-            "windows": 6,
-            "hits": 5
+            "n": 152,
+            "hits": 137
+          },
+          "after_hit": {
+            "n": 816,
+            "hits": 734
           },
           "after_three_plus_misses": {
-            "windows": 1,
-            "hits": 1
+            "n": 131,
+            "hits": 125
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 127,
-          "hits": 111,
-          "rate": 0.8740157480314961
+          "windows": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918
         },
         {
           "year": 2022,
-          "windows": 132,
-          "hits": 116,
-          "rate": 0.8787878787878788
+          "windows": 231,
+          "hits": 214,
+          "rate": 0.9264069264069265
         },
         {
           "year": 2023,
-          "windows": 132,
-          "hits": 119,
-          "rate": 0.9015151515151515
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2024,
-          "windows": 130,
-          "hits": 117,
-          "rate": 0.9
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2025,
-          "windows": 127,
-          "hits": 116,
-          "rate": 0.9133858267716536
+          "windows": 231,
+          "hits": 207,
+          "rate": 0.8961038961038961
         },
         {
           "year": 2026,
-          "windows": 178,
-          "hits": 165,
-          "rate": 0.9269662921348315
+          "windows": 296,
+          "hits": 268,
+          "rate": 0.9054054054054054
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 127,
-          "hits": 116,
-          "rate": 0.9133858267716536,
-          "baseline": 0.9114966196971541,
-          "brier": 0.07990767459553005,
-          "baselineBrier": 0.07921680456666524,
-          "brierSkill": -0.008721255958808571,
-          "logLoss": 0.2988661056713522,
-          "baselineLogLoss": 0.29528283012279144
+          "predictions": 231,
+          "hits": 207,
+          "rate": 0.8961038961038961,
+          "baseline": 0.9113826452098265,
+          "brier": 0.09490605579678318,
+          "baselineBrier": 0.09345174707456448,
+          "brierSkill": -0.015562135195378746
         },
         {
           "year": 2026,
-          "predictions": 178,
-          "hits": 165,
-          "rate": 0.9269662921348315,
-          "baseline": 0.9137744767860592,
-          "brier": 0.06860226352757531,
-          "baselineBrier": 0.06791347883719412,
-          "brierSkill": -0.010142091116144725,
-          "logLoss": 0.2667250535564847,
-          "baselineLogLoss": 0.2628215196339037
+          "predictions": 296,
+          "hits": 268,
+          "rate": 0.9054054054054054,
+          "baseline": 0.9135971799637025,
+          "brier": 0.08648960296273354,
+          "baselineBrier": 0.08571831352414432,
+          "brierSkill": -0.008997953959651639
         }
       ],
       "current": {
-        "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 9,
-        "waitingTail": null,
-        "samples": 739,
-        "hits": 664,
-        "lineRate": 0.9009914021368246,
-        "predictedRate": 0.8985768485411547,
-        "baseline": 0.9082880076373938,
-        "edge": -0.009711159096239097,
-        "lower": 0.8833997017496331,
-        "upper": 0.9118601713544348,
+        "target": 1464,
+        "tail": 9,
+        "state": "after_one_miss",
+        "stateLabel": "连续遗漏1期",
+        "samples": 346,
+        "hits": 315,
+        "lineRate": 0.907840648456345,
+        "predictedRate": 0.9102645163090899,
+        "baseline": 0.9170666787949012,
+        "edge": -0.006802162485811336,
+        "lower": 0.8887684631497245,
+        "upper": 0.9281723581174312,
         "confidence": "接近基准",
-        "windowStart": 1463,
-        "windowAttempts": 1,
-        "reason": "长期 90.1%（744/826），第1/2/3期结束 64/26/10%，当前状态“上一窗命中”历史 664/739。"
+        "reason": "长期新三期窗口 90.8%（1317/1451），第1/2/3期结束 62/26/12%，当前连续遗漏1期历史 315/346。"
       }
     },
     {
@@ -1391,138 +1236,116 @@
       "label": "概率第1",
       "kind": "probability",
       "longTerm": {
-        "windows": 826,
-        "hits": 755,
-        "misses": 71,
-        "rate": 0.914043583535109,
-        "baseline": 0.9060180336627223,
-        "edge": 0.008025549872386684,
+        "windows": 1451,
+        "hits": 1331,
+        "misses": 120,
+        "rate": 0.9172984148862853,
+        "baseline": 0.9063530422811408,
+        "edge": 0.010945372605144499,
         "stageShare": {
-          "first": 0.6211920529801325,
-          "second": 0.26225165562913905,
-          "third": 0.11655629139072848
+          "first": 0.6190833959429001,
+          "second": 0.2607062359128475,
+          "third": 0.12021036814425244
         },
         "stageCounts": {
-          "first": 469,
-          "second": 198,
-          "third": 88
-        },
-        "hitRuns": {
-          "1": 64,
-          "2": 60,
-          "3": 53,
-          "4": 578
-        },
-        "missRuns": {
-          "1": 63,
-          "2": 6,
-          "3": 2
+          "first": 824,
+          "second": 347,
+          "third": 160
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 750,
-            "hits": 687
+            "n": 1281,
+            "hits": 1176
           },
           "after_one_miss": {
-            "windows": 62,
-            "hits": 56
+            "n": 156,
+            "hits": 142
           },
           "after_two_misses": {
-            "windows": 6,
-            "hits": 4
-          },
-          "after_three_plus_misses": {
-            "windows": 2,
-            "hits": 2
+            "n": 8,
+            "hits": 7
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 139,
-          "hits": 129,
-          "rate": 0.9280575539568345
+          "windows": 231,
+          "hits": 216,
+          "rate": 0.935064935064935
         },
         {
           "year": 2022,
-          "windows": 118,
-          "hits": 102,
-          "rate": 0.864406779661017
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2023,
-          "windows": 134,
-          "hits": 123,
-          "rate": 0.917910447761194
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2024,
-          "windows": 135,
-          "hits": 127,
-          "rate": 0.9407407407407408
+          "windows": 231,
+          "hits": 218,
+          "rate": 0.9437229437229437
         },
         {
           "year": 2025,
-          "windows": 128,
-          "hits": 116,
-          "rate": 0.90625
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
         },
         {
           "year": 2026,
-          "windows": 172,
-          "hits": 158,
-          "rate": 0.9186046511627907
+          "windows": 296,
+          "hits": 268,
+          "rate": 0.9054054054054054
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 128,
-          "hits": 116,
-          "rate": 0.90625,
-          "baseline": 0.9102122232198078,
-          "brier": 0.08543966843092761,
-          "baselineBrier": 0.08525958796255123,
-          "brierSkill": -0.002112143310561976,
-          "logLoss": 0.31388911137581565,
-          "baselineLogLoss": 0.31151838711345037
+          "predictions": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005,
+          "baseline": 0.9091458273236181,
+          "brier": 0.09039244859686461,
+          "baselineBrier": 0.0900802956628338,
+          "brierSkill": -0.0034652743059278013
         },
         {
           "year": 2026,
-          "predictions": 172,
-          "hits": 158,
-          "rate": 0.9186046511627907,
-          "baseline": 0.9064915048113972,
-          "brier": 0.07505756562386796,
-          "baselineBrier": 0.07544166658337674,
-          "brierSkill": 0.005091363657565462,
-          "logLoss": 0.28381404311846964,
-          "baselineLogLoss": 0.2862926760449192
+          "predictions": 296,
+          "hits": 268,
+          "rate": 0.9054054054054054,
+          "baseline": 0.9074893759922954,
+          "brier": 0.0860431227166563,
+          "baselineBrier": 0.08659092371261554,
+          "brierSkill": 0.006326309646231709
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 0,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 3,
-        "waitingTail": null,
-        "samples": 750,
-        "hits": 687,
-        "lineRate": 0.9137623142638805,
-        "predictedRate": 0.9159418782925683,
-        "baseline": 0.9060180336627223,
-        "edge": 0.00992384462984608,
-        "lower": 0.9021108192204379,
-        "upper": 0.928075610850192,
-        "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 91.4%（755/826），第1/2/3期结束 62/26/12%，当前状态“上一窗命中”历史 687/750。"
+        "stateLabel": "上一期开出",
+        "samples": 1281,
+        "hits": 1176,
+        "lineRate": 0.9160433341029376,
+        "predictedRate": 0.9180022034450874,
+        "baseline": 0.8553392602150206,
+        "edge": 0.06266294323006683,
+        "lower": 0.9076801904823174,
+        "upper": 0.9273174206916505,
+        "confidence": "高于基准",
+        "reason": "长期新三期窗口 91.7%（1331/1451），第1/2/3期结束 62/26/12%，当前上一期开出历史 1176/1281。"
       }
     },
     {
@@ -1530,139 +1353,116 @@
       "label": "概率第2",
       "kind": "probability",
       "longTerm": {
-        "windows": 809,
-        "hits": 734,
-        "misses": 75,
-        "rate": 0.907292954264524,
-        "baseline": 0.9073192517967172,
-        "edge": -0.000026297532193186868,
+        "windows": 1451,
+        "hits": 1312,
+        "misses": 139,
+        "rate": 0.9042039972432805,
+        "baseline": 0.9080557915616436,
+        "edge": -0.003851794318363133,
         "stageShare": {
-          "first": 0.6171662125340599,
-          "second": 0.2561307901907357,
-          "third": 0.12670299727520437
+          "first": 0.6189024390243902,
+          "second": 0.24847560975609756,
+          "third": 0.1326219512195122
         },
         "stageCounts": {
-          "first": 453,
-          "second": 188,
-          "third": 93
-        },
-        "hitRuns": {
-          "1": 68,
-          "2": 63,
-          "3": 60,
-          "4": 543
-        },
-        "missRuns": {
-          "1": 67,
-          "2": 5,
-          "3": 2,
-          "4": 1
+          "first": 812,
+          "second": 326,
+          "third": 174
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 728,
-            "hits": 661
+            "n": 1183,
+            "hits": 1069
           },
           "after_one_miss": {
-            "windows": 67,
-            "hits": 62
+            "n": 236,
+            "hits": 214
           },
           "after_two_misses": {
-            "windows": 5,
-            "hits": 3
-          },
-          "after_three_plus_misses": {
-            "windows": 3,
-            "hits": 2
+            "n": 26,
+            "hits": 23
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 146,
-          "hits": 136,
-          "rate": 0.9315068493150684
+          "windows": 231,
+          "hits": 219,
+          "rate": 0.948051948051948
         },
         {
           "year": 2022,
-          "windows": 132,
-          "hits": 121,
-          "rate": 0.9166666666666666
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2023,
-          "windows": 112,
-          "hits": 98,
-          "rate": 0.875
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2024,
-          "windows": 124,
-          "hits": 111,
-          "rate": 0.8951612903225806
+          "windows": 231,
+          "hits": 200,
+          "rate": 0.8658008658008658
         },
         {
           "year": 2025,
-          "windows": 135,
-          "hits": 125,
-          "rate": 0.9259259259259259
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2026,
-          "windows": 160,
-          "hits": 143,
-          "rate": 0.89375
+          "windows": 296,
+          "hits": 260,
+          "rate": 0.8783783783783784
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 135,
-          "hits": 125,
-          "rate": 0.9259259259259259,
-          "baseline": 0.9052640605820418,
-          "brier": 0.0687704980568552,
-          "baselineBrier": 0.07082162299906035,
-          "brierSkill": 0.02896184604852059,
-          "logLoss": 0.26510664723892796,
-          "baselineLogLoss": 0.27568453305486407
+          "predictions": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178,
+          "baseline": 0.9060903825667974,
+          "brier": 0.07581308232288107,
+          "baselineBrier": 0.0773011018818723,
+          "brierSkill": 0.019249655215331063
         },
         {
           "year": 2026,
-          "predictions": 160,
-          "hits": 143,
-          "rate": 0.89375,
-          "baseline": 0.9096350268864002,
-          "brier": 0.09541069998947649,
-          "baselineBrier": 0.09431996329256401,
-          "brierSkill": -0.01156421884441583,
-          "logLoss": 0.3417437850055641,
-          "baselineLogLoss": 0.335642536181434
+          "predictions": 296,
+          "hits": 260,
+          "rate": 0.8783783783783784,
+          "baseline": 0.9084772160174263,
+          "brier": 0.1078922732627322,
+          "baselineBrier": 0.10716417566782778,
+          "brierSkill": -0.006794225685655242
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 3,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 0,
-        "waitingTail": null,
-        "samples": 728,
-        "hits": 661,
-        "lineRate": 0.9072938945815275,
-        "predictedRate": 0.9079490346144794,
-        "baseline": 0.9073192517967172,
-        "edge": 0.0006297828177621589,
-        "lower": 0.8933221660444595,
-        "upper": 0.9207797233297841,
+        "stateLabel": "上一期开出",
+        "samples": 1183,
+        "hits": 1069,
+        "lineRate": 0.9043597519221445,
+        "predictedRate": 0.9036468786686973,
+        "baseline": 0.9118930865565257,
+        "edge": -0.008246207887828372,
+        "lower": 0.8920881766403074,
+        "upper": 0.9140649921241021,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 90.7%（734/809），第1/2/3期结束 62/26/13%，当前状态“上一窗命中”历史 661/728。"
+        "reason": "长期新三期窗口 90.4%（1312/1451），第1/2/3期结束 62/25/13%，当前上一期开出历史 1069/1183。"
       }
     },
     {
@@ -1670,133 +1470,120 @@
       "label": "概率第3",
       "kind": "probability",
       "longTerm": {
-        "windows": 798,
-        "hits": 729,
-        "misses": 69,
-        "rate": 0.9135338345864662,
-        "baseline": 0.9064070464176452,
-        "edge": 0.007126788168820952,
+        "windows": 1451,
+        "hits": 1334,
+        "misses": 117,
+        "rate": 0.9193659545141282,
+        "baseline": 0.9055718145524906,
+        "edge": 0.013794139961637586,
         "stageShare": {
-          "first": 0.5898491083676269,
-          "second": 0.27983539094650206,
-          "third": 0.13031550068587106
+          "first": 0.6004497751124438,
+          "second": 0.27586206896551724,
+          "third": 0.12368815592203898
         },
         "stageCounts": {
-          "first": 430,
-          "second": 204,
-          "third": 95
-        },
-        "hitRuns": {
-          "1": 66,
-          "2": 62,
-          "3": 54,
-          "4": 547
-        },
-        "missRuns": {
-          "1": 66,
-          "2": 3
+          "first": 801,
+          "second": 368,
+          "third": 165
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 726,
-            "hits": 660
+            "n": 1128,
+            "hits": 1031
           },
           "after_one_miss": {
-            "windows": 63,
-            "hits": 60
+            "n": 281,
+            "hits": 263
+          },
+          "after_three_plus_misses": {
+            "n": 3,
+            "hits": 3
           },
           "after_two_misses": {
-            "windows": 3,
-            "hits": 3
+            "n": 33,
+            "hits": 31
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 125,
-          "hits": 115,
-          "rate": 0.92
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2022,
-          "windows": 130,
-          "hits": 118,
-          "rate": 0.9076923076923077
+          "windows": 231,
+          "hits": 213,
+          "rate": 0.922077922077922
         },
         {
           "year": 2023,
-          "windows": 128,
-          "hits": 116,
-          "rate": 0.90625
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2024,
-          "windows": 129,
-          "hits": 121,
-          "rate": 0.937984496124031
+          "windows": 231,
+          "hits": 218,
+          "rate": 0.9437229437229437
         },
         {
           "year": 2025,
-          "windows": 117,
-          "hits": 102,
-          "rate": 0.8717948717948718
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2026,
-          "windows": 169,
-          "hits": 157,
-          "rate": 0.9289940828402367
+          "windows": 296,
+          "hits": 272,
+          "rate": 0.918918918918919
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 117,
-          "hits": 102,
-          "rate": 0.8717948717948718,
-          "baseline": 0.902163318123065,
-          "brier": 0.11230418293240468,
-          "baselineBrier": 0.11304964989871528,
-          "brierSkill": 0.006594155461591367,
-          "logLoss": 0.38365921226819744,
-          "baselineLogLoss": 0.39067610259945595
+          "predictions": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091,
+          "baseline": 0.9037168837740432,
+          "brier": 0.08262607764763098,
+          "baselineBrier": 0.08323047752552463,
+          "brierSkill": 0.007261761506874631
         },
         {
           "year": 2026,
-          "predictions": 169,
-          "hits": 157,
-          "rate": 0.9289940828402367,
-          "baseline": 0.9077554082287547,
-          "brier": 0.06743250810307871,
-          "baselineBrier": 0.06754550030287558,
-          "brierSkill": 0.0016728308960657357,
-          "logLoss": 0.2676022316523151,
-          "baselineLogLoss": 0.2657316441828394
+          "predictions": 296,
+          "hits": 272,
+          "rate": 0.918918918918919,
+          "baseline": 0.9048331560995169,
+          "brier": 0.07480229850768347,
+          "baselineBrier": 0.07553597902493,
+          "brierSkill": 0.009712994081991
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 5,
         "state": "after_one_miss",
-        "stateLabel": "上一窗全错1次",
-        "status": "waiting",
-        "lockedTail": null,
-        "waitingTail": 2,
-        "samples": 63,
-        "hits": 60,
-        "lineRate": 0.9132756176238277,
-        "predictedRate": 0.9429579801503198,
-        "baseline": 0.9064070464176452,
-        "edge": 0.036550933732674595,
-        "lower": 0.905123130660311,
-        "upper": 0.9767056274772666,
-        "confidence": "等待重开",
-        "windowStart": null,
-        "windowAttempts": 0,
-        "reason": "长期 91.4%（729/798），第1/2/3期结束 59/28/13%，当前状态“上一窗全错1次”历史 60/63。"
+        "stateLabel": "连续遗漏1期",
+        "samples": 281,
+        "hits": 263,
+        "lineRate": 0.9191897919673875,
+        "predictedRate": 0.9348298865094609,
+        "baseline": 0.9106693967900266,
+        "edge": 0.024160489719434297,
+        "lower": 0.9146030675350987,
+        "upper": 0.9522288986803908,
+        "confidence": "高于基准",
+        "reason": "长期新三期窗口 91.9%（1334/1451），第1/2/3期结束 60/28/12%，当前连续遗漏1期历史 263/281。"
       }
     }
   ],
@@ -1807,133 +1594,120 @@
       "label": "概率第3",
       "kind": "probability",
       "longTerm": {
-        "windows": 798,
-        "hits": 729,
-        "misses": 69,
-        "rate": 0.9135338345864662,
-        "baseline": 0.9064070464176452,
-        "edge": 0.007126788168820952,
+        "windows": 1451,
+        "hits": 1334,
+        "misses": 117,
+        "rate": 0.9193659545141282,
+        "baseline": 0.9055718145524906,
+        "edge": 0.013794139961637586,
         "stageShare": {
-          "first": 0.5898491083676269,
-          "second": 0.27983539094650206,
-          "third": 0.13031550068587106
+          "first": 0.6004497751124438,
+          "second": 0.27586206896551724,
+          "third": 0.12368815592203898
         },
         "stageCounts": {
-          "first": 430,
-          "second": 204,
-          "third": 95
-        },
-        "hitRuns": {
-          "1": 66,
-          "2": 62,
-          "3": 54,
-          "4": 547
-        },
-        "missRuns": {
-          "1": 66,
-          "2": 3
+          "first": 801,
+          "second": 368,
+          "third": 165
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 726,
-            "hits": 660
+            "n": 1128,
+            "hits": 1031
           },
           "after_one_miss": {
-            "windows": 63,
-            "hits": 60
+            "n": 281,
+            "hits": 263
+          },
+          "after_three_plus_misses": {
+            "n": 3,
+            "hits": 3
           },
           "after_two_misses": {
-            "windows": 3,
-            "hits": 3
+            "n": 33,
+            "hits": 31
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 125,
-          "hits": 115,
-          "rate": 0.92
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2022,
-          "windows": 130,
-          "hits": 118,
-          "rate": 0.9076923076923077
+          "windows": 231,
+          "hits": 213,
+          "rate": 0.922077922077922
         },
         {
           "year": 2023,
-          "windows": 128,
-          "hits": 116,
-          "rate": 0.90625
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2024,
-          "windows": 129,
-          "hits": 121,
-          "rate": 0.937984496124031
+          "windows": 231,
+          "hits": 218,
+          "rate": 0.9437229437229437
         },
         {
           "year": 2025,
-          "windows": 117,
-          "hits": 102,
-          "rate": 0.8717948717948718
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2026,
-          "windows": 169,
-          "hits": 157,
-          "rate": 0.9289940828402367
+          "windows": 296,
+          "hits": 272,
+          "rate": 0.918918918918919
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 117,
-          "hits": 102,
-          "rate": 0.8717948717948718,
-          "baseline": 0.902163318123065,
-          "brier": 0.11230418293240468,
-          "baselineBrier": 0.11304964989871528,
-          "brierSkill": 0.006594155461591367,
-          "logLoss": 0.38365921226819744,
-          "baselineLogLoss": 0.39067610259945595
+          "predictions": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091,
+          "baseline": 0.9037168837740432,
+          "brier": 0.08262607764763098,
+          "baselineBrier": 0.08323047752552463,
+          "brierSkill": 0.007261761506874631
         },
         {
           "year": 2026,
-          "predictions": 169,
-          "hits": 157,
-          "rate": 0.9289940828402367,
-          "baseline": 0.9077554082287547,
-          "brier": 0.06743250810307871,
-          "baselineBrier": 0.06754550030287558,
-          "brierSkill": 0.0016728308960657357,
-          "logLoss": 0.2676022316523151,
-          "baselineLogLoss": 0.2657316441828394
+          "predictions": 296,
+          "hits": 272,
+          "rate": 0.918918918918919,
+          "baseline": 0.9048331560995169,
+          "brier": 0.07480229850768347,
+          "baselineBrier": 0.07553597902493,
+          "brierSkill": 0.009712994081991
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 5,
         "state": "after_one_miss",
-        "stateLabel": "上一窗全错1次",
-        "status": "waiting",
-        "lockedTail": null,
-        "waitingTail": 2,
-        "samples": 63,
-        "hits": 60,
-        "lineRate": 0.9132756176238277,
-        "predictedRate": 0.9429579801503198,
-        "baseline": 0.9064070464176452,
-        "edge": 0.036550933732674595,
-        "lower": 0.905123130660311,
-        "upper": 0.9767056274772666,
-        "confidence": "等待重开",
-        "windowStart": null,
-        "windowAttempts": 0,
-        "reason": "长期 91.4%（729/798），第1/2/3期结束 59/28/13%，当前状态“上一窗全错1次”历史 60/63。"
+        "stateLabel": "连续遗漏1期",
+        "samples": 281,
+        "hits": 263,
+        "lineRate": 0.9191897919673875,
+        "predictedRate": 0.9348298865094609,
+        "baseline": 0.9106693967900266,
+        "edge": 0.024160489719434297,
+        "lower": 0.9146030675350987,
+        "upper": 0.9522288986803908,
+        "confidence": "高于基准",
+        "reason": "长期新三期窗口 91.9%（1334/1451），第1/2/3期结束 60/28/12%，当前连续遗漏1期历史 263/281。"
       }
     },
     {
@@ -1942,133 +1716,120 @@
       "label": "尾2",
       "kind": "tail",
       "longTerm": {
-        "windows": 848,
-        "hits": 778,
-        "misses": 70,
-        "rate": 0.9174528301886793,
-        "baseline": 0.9391595451149473,
-        "edge": -0.021706714926267967,
+        "windows": 1451,
+        "hits": 1329,
+        "misses": 122,
+        "rate": 0.9159200551343901,
+        "baseline": 0.9383701484416478,
+        "edge": -0.022450093307257668,
         "stageShare": {
-          "first": 0.6529562982005142,
-          "second": 0.2416452442159383,
-          "third": 0.10539845758354756
+          "first": 0.6320541760722348,
+          "second": 0.254326561324304,
+          "third": 0.11361926260346125
         },
         "stageCounts": {
-          "first": 508,
-          "second": 188,
-          "third": 82
-        },
-        "hitRuns": {
-          "1": 66,
-          "2": 61,
-          "3": 55,
-          "4": 596
-        },
-        "missRuns": {
-          "1": 66,
-          "2": 4
+          "first": 840,
+          "second": 338,
+          "third": 151
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 773,
-            "hits": 707
+            "n": 837,
+            "hits": 767
           },
           "after_one_miss": {
-            "windows": 65,
-            "hits": 61
+            "n": 337,
+            "hits": 305
           },
           "after_two_misses": {
-            "windows": 4,
-            "hits": 4
+            "n": 150,
+            "hits": 139
+          },
+          "after_three_plus_misses": {
+            "n": 121,
+            "hits": 112
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 141,
-          "hits": 131,
-          "rate": 0.9290780141843972
+          "windows": 231,
+          "hits": 215,
+          "rate": 0.9307359307359307
         },
         {
           "year": 2022,
-          "windows": 143,
-          "hits": 136,
-          "rate": 0.951048951048951
+          "windows": 231,
+          "hits": 222,
+          "rate": 0.961038961038961
         },
         {
           "year": 2023,
-          "windows": 136,
-          "hits": 125,
-          "rate": 0.9191176470588235
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2024,
-          "windows": 140,
-          "hits": 132,
-          "rate": 0.9428571428571428
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2025,
-          "windows": 129,
-          "hits": 115,
-          "rate": 0.8914728682170543
+          "windows": 231,
+          "hits": 213,
+          "rate": 0.922077922077922
         },
         {
           "year": 2026,
-          "windows": 159,
-          "hits": 139,
-          "rate": 0.8742138364779874
+          "windows": 296,
+          "hits": 257,
+          "rate": 0.8682432432432432
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 129,
-          "hits": 115,
-          "rate": 0.8914728682170543,
-          "baseline": 0.9342574246779254,
-          "brier": 0.09864640052583896,
-          "baselineBrier": 0.09871208120441453,
-          "brierSkill": 0.0006653762920827422,
-          "logLoss": 0.35634490984453115,
-          "baselineLogLoss": 0.3571314132888073
+          "predictions": 231,
+          "hits": 213,
+          "rate": 0.922077922077922,
+          "baseline": 0.9341438982351735,
+          "brier": 0.07197799285468132,
+          "baselineBrier": 0.07210203565371867,
+          "brierSkill": 0.001720378598367045
         },
         {
           "year": 2026,
-          "predictions": 159,
-          "hits": 139,
-          "rate": 0.8742138364779874,
-          "baseline": 0.9286509918637921,
-          "brier": 0.11218661038333617,
-          "baselineBrier": 0.11305331177187004,
-          "brierSkill": 0.007666306939179135,
-          "logLoss": 0.39147210109397035,
-          "baselineLogLoss": 0.39778114350729854
+          "predictions": 296,
+          "hits": 257,
+          "rate": 0.8682432432432432,
+          "baseline": 0.9285614428890097,
+          "brier": 0.1184308159578144,
+          "baselineBrier": 0.11814682728216891,
+          "brierSkill": -0.002403692779385791
         }
       ],
       "current": {
-        "state": "after_one_miss",
-        "stateLabel": "上一窗全错1次",
-        "status": "waiting",
-        "lockedTail": 2,
-        "waitingTail": 2,
-        "samples": 65,
-        "hits": 61,
-        "lineRate": 0.9181945174868433,
-        "predictedRate": 0.9336928276439631,
-        "baseline": 0.9391595451149473,
-        "edge": -0.00546671747098415,
-        "lower": 0.8884880321061045,
-        "upper": 0.9668746416675754,
-        "confidence": "等待重开",
-        "windowStart": null,
-        "windowAttempts": 0,
-        "reason": "长期 91.7%（778/848），第1/2/3期结束 65/24/11%，当前状态“上一窗全错1次”历史 61/65。"
+        "target": 1464,
+        "tail": 2,
+        "state": "after_three_plus_misses",
+        "stateLabel": "连续遗漏3期以上",
+        "samples": 121,
+        "hits": 112,
+        "lineRate": 0.916111145511415,
+        "predictedRate": 0.9242710844697043,
+        "baseline": 0.9253535500801866,
+        "edge": -0.0010824656104823083,
+        "lower": 0.8890774382859613,
+        "upper": 0.9507900094302516,
+        "confidence": "接近基准",
+        "reason": "长期新三期窗口 91.6%（1329/1451），第1/2/3期结束 63/25/11%，当前连续遗漏3期以上历史 112/121。"
       }
     },
     {
@@ -2077,689 +1838,604 @@
       "label": "尾6",
       "kind": "tail",
       "longTerm": {
-        "windows": 826,
-        "hits": 763,
-        "misses": 63,
-        "rate": 0.923728813559322,
-        "baseline": 0.9176399067400087,
-        "edge": 0.006088906819313289,
+        "windows": 1451,
+        "hits": 1346,
+        "misses": 105,
+        "rate": 0.9276361130254996,
+        "baseline": 0.9169227508380364,
+        "edge": 0.010713362187463216,
         "stageShare": {
-          "first": 0.6107470511140236,
-          "second": 0.2503276539973788,
-          "third": 0.13892529488859764
+          "first": 0.6092124814264487,
+          "second": 0.2659732540861813,
+          "third": 0.12481426448736999
         },
         "stageCounts": {
-          "first": 466,
-          "second": 191,
-          "third": 106
-        },
-        "hitRuns": {
-          "1": 59,
-          "2": 54,
-          "3": 48,
-          "4": 602
-        },
-        "missRuns": {
-          "1": 58,
-          "2": 5
+          "first": 820,
+          "second": 358,
+          "third": 168
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 5
           },
           "after_hit": {
-            "windows": 758,
-            "hits": 701
+            "n": 815,
+            "hits": 753
           },
           "after_one_miss": {
-            "windows": 57,
-            "hits": 52
+            "n": 359,
+            "hits": 336
           },
           "after_two_misses": {
-            "windows": 5,
-            "hits": 5
+            "n": 168,
+            "hits": 158
+          },
+          "after_three_plus_misses": {
+            "n": 103,
+            "hits": 94
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 131,
-          "hits": 122,
-          "rate": 0.9312977099236641
+          "windows": 231,
+          "hits": 216,
+          "rate": 0.935064935064935
         },
         {
           "year": 2022,
-          "windows": 137,
-          "hits": 129,
-          "rate": 0.9416058394160584
+          "windows": 231,
+          "hits": 219,
+          "rate": 0.948051948051948
         },
         {
           "year": 2023,
-          "windows": 130,
-          "hits": 119,
-          "rate": 0.9153846153846154
+          "windows": 231,
+          "hits": 211,
+          "rate": 0.9134199134199135
         },
         {
           "year": 2024,
-          "windows": 131,
-          "hits": 119,
-          "rate": 0.9083969465648855
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2025,
-          "windows": 117,
-          "hits": 106,
-          "rate": 0.905982905982906
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
         },
         {
           "year": 2026,
-          "windows": 180,
-          "hits": 168,
-          "rate": 0.9333333333333333
+          "windows": 296,
+          "hits": 280,
+          "rate": 0.9459459459459459
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 117,
-          "hits": 106,
-          "rate": 0.905982905982906,
-          "baseline": 0.9141986286585667,
-          "brier": 0.08627096053862214,
-          "baselineBrier": 0.0853987115050674,
-          "brierSkill": -0.010213843021542157,
-          "logLoss": 0.32065745748230307,
-          "baselineLogLoss": 0.3131173124281605
+          "predictions": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005,
+          "baseline": 0.914101679464,
+          "brier": 0.0909150308972192,
+          "baselineBrier": 0.0898989285526357,
+          "brierSkill": -0.011302719186342403
         },
         {
           "year": 2026,
-          "predictions": 180,
-          "hits": 168,
-          "rate": 0.9333333333333333,
-          "baseline": 0.9138397385445555,
-          "brier": 0.06270472325159505,
-          "baselineBrier": 0.06273883600361647,
-          "brierSkill": 0.0005437262498694251,
-          "logLoss": 0.24853149529812668,
-          "baselineLogLoss": 0.24839628290195018
+          "predictions": 296,
+          "hits": 280,
+          "rate": 0.9459459459459459,
+          "baseline": 0.9136963923294065,
+          "brier": 0.05176311977584207,
+          "baselineBrier": 0.05227905474204874,
+          "brierSkill": 0.00986886562414635
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 6,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 6,
-        "waitingTail": null,
-        "samples": 758,
-        "hits": 701,
-        "lineRate": 0.92351541729229,
-        "predictedRate": 0.9247690338635549,
-        "baseline": 0.9176399067400087,
-        "edge": 0.007129127123546186,
-        "lower": 0.9116045535057661,
-        "upper": 0.9361672284368002,
+        "stateLabel": "上一期开出",
+        "samples": 815,
+        "hits": 753,
+        "lineRate": 0.9274220123996265,
+        "predictedRate": 0.9240101080814281,
+        "baseline": 0.9170666787949012,
+        "edge": 0.006943429286526914,
+        "lower": 0.9111705263237647,
+        "upper": 0.9349812098669409,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 92.4%（763/826），第1/2/3期结束 61/25/14%，当前状态“上一窗命中”历史 701/758。"
+        "reason": "长期新三期窗口 92.8%（1346/1451），第1/2/3期结束 61/27/12%，当前上一期开出历史 753/815。"
       }
     },
     {
       "rank": 4,
-      "id": "tail3",
-      "label": "尾3",
+      "id": "tail1",
+      "label": "尾1",
       "kind": "tail",
       "longTerm": {
-        "windows": 812,
-        "hits": 747,
-        "misses": 65,
-        "rate": 0.9199507389162561,
-        "baseline": 0.9159713472271525,
-        "edge": 0.003979391689103662,
+        "windows": 1451,
+        "hits": 1322,
+        "misses": 129,
+        "rate": 0.9110957960027567,
+        "baseline": 0.9096241521538668,
+        "edge": 0.0014716438488898698,
         "stageShare": {
-          "first": 0.6117804551539491,
-          "second": 0.2637215528781794,
-          "third": 0.12449799196787148
+          "first": 0.6043872919818457,
+          "second": 0.2745839636913767,
+          "third": 0.12102874432677761
         },
         "stageCounts": {
-          "first": 457,
-          "second": 197,
-          "third": 93
-        },
-        "hitRuns": {
-          "1": 61,
-          "2": 57,
-          "3": 56,
-          "4": 573
-        },
-        "missRuns": {
-          "1": 60,
-          "2": 4,
-          "3": 1
+          "first": 799,
+          "second": 363,
+          "third": 160
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
-          "after_hit": {
-            "windows": 741,
-            "hits": 681
-          },
           "after_one_miss": {
-            "windows": 60,
-            "hits": 56
+            "n": 363,
+            "hits": 329
+          },
+          "after_hit": {
+            "n": 795,
+            "hits": 732
           },
           "after_two_misses": {
-            "windows": 4,
-            "hits": 3
+            "n": 160,
+            "hits": 141
           },
           "after_three_plus_misses": {
-            "windows": 1,
-            "hits": 1
+            "n": 127,
+            "hits": 114
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 129,
-          "hits": 118,
-          "rate": 0.9147286821705426
+          "windows": 231,
+          "hits": 205,
+          "rate": 0.8874458874458875
         },
         {
           "year": 2022,
-          "windows": 134,
-          "hits": 124,
-          "rate": 0.9253731343283582
+          "windows": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918
         },
         {
           "year": 2023,
-          "windows": 120,
-          "hits": 111,
-          "rate": 0.925
+          "windows": 231,
+          "hits": 216,
+          "rate": 0.935064935064935
         },
         {
           "year": 2024,
-          "windows": 139,
-          "hits": 130,
-          "rate": 0.935251798561151
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2025,
-          "windows": 142,
-          "hits": 133,
-          "rate": 0.9366197183098591
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2026,
-          "windows": 148,
-          "hits": 131,
+          "windows": 296,
+          "hits": 276,
+          "rate": 0.9324324324324325
+        }
+      ],
+      "validation": [
+        {
+          "year": 2025,
+          "predictions": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048,
+          "baseline": 0.9089090356805571,
+          "brier": 0.08620694950223605,
+          "baselineBrier": 0.08637437409156325,
+          "brierSkill": 0.0019383595086861494
+        },
+        {
+          "year": 2026,
+          "predictions": 296,
+          "hits": 276,
+          "rate": 0.9324324324324325,
+          "baseline": 0.9100719331581135,
+          "brier": 0.06400035139790704,
+          "baselineBrier": 0.06352503917262321,
+          "brierSkill": -0.007482281498358612
+        }
+      ],
+      "current": {
+        "target": 1464,
+        "tail": 1,
+        "state": "after_hit",
+        "stateLabel": "上一期开出",
+        "samples": 795,
+        "hits": 732,
+        "lineRate": 0.9110621423806138,
+        "predictedRate": 0.9205168623897083,
+        "baseline": 0.9094344288563013,
+        "edge": 0.011082433533406988,
+        "lower": 0.9076087944063557,
+        "upper": 0.932169955902442,
+        "confidence": "接近基准",
+        "reason": "长期新三期窗口 91.1%（1322/1451），第1/2/3期结束 60/27/12%，当前上一期开出历史 732/795。"
+      }
+    },
+    {
+      "rank": 5,
+      "id": "tail3",
+      "label": "尾3",
+      "kind": "tail",
+      "longTerm": {
+        "windows": 1451,
+        "hits": 1316,
+        "misses": 135,
+        "rate": 0.906960716747071,
+        "baseline": 0.9146376918400867,
+        "edge": -0.007676975093015681,
+        "stageShare": {
+          "first": 0.6101823708206687,
+          "second": 0.26975683890577506,
+          "third": 0.12006079027355623
+        },
+        "stageCounts": {
+          "first": 803,
+          "second": 355,
+          "third": 158
+        },
+        "stateCounts": {
+          "year_start": {
+            "n": 6,
+            "hits": 6
+          },
+          "after_one_miss": {
+            "n": 354,
+            "hits": 321
+          },
+          "after_hit": {
+            "n": 800,
+            "hits": 735
+          },
+          "after_two_misses": {
+            "n": 156,
+            "hits": 138
+          },
+          "after_three_plus_misses": {
+            "n": 135,
+            "hits": 116
+          }
+        }
+      },
+      "yearly": [
+        {
+          "year": 2021,
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
+        },
+        {
+          "year": 2022,
+          "windows": 231,
+          "hits": 211,
+          "rate": 0.9134199134199135
+        },
+        {
+          "year": 2023,
+          "windows": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918
+        },
+        {
+          "year": 2024,
+          "windows": 231,
+          "hits": 218,
+          "rate": 0.9437229437229437
+        },
+        {
+          "year": 2025,
+          "windows": 231,
+          "hits": 219,
+          "rate": 0.948051948051948
+        },
+        {
+          "year": 2026,
+          "windows": 296,
+          "hits": 252,
+          "rate": 0.8513513513513513
+        }
+      ],
+      "validation": [
+        {
+          "year": 2025,
+          "predictions": 231,
+          "hits": 219,
+          "rate": 0.948051948051948,
+          "baseline": 0.9191288645846455,
+          "brier": 0.0506222364104259,
+          "baselineBrier": 0.05014791876744616,
+          "brierSkill": -0.009458371446666058
+        },
+        {
+          "year": 2026,
+          "predictions": 296,
+          "hits": 252,
+          "rate": 0.8513513513513513,
+          "baseline": 0.9157914275599968,
+          "brier": 0.12999433136049396,
+          "baselineBrier": 0.13068684044173132,
+          "brierSkill": 0.005298996279171075
+        }
+      ],
+      "current": {
+        "target": 1464,
+        "tail": 3,
+        "state": "after_hit",
+        "stateLabel": "上一期开出",
+        "samples": 800,
+        "hits": 735,
+        "lineRate": 0.9070606297074246,
+        "predictedRate": 0.9184648934074982,
+        "baseline": 0.9118930865565257,
+        "edge": 0.0065718068509724725,
+        "lower": 0.9055127144036271,
+        "upper": 0.930275591146606,
+        "confidence": "接近基准",
+        "reason": "长期新三期窗口 90.7%（1316/1451），第1/2/3期结束 61/27/12%，当前上一期开出历史 735/800。"
+      }
+    },
+    {
+      "rank": 6,
+      "id": "prob1",
+      "label": "概率第1",
+      "kind": "probability",
+      "longTerm": {
+        "windows": 1451,
+        "hits": 1331,
+        "misses": 120,
+        "rate": 0.9172984148862853,
+        "baseline": 0.9063530422811408,
+        "edge": 0.010945372605144499,
+        "stageShare": {
+          "first": 0.6190833959429001,
+          "second": 0.2607062359128475,
+          "third": 0.12021036814425244
+        },
+        "stageCounts": {
+          "first": 824,
+          "second": 347,
+          "third": 160
+        },
+        "stateCounts": {
+          "year_start": {
+            "n": 6,
+            "hits": 6
+          },
+          "after_hit": {
+            "n": 1281,
+            "hits": 1176
+          },
+          "after_one_miss": {
+            "n": 156,
+            "hits": 142
+          },
+          "after_two_misses": {
+            "n": 8,
+            "hits": 7
+          }
+        }
+      },
+      "yearly": [
+        {
+          "year": 2021,
+          "windows": 231,
+          "hits": 216,
+          "rate": 0.935064935064935
+        },
+        {
+          "year": 2022,
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
+        },
+        {
+          "year": 2023,
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
+        },
+        {
+          "year": 2024,
+          "windows": 231,
+          "hits": 218,
+          "rate": 0.9437229437229437
+        },
+        {
+          "year": 2025,
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
+        },
+        {
+          "year": 2026,
+          "windows": 296,
+          "hits": 268,
+          "rate": 0.9054054054054054
+        }
+      ],
+      "validation": [
+        {
+          "year": 2025,
+          "predictions": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005,
+          "baseline": 0.9091458273236181,
+          "brier": 0.09039244859686461,
+          "baselineBrier": 0.0900802956628338,
+          "brierSkill": -0.0034652743059278013
+        },
+        {
+          "year": 2026,
+          "predictions": 296,
+          "hits": 268,
+          "rate": 0.9054054054054054,
+          "baseline": 0.9074893759922954,
+          "brier": 0.0860431227166563,
+          "baselineBrier": 0.08659092371261554,
+          "brierSkill": 0.006326309646231709
+        }
+      ],
+      "current": {
+        "target": 1464,
+        "tail": 0,
+        "state": "after_hit",
+        "stateLabel": "上一期开出",
+        "samples": 1281,
+        "hits": 1176,
+        "lineRate": 0.9160433341029376,
+        "predictedRate": 0.9180022034450874,
+        "baseline": 0.8553392602150206,
+        "edge": 0.06266294323006683,
+        "lower": 0.9076801904823174,
+        "upper": 0.9273174206916505,
+        "confidence": "高于基准",
+        "reason": "长期新三期窗口 91.7%（1331/1451），第1/2/3期结束 62/26/12%，当前上一期开出历史 1176/1281。"
+      }
+    },
+    {
+      "rank": 7,
+      "id": "tail5",
+      "label": "尾5",
+      "kind": "tail",
+      "longTerm": {
+        "windows": 1451,
+        "hits": 1322,
+        "misses": 129,
+        "rate": 0.9110957960027567,
+        "baseline": 0.9115538391207002,
+        "edge": -0.0004580431179435074,
+        "stageShare": {
+          "first": 0.6059001512859304,
+          "second": 0.26777609682299547,
+          "third": 0.12632375189107414
+        },
+        "stageCounts": {
+          "first": 801,
+          "second": 354,
+          "third": 167
+        },
+        "stateCounts": {
+          "year_start": {
+            "n": 6,
+            "hits": 6
+          },
+          "after_hit": {
+            "n": 796,
+            "hits": 726
+          },
+          "after_one_miss": {
+            "n": 353,
+            "hits": 324
+          },
+          "after_two_misses": {
+            "n": 167,
+            "hits": 151
+          },
+          "after_three_plus_misses": {
+            "n": 129,
+            "hits": 115
+          }
+        }
+      },
+      "yearly": [
+        {
+          "year": 2021,
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
+        },
+        {
+          "year": 2022,
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
+        },
+        {
+          "year": 2023,
+          "windows": 231,
+          "hits": 213,
+          "rate": 0.922077922077922
+        },
+        {
+          "year": 2024,
+          "windows": 231,
+          "hits": 217,
+          "rate": 0.9393939393939394
+        },
+        {
+          "year": 2025,
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
+        },
+        {
+          "year": 2026,
+          "windows": 296,
+          "hits": 262,
           "rate": 0.8851351351351351
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 142,
-          "hits": 133,
-          "rate": 0.9366197183098591,
-          "baseline": 0.9191390623142818,
-          "brier": 0.059757928932397425,
-          "baselineBrier": 0.05974407397672953,
-          "brierSkill": -0.0002319051036474562,
-          "logLoss": 0.2392219575449622,
-          "baselineLogLoss": 0.23887801224851452
+          "predictions": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005,
+          "baseline": 0.9160271011339205,
+          "brier": 0.09122619665965706,
+          "baselineBrier": 0.08990699581094128,
+          "brierSkill": -0.01467294993917756
         },
         {
           "year": 2026,
-          "predictions": 148,
-          "hits": 131,
+          "predictions": 296,
+          "hits": 262,
           "rate": 0.8851351351351351,
-          "baseline": 0.9158862452105304,
-          "brier": 0.10337634613548599,
-          "baselineBrier": 0.10270912980104191,
-          "brierSkill": -0.006496173570319952,
-          "logLoss": 0.36737285938866737,
-          "baselineLogLoss": 0.36273698735996557
+          "baseline": 0.9133118398471041,
+          "brier": 0.1029106550038176,
+          "baselineBrier": 0.10243544074707525,
+          "brierSkill": -0.004639158608354288
         }
       ],
       "current": {
-        "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 3,
-        "waitingTail": null,
-        "samples": 741,
-        "hits": 681,
-        "lineRate": 0.9198089553643878,
-        "predictedRate": 0.9190488555943334,
-        "baseline": 0.9159713472271525,
-        "edge": 0.0030775083671809034,
-        "lower": 0.9052575367386819,
-        "upper": 0.9309502327491335,
+        "target": 1464,
+        "tail": 5,
+        "state": "after_one_miss",
+        "stateLabel": "连续遗漏1期",
+        "samples": 353,
+        "hits": 324,
+        "lineRate": 0.9110871586115468,
+        "predictedRate": 0.9174845661453913,
+        "baseline": 0.9106693967900266,
+        "edge": 0.0068151693553647474,
+        "lower": 0.8971526491068075,
+        "upper": 0.9346805646681248,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 92.0%（747/812），第1/2/3期结束 61/26/12%，当前状态“上一窗命中”历史 681/741。"
-      }
-    },
-    {
-      "rank": 5,
-      "id": "tail1",
-      "label": "尾1",
-      "kind": "tail",
-      "longTerm": {
-        "windows": 806,
-        "hits": 743,
-        "misses": 63,
-        "rate": 0.9218362282878412,
-        "baseline": 0.9121253645804503,
-        "edge": 0.009710863707390827,
-        "stageShare": {
-          "first": 0.5921938088829072,
-          "second": 0.2772543741588156,
-          "third": 0.13055181695827725
-        },
-        "stageCounts": {
-          "first": 440,
-          "second": 206,
-          "third": 97
-        },
-        "hitRuns": {
-          "1": 61,
-          "2": 54,
-          "3": 51,
-          "4": 577
-        },
-        "missRuns": {
-          "1": 60,
-          "2": 3
-        },
-        "stateCounts": {
-          "year_start": {
-            "windows": 6,
-            "hits": 6
-          },
-          "after_hit": {
-            "windows": 738,
-            "hits": 678
-          },
-          "after_one_miss": {
-            "windows": 60,
-            "hits": 57
-          },
-          "after_two_misses": {
-            "windows": 2,
-            "hits": 2
-          }
-        }
-      },
-      "yearly": [
-        {
-          "year": 2021,
-          "windows": 133,
-          "hits": 121,
-          "rate": 0.9097744360902256
-        },
-        {
-          "year": 2022,
-          "windows": 124,
-          "hits": 113,
-          "rate": 0.9112903225806451
-        },
-        {
-          "year": 2023,
-          "windows": 138,
-          "hits": 129,
-          "rate": 0.9347826086956522
-        },
-        {
-          "year": 2024,
-          "windows": 123,
-          "hits": 112,
-          "rate": 0.9105691056910569
-        },
-        {
-          "year": 2025,
-          "windows": 122,
-          "hits": 114,
-          "rate": 0.9344262295081968
-        },
-        {
-          "year": 2026,
-          "windows": 166,
-          "hits": 154,
-          "rate": 0.927710843373494
-        }
-      ],
-      "validation": [
-        {
-          "year": 2025,
-          "predictions": 122,
-          "hits": 114,
-          "rate": 0.9344262295081968,
-          "baseline": 0.9089884717957136,
-          "brier": 0.061586383077313185,
-          "baselineBrier": 0.061989622275097064,
-          "brierSkill": 0.00650494684407632,
-          "logLoss": 0.24417754658614582,
-          "baselineLogLoss": 0.2467407709412592
-        },
-        {
-          "year": 2026,
-          "predictions": 166,
-          "hits": 154,
-          "rate": 0.927710843373494,
-          "baseline": 0.9101579578352639,
-          "brier": 0.06704137883972987,
-          "baselineBrier": 0.06737077620098254,
-          "brierSkill": 0.004889321154175286,
-          "logLoss": 0.2592211526865499,
-          "baselineLogLoss": 0.2615168651059419
-        }
-      ],
-      "current": {
-        "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 1,
-        "waitingTail": null,
-        "samples": 738,
-        "hits": 678,
-        "lineRate": 0.9214877523174803,
-        "predictedRate": 0.9187727639133899,
-        "baseline": 0.9121253645804503,
-        "edge": 0.006647399332939563,
-        "lower": 0.904875550878989,
-        "upper": 0.93066787142034,
-        "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 92.2%（743/806），第1/2/3期结束 59/28/13%，当前状态“上一窗命中”历史 678/738。"
-      }
-    },
-    {
-      "rank": 6,
-      "id": "tail5",
-      "label": "尾5",
-      "kind": "tail",
-      "longTerm": {
-        "windows": 809,
-        "hits": 739,
-        "misses": 70,
-        "rate": 0.9134734239802225,
-        "baseline": 0.9123544168352413,
-        "edge": 0.0011190071449811434,
-        "stageShare": {
-          "first": 0.6129905277401895,
-          "second": 0.2557510148849797,
-          "third": 0.13125845737483086
-        },
-        "stageCounts": {
-          "first": 453,
-          "second": 189,
-          "third": 97
-        },
-        "hitRuns": {
-          "1": 61,
-          "2": 58,
-          "3": 55,
-          "4": 565
-        },
-        "missRuns": {
-          "1": 60,
-          "2": 7,
-          "3": 2,
-          "4": 1
-        },
-        "stateCounts": {
-          "year_start": {
-            "windows": 6,
-            "hits": 6
-          },
-          "after_hit": {
-            "windows": 733,
-            "hits": 673
-          },
-          "after_one_miss": {
-            "windows": 60,
-            "hits": 53
-          },
-          "after_two_misses": {
-            "windows": 7,
-            "hits": 5
-          },
-          "after_three_plus_misses": {
-            "windows": 3,
-            "hits": 2
-          }
-        }
-      },
-      "yearly": [
-        {
-          "year": 2021,
-          "windows": 133,
-          "hits": 121,
-          "rate": 0.9097744360902256
-        },
-        {
-          "year": 2022,
-          "windows": 120,
-          "hits": 109,
-          "rate": 0.9083333333333333
-        },
-        {
-          "year": 2023,
-          "windows": 126,
-          "hits": 116,
-          "rate": 0.9206349206349206
-        },
-        {
-          "year": 2024,
-          "windows": 145,
-          "hits": 134,
-          "rate": 0.9241379310344827
-        },
-        {
-          "year": 2025,
-          "windows": 134,
-          "hits": 125,
-          "rate": 0.9328358208955224
-        },
-        {
-          "year": 2026,
-          "windows": 151,
-          "hits": 134,
-          "rate": 0.8874172185430463
-        }
-      ],
-      "validation": [
-        {
-          "year": 2025,
-          "predictions": 134,
-          "hits": 125,
-          "rate": 0.9328358208955224,
-          "baseline": 0.9161733198973884,
-          "brier": 0.06330303509526376,
-          "baselineBrier": 0.06297023567058806,
-          "brierSkill": -0.0052850274599043345,
-          "logLoss": 0.25090563649810227,
-          "baselineLogLoss": 0.24842401210753579
-        },
-        {
-          "year": 2026,
-          "predictions": 151,
-          "hits": 134,
-          "rate": 0.8874172185430463,
-          "baseline": 0.9133653581713106,
-          "brier": 0.10101202470659004,
-          "baselineBrier": 0.10059501695572678,
-          "brierSkill": -0.004145411606688132,
-          "logLoss": 0.3588943674259242,
-          "baselineLogLoss": 0.3558806839312841
-        }
-      ],
-      "current": {
-        "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 5,
-        "waitingTail": null,
-        "samples": 733,
-        "hits": 673,
-        "lineRate": 0.9134334118057893,
-        "predictedRate": 0.9180194797292375,
-        "baseline": 0.9123544168352413,
-        "edge": 0.005665062893996153,
-        "lower": 0.9042320178421858,
-        "upper": 0.9301921015613194,
-        "confidence": "接近基准",
-        "windowStart": 1463,
-        "windowAttempts": 1,
-        "reason": "长期 91.3%（739/809），第1/2/3期结束 61/26/13%，当前状态“上一窗命中”历史 673/733。"
-      }
-    },
-    {
-      "rank": 7,
-      "id": "prob1",
-      "label": "概率第1",
-      "kind": "probability",
-      "longTerm": {
-        "windows": 826,
-        "hits": 755,
-        "misses": 71,
-        "rate": 0.914043583535109,
-        "baseline": 0.9060180336627223,
-        "edge": 0.008025549872386684,
-        "stageShare": {
-          "first": 0.6211920529801325,
-          "second": 0.26225165562913905,
-          "third": 0.11655629139072848
-        },
-        "stageCounts": {
-          "first": 469,
-          "second": 198,
-          "third": 88
-        },
-        "hitRuns": {
-          "1": 64,
-          "2": 60,
-          "3": 53,
-          "4": 578
-        },
-        "missRuns": {
-          "1": 63,
-          "2": 6,
-          "3": 2
-        },
-        "stateCounts": {
-          "year_start": {
-            "windows": 6,
-            "hits": 6
-          },
-          "after_hit": {
-            "windows": 750,
-            "hits": 687
-          },
-          "after_one_miss": {
-            "windows": 62,
-            "hits": 56
-          },
-          "after_two_misses": {
-            "windows": 6,
-            "hits": 4
-          },
-          "after_three_plus_misses": {
-            "windows": 2,
-            "hits": 2
-          }
-        }
-      },
-      "yearly": [
-        {
-          "year": 2021,
-          "windows": 139,
-          "hits": 129,
-          "rate": 0.9280575539568345
-        },
-        {
-          "year": 2022,
-          "windows": 118,
-          "hits": 102,
-          "rate": 0.864406779661017
-        },
-        {
-          "year": 2023,
-          "windows": 134,
-          "hits": 123,
-          "rate": 0.917910447761194
-        },
-        {
-          "year": 2024,
-          "windows": 135,
-          "hits": 127,
-          "rate": 0.9407407407407408
-        },
-        {
-          "year": 2025,
-          "windows": 128,
-          "hits": 116,
-          "rate": 0.90625
-        },
-        {
-          "year": 2026,
-          "windows": 172,
-          "hits": 158,
-          "rate": 0.9186046511627907
-        }
-      ],
-      "validation": [
-        {
-          "year": 2025,
-          "predictions": 128,
-          "hits": 116,
-          "rate": 0.90625,
-          "baseline": 0.9102122232198078,
-          "brier": 0.08543966843092761,
-          "baselineBrier": 0.08525958796255123,
-          "brierSkill": -0.002112143310561976,
-          "logLoss": 0.31388911137581565,
-          "baselineLogLoss": 0.31151838711345037
-        },
-        {
-          "year": 2026,
-          "predictions": 172,
-          "hits": 158,
-          "rate": 0.9186046511627907,
-          "baseline": 0.9064915048113972,
-          "brier": 0.07505756562386796,
-          "baselineBrier": 0.07544166658337674,
-          "brierSkill": 0.005091363657565462,
-          "logLoss": 0.28381404311846964,
-          "baselineLogLoss": 0.2862926760449192
-        }
-      ],
-      "current": {
-        "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 3,
-        "waitingTail": null,
-        "samples": 750,
-        "hits": 687,
-        "lineRate": 0.9137623142638805,
-        "predictedRate": 0.9159418782925683,
-        "baseline": 0.9060180336627223,
-        "edge": 0.00992384462984608,
-        "lower": 0.9021108192204379,
-        "upper": 0.928075610850192,
-        "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 91.4%（755/826），第1/2/3期结束 62/26/12%，当前状态“上一窗命中”历史 687/750。"
+        "reason": "长期新三期窗口 91.1%（1322/1451），第1/2/3期结束 61/27/13%，当前连续遗漏1期历史 324/353。"
       }
     },
     {
@@ -2768,414 +2444,364 @@
       "label": "尾7",
       "kind": "tail",
       "longTerm": {
-        "windows": 807,
-        "hits": 740,
-        "misses": 67,
-        "rate": 0.9169764560099133,
-        "baseline": 0.9147892623228175,
-        "edge": 0.0021871936870957454,
+        "windows": 1451,
+        "hits": 1329,
+        "misses": 122,
+        "rate": 0.9159200551343901,
+        "baseline": 0.9139582480980566,
+        "edge": 0.0019618070363335294,
         "stageShare": {
-          "first": 0.6,
-          "second": 0.26216216216216215,
-          "third": 0.13783783783783785
+          "first": 0.6019563581640331,
+          "second": 0.2708803611738149,
+          "third": 0.127163280662152
         },
         "stageCounts": {
-          "first": 444,
-          "second": 194,
-          "third": 102
-        },
-        "hitRuns": {
-          "1": 64,
-          "2": 56,
-          "3": 53,
-          "4": 567
-        },
-        "missRuns": {
-          "1": 63,
-          "2": 4
+          "first": 800,
+          "second": 360,
+          "third": 169
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 5
           },
           "after_hit": {
-            "windows": 736,
-            "hits": 674
+            "n": 798,
+            "hits": 732
           },
           "after_one_miss": {
-            "windows": 61,
-            "hits": 57
+            "n": 360,
+            "hits": 328
           },
           "after_two_misses": {
-            "windows": 4,
-            "hits": 4
+            "n": 169,
+            "hits": 152
+          },
+          "after_three_plus_misses": {
+            "n": 118,
+            "hits": 112
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 140,
-          "hits": 134,
-          "rate": 0.9571428571428572
+          "windows": 231,
+          "hits": 219,
+          "rate": 0.948051948051948
         },
         {
           "year": 2022,
-          "windows": 123,
-          "hits": 113,
-          "rate": 0.9186991869918699
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2023,
-          "windows": 130,
-          "hits": 117,
-          "rate": 0.9
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2024,
-          "windows": 119,
-          "hits": 108,
-          "rate": 0.907563025210084
+          "windows": 231,
+          "hits": 204,
+          "rate": 0.8831168831168831
         },
         {
           "year": 2025,
-          "windows": 126,
-          "hits": 113,
-          "rate": 0.8968253968253969
+          "windows": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918
         },
         {
           "year": 2026,
-          "windows": 169,
-          "hits": 155,
-          "rate": 0.9171597633136095
+          "windows": 296,
+          "hits": 279,
+          "rate": 0.9425675675675675
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 126,
-          "hits": 113,
-          "rate": 0.8968253968253969,
-          "baseline": 0.9077100396628711,
-          "brier": 0.0931764151749414,
-          "baselineBrier": 0.09278985032992174,
-          "brierSkill": -0.004166025094826553,
-          "logLoss": 0.3360668392717886,
-          "baselineLogLoss": 0.3335336314102712
+          "predictions": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918,
+          "baseline": 0.9075738715881736,
+          "brier": 0.09714222227619354,
+          "baselineBrier": 0.09682614881175577,
+          "brierSkill": -0.003264339936231986
         },
         {
           "year": 2026,
-          "predictions": 169,
-          "hits": 155,
-          "rate": 0.9171597633136095,
-          "baseline": 0.9092023965103547,
-          "brier": 0.07617426908350876,
-          "baselineBrier": 0.07614452244839788,
-          "brierSkill": -0.00039066020974831694,
-          "logLoss": 0.2870543023815295,
-          "baselineLogLoss": 0.28667727359194184
+          "predictions": 296,
+          "hits": 279,
+          "rate": 0.9425675675675675,
+          "baseline": 0.9091160281059779,
+          "brier": 0.0555317326809501,
+          "baselineBrier": 0.05532154560804748,
+          "brierSkill": -0.003799370942955793
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 7,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 7,
-        "waitingTail": null,
-        "samples": 736,
-        "hits": 674,
-        "lineRate": 0.9168980619709493,
-        "predictedRate": 0.9157909540203955,
-        "baseline": 0.9147892623228175,
-        "edge": 0.001001691697577911,
-        "lower": 0.9017149758388526,
-        "upper": 0.9279598350169812,
+        "stateLabel": "上一期开出",
+        "samples": 798,
+        "hits": 732,
+        "lineRate": 0.915797042697314,
+        "predictedRate": 0.9172566514106922,
+        "baseline": 0.9098473411574023,
+        "edge": 0.007409310253289947,
+        "lower": 0.903941206774862,
+        "upper": 0.92893525338513,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 91.7%（740/807），第1/2/3期结束 60/26/14%，当前状态“上一窗命中”历史 674/736。"
+        "reason": "长期新三期窗口 91.6%（1329/1451），第1/2/3期结束 60/27/13%，当前上一期开出历史 732/798。"
       }
     },
     {
       "rank": 9,
-      "id": "tail8",
-      "label": "尾8",
+      "id": "tail9",
+      "label": "尾9",
       "kind": "tail",
       "longTerm": {
-        "windows": 799,
-        "hits": 724,
-        "misses": 75,
-        "rate": 0.9061326658322904,
-        "baseline": 0.8963078059223887,
-        "edge": 0.009824859909901673,
+        "windows": 1451,
+        "hits": 1317,
+        "misses": 134,
+        "rate": 0.9076498966230186,
+        "baseline": 0.906020073908593,
+        "edge": 0.0016298227144256883,
         "stageShare": {
-          "first": 0.6146408839779005,
-          "second": 0.27348066298342544,
-          "third": 0.11187845303867404
+          "first": 0.621867881548975,
+          "second": 0.2627182991647684,
+          "third": 0.11541381928625664
         },
         "stageCounts": {
-          "first": 445,
-          "second": 198,
-          "third": 81
-        },
-        "hitRuns": {
-          "1": 65,
-          "2": 59,
-          "3": 55,
-          "4": 545
-        },
-        "missRuns": {
-          "1": 65,
-          "2": 9,
-          "3": 1
+          "first": 819,
+          "second": 346,
+          "third": 152
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
-            "hits": 4
+            "n": 6,
+            "hits": 6
           },
           "after_one_miss": {
-            "windows": 65,
-            "hits": 57
+            "n": 346,
+            "hits": 315
           },
           "after_two_misses": {
-            "windows": 8,
-            "hits": 7
+            "n": 152,
+            "hits": 137
           },
           "after_hit": {
-            "windows": 719,
-            "hits": 655
+            "n": 816,
+            "hits": 734
           },
           "after_three_plus_misses": {
-            "windows": 1,
-            "hits": 1
+            "n": 131,
+            "hits": 125
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 122,
-          "hits": 110,
-          "rate": 0.9016393442622951
+          "windows": 231,
+          "hits": 206,
+          "rate": 0.8917748917748918
         },
         {
           "year": 2022,
-          "windows": 133,
-          "hits": 121,
-          "rate": 0.9097744360902256
+          "windows": 231,
+          "hits": 214,
+          "rate": 0.9264069264069265
         },
         {
           "year": 2023,
-          "windows": 128,
-          "hits": 117,
-          "rate": 0.9140625
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2024,
-          "windows": 115,
-          "hits": 100,
-          "rate": 0.8695652173913043
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2025,
-          "windows": 133,
-          "hits": 125,
-          "rate": 0.9398496240601504
+          "windows": 231,
+          "hits": 207,
+          "rate": 0.8961038961038961
         },
         {
           "year": 2026,
-          "windows": 168,
-          "hits": 151,
-          "rate": 0.8988095238095238
+          "windows": 296,
+          "hits": 268,
+          "rate": 0.9054054054054054
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 133,
-          "hits": 125,
-          "rate": 0.9398496240601504,
-          "baseline": 0.9014706302007506,
-          "brier": 0.057817649524212464,
-          "baselineBrier": 0.05806525475336098,
-          "brierSkill": 0.004264258035209689,
-          "logLoss": 0.23554914489296752,
-          "baselineLogLoss": 0.23721553624864292
+          "predictions": 231,
+          "hits": 207,
+          "rate": 0.8961038961038961,
+          "baseline": 0.9113826452098265,
+          "brier": 0.09490605579678318,
+          "baselineBrier": 0.09345174707456448,
+          "brierSkill": -0.015562135195378746
         },
         {
           "year": 2026,
-          "predictions": 168,
-          "hits": 151,
-          "rate": 0.8988095238095238,
-          "baseline": 0.9054485298240221,
-          "brier": 0.09149095536351186,
-          "baselineBrier": 0.09111877116447074,
-          "brierSkill": -0.00408460511796549,
-          "logLoss": 0.33098032207546174,
-          "baselineLogLoss": 0.32866700689597633
+          "predictions": 296,
+          "hits": 268,
+          "rate": 0.9054054054054054,
+          "baseline": 0.9135971799637025,
+          "brier": 0.08648960296273354,
+          "baselineBrier": 0.08571831352414432,
+          "brierSkill": -0.008997953959651639
         }
       ],
       "current": {
-        "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 8,
-        "waitingTail": null,
-        "samples": 719,
-        "hits": 655,
-        "lineRate": 0.9057771220478549,
-        "predictedRate": 0.910846471503325,
-        "baseline": 0.8963078059223887,
-        "edge": 0.014538665580936305,
-        "lower": 0.8964430600581536,
-        "upper": 0.9236631124688727,
-        "confidence": "高于基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 90.6%（724/799），第1/2/3期结束 61/27/11%，当前状态“上一窗命中”历史 655/719。"
+        "target": 1464,
+        "tail": 9,
+        "state": "after_one_miss",
+        "stateLabel": "连续遗漏1期",
+        "samples": 346,
+        "hits": 315,
+        "lineRate": 0.907840648456345,
+        "predictedRate": 0.9102645163090899,
+        "baseline": 0.9170666787949012,
+        "edge": -0.006802162485811336,
+        "lower": 0.8887684631497245,
+        "upper": 0.9281723581174312,
+        "confidence": "接近基准",
+        "reason": "长期新三期窗口 90.8%（1317/1451），第1/2/3期结束 62/26/12%，当前连续遗漏1期历史 315/346。"
       }
     },
     {
       "rank": 10,
-      "id": "prob2",
-      "label": "概率第2",
-      "kind": "probability",
+      "id": "tail8",
+      "label": "尾8",
+      "kind": "tail",
       "longTerm": {
-        "windows": 809,
-        "hits": 734,
-        "misses": 75,
-        "rate": 0.907292954264524,
-        "baseline": 0.9073192517967172,
-        "edge": -0.000026297532193186868,
+        "windows": 1451,
+        "hits": 1298,
+        "misses": 153,
+        "rate": 0.8945554789800138,
+        "baseline": 0.8923966865205613,
+        "edge": 0.0021587924594524965,
         "stageShare": {
-          "first": 0.6171662125340599,
-          "second": 0.2561307901907357,
-          "third": 0.12670299727520437
+          "first": 0.6093990755007704,
+          "second": 0.2711864406779661,
+          "third": 0.11941448382126348
         },
         "stageCounts": {
-          "first": 453,
-          "second": 188,
-          "third": 93
-        },
-        "hitRuns": {
-          "1": 68,
-          "2": 63,
-          "3": 60,
-          "4": 543
-        },
-        "missRuns": {
-          "1": 67,
-          "2": 5,
-          "3": 2,
-          "4": 1
+          "first": 791,
+          "second": 352,
+          "third": 155
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
-            "hits": 6
-          },
-          "after_hit": {
-            "windows": 728,
-            "hits": 661
+            "n": 6,
+            "hits": 4
           },
           "after_one_miss": {
-            "windows": 67,
-            "hits": 62
+            "n": 351,
+            "hits": 313
           },
           "after_two_misses": {
-            "windows": 5,
-            "hits": 3
+            "n": 154,
+            "hits": 133
           },
           "after_three_plus_misses": {
-            "windows": 3,
-            "hits": 2
+            "n": 152,
+            "hits": 133
+          },
+          "after_hit": {
+            "n": 788,
+            "hits": 715
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 146,
-          "hits": 136,
-          "rate": 0.9315068493150684
+          "windows": 231,
+          "hits": 203,
+          "rate": 0.8787878787878788
         },
         {
           "year": 2022,
-          "windows": 132,
-          "hits": 121,
-          "rate": 0.9166666666666666
+          "windows": 231,
+          "hits": 210,
+          "rate": 0.9090909090909091
         },
         {
           "year": 2023,
-          "windows": 112,
-          "hits": 98,
-          "rate": 0.875
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
         },
         {
           "year": 2024,
-          "windows": 124,
-          "hits": 111,
-          "rate": 0.8951612903225806
+          "windows": 231,
+          "hits": 200,
+          "rate": 0.8658008658008658
         },
         {
           "year": 2025,
-          "windows": 135,
-          "hits": 125,
-          "rate": 0.9259259259259259
+          "windows": 231,
+          "hits": 216,
+          "rate": 0.935064935064935
         },
         {
           "year": 2026,
-          "windows": 160,
-          "hits": 143,
-          "rate": 0.89375
+          "windows": 296,
+          "hits": 261,
+          "rate": 0.8817567567567568
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 135,
-          "hits": 125,
-          "rate": 0.9259259259259259,
-          "baseline": 0.9052640605820418,
-          "brier": 0.0687704980568552,
-          "baselineBrier": 0.07082162299906035,
-          "brierSkill": 0.02896184604852059,
-          "logLoss": 0.26510664723892796,
-          "baselineLogLoss": 0.27568453305486407
+          "predictions": 231,
+          "hits": 216,
+          "rate": 0.935064935064935,
+          "baseline": 0.9013688074555959,
+          "brier": 0.06249658529696634,
+          "baselineBrier": 0.0619397447428287,
+          "brierSkill": -0.00899003630786055
         },
         {
           "year": 2026,
-          "predictions": 160,
-          "hits": 143,
-          "rate": 0.89375,
-          "baseline": 0.9096350268864002,
-          "brier": 0.09541069998947649,
-          "baselineBrier": 0.09431996329256401,
-          "brierSkill": -0.01156421884441583,
-          "logLoss": 0.3417437850055641,
-          "baselineLogLoss": 0.335642536181434
+          "predictions": 296,
+          "hits": 261,
+          "rate": 0.8817567567567568,
+          "baseline": 0.9053692928872304,
+          "brier": 0.10502426696459419,
+          "baselineBrier": 0.10497734128956011,
+          "brierSkill": -0.00044700765381966434
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 8,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 0,
-        "waitingTail": null,
-        "samples": 728,
-        "hits": 661,
-        "lineRate": 0.9072938945815275,
-        "predictedRate": 0.9079490346144794,
-        "baseline": 0.9073192517967172,
-        "edge": 0.0006297828177621589,
-        "lower": 0.8933221660444595,
-        "upper": 0.9207797233297841,
+        "stateLabel": "上一期开出",
+        "samples": 788,
+        "hits": 715,
+        "lineRate": 0.8947890408484938,
+        "predictedRate": 0.9070492336843686,
+        "baseline": 0.9060856498873028,
+        "edge": 0.0009635837970658478,
+        "lower": 0.8932817761988342,
+        "upper": 0.919748593144906,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 90.7%（734/809），第1/2/3期结束 62/26/13%，当前状态“上一窗命中”历史 661/728。"
+        "reason": "长期新三期窗口 89.5%（1298/1451），第1/2/3期结束 61/27/12%，当前上一期开出历史 715/788。"
       }
     },
     {
@@ -3184,273 +2810,238 @@
       "label": "尾4",
       "kind": "tail",
       "longTerm": {
-        "windows": 779,
-        "hits": 707,
-        "misses": 72,
-        "rate": 0.9075738125802311,
-        "baseline": 0.906104136074455,
-        "edge": 0.0014696765057761185,
+        "windows": 1451,
+        "hits": 1309,
+        "misses": 142,
+        "rate": 0.9021364576154376,
+        "baseline": 0.9052091722283556,
+        "edge": -0.003072714612918026,
         "stageShare": {
-          "first": 0.5898161244695899,
-          "second": 0.26025459688826025,
-          "third": 0.14992927864214992
+          "first": 0.5889992360580596,
+          "second": 0.2750190985485103,
+          "third": 0.1359816653934301
         },
         "stageCounts": {
-          "first": 417,
-          "second": 184,
-          "third": 106
-        },
-        "hitRuns": {
-          "1": 68,
-          "2": 61,
-          "3": 57,
-          "4": 521
-        },
-        "missRuns": {
-          "1": 67,
-          "2": 5
+          "first": 771,
+          "second": 360,
+          "third": 178
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 702,
-            "hits": 635
+            "n": 768,
+            "hits": 696
           },
           "after_one_miss": {
-            "windows": 66,
-            "hits": 61
+            "n": 360,
+            "hits": 321
           },
           "after_two_misses": {
-            "windows": 5,
-            "hits": 5
+            "n": 176,
+            "hits": 160
+          },
+          "after_three_plus_misses": {
+            "n": 141,
+            "hits": 126
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 126,
-          "hits": 112,
-          "rate": 0.8888888888888888
+          "windows": 231,
+          "hits": 208,
+          "rate": 0.9004329004329005
         },
         {
           "year": 2022,
-          "windows": 137,
-          "hits": 131,
-          "rate": 0.9562043795620438
+          "windows": 231,
+          "hits": 220,
+          "rate": 0.9523809523809523
         },
         {
           "year": 2023,
-          "windows": 122,
-          "hits": 111,
-          "rate": 0.9098360655737705
+          "windows": 231,
+          "hits": 203,
+          "rate": 0.8787878787878788
         },
         {
           "year": 2024,
-          "windows": 120,
-          "hits": 107,
-          "rate": 0.8916666666666667
+          "windows": 231,
+          "hits": 200,
+          "rate": 0.8658008658008658
         },
         {
           "year": 2025,
-          "windows": 113,
-          "hits": 98,
-          "rate": 0.8672566371681416
+          "windows": 231,
+          "hits": 204,
+          "rate": 0.8831168831168831
         },
         {
           "year": 2026,
-          "windows": 161,
-          "hits": 148,
-          "rate": 0.9192546583850931
+          "windows": 296,
+          "hits": 274,
+          "rate": 0.9256756756756757
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 113,
-          "hits": 98,
-          "rate": 0.8672566371681416,
-          "baseline": 0.9004328501429397,
-          "brier": 0.11685378012735534,
-          "baselineBrier": 0.11639761685953307,
-          "brierSkill": -0.00391900865438477,
-          "logLoss": 0.400904084466745,
-          "baselineLogLoss": 0.3981721581666
+          "predictions": 231,
+          "hits": 204,
+          "rate": 0.8831168831168831,
+          "baseline": 0.9002478996307975,
+          "brier": 0.10434663135641319,
+          "baselineBrier": 0.10359967091892772,
+          "brierSkill": -0.007210065735343996
         },
         {
           "year": 2026,
-          "predictions": 161,
-          "hits": 148,
-          "rate": 0.9192546583850931,
-          "baseline": 0.8967289525250441,
-          "brier": 0.07461783796416595,
-          "baselineBrier": 0.07483842100399214,
-          "brierSkill": 0.00294745715993161,
-          "logLoss": 0.2829903311900042,
-          "baselineLogLoss": 0.2840937744613131
+          "predictions": 296,
+          "hits": 274,
+          "rate": 0.9256756756756757,
+          "baseline": 0.8965979077734645,
+          "brier": 0.06968740407970668,
+          "baselineBrier": 0.06972221887090527,
+          "brierSkill": 0.0004993356746584299
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 4,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 4,
-        "waitingTail": null,
-        "samples": 702,
-        "hits": 635,
-        "lineRate": 0.9075193128334161,
-        "predictedRate": 0.9046404241782109,
-        "baseline": 0.906104136074455,
-        "edge": -0.0014637118962440576,
-        "lower": 0.8894069031232135,
-        "upper": 0.91782590281802,
+        "stateLabel": "上一期开出",
+        "samples": 768,
+        "hits": 696,
+        "lineRate": 0.9020486900141818,
+        "predictedRate": 0.9061433677668573,
+        "baseline": 0.8978036637001049,
+        "edge": 0.00833970406675244,
+        "lower": 0.8919088259214333,
+        "upper": 0.9188615306512117,
         "confidence": "接近基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 90.8%（707/779），第1/2/3期结束 59/26/15%，当前状态“上一窗命中”历史 635/702。"
+        "reason": "长期新三期窗口 90.2%（1309/1451），第1/2/3期结束 59/28/14%，当前上一期开出历史 696/768。"
       }
     },
     {
       "rank": 12,
-      "id": "tail9",
-      "label": "尾9",
-      "kind": "tail",
+      "id": "prob2",
+      "label": "概率第2",
+      "kind": "probability",
       "longTerm": {
-        "windows": 826,
-        "hits": 744,
-        "misses": 82,
-        "rate": 0.9007263922518159,
-        "baseline": 0.9082880076373938,
-        "edge": -0.007561615385577869,
+        "windows": 1451,
+        "hits": 1312,
+        "misses": 139,
+        "rate": 0.9042039972432805,
+        "baseline": 0.9080557915616436,
+        "edge": -0.003851794318363133,
         "stageShare": {
-          "first": 0.6411290322580645,
-          "second": 0.26344086021505375,
-          "third": 0.09543010752688172
+          "first": 0.6189024390243902,
+          "second": 0.24847560975609756,
+          "third": 0.1326219512195122
         },
         "stageCounts": {
-          "first": 477,
-          "second": 196,
-          "third": 71
-        },
-        "hitRuns": {
-          "1": 76,
-          "2": 65,
-          "3": 64,
-          "4": 539
-        },
-        "missRuns": {
-          "1": 75,
-          "2": 6,
-          "3": 1
+          "first": 812,
+          "second": 326,
+          "third": 174
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
           "after_hit": {
-            "windows": 739,
-            "hits": 664
+            "n": 1183,
+            "hits": 1069
           },
           "after_one_miss": {
-            "windows": 74,
-            "hits": 68
+            "n": 236,
+            "hits": 214
           },
           "after_two_misses": {
-            "windows": 6,
-            "hits": 5
-          },
-          "after_three_plus_misses": {
-            "windows": 1,
-            "hits": 1
+            "n": 26,
+            "hits": 23
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 127,
-          "hits": 111,
-          "rate": 0.8740157480314961
+          "windows": 231,
+          "hits": 219,
+          "rate": 0.948051948051948
         },
         {
           "year": 2022,
-          "windows": 132,
-          "hits": 116,
-          "rate": 0.8787878787878788
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2023,
-          "windows": 132,
-          "hits": 119,
-          "rate": 0.9015151515151515
+          "windows": 231,
+          "hits": 209,
+          "rate": 0.9047619047619048
         },
         {
           "year": 2024,
-          "windows": 130,
-          "hits": 117,
-          "rate": 0.9
+          "windows": 231,
+          "hits": 200,
+          "rate": 0.8658008658008658
         },
         {
           "year": 2025,
-          "windows": 127,
-          "hits": 116,
-          "rate": 0.9133858267716536
+          "windows": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178
         },
         {
           "year": 2026,
-          "windows": 178,
-          "hits": 165,
-          "rate": 0.9269662921348315
+          "windows": 296,
+          "hits": 260,
+          "rate": 0.8783783783783784
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 127,
-          "hits": 116,
-          "rate": 0.9133858267716536,
-          "baseline": 0.9114966196971541,
-          "brier": 0.07990767459553005,
-          "baselineBrier": 0.07921680456666524,
-          "brierSkill": -0.008721255958808571,
-          "logLoss": 0.2988661056713522,
-          "baselineLogLoss": 0.29528283012279144
+          "predictions": 231,
+          "hits": 212,
+          "rate": 0.9177489177489178,
+          "baseline": 0.9060903825667974,
+          "brier": 0.07581308232288107,
+          "baselineBrier": 0.0773011018818723,
+          "brierSkill": 0.019249655215331063
         },
         {
           "year": 2026,
-          "predictions": 178,
-          "hits": 165,
-          "rate": 0.9269662921348315,
-          "baseline": 0.9137744767860592,
-          "brier": 0.06860226352757531,
-          "baselineBrier": 0.06791347883719412,
-          "brierSkill": -0.010142091116144725,
-          "logLoss": 0.2667250535564847,
-          "baselineLogLoss": 0.2628215196339037
+          "predictions": 296,
+          "hits": 260,
+          "rate": 0.8783783783783784,
+          "baseline": 0.9084772160174263,
+          "brier": 0.1078922732627322,
+          "baselineBrier": 0.10716417566782778,
+          "brierSkill": -0.006794225685655242
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 3,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 9,
-        "waitingTail": null,
-        "samples": 739,
-        "hits": 664,
-        "lineRate": 0.9009914021368246,
-        "predictedRate": 0.8985768485411547,
-        "baseline": 0.9082880076373938,
-        "edge": -0.009711159096239097,
-        "lower": 0.8833997017496331,
-        "upper": 0.9118601713544348,
+        "stateLabel": "上一期开出",
+        "samples": 1183,
+        "hits": 1069,
+        "lineRate": 0.9043597519221445,
+        "predictedRate": 0.9036468786686973,
+        "baseline": 0.9118930865565257,
+        "edge": -0.008246207887828372,
+        "lower": 0.8920881766403074,
+        "upper": 0.9140649921241021,
         "confidence": "接近基准",
-        "windowStart": 1463,
-        "windowAttempts": 1,
-        "reason": "长期 90.1%（744/826），第1/2/3期结束 64/26/10%，当前状态“上一窗命中”历史 664/739。"
+        "reason": "长期新三期窗口 90.4%（1312/1451），第1/2/3期结束 62/25/13%，当前上一期开出历史 1069/1183。"
       }
     },
     {
@@ -3459,140 +3050,165 @@
       "label": "尾0",
       "kind": "tail",
       "longTerm": {
-        "windows": 696,
-        "hits": 604,
-        "misses": 92,
-        "rate": 0.867816091954023,
-        "baseline": 0.8252645080511333,
-        "edge": 0.04255158390288971,
+        "windows": 1451,
+        "hits": 1216,
+        "misses": 235,
+        "rate": 0.8380427291523087,
+        "baseline": 0.8208724008077456,
+        "edge": 0.017170328344563113,
         "stageShare": {
-          "first": 0.5579470198675497,
-          "second": 0.30960264900662254,
-          "third": 0.13245033112582782
+          "first": 0.5657894736842105,
+          "second": 0.2935855263157895,
+          "third": 0.140625
         },
         "stageCounts": {
-          "first": 337,
-          "second": 187,
-          "third": 80
-        },
-        "hitRuns": {
-          "1": 75,
-          "2": 68,
-          "3": 56,
-          "4": 405
-        },
-        "missRuns": {
-          "1": 74,
-          "2": 14,
-          "3": 3,
-          "4": 1
+          "first": 688,
+          "second": 357,
+          "third": 171
         },
         "stateCounts": {
           "year_start": {
-            "windows": 6,
+            "n": 6,
             "hits": 6
           },
-          "after_hit": {
-            "windows": 601,
-            "hits": 527
-          },
           "after_one_miss": {
-            "windows": 73,
-            "hits": 59
+            "n": 358,
+            "hits": 306
           },
           "after_two_misses": {
-            "windows": 12,
-            "hits": 9
+            "n": 171,
+            "hits": 141
+          },
+          "after_hit": {
+            "n": 687,
+            "hits": 595
           },
           "after_three_plus_misses": {
-            "windows": 4,
-            "hits": 3
+            "n": 229,
+            "hits": 168
           }
         }
       },
       "yearly": [
         {
           "year": 2021,
-          "windows": 99,
-          "hits": 83,
-          "rate": 0.8383838383838383
+          "windows": 231,
+          "hits": 176,
+          "rate": 0.7619047619047619
         },
         {
           "year": 2022,
-          "windows": 96,
-          "hits": 74,
-          "rate": 0.7708333333333334
+          "windows": 231,
+          "hits": 179,
+          "rate": 0.7748917748917749
         },
         {
           "year": 2023,
-          "windows": 105,
-          "hits": 87,
-          "rate": 0.8285714285714286
+          "windows": 231,
+          "hits": 188,
+          "rate": 0.8138528138528138
         },
         {
           "year": 2024,
-          "windows": 118,
-          "hits": 106,
-          "rate": 0.8983050847457628
+          "windows": 231,
+          "hits": 195,
+          "rate": 0.8441558441558441
         },
         {
           "year": 2025,
-          "windows": 123,
-          "hits": 112,
-          "rate": 0.9105691056910569
+          "windows": 231,
+          "hits": 213,
+          "rate": 0.922077922077922
         },
         {
           "year": 2026,
-          "windows": 155,
-          "hits": 142,
-          "rate": 0.9161290322580645
+          "windows": 296,
+          "hits": 265,
+          "rate": 0.8952702702702703
         }
       ],
       "validation": [
         {
           "year": 2025,
-          "predictions": 123,
-          "hits": 112,
-          "rate": 0.9105691056910569,
-          "baseline": 0.8417500016096142,
-          "brier": 0.0853614298009695,
-          "baselineBrier": 0.0869314765023921,
-          "brierSkill": 0.018060738924403186,
-          "logLoss": 0.31816149866247784,
-          "baselineLogLoss": 0.3245619313413587
+          "predictions": 231,
+          "hits": 213,
+          "rate": 0.922077922077922,
+          "baseline": 0.8419641649355917,
+          "brier": 0.08464199935975993,
+          "baselineBrier": 0.07883755317389056,
+          "brierSkill": -0.07362539744310181
         },
         {
           "year": 2026,
-          "predictions": 155,
-          "hits": 142,
-          "rate": 0.9161290322580645,
-          "baseline": 0.851668619026523,
-          "brier": 0.07986285383679054,
-          "baselineBrier": 0.0811823997697322,
-          "brierSkill": 0.016254088776439857,
-          "logLoss": 0.3020148999598204,
-          "baselineLogLoss": 0.30788491761392994
+          "predictions": 296,
+          "hits": 265,
+          "rate": 0.8952702702702703,
+          "baseline": 0.8515905895932288,
+          "brier": 0.09623333685014983,
+          "baselineBrier": 0.09599562915087342,
+          "brierSkill": -0.00247623460962787
         }
       ],
       "current": {
+        "target": 1464,
+        "tail": 0,
         "state": "after_hit",
-        "stateLabel": "上一窗命中",
-        "status": "active",
-        "lockedTail": 0,
-        "waitingTail": null,
-        "samples": 601,
-        "hits": 527,
-        "lineRate": 0.8660577620406805,
-        "predictedRate": 0.8765235994216,
-        "baseline": 0.8252645080511333,
-        "edge": 0.05125909137046669,
-        "lower": 0.8586838671305267,
-        "upper": 0.8930106813748458,
-        "confidence": "高于基准",
-        "windowStart": 1464,
-        "windowAttempts": 0,
-        "reason": "长期 86.8%（604/696），第1/2/3期结束 56/31/13%，当前状态“上一窗命中”历史 527/601。"
+        "stateLabel": "上一期开出",
+        "samples": 687,
+        "hits": 595,
+        "lineRate": 0.8383930977761314,
+        "predictedRate": 0.8653010777305837,
+        "baseline": 0.8553392602150206,
+        "edge": 0.009961817515563132,
+        "lower": 0.8485790788760227,
+        "upper": 0.8818478040860659,
+        "confidence": "接近基准",
+        "reason": "长期新三期窗口 83.8%（1216/1451），第1/2/3期结束 57/29/14%，当前上一期开出历史 595/687。"
       }
+    }
+  ],
+  "selectionValidation": [
+    {
+      "year": 2025,
+      "periods": 231,
+      "all": {
+        "n": 3003,
+        "hits": 2733,
+        "rate": 0.9100899100899101
+      },
+      "top2": {
+        "n": 462,
+        "hits": 411,
+        "rate": 0.8896103896103896
+      },
+      "top3": {
+        "n": 693,
+        "hits": 623,
+        "rate": 0.898989898989899
+      },
+      "top2Lift": -0.020479520479520508,
+      "top3Lift": -0.011100011100011131
+    },
+    {
+      "year": 2026,
+      "periods": 296,
+      "all": {
+        "n": 3848,
+        "hits": 3474,
+        "rate": 0.9028066528066528
+      },
+      "top2": {
+        "n": 592,
+        "hits": 537,
+        "rate": 0.9070945945945946
+      },
+      "top3": {
+        "n": 888,
+        "hits": 797,
+        "rate": 0.8975225225225225
+      },
+      "top2Lift": 0.004287941787941785,
+      "top3Lift": -0.005284130284130328
     }
   ]
 }

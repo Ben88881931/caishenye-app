@@ -823,6 +823,7 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator("[data-report-mode]")).toHaveCount(39);
   await expect(page.locator("[data-report-personality-state]")).toHaveCount(13);
   await expect(page.locator('[data-report-section="snapshot"]')).toHaveCount(1);
+  await expect(page.locator('[data-report-section="snapshot"]')).toContainText("每期前2/3选线走步验证");
   await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
   await expect(page.locator("#view")).toContainText("逐线长期性格模型");
   await expect(page.locator("#view")).not.toContainText("20% / 30% / 40%");
@@ -855,14 +856,10 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
       eligible: row.getAttribute("data-report-eligible") === "true",
     }))
   ));
-  expect(rankingRows.some((row) => row.eligible)).toBe(true);
-  expect(rankingRows.findIndex((row) => !row.eligible)).toBeGreaterThan(0);
-  expect(rankingRows.every((row, index) => index === 0 || rankingRows[index - 1].eligible || !row.eligible)).toBe(true);
+  expect(rankingRows.every((row) => row.eligible)).toBe(true);
   expect(rankingRows.every((row) => Math.abs(row.score - row.predicted) < 0.0001)).toBe(true);
-  for (const eligible of [true, false]) {
-    const scores = rankingRows.filter((row) => row.eligible === eligible).map((row) => row.score);
-    expect(scores.every((score, index) => index === 0 || scores[index - 1] >= score)).toBe(true);
-  }
+  const scores = rankingRows.map((row) => row.score);
+  expect(scores.every((score, index) => index === 0 || scores[index - 1] >= score)).toBe(true);
   const snapshotTop3 = await page.evaluate(() => {
     const latest = window.APP_DATA.d[window.APP_DATA.d.length - 1];
     const record = window.APP_PERSONALITY_SNAPSHOTS.records.find((item) => (

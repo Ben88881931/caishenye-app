@@ -39,7 +39,7 @@ def main():
     selector_path = REPO / "model_selector.js"
     probability_research_path = REPO / "probability_weight_research.js"
     probability_model_path = REPO / "model_probability.js"
-    personality_model_path = REPO / "personality_model.js"
+    personality_model_path = REPO / "next_window_model.js"
     personality_data_path = REPO / "personality_model_data.js"
     personality_snapshots_js_path = REPO / "personality_snapshots.js"
     selector_backtest_path = REPO / "selector_backtest.js"

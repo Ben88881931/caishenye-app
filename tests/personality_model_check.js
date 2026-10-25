@@ -3,7 +3,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
-const personality = require("../personality_model.js");
+const personality = require("../next_window_model.js");
 const probabilityModel = require("../model_probability.js");
 
 const dataSandbox = { window: {} };
@@ -23,7 +23,8 @@ const expectedLines = [
   "prob3",
 ];
 
-assert.equal(model.method, "per-line-long-term-personality-v1");
+assert.equal(model.method, "per-line-next-window-personality-v2");
+assert.equal(model.overlappingWindows, true);
 assert.equal(model.lines.length, 13);
 assert.deepEqual(model.lines.map((line) => line.id), expectedLines);
 assert.equal(model.ranking.length, 13);
@@ -41,6 +42,9 @@ for (const line of model.lines) {
   assert.ok(Number.isFinite(line.longTerm.stageShare.first));
   assert.ok(Number.isFinite(line.longTerm.stageShare.second));
   assert.ok(Number.isFinite(line.longTerm.stageShare.third));
+  assert.ok(Number.isInteger(line.longTerm.stageCounts.first));
+  assert.ok(Number.isInteger(line.longTerm.stageCounts.second));
+  assert.ok(Number.isInteger(line.longTerm.stageCounts.third));
   assert.ok(Array.isArray(line.yearly) && line.yearly.length > 0);
   assert.ok(line.current.state, `${line.id} missing personality state`);
   assert.ok(Number.isFinite(line.current.predictedRate), `${line.id} prediction missing`);
@@ -48,9 +52,8 @@ for (const line of model.lines) {
   assert.ok(Number.isFinite(line.current.edge), `${line.id} current edge missing`);
   assert.ok(line.current.samples >= 0);
   assert.ok(line.current.reason);
-  if (line.current.status === "active") {
-    assert.ok(Number.isInteger(line.current.windowStart), `${line.id} active current window needs a start`);
-  }
+  assert.equal(line.current.target, model.target);
+  assert.ok(line.current.tail >= 0 && line.current.tail <= 9);
   assert.equal(line.validation.length, 2);
   assert.deepEqual(line.validation.map((item) => item.year), [2025, 2026]);
   for (const item of line.validation) {
@@ -68,5 +71,12 @@ assert.equal(model.oneTwoThreeWeightMix, false);
 assert.equal(model.lookAheadUsed, false);
 assert.ok(model.asOfPeriod > 0);
 assert.ok(model.lines.some((line) => line.current.state !== "year_start"), "current personality state must use completed current-year windows");
+assert.equal(model.selectionValidation.length, 2);
+for (const item of model.selectionValidation) {
+  assert.ok(item.periods > 0);
+  assert.ok(Number.isFinite(item.all.rate));
+  assert.ok(Number.isFinite(item.top2.rate));
+  assert.ok(Number.isFinite(item.top3.rate));
+}
 
 console.log("PASS: per-line long-term personality model contract");

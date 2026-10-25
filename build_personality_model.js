@@ -2,7 +2,7 @@
 
 const fs = require("node:fs");
 const vm = require("node:vm");
-const personality = require("./personality_model.js");
+const personality = require("./next_window_model.js");
 const probabilityModel = require("./model_probability.js");
 
 function readSnapshots() {
@@ -15,6 +15,7 @@ function readSnapshots() {
 function settleSnapshots(snapshots, d) {
   let changed = false;
   snapshots.records.forEach((record) => {
+    if (record.superseded) return;
     record.lines.forEach((line) => {
       if (line.status !== "pending") return;
       line.attempts = Array.isArray(line.attempts) ? line.attempts : [];
@@ -48,18 +49,23 @@ function appendCurrentSnapshot(snapshots, model, appData) {
   const latest = appData.d[appData.d.length - 1];
   const targetGlobal = appData.d.length + 1;
   const targetLocal = Number(latest.p) + 1;
-  const exists = snapshots.records.some((record) => (
-    Number(record.year) === Number(latest.y) && Number(record.target) === targetLocal
+  const sameVersion = snapshots.records.some((record) => (
+    Number(record.year) === Number(latest.y) &&
+    Number(record.target) === targetLocal &&
+    record.version === model.version
   ));
-  if (exists) return false;
+  if (sameVersion) return false;
+  snapshots.records.forEach((record) => {
+    if (Number(record.year) === Number(latest.y) && Number(record.target) === targetLocal) {
+      record.superseded = true;
+      record.supersededBy = model.version;
+    }
+  });
 
-  const candidateIds = new Set(model.lines
-    .filter((line) => line.current.status === "active" && Number(line.current.windowStart) === targetGlobal)
-    .map((line) => line.id));
-  const candidates = model.ranking.filter((line) => candidateIds.has(line.id)).map((line) => ({
+  const candidates = model.ranking.map((line) => ({
     id: line.id,
     label: line.label,
-    tail: line.current.lockedTail,
+    tail: line.current.tail,
     predictedRate: line.current.predictedRate,
     baseline: line.current.baseline,
     edge: line.current.edge,
