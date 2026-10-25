@@ -2786,6 +2786,13 @@ body[data-page="trend"] .trend-run-chip.is-current {
   box-shadow: 0 0 0 2px #dbeafe;
 }
 
+body[data-page="windowmiss"] .trend-run-chip--live {
+  border: 2px dashed #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 2px #dbeafe;
+}
+
 body[data-page="missorder"] .trend-run-empty,
 body[data-page="windowmiss"] .trend-run-empty,
 body[data-page="trend"] .trend-run-empty {

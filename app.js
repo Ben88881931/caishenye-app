@@ -2396,14 +2396,32 @@
       "当年第" + run.startPeriod + "–" + run.endPeriod + "期" + gapText;
   }
 
-  function wmRunStripHTML(line, kind, runs, activeState) {
+  function wmRunLiveChipHTML(line, activeState, maxStage) {
+    if (!activeState) return "";
+    if (activeState.waiting) {
+      return '<span class="trend-run-chip trend-run-chip--live" data-wm-live-state="waiting" title="' +
+        line.label + '当前等待尾' + activeState.waiting.tail + '重新开出">' +
+        '<b>等尾' + activeState.waiting.tail + '</b><small>重新开出后开窗</small></span>';
+    }
+    if (!activeState.active) return "";
+    var stage = Math.min(maxStage, (activeState.active.attempts || []).length + 1);
+    var startPeriod = betLocalPeriod(activeState.active.start);
+    var tailText = activeState.active.lockedTail != null ? " · 锁尾" + activeState.active.lockedTail : "";
+    return '<span class="trend-run-chip trend-run-chip--live" data-wm-live-state="active" title="' +
+      line.label + '当前窗口第' + stage + '期，起始第' + startPeriod + '期' + tailText + '">' +
+      '<b>进' + stage + '</b><small>第' + startPeriod + '期起' + tailText + '</small></span>';
+  }
+
+  function wmRunStripHTML(line, kind, runs, activeState, maxStage) {
     var isHit = kind === "hit";
     var label = isHit ? "窗口连中" : "窗口遗漏";
     var countsText = wmRunCountsText(isHit ? "连" : "漏", runs);
+    var liveChip = wmRunLiveChipHTML(line, activeState, maxStage);
     var html = '<div class="trend-run-row">';
     html += '<div class="trend-run-row__head"><b>' + label + '</b><span>' + countsText + '</span></div>';
     html += '<div class="trend-run-strip" aria-label="' + line.label + label + '滚动记录">';
-    if (!runs.length) {
+    html += liveChip;
+    if (!runs.length && !liveChip) {
       html += '<span class="trend-run-empty">该年暂无' + (isHit ? "连中" : "遗漏") + '段</span>';
     } else {
       var reversed = runs.slice().reverse();
@@ -2436,7 +2454,7 @@
     var latestYear = Number((D[D.length - 1] || {}).y);
     var isCurrentYear = Number(year) === latestYear;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏 / 窗口连中滚动记录 · ' + year + '年</h2><span class="section__hint">单位=一个完整窗口，不是一期 · 每年重新开窗、跨年断段 · 新→旧 · 横向滑动看全部</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏2窗”=连续2个窗口三期全错；“连3窗”=连续3个窗口在三期内命中。遗漏铁链和连中铁链都按新→旧排列：当前段在左，连到上一次同类段，再到更上一次。<b>每块连接牌都写两组数：起点差=本次段起点减上次段起点；中间隔X窗=两段之间完整隔开的窗口数</b>。进行中的窗口还没结算，不计入已完成窗口的连错或连中。</div></div>';
+    html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏2窗”=连续2个窗口三期全错；“连3窗”=连续3个窗口在三期内命中。遗漏铁链和连中铁链都按新→旧排列：最左第一格是当前未结算的实时状态，后面接已完成同类段。<b>每块连接牌都写两组数：起点差=本次段起点减上次段起点；中间隔X窗=两段之间完整隔开的窗口数</b>。实时格显示“进N”=窗口进行到第N期，“等尾X”=等待该尾号重新开出；实时格不计入连中或连错统计。</div></div>';
     EXEC_LINES.forEach(function (line) {
       var data = wmWindowRunData(line, maxStage, year);
       var activeState = isCurrentYear ? wmStageNow(line, maxStage) : null;
@@ -2458,8 +2476,8 @@
       html += '<div class="wm-run-summary__item wm-run-summary__item--miss"><b>窗口遗漏</b><span>' + wmRunCountsText("漏", data.miss) + '</span><small>' + wmRunGapText(data.miss) + '</small></div>';
       html += '<div class="wm-run-summary__item wm-run-summary__item--hit"><b>窗口连中</b><span>' + wmRunCountsText("连", data.hit) + '</span><small>' + wmRunGapText(data.hit) + '</small></div>';
       html += '</div>';
-      html += wmRunStripHTML(line, "miss", data.miss, activeState);
-      html += wmRunStripHTML(line, "hit", data.hit, activeState);
+      html += wmRunStripHTML(line, "miss", data.miss, activeState, maxStage);
+      html += wmRunStripHTML(line, "hit", data.hit, activeState, maxStage);
       html += "</div></div>";
     });
     html += '<p class="disclaimer">窗口记录只读取本页同一套两期/三期窗口引擎；切换上方两期/三期或年份，整页一起切换。没有把未结算的当前窗口写成中或错。</p>';

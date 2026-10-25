@@ -662,6 +662,30 @@ test("13-line center subtabs are fixed and clickable", async ({ page }) => {
   await expect(page.locator(".wm-view-tab.is-active")).toHaveAttribute("data-wm-view", "windows");
 });
 
+test("window omission and hit strips start with the current live state", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmiss"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement &&
+      view.innerText.includes("窗口遗漏 / 窗口连中滚动记录") &&
+      document.querySelectorAll(".trend-run-strip").length === 26;
+  });
+
+  const strips = page.locator(".trend-run-strip");
+  await expect(strips).toHaveCount(26);
+  const liveStates = page.locator("[data-wm-live-state]");
+  await expect(liveStates).toHaveCount(26);
+  for (let index = 0; index < 26; index++) {
+    const strip = strips.nth(index);
+    await expect(strip.locator("[data-wm-live-state]").first()).toHaveCount(1);
+    await expect(strip.locator("[data-wm-live-state]").first()).toHaveText(/进\d|等尾\d/);
+  }
+});
+
 test("long right swipe on the first page does not open the directory", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
