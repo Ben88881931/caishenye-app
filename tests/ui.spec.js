@@ -445,11 +445,11 @@ test("full-screen content swipes flip navigation pages", async ({ page }) => {
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
   });
 
-  const swipe = (distance, pointerId) => page.locator("#view .panel").first().evaluate((element, settings) => {
+  const swipe = (distance, pointerId, vertical = 0) => page.locator("#view .panel").first().evaluate((element, settings) => {
     const rect = element.getBoundingClientRect();
     const startX = rect.left + Math.min(120, rect.width / 2);
     const y = rect.top + 20;
-    const pointer = (type, clientX) => new PointerEvent(type, {
+    const pointer = (type, clientX, clientY) => new PointerEvent(type, {
       bubbles: true,
       cancelable: true,
       isPrimary: true,
@@ -457,17 +457,18 @@ test("full-screen content swipes flip navigation pages", async ({ page }) => {
       pointerType: "touch",
       button: 0,
       clientX,
-      clientY: y,
+      clientY,
     });
     const before = document.body.dataset.page;
-    element.dispatchEvent(pointer("pointerdown", startX));
-    document.documentElement.dispatchEvent(pointer("pointermove", startX - settings.distance));
-    document.documentElement.dispatchEvent(pointer("pointerup", startX - settings.distance));
+    element.dispatchEvent(pointer("pointerdown", startX, y));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - settings.distance, y + settings.vertical));
+    document.documentElement.dispatchEvent(pointer("pointerup", startX - settings.distance, y + settings.vertical));
     return { before, after: document.body.dataset.page };
-  }, { distance, pointerId });
+  }, { distance, pointerId, vertical });
 
-  expect(await swipe(24, 99)).toEqual({ before: "pick3", after: "pick3" });
-  expect(await swipe(60, 100)).toEqual({ before: "pick3", after: "betexec" });
+  expect(await swipe(40, 99)).toEqual({ before: "pick3", after: "pick3" });
+  expect(await swipe(0, 100, 80)).toEqual({ before: "pick3", after: "pick3" });
+  expect(await swipe(60, 101)).toEqual({ before: "pick3", after: "betexec" });
 });
 
 test("a page swipe still commits when the touch system omits pointerup", async ({ page }) => {
@@ -527,8 +528,8 @@ test("a short touch swipe commits once when the browser cancels the pointer stre
     });
     const before = document.body.dataset.page;
     element.dispatchEvent(pointer("pointerdown", startX));
-    document.documentElement.dispatchEvent(pointer("pointermove", startX - 28));
-    document.documentElement.dispatchEvent(pointer("pointercancel", startX - 28));
+    document.documentElement.dispatchEvent(pointer("pointermove", startX - 40));
+    document.documentElement.dispatchEvent(pointer("pointercancel", startX - 40));
     return { before, after: document.body.dataset.page };
   });
   expect(result).toEqual({ before: "pick3", after: "betexec" });

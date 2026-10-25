@@ -7015,10 +7015,10 @@
     view.innerHTML = html;
   }
 
-  var SWIPE_X = 28;
-  var SWIPE_PRIMARY_X = 22;
-  var SWIPE_CANCEL_X = 20;
-  var SWIPE_DIRECTION_RATIO = 1.12;
+  var SWIPE_X = 48;
+  var SWIPE_PRIMARY_X = 42;
+  var SWIPE_CANCEL_X = 38;
+  var SWIPE_DIRECTION_RATIO = 1.45;
   var HORIZONTAL_EDGE_FLIP_ZONE = 56;
   var historyPointerStart = null;
   var gestureClickGuard = false;
@@ -7068,6 +7068,7 @@
     var absX = Math.abs(dx);
     var absY = Math.abs(dy);
     if (absX > 10 || absY > 10) armGestureClickGuard();
+    if (gesture.axis === "vertical") return null;
     if (gesture.inHorizontalScroll && !gesture.edgeSwipe) return null;
     if (absX < threshold || absX < absY * SWIPE_DIRECTION_RATIO) return null;
     return { type: "page", level: gesture.level, delta: dx > 0 ? -1 : 1 };
@@ -7109,6 +7110,7 @@
       level: state.tab === "directory" || e.target.closest(".nav-groups") ? "group" : "tab",
       inHorizontalScroll: gestureInfo.inHorizontalScroll,
       edgeSwipe: horizontalScrollEdgeAt(e.clientX),
+      axis: null,
       intent: null,
       handled: false
     };
@@ -7127,6 +7129,15 @@
     var absY = Math.abs(dy);
     var level = historyPointerStart.level;
     var swipeX = level === "group" ? SWIPE_PRIMARY_X : SWIPE_X;
+    if (!historyPointerStart.axis && (absX > 10 || absY > 10)) {
+      if (absY >= absX) {
+        historyPointerStart.axis = "vertical";
+        armGestureClickGuard();
+        return;
+      }
+      if (absX > absY * SWIPE_DIRECTION_RATIO) historyPointerStart.axis = "horizontal";
+    }
+    if (historyPointerStart.axis !== "horizontal") return;
     if (historyPointerStart.inHorizontalScroll && !historyPointerStart.edgeSwipe) return;
     if (absX >= swipeX && absX > absY * SWIPE_DIRECTION_RATIO) {
       historyPointerStart.handled = true;

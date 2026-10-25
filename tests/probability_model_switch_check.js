@@ -10,13 +10,20 @@ const snapshots = require("../probability_snapshots.json");
 const pending = snapshots.records.find((record) => !record.settled);
 const locked = model.analyze(raw, pending.basedOn);
 const fresh = model.analyze(raw, pending.basedOn, { method: "new" });
+const legacy296 = snapshots.records.find((record) => Number(record.target) === 296);
 
 assert.equal(model.VERSION, "prob-v2-20261022-57152130");
-assert.equal(locked.version, "prob-v1-20261020");
+assert.equal(legacy296.modelVersion, "prob-v1-20261020");
+assert.deepEqual(
+  legacy296.top3.map((row) => Number(row.tail)),
+  [8, 3, 7],
+  "the frozen 296 snapshot must remain unchanged"
+);
+assert.equal(locked.version, "prob-v2-20261022-57152130");
 assert.deepEqual(
   locked.top.map((row) => Number(row.tail)),
   pending.top3.map((row) => Number(row.tail)),
-  "the already saved 296 snapshot must remain the displayed prediction"
+  "the current saved snapshot must remain the displayed prediction"
 );
 assert.equal(fresh.version, "prob-v2-20261022-57152130");
 assert.deepEqual(model.META.productionMethod.windows, [5, 7, 15, 21, 30]);
