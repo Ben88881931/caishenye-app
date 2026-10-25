@@ -1704,6 +1704,92 @@
     return { hit: false, label: "三期全错", color: "#b91c1c", soft: "#fee2e2" };
   }
 
+  function dailyReportOnePeriodRows(line) {
+    var start = line.kind === "tail" ? 1 : (Number(line.startPeriod) || 31);
+    var rows = [];
+    for (var period = start; period <= D.length; period++) {
+      var pick = line.kind === "tail"
+        ? { tail: line.tail }
+        : (line.kind === "probability" ? probabilityPickAt(period, line.rank || 0) : wmFullPick(period, line.stream));
+      if (!pick || pick.tail == null) continue;
+      var actual = (D[period - 1].nums || []).map(function (num) { return Number(num) % 10; });
+      var hit = actual.indexOf(Number(pick.tail)) >= 0;
+      rows.push({
+        start: period,
+        hitIndex: hit ? 1 : 0,
+        attempts: [{ period: period, tail: Number(pick.tail), hit: hit }],
+        mode: 1
+      });
+    }
+    return rows;
+  }
+
+  function dailyReportModeRun(rows, unit) {
+    if (!rows.length) return { kind: "none", len: 0, text: "样本不足" };
+    var lastYear = wmYearOf(rows[rows.length - 1].start);
+    var yearRows = rows.filter(function (row) { return wmYearOf(row.start) === lastYear; });
+    if (!yearRows.length) return { kind: "none", len: 0, text: "样本不足" };
+    var kind = Number(yearRows[yearRows.length - 1].hitIndex) > 0 ? "hit" : "miss";
+    var len = 0;
+    for (var i = yearRows.length - 1; i >= 0; i--) {
+      var rowKind = Number(yearRows[i].hitIndex) > 0 ? "hit" : "miss";
+      if (rowKind !== kind) break;
+      len++;
+    }
+    return {
+      kind: kind,
+      len: len,
+      text: (kind === "hit" ? "连中" : "连错") + len + unit
+    };
+  }
+
+  function dailyReportModeStats(line, stage) {
+    var unit = stage === 1 ? "期" : "窗";
+    var rows = stage === 1
+      ? dailyReportOnePeriodRows(line)
+      : wmWindowsForStage(line, stage).filter(function (row) {
+        return row && row.hitIndex != null &&
+          (Number(row.hitIndex) > 0 || (row.attempts || []).length === stage);
+      });
+    var recent = rows.slice(-3);
+    var previous = rows.slice(-6, -3);
+    var recentHits = recent.filter(function (row) { return Number(row.hitIndex) > 0; }).length;
+    var previousHits = previous.filter(function (row) { return Number(row.hitIndex) > 0; }).length;
+    var historyHits = rows.filter(function (row) { return Number(row.hitIndex) > 0; }).length;
+    var baseRates = rows.map(function (row) {
+      var tail = row.attempts && row.attempts[0] ? Number(row.attempts[0].tail) : null;
+      var base = tail != null && BASE_RATE[tail] != null ? BASE_RATE[tail] : 0.5556;
+      return stage === 1 ? base : 1 - Math.pow(1 - base, stage);
+    });
+    var baseline = baseRates.length
+      ? baseRates.reduce(function (sum, rate) { return sum + rate; }, 0) / baseRates.length
+      : (stage === 1 ? 0.5556 : (stage === 2 ? 0.8 : 0.91));
+    var recentRate = recent.length ? recentHits / recent.length : 0;
+    var historyRate = rows.length ? historyHits / rows.length : 0;
+    var previousRate = previous.length ? previousHits / previous.length : null;
+    var trend = "样本不足";
+    if (previousRate != null) {
+      if (recentRate > previousRate + 0.15) trend = "回暖";
+      else if (recentRate < previousRate - 0.15) trend = "走弱";
+      else trend = "平稳";
+    }
+    return {
+      stage: stage,
+      unit: unit,
+      label: stage === 1 ? "一期" : (stage === 2 ? "两期" : "三期"),
+      rows: rows,
+      recent: recent,
+      recentHits: recentHits,
+      recentRate: recentRate,
+      historyHits: historyHits,
+      historyRate: historyRate,
+      previousRate: previousRate,
+      trend: trend,
+      baseline: baseline,
+      run: dailyReportModeRun(rows, unit)
+    };
+  }
+
   function dailyReportRate(rows) {
     var hits = rows.filter(function (w) { return Number(w.hitIndex) > 0; }).length;
     return { n: rows.length, hits: hits, rate: rows.length ? hits / rows.length : 0 };
@@ -1738,7 +1824,23 @@
     return { kind: kind, len: len, year: year };
   }
 
-  function dailyReportUnderlying(line, live) {
+  function dailyReportProbabilitySignal(line, live) {
+    var targetIndex = live && live.active ? live.active.start : D.length + 1;
+    var target = betLocalPeriod(targetIndex);
+    var snapshot = probabilitySnapshotRecord(target);
+    var savedPick = snapshot && snapshot.top3 ? snapshot.top3[line.rank || 0] : null;
+    var pick = savedPick || (live && live.active && live.active.lockedTail != null
+      ? { tail: Number(live.active.lockedTail), window3Prob: null, nextProb: null }
+      : null);
+    var boundary = !snapshot
+      ? "第" + target + "期概率快照缺失。"
+      : (snapshot.modelVersion === PROB_MODEL.LEGACY_VERSION
+        ? "第" + target + "期仍是切换前旧快照，新方法从第297期生效。"
+        : "当前使用5/7/15/21/30新方法快照。");
+    return { target: target, snapshot: snapshot, pick: pick, boundary: boundary };
+  }
+
+  function dailyReportUnderlying(line, live, probabilitySignal) {
     if (line.kind === "tail") {
       var miss = currentMiss(line.tail);
       var streak = currentStreak(line.tail);
@@ -1751,76 +1853,86 @@
       };
     }
     if (line.kind === "probability") {
-      var snapshot = probabilitySnapshotRecord(latest + 1);
-      var pick = snapshot && snapshot.top3 ? snapshot.top3[line.rank || 0] : null;
-      var boundary = snapshot && snapshot.modelVersion === PROB_MODEL.LEGACY_VERSION
-        ? "第296期仍是切换前旧快照，新方法从第297期生效。"
-        : "当前使用5/7/15/21/30新方法快照。";
+      var signal = probabilitySignal || dailyReportProbabilitySignal(line, live);
+      var pick = signal.pick;
+      var probabilityText = pick && pick.window3Prob != null
+        ? "当前锁尾" + pick.tail + "，三期概率" + (Number(pick.window3Prob) * 100).toFixed(1) +
+          "%，下一期概率" + (Number(pick.nextProb) * 100).toFixed(1) + "%。"
+        : (pick ? "当前锁尾" + pick.tail + "，概率快照缺失。" : "当前概率快照缺失。");
+      if (live && live.waiting) {
+        probabilityText = "当前等待尾" + live.waiting.tail + "重开；下一期快照首选" +
+          (pick ? "尾" + pick.tail : "待定") + "。";
+      }
       return {
         source: "动态概率 + 真实快照",
-        text: pick
-          ? "当前锁尾" + pick.tail + "，三期概率" + (Number(pick.window3Prob) * 100).toFixed(1) +
-            "%，下一期概率" + (Number(pick.nextProb) * 100).toFixed(1) + "%。" + boundary
-          : "当前概率快照缺失；" + boundary
+        text: probabilityText + signal.boundary
       };
     }
     return { source: "下注执行表", text: live && live.active ? "窗口进行中。" : "查看当前窗口状态。" };
   }
 
   function dailyReportCompositeScore(row) {
-    var recentRate = Math.max(0, row.recentRate);
+    var modeRows = [row.modes.one, row.modes.two, row.modes.three];
+    var modePerformance = modeRows.map(function (mode) {
+      var baseline = Math.max(0.01, Number(mode.baseline || 0.55));
+      return Math.max(0, Math.min(1.15, mode.recentRate / baseline));
+    });
+    var modeRateList = modeRows.map(function (mode) { return mode.recentRate; });
+    var divergence = Math.max.apply(null, modeRateList) - Math.min.apply(null, modeRateList);
+    var consistency = Math.max(0, 1 - Math.min(1, divergence / 0.45));
+    var personalityHealth = modeRows.reduce(function (sum, mode) {
+      if (!mode.run || mode.run.kind === "none") return sum + 0.5;
+      return sum + (mode.run.kind === "hit" ? 1 : 0);
+    }, 0) / 3;
     var momentum = row.trend === "回暖" ? 1 : (row.trend === "平稳" ? 0.6 : (row.trend === "走弱" ? 0 : 0.4));
     var firstShare = row.recentHits ? row.first / row.recentHits : 0;
     var currentYearRate = row.currentYearStats && row.currentYearStats.stats ? row.currentYearStats.stats.rate : 0;
     var score =
-      recentRate * 35 +
-      row.recent6Rate * 20 +
-      row.recent12Rate * 15 +
-      row.historyRate * 10 +
-      currentYearRate * 10 +
-      momentum * 5 +
-      firstShare * 5;
-    if (row.live.waiting) score -= 18;
-    if (row.windows.length < 12) score -= 5;
+      (modePerformance[0] * 0.2 + modePerformance[1] * 0.3 + modePerformance[2] * 0.4) * 52 +
+      consistency * 10 +
+      personalityHealth * 10 +
+      row.signals.formulaScore * 10 +
+      currentYearRate * 5 +
+      momentum * 3 +
+      firstShare * 2 +
+      Math.min(1.2, row.signals.underlyingScore) * 5 +
+      row.signals.sampleScore * 3;
+    if (row.live.waiting) score -= 12;
+    if (row.windows.length < 12 || row.modes.one.rows.length < 12 || row.modes.two.rows.length < 12) score -= 5;
     return Math.max(0, Math.min(100, score));
   }
 
   function dailyReportAdviceFor(row) {
     if (row.live.waiting) {
-      return { label: "等待重开", tier: "risk", color: "#b45309",
+      return { label: "等待重开中", tier: "risk", color: "#b45309",
         reason: "上一窗三期全错，当前处于等待期，必须先等尾" + row.live.waiting.tail + "重新开出。" };
     }
     if (row.line.kind === "probability") {
       return {
-        label: "正式选号 · 暂不配仓",
+        label: row.score >= 70 ? "概率线 · 优先观察" : "概率线 · 继续观察",
         tier: row.score >= 70 ? "watch" : "risk",
         color: row.score >= 70 ? "#1d4ed8" : "#b45309",
-        reason: "新方法已用于选号，但仓位公式尚未验证；排序依据为近期、年度和模型记录，不代表建议下注金额。"
-      };
-    }
-    if (planRisk(row.line.plan) === 0) {
-      return {
-        label: row.score >= 70 ? "可关注 · 暂不配仓" : "观望 · 不配仓",
-        tier: row.score >= 70 ? "watch" : "risk",
-        color: row.score >= 70 ? "#1d4ed8" : "#b45309",
-        reason: "窗口数据可以观察，但公式表当前没有给这条线配置正式仓位。"
+        reason: "综合一期、两期、三期窗口表现、各自连中/连错性格、公式验证和当前概率快照后得出；本报告不计算仓位金额。"
       };
     }
     if (row.score >= 75 && row.trend !== "走弱") {
-      return { label: "优先关注", tier: "strong", color: "#15803d",
+      return { label: "可优先关注", tier: "strong", color: "#15803d",
         reason: "近期窗口、近6窗、年度状态和当前窗口同时处于相对优势。" };
     }
     if (row.score >= 58) {
-      return { label: "可以关注", tier: "watch", color: "#1d4ed8",
+      return { label: "可继续关注", tier: "watch", color: "#1d4ed8",
         reason: "综合表现不差，但仍有一项或多项指标需要继续观察。" };
     }
-    return { label: "谨慎观察", tier: "risk", color: "#b45309",
+    return { label: "保持谨慎观察", tier: "risk", color: "#b45309",
       reason: "近期或长期至少一项明显偏弱，暂不列为优先线路。" };
   }
 
   function dailyReportReason(row) {
     var parts = [];
-    parts.push("近3窗" + row.recentHits + "/" + row.recent.length + "，近6窗" + row.recent6Hits + "/" + row.recent6.length);
+    [row.modes.one, row.modes.two, row.modes.three].forEach(function (mode) {
+      parts.push(mode.label + "近3" + mode.unit + " " + mode.recentHits + "/" + mode.recent.length +
+        "，" + mode.run.text + "，近期" + (mode.trend || "样本不足"));
+    });
     parts.push("最近3个已中窗口里，第1期" + row.first + "次、第2期" + row.second + "次、第3期" + row.third + "次");
     if (row.previousRate != null) {
       parts.push("近3窗比前3窗" + (row.recentRate >= row.previousRate ? "高" : "低") +
@@ -1828,7 +1940,9 @@
     }
     if (row.live.waiting) parts.push("当前等尾" + row.live.waiting.tail + "重新开出");
     else if (row.live.active) parts.push("当前窗口已走到第" + Math.min(3, row.live.active.attempts.length + 1) + "期");
-    if (row.line.kind === "probability") parts.push("当前为概率线，296期仍受旧快照边界约束");
+    if (row.line.kind === "probability") {
+      parts.push(String(row.probabilitySignal && row.probabilitySignal.boundary || "").replace(/。$/, ""));
+    }
     return parts.join("；") + "。";
   }
 
@@ -1845,6 +1959,12 @@
     else if (row.first > 0) parts.push("第1期贡献较多，开窗后较快结束的比例更高");
     if (row.currentRun.kind === "hit") parts.push("当前年度已完成窗口连续命中" + row.currentRun.len + "窗");
     else if (row.currentRun.kind === "miss") parts.push("当前年度已完成窗口连续全错" + row.currentRun.len + "窗");
+    var rates = [row.modes.one.recentRate, row.modes.two.recentRate, row.modes.three.recentRate];
+    if (Math.max.apply(null, rates) - Math.min.apply(null, rates) >= 0.25) {
+      parts.push("一期、两期、三期近期状态分化较大，不能把某一口径直接套到另外两个窗口");
+    } else {
+      parts.push("一期、两期、三期近期方向基本一致");
+    }
     parts.push(String(row.underlying.text || "").replace(/。$/, ""));
     return parts.join("；") + "。";
   }
@@ -1855,25 +1975,29 @@
     if (row.live.waiting) risks.push("当前窗口未重开，马上追会破坏窗口规则");
     if (row.recent.length && row.recentRate < row.historyRate - 0.08) risks.push("近期明显低于长期命中率");
     if (row.third > row.first + row.second) risks.push("过度依赖第3期命中");
-    if (planRisk(row.line.plan) === 0) risks.push("公式表当前不配仓");
-    if (row.line.kind === "probability") risks.push("296期仍显示切换前旧快照，297期才执行新方法");
+    var modeRates = [row.modes.one.recentRate, row.modes.two.recentRate, row.modes.three.recentRate];
+    if (Math.max.apply(null, modeRates) - Math.min.apply(null, modeRates) >= 0.25) {
+      risks.push("一期/两期/三期窗口性格分化，不能只看表现最好的口径");
+    }
+    if (row.line.kind === "probability") risks.push("概率线仍处于独立有效性观察阶段，不能只看短期成绩");
     if (!risks.length) risks.push("未发现新增结构性风险，但仍按真实窗口结算");
     return risks.join("；") + "。";
   }
 
   function dailyReportLineStats(line, order) {
-    var windows = wmWindowsForStage(line, 3).filter(function (w) {
-      return w && w.hitIndex != null && Number(w.hitIndex) >= 0 &&
-        (Number(w.hitIndex) > 0 || (w.attempts || []).length === 3);
-    });
-    var recent = windows.slice(-3);
-    var previous = windows.slice(-6, -3);
+    var modes = {
+      one: dailyReportModeStats(line, 1),
+      two: dailyReportModeStats(line, 2),
+      three: dailyReportModeStats(line, 3)
+    };
+    var primary = modes.three;
+    var windows = primary.rows;
+    var recent = primary.recent;
     var hits = recent.filter(function (w) { return Number(w.hitIndex) > 0; }).length;
-    var previousHits = previous.filter(function (w) { return Number(w.hitIndex) > 0; }).length;
     var first = recent.filter(function (w) { return Number(w.hitIndex) === 1; }).length;
     var second = recent.filter(function (w) { return Number(w.hitIndex) === 2; }).length;
     var third = recent.filter(function (w) { return Number(w.hitIndex) === 3; }).length;
-    var historyHits = windows.filter(function (w) { return Number(w.hitIndex) > 0; }).length;
+    var historyHits = primary.historyHits;
     var allFirst = windows.filter(function (w) { return Number(w.hitIndex) === 1; }).length;
     var allSecond = windows.filter(function (w) { return Number(w.hitIndex) === 2; }).length;
     var allThird = windows.filter(function (w) { return Number(w.hitIndex) === 3; }).length;
@@ -1901,20 +2025,16 @@
       color = "#1d4ed8";
     }
     var rate = recent.length ? hits / recent.length : -1;
-    var previousRate = previous.length ? previousHits / previous.length : null;
-    var trend = "样本不足";
-    if (previousRate != null) {
-      if (rate > previousRate + 0.15) trend = "回暖";
-      else if (rate < previousRate - 0.15) trend = "走弱";
-      else trend = "平稳";
-    }
-    var position = wmPositionForPlan(line, line.plan);
+    var previousRate = primary.previousRate;
+    var trend = primary.trend;
     var formulaAudit = EXEC_FORMULA_AUDIT[line.id] || null;
     var currentRun = dailyReportCurrentRun(windows);
-    var underlying = dailyReportUnderlying(line, live);
+    var probabilitySignal = line.kind === "probability" ? dailyReportProbabilitySignal(line, live) : null;
+    var underlying = dailyReportUnderlying(line, live, probabilitySignal);
     var result = {
       line: line,
       order: order,
+      modes: modes,
       windows: windows,
       recent: recent,
       recentHits: hits,
@@ -1937,9 +2057,8 @@
       yearStats: yearStats,
       currentYearStats: currentYearStats,
       currentRun: currentRun,
-      position: position,
       formulaAudit: formulaAudit,
-      formulaRisk: planRisk(line.plan),
+      probabilitySignal: probabilitySignal,
       underlying: underlying,
       trend: trend,
       status: status,
@@ -1948,6 +2067,7 @@
       period: period,
       live: live,
     };
+    result.signals = dailyReportSignalSummary(result);
     result.score = dailyReportCompositeScore(result);
     result.advice = dailyReportAdviceFor(result);
     result.reason = dailyReportReason(result);
@@ -1964,6 +2084,78 @@
       '<small>' + (w.attempts || []).map(function (attempt) {
         return "第" + (Number(attempt.period) - Number(w.start) + 1) + "期尾" + attempt.tail + (attempt.hit ? "中" : "错");
       }).join(" · ") + '</small></div>';
+  }
+
+  function dailyReportModeComparisonHTML(row) {
+    var modes = [row.modes.one, row.modes.two, row.modes.three];
+    var cells = modes.map(function (mode) {
+      return '<div class="daily-report-mode-cell" data-report-mode="' +
+        (mode.stage === 1 ? "one" : (mode.stage === 2 ? "two" : "three")) + '">' +
+        '<b>' + mode.label + '</b>' +
+        '<strong>' + mode.recentHits + '/' + mode.recent.length +
+          ' · ' + (mode.recentRate * 100).toFixed(1) + '%</strong>' +
+        '<span>' + mode.run.text + ' · ' + mode.trend + '</span>' +
+        '<small>历史 ' + (mode.historyRate * 100).toFixed(1) + '% / 基准 ' +
+          (mode.baseline * 100).toFixed(1) + '%</small></div>';
+    }).join("");
+    return '<div class="daily-report-section" data-report-section="period-comparison"><b>一期 / 两期 / 三期热图对照</b>' +
+      '<div class="daily-report-mode-grid">' + cells + '</div>' +
+      '<small>三套窗口分别计算，不合并；综合分已按各自随机基准归一化，再结合当前连中/连错性格。</small></div>';
+  }
+
+  function dailyReportSignalSummary(row) {
+    var audit = row.formulaAudit;
+    var formulaScore = 0.4;
+    var formulaText = "公式表暂无验证记录";
+    if (row.line.kind === "probability") {
+      formulaScore = 0.5;
+      formulaText = "概率线只做选号对照";
+    } else if (audit) {
+      var trainPositive = audit && Number(audit.trainNet) > 0;
+      var validPositive = audit && Number(audit.validNet) > 0;
+      formulaScore = trainPositive && validPositive ? 1 : ((trainPositive || validPositive) ? 0.55 : 0.25);
+      formulaText = formulaScore === 1 ? "训练/验证同时为正" : (formulaScore === 0.55 ? "训练/验证仅一段为正" : "训练/验证未通过");
+    }
+    var windowText = "可开新窗";
+    if (row.live.waiting) {
+      windowText = "等待尾" + row.live.waiting.tail + "重开";
+    } else if (row.live.active) {
+      windowText = "窗口第" + Math.min(3, row.live.active.attempts.length + 1) + "期";
+    }
+    var underlyingScore = 0.6;
+    var underlyingText = row.underlying.text;
+    if (row.line.kind === "tail") {
+      var expected = BASE_RATE[row.line.tail] * 30;
+      underlyingScore = Math.max(0, Math.min(1.2, countWindow(row.line.tail, 30) / Math.max(0.1, expected)));
+    } else {
+      var pick = probabilityPickAt(D.length + 1, row.line.rank || 0);
+      if (pick) underlyingScore = Math.max(0, Math.min(1.2, Number(pick.window3Prob) / 0.91));
+    }
+    var sampleScore = Math.min(1,
+      Math.min(row.modes.one.rows.length, row.modes.two.rows.length, row.modes.three.rows.length) / 30
+    );
+    var sampleText = "1期" + row.modes.one.rows.length + " / 2期" + row.modes.two.rows.length + " / 3期" + row.modes.three.rows.length;
+    return {
+      formulaScore: formulaScore,
+      formulaText: formulaText,
+      windowText: windowText,
+      underlyingScore: underlyingScore,
+      underlyingText: underlyingText,
+      sampleScore: sampleScore,
+      sampleText: sampleText
+    };
+  }
+
+  function dailyReportSourceAnalysisHTML(row) {
+    var signals = row.signals;
+    return '<div class="daily-report-section" data-report-section="cross-page"><b>其他页面综合信号</b>' +
+      '<div class="daily-report-source-grid">' +
+        '<div><span>公式表</span><strong>' + signals.formulaText + '</strong></div>' +
+        '<div><span>当前窗口</span><strong>' + signals.windowText + '</strong></div>' +
+        '<div><span>' + row.underlying.source + '</span><strong>' + signals.underlyingText + '</strong></div>' +
+        '<div><span>样本量</span><strong>' + signals.sampleText + '</strong></div>' +
+      '</div>' +
+      '<small>综合分由窗口表现、性格一致性、公式验证、当前窗口状态、尾号/概率信号和样本量共同构成；仓位和金额不参与评分。</small></div>';
   }
 
   function dailyReportWeightRows(model) {
@@ -1992,7 +2184,7 @@
       '<div><span class="daily-report-kicker">每日最终报告</span>' +
       '<h2>13线综合分析报告</h2>' +
       '<p>数据截至第' + latestRow.p + '期 · 已开奖尾数 ' + tailsOf(latest).join(" ") + ' · 下一期待开奖第' + (Number(latestRow.p) + 1) + '期</p></div>' +
-      '<strong>综合近3/6/12窗、年度状态、窗口性格和当前窗口<br>排序不按金额、不按下一期Top1</strong></div>';
+      '<strong>一期 / 两期 / 三期热图分别分析后综合<br>排序不按金额、不按单一窗口或下一期Top1</strong></div>';
 
     var totalHits = rows.reduce(function (sum, row) { return sum + row.recentHits; }, 0);
     var totalWindows = rows.reduce(function (sum, row) { return sum + row.recent.length; }, 0);
@@ -2005,11 +2197,14 @@
       '<div><b>' + rows.filter(function (row) { return row.trend === "走弱"; }).length + '</b><span>近3窗转弱线路</span></div>' +
       '</div>';
 
-    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线综合优秀度排名</h3><span>各项分析综合评分；同分时保持固定线路顺序</span></div>';
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线综合优秀度排名</h3><span>一期/两期/三期分别按随机基准归一化，再结合窗口性格综合；同分保持线路顺序</span></div>';
     html += '<div class="daily-report-rank-card" data-daily-report-rank-card>';
     rows.forEach(function (row, index) {
       html += '<div class="daily-report-rank-item" data-daily-report-row data-daily-report-rank-item data-report-rate="' +
-        (row.recent.length ? row.recentRate.toFixed(6) : "-1") + '" data-report-score="' + row.score.toFixed(3) + '">' +
+        (row.recent.length ? row.recentRate.toFixed(6) : "-1") + '" data-report-score="' + row.score.toFixed(3) +
+        '" data-report-mode-rates="' + [row.modes.one.recentRate, row.modes.two.recentRate, row.modes.three.recentRate].map(function (rate) {
+          return Math.round(rate * 1000) / 10;
+        }).join("/") + '">' +
         '<span class="daily-report-rank-item__no">#' + (index + 1) + '</span>' +
         '<div class="daily-report-rank-item__main">' +
           '<div class="daily-report-rank-item__top"><b>' + row.line.label + '</b>' +
@@ -2018,8 +2213,10 @@
           '<div class="daily-report-rank-item__reason" data-report-reason title="' + row.reason + '">' + row.reason + '</div>' +
         '</div>' +
         '<div class="daily-report-rank-item__side"><b style="color:' + row.color + '">' + row.status + '</b>' +
-          '<small>近3 ' + row.recentHits + '/' + row.recent.length + ' · 1/2/3 ' +
-          row.first + '/' + row.second + '/' + row.third + '</small></div></div>';
+          '<small title="一期/两期/三期近期命中率">1/2/3 ' +
+          [row.modes.one, row.modes.two, row.modes.three].map(function (mode) {
+            return (mode.recentRate * 100).toFixed(0);
+          }).join('/') + '</small></div></div>';
     });
     html += '</div></div>';
 
@@ -2041,29 +2238,32 @@
         return item.year + "年 " + item.stats.hits + "/" + item.stats.n + "（" + (item.stats.rate * 100).toFixed(1) + "%）";
       }).join(" · ") || "年度已完成窗口不足";
       var planText = (line.plan || []).join(" / ");
-      var positionText = row.position.amount > 0
-        ? row.position.label + " " + row.position.amount + "元"
-        : (row.position.status || row.position.label);
       var auditText = row.formulaAudit
         ? (row.formulaAudit.formula || "无公式") +
           " · 训练" + (Number(row.formulaAudit.trainNet) >= 0 ? "+" : "") + Number(row.formulaAudit.trainNet || 0) +
           " / 验证" + (Number(row.formulaAudit.validNet) >= 0 ? "+" : "") + Number(row.formulaAudit.validNet || 0)
         : "公式表暂无这条线的审计记录";
-      var sourceTags = ["下注执行表", "公式表", "13线规律中心", "窗口遗漏热图"];
+      var sourceTags = ["下注执行表", "公式表", "13线规律中心", "一期热图", "两期热图", "三期热图"];
       sourceTags.push(line.kind === "probability" ? "动态概率" : "尾号性格");
-      html += '<article class="daily-report-line-card" data-daily-report-card data-line-id="' + line.id + '">' +
+      html += '<article class="daily-report-line-card" data-daily-report-card data-line-id="' + line.id + '"' +
+        (row.probabilitySignal
+          ? ' data-report-probability-target="' + row.probabilitySignal.target +
+            '" data-report-probability-snapshot="' + (row.probabilitySignal.snapshot ? "found" : "missing") + '"'
+          : "") + '>' +
         '<div class="daily-report-line-card__head"><div><span>' + (line.kind === "probability" ? "新方法概率线" : "真实窗口线") + '</span><h3>' + line.label + '</h3></div><b style="color:' + row.advice.color + '" data-report-advice>' + row.advice.label + '</b></div>' +
         '<div class="daily-report-sources" data-report-sources="' + sourceTags.join("|") + '">' + sourceTags.map(function (source) { return '<span>' + source + '</span>'; }).join("") + '</div>' +
         '<div class="daily-report-section daily-report-section--conclusion" data-report-section="conclusion"><b>当下结论</b><p>' + row.advice.reason + '</p></div>' +
         '<div class="daily-report-section" data-report-section="reason"><b>为什么</b><p>' + row.reason + '</p></div>' +
         '<div class="daily-report-section" data-report-section="window"><b>当前窗口</b><p>' + currentWindowText + '</p><small>' + row.underlying.source + '：' + row.underlying.text + '</small></div>' +
+        dailyReportModeComparisonHTML(row) +
+        dailyReportSourceAnalysisHTML(row) +
         '<div class="daily-report-section" data-report-section="recent"><b>近期表现</b><div class="daily-report-recent-metrics"><span>近3窗 ' + row.recentHits + '/' + row.recent.length + '</span><span>近6窗 ' + row.recent6Hits + '/' + row.recent6.length + '</span><span>近12窗 ' + row.recent12Hits + '/' + row.recent12.length + '</span><span>趋势 ' + row.trend + '</span></div>';
       html += '<div class="daily-report-window-list">';
       if (row.recent.length) row.recent.slice().reverse().forEach(function (w) { html += dailyReportWindowChipHTML(w); });
       else html += '<div class="daily-report-empty">暂无已完成窗口</div>';
       html += '</div></div>';
       html += '<div class="daily-report-section" data-report-section="longterm"><b>长期与年度</b><p>全历史 ' + row.historyHits + '/' + row.windows.length + ' 窗（' + (row.historyRate * 100).toFixed(1) + '%）；首次命中分布 第1期' + row.allFirst + ' / 第2期' + row.allSecond + ' / 第3期' + row.allThird + '。</p><small>' + yearText + '。' + (row.currentRun.kind === "hit" ? "当前年度已完成窗口连中" + row.currentRun.len + "窗。" : (row.currentRun.kind === "miss" ? "当前年度已完成窗口连错" + row.currentRun.len + "窗。" : "")) + '</small></div>' +
-        '<div class="daily-report-section" data-report-section="formula"><b>公式与仓位</b><p>' + auditText + '。</p><small>正式公式 ' + planText + ' · 当前状态 ' + positionText + '。</small></div>' +
+        '<div class="daily-report-section" data-report-section="formula"><b>公式验证</b><p>' + auditText + '。</p><small>正式公式 ' + planText + ' · 只验证训练/验证表现，仓位和金额不参与综合报告。</small></div>' +
         '<div class="daily-report-section daily-report-section--risk" data-report-section="risk"><b>风险与解读</b><p>' + row.risk + '</p><small>' + row.interpretation + '</small></div>' +
         '</article>';
     });
@@ -4250,13 +4450,13 @@
   }
 
   function probabilityPickAt(period, rank) {
-    var saved = probabilitySnapshotRecord(period);
+    var localPeriod = betLocalPeriod(period);
+    var saved = probabilitySnapshotRecord(localPeriod);
     if (saved && saved.top3 && saved.top3[rank || 0]) {
       var savedRow = saved.top3[rank || 0];
       return { tail: savedRow.tail, score: savedRow.nextProb, window3Prob: savedRow.window3Prob, role: "probability-snapshot" };
     }
     if (!PROB_MODEL || !PROB_MODEL.analyze || period <= 1) return null;
-    var localPeriod = betLocalPeriod(period);
     var result = PROB_MODEL.analyze(RAW, localPeriod - 1);
     var row = result.top && result.top[rank || 0];
     return row ? { tail: row.tail, score: row.nextProb, window3Prob: row.window3Prob, role: "probability" } : null;

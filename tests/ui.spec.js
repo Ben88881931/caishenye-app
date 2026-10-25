@@ -820,6 +820,7 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator("[data-weight-model]")).toHaveCount(2);
   await expect(page.locator("[data-daily-report-rank-card]")).toHaveCount(1);
   await expect(page.locator("[data-daily-report-rank-item]")).toHaveCount(13);
+  await expect(page.locator("[data-report-mode]")).toHaveCount(39);
   await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
 
   const rankLayout = await page.locator("[data-daily-report-rank-card]").evaluate((card) => ({
@@ -860,7 +861,7 @@ test("daily reports synthesize every analysis section for all 13 lines", async (
     return cards.length === 13;
   });
 
-  const required = ["conclusion", "reason", "window", "recent", "longterm", "formula", "risk"];
+  const required = ["conclusion", "reason", "window", "period-comparison", "cross-page", "recent", "longterm", "formula", "risk"];
   const report = await page.locator("[data-daily-report-card]").evaluateAll((cards, sectionNames) => {
     return cards.map((card) => {
       const sections = sectionNames.map((name) => {
@@ -868,9 +869,18 @@ test("daily reports synthesize every analysis section for all 13 lines", async (
         return { name, present: Boolean(node), text: node?.innerText?.trim() || "" };
       });
       const advice = card.querySelector("[data-report-advice]");
+      const modes = [...card.querySelectorAll("[data-report-mode]")].map((node) => ({
+        mode: node.getAttribute("data-report-mode"),
+        text: node.innerText.trim(),
+      }));
+      const windowText = card.querySelector('[data-report-section="window"]')?.innerText?.trim() || "";
+      const reasonText = card.querySelector('[data-report-section="reason"]')?.innerText?.trim() || "";
       return {
         id: card.getAttribute("data-line-id"),
         advice: advice?.innerText?.trim() || "",
+        modes,
+        windowText,
+        reasonText,
         sections,
       };
     });
@@ -880,15 +890,32 @@ test("daily reports synthesize every analysis section for all 13 lines", async (
   for (const card of report) {
     expect(card.id).toBeTruthy();
     expect(card.advice.length).toBeGreaterThan(4);
+    expect(card.modes).toHaveLength(3);
+    expect(card.modes.map((item) => item.mode)).toEqual(["one", "two", "three"]);
     for (const section of card.sections) {
       expect(section.present, `${card.id} missing ${section.name}`).toBe(true);
       expect(section.text.length, `${card.id} empty ${section.name}`).toBeGreaterThan(8);
+    }
+    for (const mode of card.modes) {
+      expect(mode.text.length, `${card.id} empty ${mode.mode} comparison`).toBeGreaterThan(8);
     }
   }
 
   const rows = page.locator("[data-daily-report-row]");
   await expect(rows.locator("[data-report-advice]")).toHaveCount(13);
   await expect(rows.locator("[data-report-reason]")).toHaveCount(13);
+  await expect(page.locator('[data-report-section="cross-page"]')).toHaveCount(13);
+  await expect(page.locator('[data-report-section="cross-page"]').first()).toContainText("仓位和金额不参与评分");
+
+  for (const card of report.filter((item) => item.id.startsWith("prob"))) {
+    const windowTail = card.windowText.match(/锁定尾(\d)/)?.[1];
+    const sourceTail = card.windowText.match(/当前锁尾(\d)/)?.[1];
+    const probabilityCard = page.locator(`[data-daily-report-card][data-line-id="${card.id}"]`);
+    expect(windowTail, `${card.id} missing locked tail`).toBeTruthy();
+    expect(sourceTail, `${card.id} probability source must match its current locked window`).toBe(windowTail);
+    await expect(probabilityCard).toHaveAttribute("data-report-probability-snapshot", "found");
+    expect(card.reasonText).not.toContain("296期仍受旧快照边界约束");
+  }
 });
 
 test("vertical wheel over a horizontal report strip scrolls the page", async ({ page }) => {
