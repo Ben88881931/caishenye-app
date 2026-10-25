@@ -1955,12 +1955,25 @@
         '<span>' + current.confidence + '</span>' +
       '</div>' +
       '<div class="daily-report-recent-metrics" data-report-submodels>' +
-        '<span>一期 ' + (current.submodels.one.predictedRate * 100).toFixed(1) + '%</span>' +
-        '<span>两期 ' + (current.submodels.two.predictedRate * 100).toFixed(1) + '%</span>' +
-        '<span>三期 ' + (current.submodels.three.predictedRate * 100).toFixed(1) + '%</span>' +
-        '<span>本线权重 ' + (personality.weights.one * 100).toFixed(0) + '/' +
-          (personality.weights.two * 100).toFixed(0) + '/' +
-          (personality.weights.three * 100).toFixed(0) + '</span>' +
+        '<span>一期 ' + (current.riskLevels[0] === "safe" ? "安全" : "风险") +
+          ' ' + (current.submodels.one.predictedRate * 100).toFixed(1) + '%</span>' +
+        '<span>两期 ' + (current.riskLevels[1] === "safe" ? "安全" : "风险") +
+          ' ' + (current.submodels.two.predictedRate * 100).toFixed(1) + '%</span>' +
+        '<span>三期 ' + (current.riskLevels[2] === "safe" ? "安全" : "风险") +
+          ' ' + (current.submodels.three.predictedRate * 100).toFixed(1) + '%</span>' +
+        '<span>正向组合 ' + current.directionPredictions.forward.patternHits + '/' +
+          current.directionPredictions.forward.patternSamples + '</span>' +
+        '<span>反向组合 ' + current.directionPredictions.reverse.patternHits + '/' +
+          current.directionPredictions.reverse.patternSamples + '</span>' +
+      '</div>' +
+      '<div class="daily-report-recent-metrics" data-report-cascade>' +
+        '<span>1→2→3 ' + current.directionPredictions.forward.riskLevels.map(function (level) {
+          return level === "safe" ? "安" : "险";
+        }).join("→") + '</span>' +
+        '<span>3→2→1 ' + current.directionPredictions.reverse.riskLevels.map(function (level) {
+          return level === "safe" ? "安" : "险";
+        }).join("→") + '</span>' +
+        '<span>' + current.cascadeDecision + '</span>' +
       '</div>' +
       '<p>' + current.reason + '</p>' +
       '<small>长期第1/2/3期结束：' +

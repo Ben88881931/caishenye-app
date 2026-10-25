@@ -7,10 +7,11 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var METHOD = "per-line-integrated-window-personality-v3";
-  var VERSION = "next-window-v3-20261026";
+  var METHOD = "per-line-dual-direction-risk-cascade-v6";
+  var VERSION = "next-window-v6-20261026";
   var LINE_PRIOR = 30;
   var STATE_PRIOR = 20;
+  var PATTERN_PRIOR = 20;
   var VALIDATION_YEARS = [2025, 2026];
   var LINES = [
     { id: "tail0", label: "尾0", kind: "tail", tail: 0 },
@@ -241,6 +242,7 @@
         state: candidate.state,
         hit: candidate.hitIndex > 0,
         predictedRate: result.predictedRate,
+        lineRate: result.lineRate,
         baseline: candidate.baseline
       });
     });
@@ -261,46 +263,105 @@
       .filter(function (row) { return row.one && row.two && row.three; });
   }
 
-  function deriveWeights(aligned) {
-    var training = aligned.filter(function (row) { return row.three.year <= 2024; });
-    if (!training.length) return { one: 1 / 3, two: 1 / 3, three: 1 / 3 };
-    var baselineBrier = training.reduce(function (sum, row) {
-      return sum + Math.pow(row.three.baseline - (row.three.hit ? 1 : 0), 2);
-    }, 0) / training.length;
-    var skills = {};
-    ["one", "two", "three"].forEach(function (key) {
-      var brier = training.reduce(function (sum, row) {
-        return sum + Math.pow(row[key].predictedRate - (row.three.hit ? 1 : 0), 2);
-      }, 0) / training.length;
-      skills[key] = baselineBrier ? 1 - brier / baselineBrier : 0;
-    });
-    var raw = {};
-    ["one", "two", "three"].forEach(function (key) {
-      raw[key] = Math.exp(clamp(skills[key], -0.08, 0.08) / 0.015);
-    });
-    var total = raw.one + raw.two + raw.three;
-    return {
-      one: raw.one / total,
-      two: raw.two / total,
-      three: raw.three / total,
-      skills: skills
-    };
+  function riskLevel(row) {
+    return row.predictedRate >= Math.max(row.baseline, row.lineRate) ? "safe" : "risk";
   }
 
-  function combinedPredictions(aligned, weights) {
-    return aligned.map(function (row) {
-      return {
+  function orderedRiskLevels(row, direction) {
+    var levels = [riskLevel(row.one), riskLevel(row.two), riskLevel(row.three)];
+    return direction === "reverse" ? levels.slice().reverse() : levels;
+  }
+
+  function directionalCascade(aligned, direction) {
+    var patternCounts = {};
+    return aligned.slice().sort(function (a, b) { return a.start - b.start; }).map(function (row) {
+      var levels = orderedRiskLevels(row, direction);
+      var pattern = levels.join("-");
+      if (!patternCounts[pattern]) patternCounts[pattern] = { n: 0, hits: 0 };
+      var count = patternCounts[pattern];
+      var predictedRate = (count.hits + PATTERN_PRIOR * row.three.lineRate) /
+        (count.n + PATTERN_PRIOR);
+      var result = {
         start: row.start,
         year: row.three.year,
         state: row.three.state,
         hit: row.three.hit,
         baseline: row.three.baseline,
-        predictedRate:
-          row.one.predictedRate * weights.one +
-          row.two.predictedRate * weights.two +
-          row.three.predictedRate * weights.three
+        lineRate: row.three.lineRate,
+        predictedRate: predictedRate,
+        riskPattern: pattern,
+        riskLevels: levels,
+        patternSamples: count.n,
+        patternHits: count.hits
+      };
+      count.n++;
+      if (row.three.hit) count.hits++;
+      return result;
+    });
+  }
+
+  function dualDirectionPredictions(aligned) {
+    var forward = directionalCascade(aligned, "forward");
+    var reverse = directionalCascade(aligned, "reverse");
+    return forward.map(function (row, index) {
+      var reverseRow = reverse[index];
+      var combined = combineDirectionalPredictions(row, reverseRow, row.baseline, row.lineRate);
+      return {
+        start: row.start,
+        year: row.year,
+        state: row.state,
+        hit: row.hit,
+        baseline: row.baseline,
+        predictedRate: combined.predictedRate,
+        cascadeDecision: combined.label,
+        forward: row,
+        reverse: reverseRow
       };
     });
+  }
+
+  function combineDirectionalPredictions(forward, reverse, baseline, lineRate) {
+    var forwardAllRisk = forward.riskLevels.every(function (level) { return level === "risk"; });
+    var reverseAllRisk = reverse.riskLevels.every(function (level) { return level === "risk"; });
+    var forwardAllSafe = forward.riskLevels.every(function (level) { return level === "safe"; });
+    var reverseAllSafe = reverse.riskLevels.every(function (level) { return level === "safe"; });
+    if (forwardAllRisk && reverseAllRisk) {
+      return {
+        label: "双向全风险·低分",
+        predictedRate: Math.min(forward.predictedRate, reverse.predictedRate, baseline) * 0.72
+      };
+    }
+    if (forwardAllSafe && reverseAllSafe) {
+      return {
+        label: "双向全安全·高分",
+        predictedRate: Math.max(forward.predictedRate, reverse.predictedRate, baseline)
+      };
+    }
+    if (forwardAllSafe !== reverseAllSafe) {
+      return { label: "方向分歧·中性", predictedRate: lineRate };
+    }
+    return {
+      label: "双方向混合·观察",
+      predictedRate: (forward.predictedRate + reverse.predictedRate) / 2
+    };
+  }
+
+  function currentDirectionPrediction(submodels, aligned, direction) {
+    var baseLevels = ["one", "two", "three"].map(function (key) { return riskLevel(submodels[key]); });
+    var levels = direction === "reverse" ? baseLevels.slice().reverse() : baseLevels;
+    var pattern = levels.join("-");
+    var matching = aligned.filter(function (row) {
+      return orderedRiskLevels(row, direction).join("-") === pattern;
+    });
+    var hits = matching.filter(function (row) { return row.three.hit; }).length;
+    return {
+      riskLevels: levels,
+      riskPattern: pattern,
+      patternSamples: matching.length,
+      patternHits: hits,
+      predictedRate: (hits + PATTERN_PRIOR * submodels.three.lineRate) /
+        (matching.length + PATTERN_PRIOR)
+    };
   }
 
   function validate(predictions, year) {
@@ -420,14 +481,12 @@
         three: walkForward(candidates.three)
       };
       var aligned = alignedSubmodels(predictions);
-      var weights = deriveWeights(aligned);
       return {
         line: line,
         candidates: candidates,
         predictions: predictions,
         aligned: aligned,
-        weights: weights,
-        combined: combinedPredictions(aligned, weights)
+        cascade: dualDirectionPredictions(aligned)
       };
     });
     var target = asOfPeriod + 1;
@@ -452,10 +511,15 @@
         };
       });
       var baseline = submodels.three.baseline;
-      var predictedRate =
-        submodels.one.predictedRate * detail.weights.one +
-        submodels.two.predictedRate * detail.weights.two +
-        submodels.three.predictedRate * detail.weights.three;
+      var forwardCascade = currentDirectionPrediction(submodels, detail.aligned, "forward");
+      var reverseCascade = currentDirectionPrediction(submodels, detail.aligned, "reverse");
+      var combinedCascade = combineDirectionalPredictions(
+        forwardCascade,
+        reverseCascade,
+        baseline,
+        submodels.three.lineRate
+      );
+      var predictedRate = combinedCascade.predictedRate;
       var interval = wilson(submodels.three.hits, submodels.three.samples, 1.28);
       var confidence = submodels.three.samples >= 20
         ? (interval.lower > baseline ? "高于基准" : (interval.upper < baseline ? "低于基准" : "接近基准"))
@@ -467,8 +531,7 @@
         kind: line.kind,
         longTerm: profile,
         yearly: yearlyStats(detail.candidates.three),
-        validation: VALIDATION_YEARS.map(function (year) { return validate(detail.combined, year); }),
-        weights: detail.weights,
+        validation: VALIDATION_YEARS.map(function (year) { return validate(detail.cascade, year); }),
         current: {
           target: target,
           tail: tail,
@@ -484,6 +547,13 @@
           upper: interval.upper,
           confidence: confidence,
           submodels: submodels,
+          riskLevels: forwardCascade.riskLevels,
+          riskPattern: forwardCascade.riskPattern + "|" + reverseCascade.riskPattern,
+          directionPredictions: {
+            forward: forwardCascade,
+            reverse: reverseCascade
+          },
+          cascadeDecision: combinedCascade.label,
           reason: "长期新三期窗口 " + (profile.rate * 100).toFixed(1) + "%（" +
             profile.hits + "/" + profile.windows + "），第1/2/3期结束 " +
             (profile.stageShare.first * 100).toFixed(0) + "/" +
@@ -492,9 +562,13 @@
             "状态。综合：一期" + (submodels.one.predictedRate * 100).toFixed(1) +
             "% / 两期" + (submodels.two.predictedRate * 100).toFixed(1) +
             "% / 三期" + (submodels.three.predictedRate * 100).toFixed(1) +
-            "%，本线权重 " + (detail.weights.one * 100).toFixed(0) + "/" +
-            (detail.weights.two * 100).toFixed(0) + "/" +
-            (detail.weights.three * 100).toFixed(0) + "%。"
+            "%，正向 1→2→3 " + forwardCascade.riskLevels.map(function (level) {
+              return level === "safe" ? "安全" : "风险";
+            }).join("→") + "（" + forwardCascade.patternHits + "/" + forwardCascade.patternSamples +
+            "）；反向 3→2→1 " + reverseCascade.riskLevels.map(function (level) {
+              return level === "safe" ? "安全" : "风险";
+            }).join("→") + "（" + reverseCascade.patternHits + "/" + reverseCascade.patternSamples +
+            "），最终判定：" + combinedCascade.label + "。"
         }
       };
     });
@@ -516,13 +590,15 @@
       linePrior: LINE_PRIOR,
       statePrior: STATE_PRIOR,
       uniformWeightsUsed: false,
-      oneTwoThreeWeightMix: true,
+      oneTwoThreeWeightMix: false,
+      riskCascade: true,
+      bidirectionalRiskCascade: true,
       lookAheadUsed: false,
       overlappingWindows: true,
       lines: lines,
       ranking: ranking,
       selectionValidation: selectionValidation(details.map(function (item) {
-        return { id: item.line.id, predictions: item.combined };
+        return { id: item.line.id, predictions: item.cascade };
       }))
     };
   }
