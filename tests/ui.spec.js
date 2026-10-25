@@ -706,6 +706,13 @@ test("two-period window omission heatmap has its own page and live strips", asyn
   await expect(page.locator(".trend-run-strip")).toHaveCount(26);
   await expect(page.locator("[data-wm-live-state]")).toHaveCount(26);
   await expect(page.locator("#view")).toContainText("两期窗口（一个窗口最多第2期）");
+  const stripLayout = await page.locator(".trend-run-strip").first().evaluate((strip) => ({
+    display: getComputedStyle(strip).display,
+    scrollWidth: strip.scrollWidth,
+    clientWidth: strip.clientWidth,
+  }));
+  expect(stripLayout.display).toBe("flex");
+  expect(stripLayout.scrollWidth).toBeGreaterThan(stripLayout.clientWidth);
 });
 
 test("long right swipe on the first page does not open the directory", async ({ page }) => {
