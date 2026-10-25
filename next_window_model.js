@@ -7,8 +7,8 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var METHOD = "per-line-next-window-personality-v2";
-  var VERSION = "next-window-v2-20261026";
+  var METHOD = "per-line-integrated-window-personality-v3";
+  var VERSION = "next-window-v3-20261026";
   var LINE_PRIOR = 30;
   var STATE_PRIOR = 20;
   var VALIDATION_YEARS = [2025, 2026];
@@ -86,9 +86,9 @@
     return total ? hits / total : 0.5556;
   }
 
-  function windowBaseline(d, tail, startPeriod) {
+  function windowBaseline(d, tail, startPeriod, cap) {
     var frequency = clamp(tailFrequency(d, tail, startPeriod), 0.01, 0.99);
-    return 1 - Math.pow(1 - frequency, 3);
+    return 1 - Math.pow(1 - frequency, cap || 3);
   }
 
   function stateAt(rows, localIndex, tail) {
@@ -114,11 +114,12 @@
     }[state] || state;
   }
 
-  function buildCandidates(d, line, grouped, probabilityCache) {
+  function buildCandidates(d, line, grouped, probabilityCache, cap) {
+    var width = cap || 3;
     var candidates = [];
     Object.keys(grouped).map(Number).sort(function (a, b) { return a - b; }).forEach(function (year) {
       var rows = grouped[year];
-      for (var localIndex = 0; localIndex + 2 < rows.length; localIndex++) {
+      for (var localIndex = 0; localIndex + width - 1 < rows.length; localIndex++) {
         var tail = line.kind === "tail"
           ? Number(line.tail)
           : Number((probabilityCache[year][localIndex] || [])[line.rank || 0]);
@@ -126,7 +127,7 @@
         var start = rows[localIndex].index;
         var attempts = [];
         var hitIndex = 0;
-        for (var offset = 0; offset < 3; offset++) {
+        for (var offset = 0; offset < width; offset++) {
           var item = rows[localIndex + offset];
           var hit = hasTail(item.row, tail);
           attempts.push({ period: item.index, tail: tail, hit: hit });
@@ -135,7 +136,7 @@
             break;
           }
         }
-        if (!hitIndex && attempts.length < 3) continue;
+        if (!hitIndex && attempts.length < width) continue;
         candidates.push({
           start: start,
           end: attempts[attempts.length - 1].period,
@@ -145,7 +146,7 @@
           attempts: attempts,
           hitIndex: hitIndex,
           state: stateAt(rows, localIndex, tail),
-          baseline: windowBaseline(d, tail, start)
+          baseline: windowBaseline(d, tail, start, width)
         });
       }
     });
@@ -245,6 +246,61 @@
     });
     candidates.forEach(function (row) { delete row._addedToHistory; });
     return predictions;
+  }
+
+  function alignedSubmodels(submodelPredictions) {
+    var byStart = {};
+    ["one", "two", "three"].forEach(function (key) {
+      submodelPredictions[key].forEach(function (row) {
+        if (!byStart[row.start]) byStart[row.start] = { start: row.start };
+        byStart[row.start][key] = row;
+      });
+    });
+    return Object.keys(byStart).map(Number).sort(function (a, b) { return a - b; })
+      .map(function (start) { return byStart[start]; })
+      .filter(function (row) { return row.one && row.two && row.three; });
+  }
+
+  function deriveWeights(aligned) {
+    var training = aligned.filter(function (row) { return row.three.year <= 2024; });
+    if (!training.length) return { one: 1 / 3, two: 1 / 3, three: 1 / 3 };
+    var baselineBrier = training.reduce(function (sum, row) {
+      return sum + Math.pow(row.three.baseline - (row.three.hit ? 1 : 0), 2);
+    }, 0) / training.length;
+    var skills = {};
+    ["one", "two", "three"].forEach(function (key) {
+      var brier = training.reduce(function (sum, row) {
+        return sum + Math.pow(row[key].predictedRate - (row.three.hit ? 1 : 0), 2);
+      }, 0) / training.length;
+      skills[key] = baselineBrier ? 1 - brier / baselineBrier : 0;
+    });
+    var raw = {};
+    ["one", "two", "three"].forEach(function (key) {
+      raw[key] = Math.exp(clamp(skills[key], -0.08, 0.08) / 0.015);
+    });
+    var total = raw.one + raw.two + raw.three;
+    return {
+      one: raw.one / total,
+      two: raw.two / total,
+      three: raw.three / total,
+      skills: skills
+    };
+  }
+
+  function combinedPredictions(aligned, weights) {
+    return aligned.map(function (row) {
+      return {
+        start: row.start,
+        year: row.three.year,
+        state: row.three.state,
+        hit: row.three.hit,
+        baseline: row.three.baseline,
+        predictedRate:
+          row.one.predictedRate * weights.one +
+          row.two.predictedRate * weights.two +
+          row.three.predictedRate * weights.three
+      };
+    });
   }
 
   function validate(predictions, year) {
@@ -353,9 +409,26 @@
     var grouped = yearGroups(available);
     var cache = buildProbabilityCache(grouped, probabilityModel);
     var details = LINES.map(function (line) {
-      var candidates = buildCandidates(available, line, grouped, cache);
-      var predictions = walkForward(candidates);
-      return { line: line, candidates: candidates, predictions: predictions };
+      var candidates = {
+        one: buildCandidates(available, line, grouped, cache, 1),
+        two: buildCandidates(available, line, grouped, cache, 2),
+        three: buildCandidates(available, line, grouped, cache, 3)
+      };
+      var predictions = {
+        one: walkForward(candidates.one),
+        two: walkForward(candidates.two),
+        three: walkForward(candidates.three)
+      };
+      var aligned = alignedSubmodels(predictions);
+      var weights = deriveWeights(aligned);
+      return {
+        line: line,
+        candidates: candidates,
+        predictions: predictions,
+        aligned: aligned,
+        weights: weights,
+        combined: combinedPredictions(aligned, weights)
+      };
     });
     var target = asOfPeriod + 1;
     var latest = available[available.length - 1];
@@ -363,40 +436,65 @@
       var line = detail.line;
       var tail = currentTail(line, grouped, cache, asOfPeriod, latest);
       var state = currentState(available, line, tail, target);
-      var baseline = windowBaseline(available, tail, target);
-      var prediction = predict(detail.candidates, state, baseline);
-      var interval = wilson(prediction.stateHits, prediction.stateSamples, 1.28);
-      var confidence = prediction.stateSamples >= 20
+      var submodels = {};
+      ["one", "two", "three"].forEach(function (key) {
+        var cap = key === "one" ? 1 : (key === "two" ? 2 : 3);
+        var baseline = windowBaseline(available, tail, target, cap);
+        var prediction = predict(detail.candidates[key], state, baseline);
+        submodels[key] = {
+          cap: cap,
+          predictedRate: prediction.predictedRate,
+          baseline: baseline,
+          edge: prediction.predictedRate - baseline,
+          samples: prediction.stateSamples,
+          hits: prediction.stateHits,
+          lineRate: prediction.lineRate
+        };
+      });
+      var baseline = submodels.three.baseline;
+      var predictedRate =
+        submodels.one.predictedRate * detail.weights.one +
+        submodels.two.predictedRate * detail.weights.two +
+        submodels.three.predictedRate * detail.weights.three;
+      var interval = wilson(submodels.three.hits, submodels.three.samples, 1.28);
+      var confidence = submodels.three.samples >= 20
         ? (interval.lower > baseline ? "高于基准" : (interval.upper < baseline ? "低于基准" : "接近基准"))
         : "样本不足";
-      var profile = longTermProfile(detail.candidates);
+      var profile = longTermProfile(detail.candidates.three);
       return {
         id: line.id,
         label: line.label,
         kind: line.kind,
         longTerm: profile,
-        yearly: yearlyStats(detail.candidates),
-        validation: VALIDATION_YEARS.map(function (year) { return validate(detail.predictions, year); }),
+        yearly: yearlyStats(detail.candidates.three),
+        validation: VALIDATION_YEARS.map(function (year) { return validate(detail.combined, year); }),
+        weights: detail.weights,
         current: {
           target: target,
           tail: tail,
           state: state,
           stateLabel: stateLabel(state),
-          samples: prediction.stateSamples,
-          hits: prediction.stateHits,
-          lineRate: prediction.lineRate,
-          predictedRate: prediction.predictedRate,
+          samples: submodels.three.samples,
+          hits: submodels.three.hits,
+          lineRate: submodels.three.lineRate,
+          predictedRate: predictedRate,
           baseline: baseline,
-          edge: prediction.predictedRate - baseline,
+          edge: predictedRate - baseline,
           lower: interval.lower,
           upper: interval.upper,
           confidence: confidence,
+          submodels: submodels,
           reason: "长期新三期窗口 " + (profile.rate * 100).toFixed(1) + "%（" +
             profile.hits + "/" + profile.windows + "），第1/2/3期结束 " +
             (profile.stageShare.first * 100).toFixed(0) + "/" +
             (profile.stageShare.second * 100).toFixed(0) + "/" +
             (profile.stageShare.third * 100).toFixed(0) + "%，当前" + stateLabel(state) +
-            "历史 " + prediction.stateHits + "/" + prediction.stateSamples + "。"
+            "状态。综合：一期" + (submodels.one.predictedRate * 100).toFixed(1) +
+            "% / 两期" + (submodels.two.predictedRate * 100).toFixed(1) +
+            "% / 三期" + (submodels.three.predictedRate * 100).toFixed(1) +
+            "%，本线权重 " + (detail.weights.one * 100).toFixed(0) + "/" +
+            (detail.weights.two * 100).toFixed(0) + "/" +
+            (detail.weights.three * 100).toFixed(0) + "%。"
         }
       };
     });
@@ -418,13 +516,13 @@
       linePrior: LINE_PRIOR,
       statePrior: STATE_PRIOR,
       uniformWeightsUsed: false,
-      oneTwoThreeWeightMix: false,
+      oneTwoThreeWeightMix: true,
       lookAheadUsed: false,
       overlappingWindows: true,
       lines: lines,
       ranking: ranking,
       selectionValidation: selectionValidation(details.map(function (item) {
-        return { id: item.line.id, predictions: item.predictions };
+        return { id: item.line.id, predictions: item.combined };
       }))
     };
   }

@@ -135,7 +135,7 @@ window.APP_PERSONALITY_SNAPSHOTS = {
         }
       ],
       "superseded": true,
-      "supersededBy": "next-window-v2-20261026"
+      "supersededBy": "next-window-v3-20261026"
     },
     {
       "version": "next-window-v2-20261026",
@@ -321,9 +321,197 @@ window.APP_PERSONALITY_SNAPSHOTS = {
           "status": "pending",
           "hitIndex": null
         }
+      ],
+      "superseded": true,
+      "supersededBy": "next-window-v3-20261026"
+    },
+    {
+      "version": "next-window-v3-20261026",
+      "generatedAt": "2026-10-25T16:51:49.125Z",
+      "year": 2026,
+      "basedOn": 298,
+      "target": 299,
+      "targetGlobal": 1464,
+      "candidates": [
+        "prob3",
+        "tail2",
+        "tail6",
+        "prob1",
+        "tail1",
+        "tail3",
+        "tail5",
+        "tail7",
+        "tail9",
+        "tail8",
+        "tail4",
+        "prob2",
+        "tail0"
+      ],
+      "top3": [
+        "prob3",
+        "tail2",
+        "tail6"
+      ],
+      "lines": [
+        {
+          "id": "prob3",
+          "label": "概率第3",
+          "tail": 5,
+          "predictedRate": 0.9331165525535309,
+          "baseline": 0.9106693967900266,
+          "edge": 0.022447155763504312,
+          "state": "after_one_miss",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail2",
+          "label": "尾2",
+          "tail": 2,
+          "predictedRate": 0.9217204488508843,
+          "baseline": 0.9253535500801866,
+          "edge": -0.0036331012293022713,
+          "state": "after_three_plus_misses",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail6",
+          "label": "尾6",
+          "tail": 6,
+          "predictedRate": 0.9199340719334039,
+          "baseline": 0.9170666787949012,
+          "edge": 0.002867393138502705,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob1",
+          "label": "概率第1",
+          "tail": 0,
+          "predictedRate": 0.9171828624822008,
+          "baseline": 0.8553392602150206,
+          "edge": 0.06184360226718022,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail1",
+          "label": "尾1",
+          "tail": 1,
+          "predictedRate": 0.9169259440582075,
+          "baseline": 0.9094344288563013,
+          "edge": 0.007491515201906163,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail3",
+          "label": "尾3",
+          "tail": 3,
+          "predictedRate": 0.9146064695412889,
+          "baseline": 0.9118930865565257,
+          "edge": 0.002713382984763202,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail5",
+          "label": "尾5",
+          "tail": 5,
+          "predictedRate": 0.9141313288187991,
+          "baseline": 0.9106693967900266,
+          "edge": 0.003461932028772541,
+          "state": "after_one_miss",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail7",
+          "label": "尾7",
+          "tail": 7,
+          "predictedRate": 0.9136551168767147,
+          "baseline": 0.9098473411574023,
+          "edge": 0.003807775719312456,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail9",
+          "label": "尾9",
+          "tail": 9,
+          "predictedRate": 0.907757139162826,
+          "baseline": 0.9170666787949012,
+          "edge": -0.009309539632075259,
+          "state": "after_one_miss",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail8",
+          "label": "尾8",
+          "tail": 8,
+          "predictedRate": 0.9044283292950572,
+          "baseline": 0.9060856498873028,
+          "edge": -0.001657320592245548,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail4",
+          "label": "尾4",
+          "tail": 4,
+          "predictedRate": 0.9014002367663507,
+          "baseline": 0.8978036637001049,
+          "edge": 0.003596573066245834,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob2",
+          "label": "概率第2",
+          "tail": 3,
+          "predictedRate": 0.9010016850421518,
+          "baseline": 0.9118930865565257,
+          "edge": -0.010891401514373844,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail0",
+          "label": "尾0",
+          "tail": 0,
+          "predictedRate": 0.8628386207208817,
+          "baseline": 0.8553392602150206,
+          "edge": 0.007499360505861086,
+          "state": "after_hit",
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        }
       ]
     }
   ],
   "latestPeriod": 298,
-  "updatedAt": "2026-10-25T16:42:08.733Z"
+  "updatedAt": "2026-10-25T16:51:49.125Z"
 };

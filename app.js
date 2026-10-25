@@ -1954,6 +1954,14 @@
         '<span>模型增量 ' + (current.edge >= 0 ? "+" : "") + (current.edge * 100).toFixed(1) + 'pp</span>' +
         '<span>' + current.confidence + '</span>' +
       '</div>' +
+      '<div class="daily-report-recent-metrics" data-report-submodels>' +
+        '<span>一期 ' + (current.submodels.one.predictedRate * 100).toFixed(1) + '%</span>' +
+        '<span>两期 ' + (current.submodels.two.predictedRate * 100).toFixed(1) + '%</span>' +
+        '<span>三期 ' + (current.submodels.three.predictedRate * 100).toFixed(1) + '%</span>' +
+        '<span>本线权重 ' + (personality.weights.one * 100).toFixed(0) + '/' +
+          (personality.weights.two * 100).toFixed(0) + '/' +
+          (personality.weights.three * 100).toFixed(0) + '</span>' +
+      '</div>' +
       '<p>' + current.reason + '</p>' +
       '<small>长期第1/2/3期结束：' +
         (longTerm.stageShare.first * 100).toFixed(1) + '% / ' +

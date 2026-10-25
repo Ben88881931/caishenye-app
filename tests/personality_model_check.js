@@ -23,7 +23,7 @@ const expectedLines = [
   "prob3",
 ];
 
-assert.equal(model.method, "per-line-next-window-personality-v2");
+assert.equal(model.method, "per-line-integrated-window-personality-v3");
 assert.equal(model.overlappingWindows, true);
 assert.equal(model.lines.length, 13);
 assert.deepEqual(model.lines.map((line) => line.id), expectedLines);
@@ -54,6 +54,11 @@ for (const line of model.lines) {
   assert.ok(line.current.reason);
   assert.equal(line.current.target, model.target);
   assert.ok(line.current.tail >= 0 && line.current.tail <= 9);
+  assert.ok(Number.isFinite(line.current.submodels.one.predictedRate));
+  assert.ok(Number.isFinite(line.current.submodels.two.predictedRate));
+  assert.ok(Number.isFinite(line.current.submodels.three.predictedRate));
+  const weightTotal = line.weights.one + line.weights.two + line.weights.three;
+  assert.ok(Math.abs(weightTotal - 1) < 0.000001, `${line.id} weights must sum to 1`);
   assert.equal(line.validation.length, 2);
   assert.deepEqual(line.validation.map((item) => item.year), [2025, 2026]);
   for (const item of line.validation) {
@@ -67,10 +72,11 @@ for (const line of model.lines) {
 }
 
 assert.equal(model.uniformWeightsUsed, false);
-assert.equal(model.oneTwoThreeWeightMix, false);
+assert.equal(model.oneTwoThreeWeightMix, true);
 assert.equal(model.lookAheadUsed, false);
 assert.ok(model.asOfPeriod > 0);
 assert.ok(model.lines.some((line) => line.current.state !== "year_start"), "current personality state must use completed current-year windows");
+assert.ok(new Set(model.lines.map((line) => [line.weights.one, line.weights.two, line.weights.three].map((value) => value.toFixed(4)).join("/"))).size > 1, "each line must learn its own window weights");
 assert.equal(model.selectionValidation.length, 2);
 for (const item of model.selectionValidation) {
   assert.ok(item.periods > 0);
