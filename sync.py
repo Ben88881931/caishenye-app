@@ -5,6 +5,7 @@
 import json
 import os
 import re
+import subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -22,6 +23,7 @@ def main():
 
     out = "window.APP_DATA = " + json.dumps({"raw": raw, "d": d}, ensure_ascii=False) + ";\n"
     open(os.path.join(HERE, "data.js"), "w", encoding="utf-8").write(out)
+    subprocess.run(["node", os.path.join(HERE, "build_personality_model.js")], cwd=HERE, check=True)
     print("synced %d periods, latest %d, %d records" % (len(raw), max(int(k) for k in raw), len(d)))
 
 

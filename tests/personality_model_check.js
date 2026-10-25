@@ -1,0 +1,72 @@
+"use strict";
+
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const vm = require("node:vm");
+const personality = require("../personality_model.js");
+const probabilityModel = require("../model_probability.js");
+
+const dataSandbox = { window: {} };
+vm.runInNewContext(fs.readFileSync("data.js", "utf8"), dataSandbox, { filename: "data.js" });
+const appData = dataSandbox.window.APP_DATA;
+const model = personality.build({
+  raw: appData.raw,
+  d: appData.d,
+  probabilityModel,
+  asOfPeriod: appData.d.length,
+});
+
+const expectedLines = [
+  ...Array.from({ length: 10 }, (_, tail) => `tail${tail}`),
+  "prob1",
+  "prob2",
+  "prob3",
+];
+
+assert.equal(model.method, "per-line-long-term-personality-v1");
+assert.equal(model.lines.length, 13);
+assert.deepEqual(model.lines.map((line) => line.id), expectedLines);
+assert.equal(model.ranking.length, 13);
+assert.ok(model.ranking.every((line, index, rows) => (
+  index === 0 || rows[index - 1].current.predictedRate >= line.current.predictedRate
+)));
+
+for (const line of model.lines) {
+  assert.ok(line.longTerm.windows > 0, `${line.id} needs long-term windows`);
+  assert.ok(line.longTerm.hits >= 0 && line.longTerm.hits <= line.longTerm.windows);
+  assert.ok(Number.isFinite(line.longTerm.rate), `${line.id} long-term rate missing`);
+  assert.ok(Number.isFinite(line.longTerm.baseline), `${line.id} baseline missing`);
+  assert.ok(Number.isFinite(line.longTerm.edge), `${line.id} edge missing`);
+  assert.ok(line.longTerm.stageShare);
+  assert.ok(Number.isFinite(line.longTerm.stageShare.first));
+  assert.ok(Number.isFinite(line.longTerm.stageShare.second));
+  assert.ok(Number.isFinite(line.longTerm.stageShare.third));
+  assert.ok(Array.isArray(line.yearly) && line.yearly.length > 0);
+  assert.ok(line.current.state, `${line.id} missing personality state`);
+  assert.ok(Number.isFinite(line.current.predictedRate), `${line.id} prediction missing`);
+  assert.ok(line.current.predictedRate >= 0 && line.current.predictedRate <= 1);
+  assert.ok(Number.isFinite(line.current.edge), `${line.id} current edge missing`);
+  assert.ok(line.current.samples >= 0);
+  assert.ok(line.current.reason);
+  if (line.current.status === "active") {
+    assert.ok(Number.isInteger(line.current.windowStart), `${line.id} active current window needs a start`);
+  }
+  assert.equal(line.validation.length, 2);
+  assert.deepEqual(line.validation.map((item) => item.year), [2025, 2026]);
+  for (const item of line.validation) {
+    assert.ok(item.predictions > 0, `${line.id}/${item.year} has no walk-forward predictions`);
+    assert.ok(Number.isFinite(item.brier));
+    assert.ok(Number.isFinite(item.baselineBrier));
+    assert.ok(Number.isFinite(item.brierSkill));
+    assert.ok(Number.isFinite(item.rate));
+    assert.ok(Number.isFinite(item.baseline));
+  }
+}
+
+assert.equal(model.uniformWeightsUsed, false);
+assert.equal(model.oneTwoThreeWeightMix, false);
+assert.equal(model.lookAheadUsed, false);
+assert.ok(model.asOfPeriod > 0);
+assert.ok(model.lines.some((line) => line.current.state !== "year_start"), "current personality state must use completed current-year windows");
+
+console.log("PASS: per-line long-term personality model contract");

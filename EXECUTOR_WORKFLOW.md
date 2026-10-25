@@ -50,12 +50,14 @@
 ```powershell
 node probability_supervisor.js sync
 node model_supervisor.js sync
+node build_personality_model.js
 ```
 
-确认以下两份文件都存在目标期且 `settled: false` 的记录：
+确认以下文件都存在目标期开奖前记录：
 
 - `probability_snapshots.json`
 - `prediction_snapshots.json`
+- `personality_snapshots.json`
 
 如果已有目标期快照，保留原记录，禁止覆盖。
 
@@ -82,7 +84,7 @@ node model_supervisor.js sync
 python sync.py
 ```
 
-该命令生成 `data.js`。生成后必须确认 `data.js` 的最新期等于本次期号。
+该命令生成 `data.js`，并自动重建 `personality_model.json`、`personality_model_data.js`、`personality_snapshots.json`、`personality_snapshots.js`。生成后必须确认最新期等于本次期号。
 
 ### 第 4 步：结算旧快照并生成下一期快照
 
@@ -101,7 +103,7 @@ node model_supervisor.js sync
 
 ### 第 5 步：更新缓存版本
 
-统一修改 `index.html` 中十处 `?v=`：
+统一修改 `index.html` 中十二处 `?v=`：
 
 - `styles.css`
 - `data.js`
@@ -109,6 +111,8 @@ node model_supervisor.js sync
 - `model_selector.js`
 - `probability_weight_research.js`
 - `model_probability.js`
+- `personality_model_data.js`
+- `personality_snapshots.js`
 - `ultimate_model.js`
 - `snapshots.js`
 - `probability_snapshots.js`
@@ -120,7 +124,7 @@ node model_supervisor.js sync
 20261021-12 -> 20261021-13
 ```
 
-十处必须完全一致。
+十二处必须完全一致。
 
 ### 第 6 步：检查改动范围
 
@@ -139,6 +143,10 @@ git diff
 - `probability_snapshots.js`
 - `prediction_snapshots.json`
 - `snapshots.js`
+- `personality_model.json`
+- `personality_model_data.js`
+- `personality_snapshots.json`
+- `personality_snapshots.js`
 - `index.html`
 
 出现任何其他文件改动时立即停止并报告，不得为了“顺手”提交。
@@ -148,7 +156,7 @@ git diff
 只能逐个文件加入：
 
 ```powershell
-git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json probability_snapshots.js prediction_snapshots.json snapshots.js index.html
+git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json probability_snapshots.js prediction_snapshots.json snapshots.js personality_model.json personality_model_data.js personality_snapshots.json personality_snapshots.js index.html
 git commit -m "更新第<期号>期数据并结算快照"
 git push origin main
 ```
@@ -159,7 +167,7 @@ git push origin main
 
 - 禁止恢复或运行 `update_daily.py`。该旧脚本及其旧页面入口已删除。
 - 禁止手工修改 `model_supervisor.js`、`prediction_snapshots.json`、`snapshots.js`。只能通过 `node model_supervisor.js sync` 生成和结算。
-- 禁止修改 `app.js`、`styles.css`、模型、公式、阈值、窗口规则或页面结构。
+- 禁止修改 `app.js`、`styles.css`、模型算法、公式、阈值、窗口规则或页面结构；只允许通过 `sync.py` 重建逐线性格派生文件。
 - 禁止修改历史开奖数据。
 - 禁止事后补写、重算或覆盖开奖前预测。
 - 禁止为了让检查通过而修改测试、护栏或断言。

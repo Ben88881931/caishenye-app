@@ -821,7 +821,11 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator("[data-daily-report-rank-card]")).toHaveCount(1);
   await expect(page.locator("[data-daily-report-rank-item]")).toHaveCount(13);
   await expect(page.locator("[data-report-mode]")).toHaveCount(39);
+  await expect(page.locator("[data-report-personality-state]")).toHaveCount(13);
+  await expect(page.locator('[data-report-section="snapshot"]')).toHaveCount(1);
   await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
+  await expect(page.locator("#view")).toContainText("逐线长期性格模型");
+  await expect(page.locator("#view")).not.toContainText("20% / 30% / 40%");
 
   const rankLayout = await page.locator("[data-daily-report-rank-card]").evaluate((card) => ({
     cardWidth: card.clientWidth,
@@ -844,10 +848,32 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   expect(cardLayout.cardWidth).toBeLessThan(cardLayout.stripWidth);
   expect(cardLayout.scrollable).toBe(true);
 
-  const scores = await page.locator("[data-daily-report-row]").evaluateAll((rows) => (
-    rows.map((row) => Number(row.getAttribute("data-report-score")))
+  const rankingRows = await page.locator("[data-daily-report-row]").evaluateAll((rows) => (
+    rows.map((row) => ({
+      score: Number(row.getAttribute("data-report-score")),
+      predicted: Number(row.getAttribute("data-personality-predicted")) * 100,
+      eligible: row.getAttribute("data-report-eligible") === "true",
+    }))
   ));
-  expect(scores.every((score, index) => index === 0 || scores[index - 1] >= score)).toBe(true);
+  expect(rankingRows.some((row) => row.eligible)).toBe(true);
+  expect(rankingRows.findIndex((row) => !row.eligible)).toBeGreaterThan(0);
+  expect(rankingRows.every((row, index) => index === 0 || rankingRows[index - 1].eligible || !row.eligible)).toBe(true);
+  expect(rankingRows.every((row) => Math.abs(row.score - row.predicted) < 0.0001)).toBe(true);
+  for (const eligible of [true, false]) {
+    const scores = rankingRows.filter((row) => row.eligible === eligible).map((row) => row.score);
+    expect(scores.every((score, index) => index === 0 || scores[index - 1] >= score)).toBe(true);
+  }
+  const snapshotTop3 = await page.evaluate(() => {
+    const latest = window.APP_DATA.d[window.APP_DATA.d.length - 1];
+    const record = window.APP_PERSONALITY_SNAPSHOTS.records.find((item) => (
+      Number(item.year) === Number(latest.y) && Number(item.target) === Number(latest.p) + 1
+    ));
+    return record?.top3 || [];
+  });
+  const eligibleIds = await page.locator('[data-daily-report-row][data-report-eligible="true"]').evaluateAll((rows) => (
+    rows.map((row) => row.getAttribute("data-line-id"))
+  ));
+  expect(eligibleIds.slice(0, 3)).toEqual(snapshotTop3);
 });
 
 test("daily reports synthesize every analysis section for all 13 lines", async ({ page }) => {
@@ -861,7 +887,7 @@ test("daily reports synthesize every analysis section for all 13 lines", async (
     return cards.length === 13;
   });
 
-  const required = ["conclusion", "reason", "window", "period-comparison", "cross-page", "recent", "longterm", "formula", "risk"];
+  const required = ["conclusion", "reason", "window", "period-comparison", "personality", "cross-page", "recent", "longterm", "formula", "risk"];
   const report = await page.locator("[data-daily-report-card]").evaluateAll((cards, sectionNames) => {
     return cards.map((card) => {
       const sections = sectionNames.map((name) => {

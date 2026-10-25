@@ -39,6 +39,9 @@ def main():
     selector_path = REPO / "model_selector.js"
     probability_research_path = REPO / "probability_weight_research.js"
     probability_model_path = REPO / "model_probability.js"
+    personality_model_path = REPO / "personality_model.js"
+    personality_data_path = REPO / "personality_model_data.js"
+    personality_snapshots_js_path = REPO / "personality_snapshots.js"
     selector_backtest_path = REPO / "selector_backtest.js"
     page_audit_path = REPO / "page_audit.js"
     ultimate_model_path = REPO / "ultimate_model.js"
@@ -327,10 +330,12 @@ def main():
         selector_pos = index_text.find("model_selector.js")
         probability_research_pos = index_text.find("probability_weight_research.js")
         probability_pos = index_text.find("model_probability.js")
+        personality_model_pos = index_text.find("personality_model_data.js")
+        personality_snapshots_pos = index_text.find("personality_snapshots.js")
         ultimate_pos = index_text.find("ultimate_model.js")
-        snap_pos = index_text.find("snapshots.js")
-        probability_snap_pos = index_text.find("probability_snapshots.js")
-        app_pos = index_text.find("app.js")
+        snap_pos = index_text.find('src="snapshots.js')
+        probability_snap_pos = index_text.find('src="probability_snapshots.js')
+        app_pos = index_text.find('src="app.js')
         if core_pos < 0:
             fail("index.html 未加载 model_core.js")
         elif selector_pos < 0:
@@ -339,6 +344,10 @@ def main():
             fail("index.html 未加载 probability_weight_research.js")
         elif probability_pos < 0:
             fail("index.html 未加载 model_probability.js")
+        elif personality_model_pos < 0:
+            fail("index.html 未加载 personality_model_data.js")
+        elif personality_snapshots_pos < 0:
+            fail("index.html 未加载 personality_snapshots.js")
         elif ultimate_pos < 0:
             fail("index.html 未加载 ultimate_model.js")
         elif snap_pos < 0:
@@ -347,8 +356,8 @@ def main():
             fail("index.html 未加载 probability_snapshots.js")
         elif app_pos < 0:
             fail("index.html 未加载 app.js")
-        elif not (core_pos < selector_pos < probability_research_pos < probability_pos < ultimate_pos < snap_pos < probability_snap_pos < app_pos):
-            fail("index.html 加载顺序必须为 model_core.js → model_selector.js → probability_weight_research.js → model_probability.js → ultimate_model.js → snapshots.js → probability_snapshots.js → app.js")
+        elif not (core_pos < selector_pos < probability_research_pos < probability_pos < personality_model_pos < personality_snapshots_pos < ultimate_pos < snap_pos < probability_snap_pos < app_pos):
+            fail("index.html 加载顺序必须为 model_core.js → model_selector.js → probability_weight_research.js → model_probability.js → personality_model_data.js → personality_snapshots.js → ultimate_model.js → snapshots.js → probability_snapshots.js → app.js")
         else:
             pass_("模型脚本、普通快照和概率快照加载顺序正确")
         if "88d2a63" in index_text:
@@ -356,7 +365,7 @@ def main():
         else:
             pass_("index.html 无旧缓存版本 88d2a63")
         # 所有资源版本号必须一致
-        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|model_selector\.js|probability_weight_research\.js|model_probability\.js|ultimate_model\.js|snapshots\.js|probability_snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
+        m_versions = re.findall(r"(?:styles\.css|data\.js|model_core\.js|model_selector\.js|probability_weight_research\.js|model_probability\.js|personality_model_data\.js|personality_snapshots\.js|ultimate_model\.js|snapshots\.js|probability_snapshots\.js|app\.js)\?v=([\w.-]+)", index_text)
         if not m_versions:
             fail("index.html 未找到带版本号的资源引用")
         else:
@@ -366,7 +375,7 @@ def main():
             else:
                 pass_(f"index.html 资源版本一致：{m_versions[0]}")
 
-    for js_path in [model_core_path, selector_path, probability_research_path, probability_model_path, probability_snapshots_js_path, selector_backtest_path, page_audit_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
+    for js_path in [model_core_path, selector_path, probability_research_path, probability_model_path, personality_model_path, personality_data_path, personality_snapshots_js_path, probability_snapshots_js_path, selector_backtest_path, page_audit_path, ultimate_model_path, ultimate_backtest_path, supervisor_path, score_calibration_path, snapshots_js_path]:
         if not js_path.exists():
             fail(f"缺少 {js_path.name}")
             continue

@@ -11,6 +11,14 @@
   var WINDOW_RECORD_FORMAT = "每窗第1/2/3期 · 期号 + 尾号 + 中/错/待开奖 · 最新在左 · 左右滑动";
   var MODEL = window.CAISHEN_MODEL.createModel(RAW);
   var PROB_MODEL = window.CAISHEN_PROBABILITY;
+  var PERSONALITY_MODEL = window.APP_PERSONALITY_MODEL || null;
+  var PERSONALITY_SNAPSHOTS = window.APP_PERSONALITY_SNAPSHOTS || null;
+  var PERSONALITY_BY_ID = {};
+  if (PERSONALITY_MODEL && Array.isArray(PERSONALITY_MODEL.lines)) {
+    PERSONALITY_MODEL.lines.forEach(function (line) {
+      PERSONALITY_BY_ID[line.id] = line;
+    });
+  }
 
   var byYearPeriod = new Map();
   D.forEach(function (e) {
@@ -1340,7 +1348,7 @@
         {
           name: "每日最终报告",
           summary: "把13条线在下注执行表、公式表、13线规律中心、窗口遗漏热图、尾号性格和动态概率里的分析综合成一份每日报告。",
-          look: ["13线综合优秀度排名", "每条线的建议、推荐理由和风险", "当前窗口、近期、年度、公式仓位和新方法权重"],
+          look: ["13线长期性格三期排名", "每条线独立的三期预测、自身基准和模型增量", "长期画像、年度稳定性、走步验证和当前风险"],
           use: "每天先看这一页，直接知道哪条线值得关注、为什么、当前能不能执行。",
           source: "真实开奖窗口、真实快照、公式审计、年度统计、尾号性格和概率模型记录。",
           note: "综合分不按金额排序；结论只解释真实数据，概率三条线继续标明296期旧快照边界。"
@@ -1871,35 +1879,67 @@
     return { source: "下注执行表", text: live && live.active ? "窗口进行中。" : "查看当前窗口状态。" };
   }
 
-  function dailyReportCompositeScore(row) {
-    var modeRows = [row.modes.one, row.modes.two, row.modes.three];
-    var modePerformance = modeRows.map(function (mode) {
-      var baseline = Math.max(0.01, Number(mode.baseline || 0.55));
-      return Math.max(0, Math.min(1.15, mode.recentRate / baseline));
-    });
-    var modeRateList = modeRows.map(function (mode) { return mode.recentRate; });
-    var divergence = Math.max.apply(null, modeRateList) - Math.min.apply(null, modeRateList);
-    var consistency = Math.max(0, 1 - Math.min(1, divergence / 0.45));
-    var personalityHealth = modeRows.reduce(function (sum, mode) {
-      if (!mode.run || mode.run.kind === "none") return sum + 0.5;
-      return sum + (mode.run.kind === "hit" ? 1 : 0);
-    }, 0) / 3;
-    var momentum = row.trend === "回暖" ? 1 : (row.trend === "平稳" ? 0.6 : (row.trend === "走弱" ? 0 : 0.4));
-    var firstShare = row.recentHits ? row.first / row.recentHits : 0;
-    var currentYearRate = row.currentYearStats && row.currentYearStats.stats ? row.currentYearStats.stats.rate : 0;
-    var score =
-      (modePerformance[0] * 0.2 + modePerformance[1] * 0.3 + modePerformance[2] * 0.4) * 52 +
-      consistency * 10 +
-      personalityHealth * 10 +
-      row.signals.formulaScore * 10 +
-      currentYearRate * 5 +
-      momentum * 3 +
-      firstShare * 2 +
-      Math.min(1.2, row.signals.underlyingScore) * 5 +
-      row.signals.sampleScore * 3;
-    if (row.live.waiting) score -= 12;
-    if (row.windows.length < 12 || row.modes.one.rows.length < 12 || row.modes.two.rows.length < 12) score -= 5;
-    return Math.max(0, Math.min(100, score));
+  function dailyReportPersonalityFor(line) {
+    return line ? PERSONALITY_BY_ID[line.id] || null : null;
+  }
+
+  function dailyReportPersonalityValidationText(personality) {
+    if (!personality || !personality.validation) return "逐线验证数据未加载";
+    return personality.validation.map(function (item) {
+      return item.year + "年 " + item.predictions + "窗 " +
+        (item.rate * 100).toFixed(1) + "% · Brier技能" +
+        (item.brierSkill >= 0 ? "+" : "") + (item.brierSkill * 100).toFixed(1) + "%";
+    }).join(" · ");
+  }
+
+  function dailyReportPersonalitySnapshot() {
+    if (!PERSONALITY_SNAPSHOTS || !Array.isArray(PERSONALITY_SNAPSHOTS.records)) return null;
+    var latestRow = D[D.length - 1] || {};
+    return PERSONALITY_SNAPSHOTS.records.filter(function (record) {
+      return Number(record.year) === Number(latestRow.y) &&
+        Number(record.target) === Number(latestRow.p) + 1;
+    })[0] || null;
+  }
+
+  function dailyReportPersonalitySnapshotHTML() {
+    var snapshot = dailyReportPersonalitySnapshot();
+    if (!snapshot) return '<div class="daily-report-section" data-report-section="snapshot"><b>真实开奖前快照</b><p>当前没有第' + ((D[D.length - 1] || {}).p ? Number(D[D.length - 1].p) + 1 : "-") + '期候选快照。</p></div>';
+    var byId = {};
+    (snapshot.lines || []).forEach(function (line) { byId[line.id] = line; });
+    var top3 = (snapshot.top3 || []).map(function (id, index) {
+      var line = byId[id] || {};
+      return "#" + (index + 1) + " " + (line.label || id) +
+        (line.tail != null && String(id).indexOf("tail") !== 0 ? " 尾" + line.tail : "") +
+        " " + (Number(line.predictedRate || 0) * 100).toFixed(1) + "%";
+    }).join(" · ");
+    return '<div class="daily-report-section" data-report-section="snapshot" data-personality-snapshot-top3="' +
+      (snapshot.top3 || []).join("|") + '"><b>真实开奖前快照</b>' +
+      '<p>第' + snapshot.target + '期候选已冻结：' + (top3 || "无可开新窗线路") + '。</p>' +
+      '<small>基于第' + snapshot.basedOn + '期及以前数据生成；候选 ' + (snapshot.candidates || []).length +
+      ' 条，后续开奖只结算这份快照，不改写候选号。</small></div>';
+  }
+
+  function dailyReportPersonalityHTML(row) {
+    var personality = row.personality;
+    if (!personality) {
+      return '<div class="daily-report-section" data-report-section="personality"><b>逐线长期性格模型</b><p>模型数据未加载。</p></div>';
+    }
+    var current = personality.current;
+    var longTerm = personality.longTerm;
+    return '<div class="daily-report-section" data-report-section="personality"><b>逐线长期性格模型</b>' +
+      '<div class="daily-report-recent-metrics">' +
+        '<span>预测三期 ' + (current.predictedRate * 100).toFixed(1) + '%</span>' +
+        '<span>自身基准 ' + (current.baseline * 100).toFixed(1) + '%</span>' +
+        '<span>模型增量 ' + (current.edge >= 0 ? "+" : "") + (current.edge * 100).toFixed(1) + 'pp</span>' +
+        '<span>' + current.confidence + '</span>' +
+      '</div>' +
+      '<p>' + current.reason + '</p>' +
+      '<small>长期第1/2/3期结束：' +
+        (longTerm.stageShare.first * 100).toFixed(1) + '% / ' +
+        (longTerm.stageShare.second * 100).toFixed(1) + '% / ' +
+        (longTerm.stageShare.third * 100).toFixed(1) + '%。逐线走步验证：' +
+        dailyReportPersonalityValidationText(personality) +
+        '。不使用统一一期/两期/三期混合权重。</small></div>';
   }
 
   function dailyReportAdviceFor(row) {
@@ -1907,37 +1947,38 @@
       return { label: "等待重开中", tier: "risk", color: "#b45309",
         reason: "上一窗三期全错，当前处于等待期，必须先等尾" + row.live.waiting.tail + "重新开出。" };
     }
-    if (row.line.kind === "probability") {
+    if (!row.personality) {
       return {
-        label: row.score >= 70 ? "概率线 · 优先观察" : "概率线 · 继续观察",
-        tier: row.score >= 70 ? "watch" : "risk",
-        color: row.score >= 70 ? "#1d4ed8" : "#b45309",
-        reason: "综合一期、两期、三期窗口表现、各自连中/连错性格、公式验证和当前概率快照后得出；本报告不计算仓位金额。"
+        label: "模型未加载",
+        tier: "risk",
+        color: "#b45309",
+        reason: "逐线长期性格模型未加载，暂不参与正式排序。"
       };
     }
-    if (row.score >= 75 && row.trend !== "走弱") {
-      return { label: "可优先关注", tier: "strong", color: "#15803d",
-        reason: "近期窗口、近6窗、年度状态和当前窗口同时处于相对优势。" };
+    var current = row.personality.current;
+    if (current.edge > 0) {
+      return { label: "长期偏强·观察", tier: "strong", color: "#15803d",
+        reason: "这条线当前状态的三期预测为" + (current.predictedRate * 100).toFixed(1) +
+          "%，高于自身历史随机基准" + (current.edge * 100).toFixed(1) + "个百分点。" };
     }
-    if (row.score >= 58) {
-      return { label: "可继续关注", tier: "watch", color: "#1d4ed8",
-        reason: "综合表现不差，但仍有一项或多项指标需要继续观察。" };
+    if (current.edge < 0) {
+      return { label: "长期偏弱·观察", tier: "risk", color: "#b45309",
+        reason: "这条线当前状态的三期预测为" + (current.predictedRate * 100).toFixed(1) +
+          "%，低于自身历史随机基准" + Math.abs(current.edge * 100).toFixed(1) + "个百分点。" };
     }
-    return { label: "保持谨慎观察", tier: "risk", color: "#b45309",
-      reason: "近期或长期至少一项明显偏弱，暂不列为优先线路。" };
+    return { label: "长期中性·观察", tier: "watch", color: "#1d4ed8",
+      reason: "这条线当前状态的三期预测与自身历史随机基准接近，暂不视为优势线路。" };
   }
 
   function dailyReportReason(row) {
     var parts = [];
+    if (row.personality) {
+      parts.push(row.personality.current.reason);
+    }
     [row.modes.one, row.modes.two, row.modes.three].forEach(function (mode) {
-      parts.push(mode.label + "近3" + mode.unit + " " + mode.recentHits + "/" + mode.recent.length +
+      parts.push("诊断：" + mode.label + "近3" + mode.unit + " " + mode.recentHits + "/" + mode.recent.length +
         "，" + mode.run.text + "，近期" + (mode.trend || "样本不足"));
     });
-    parts.push("最近3个已中窗口里，第1期" + row.first + "次、第2期" + row.second + "次、第3期" + row.third + "次");
-    if (row.previousRate != null) {
-      parts.push("近3窗比前3窗" + (row.recentRate >= row.previousRate ? "高" : "低") +
-        Math.abs((row.recentRate - row.previousRate) * 100).toFixed(1) + "个百分点");
-    }
     if (row.live.waiting) parts.push("当前等尾" + row.live.waiting.tail + "重新开出");
     else if (row.live.active) parts.push("当前窗口已走到第" + Math.min(3, row.live.active.attempts.length + 1) + "期");
     if (row.line.kind === "probability") {
@@ -1948,22 +1989,13 @@
 
   function dailyReportInterpretation(row) {
     var parts = [];
-    if (!row.recent.length) return "当前没有足够的已完成窗口，无法判断近期强弱势；只看长期记录容易产生误判。";
-    if (row.trend === "回暖") parts.push("最近一段比前一段明显回暖");
-    else if (row.trend === "走弱") parts.push("最近一段比前一段明显转弱");
-    else parts.push("最近一段与前一段基本持平");
-    if (row.recentRate > row.historyRate + 0.05) parts.push("近期命中率高于全历史");
-    else if (row.recentRate < row.historyRate - 0.05) parts.push("近期命中率低于全历史");
-    else parts.push("近期命中率与全历史接近");
-    if (row.third > row.first) parts.push("第3期贡献较多，窗口拖得越久越依赖最后一期");
-    else if (row.first > 0) parts.push("第1期贡献较多，开窗后较快结束的比例更高");
-    if (row.currentRun.kind === "hit") parts.push("当前年度已完成窗口连续命中" + row.currentRun.len + "窗");
-    else if (row.currentRun.kind === "miss") parts.push("当前年度已完成窗口连续全错" + row.currentRun.len + "窗");
-    var rates = [row.modes.one.recentRate, row.modes.two.recentRate, row.modes.three.recentRate];
-    if (Math.max.apply(null, rates) - Math.min.apply(null, rates) >= 0.25) {
-      parts.push("一期、两期、三期近期状态分化较大，不能把某一口径直接套到另外两个窗口");
-    } else {
-      parts.push("一期、两期、三期近期方向基本一致");
+    if (row.personality) {
+      var current = row.personality.current;
+      var longTerm = row.personality.longTerm;
+      parts.push("长期三期命中" + (longTerm.rate * 100).toFixed(1) + "%，自身随机基准" +
+        (longTerm.baseline * 100).toFixed(1) + "%");
+      parts.push("当前状态“" + current.stateLabel + "”预测" + (current.predictedRate * 100).toFixed(1) + "%");
+      parts.push(dailyReportPersonalityValidationText(row.personality));
     }
     parts.push(String(row.underlying.text || "").replace(/。$/, ""));
     return parts.join("；") + "。";
@@ -1971,6 +2003,14 @@
 
   function dailyReportRisk(row) {
     var risks = [];
+    if (row.personality) {
+      if (row.personality.longTerm.windows < 400) risks.push("长期窗口不足400个");
+      if (row.personality.current.samples < 20) risks.push("当前性格状态样本不足20窗");
+      if (row.personality.current.edge < 0) risks.push("当前状态预测低于自身随机基准");
+      if (row.personality.validation.every(function (item) { return item.brierSkill <= 0; })) {
+        risks.push("2025/2026走步验证均未改善Brier分数");
+      }
+    }
     if (row.windows.length < 20) risks.push("已完成窗口样本不足20个");
     if (row.live.waiting) risks.push("当前窗口未重开，马上追会破坏窗口规则");
     if (row.recent.length && row.recentRate < row.historyRate - 0.08) risks.push("近期明显低于长期命中率");
@@ -2031,6 +2071,7 @@
     var currentRun = dailyReportCurrentRun(windows);
     var probabilitySignal = line.kind === "probability" ? dailyReportProbabilitySignal(line, live) : null;
     var underlying = dailyReportUnderlying(line, live, probabilitySignal);
+    var personality = dailyReportPersonalityFor(line);
     var result = {
       line: line,
       order: order,
@@ -2059,6 +2100,7 @@
       currentRun: currentRun,
       formulaAudit: formulaAudit,
       probabilitySignal: probabilitySignal,
+      personality: personality,
       underlying: underlying,
       trend: trend,
       status: status,
@@ -2068,7 +2110,10 @@
       live: live,
     };
     result.signals = dailyReportSignalSummary(result);
-    result.score = dailyReportCompositeScore(result);
+    result.score = personality ? personality.current.predictedRate * 100 : 0;
+    result.entryEligible = !!(personality &&
+      personality.current.status === "active" &&
+      Number(personality.current.windowStart) === D.length + 1);
     result.advice = dailyReportAdviceFor(result);
     result.reason = dailyReportReason(result);
     result.interpretation = dailyReportInterpretation(result);
@@ -2100,21 +2145,18 @@
     }).join("");
     return '<div class="daily-report-section" data-report-section="period-comparison"><b>一期 / 两期 / 三期热图对照</b>' +
       '<div class="daily-report-mode-grid">' + cells + '</div>' +
-      '<small>三套窗口分别计算，不合并；综合分已按各自随机基准归一化，再结合当前连中/连错性格。</small></div>';
+      '<small>三套窗口只解释节奏和风险，不混成统一权重；正式排序使用下方逐线长期性格模型的三期预测。</small></div>';
   }
 
   function dailyReportSignalSummary(row) {
     var audit = row.formulaAudit;
-    var formulaScore = 0.4;
     var formulaText = "公式表暂无验证记录";
     if (row.line.kind === "probability") {
-      formulaScore = 0.5;
       formulaText = "概率线只做选号对照";
     } else if (audit) {
       var trainPositive = audit && Number(audit.trainNet) > 0;
       var validPositive = audit && Number(audit.validNet) > 0;
-      formulaScore = trainPositive && validPositive ? 1 : ((trainPositive || validPositive) ? 0.55 : 0.25);
-      formulaText = formulaScore === 1 ? "训练/验证同时为正" : (formulaScore === 0.55 ? "训练/验证仅一段为正" : "训练/验证未通过");
+      formulaText = trainPositive && validPositive ? "训练/验证同时为正" : ((trainPositive || validPositive) ? "训练/验证仅一段为正" : "训练/验证未通过");
     }
     var windowText = "可开新窗";
     if (row.live.waiting) {
@@ -2122,40 +2164,35 @@
     } else if (row.live.active) {
       windowText = "窗口第" + Math.min(3, row.live.active.attempts.length + 1) + "期";
     }
-    var underlyingScore = 0.6;
     var underlyingText = row.underlying.text;
-    if (row.line.kind === "tail") {
-      var expected = BASE_RATE[row.line.tail] * 30;
-      underlyingScore = Math.max(0, Math.min(1.2, countWindow(row.line.tail, 30) / Math.max(0.1, expected)));
-    } else {
-      var pick = probabilityPickAt(D.length + 1, row.line.rank || 0);
-      if (pick) underlyingScore = Math.max(0, Math.min(1.2, Number(pick.window3Prob) / 0.91));
-    }
-    var sampleScore = Math.min(1,
-      Math.min(row.modes.one.rows.length, row.modes.two.rows.length, row.modes.three.rows.length) / 30
-    );
-    var sampleText = "1期" + row.modes.one.rows.length + " / 2期" + row.modes.two.rows.length + " / 3期" + row.modes.three.rows.length;
+    var sampleText = row.personality
+      ? "长期" + row.personality.longTerm.windows + "窗 / 当前状态" + row.personality.current.samples + "窗"
+      : "模型未加载";
     return {
-      formulaScore: formulaScore,
       formulaText: formulaText,
       windowText: windowText,
-      underlyingScore: underlyingScore,
       underlyingText: underlyingText,
-      sampleScore: sampleScore,
       sampleText: sampleText
     };
   }
 
   function dailyReportSourceAnalysisHTML(row) {
     var signals = row.signals;
-    return '<div class="daily-report-section" data-report-section="cross-page"><b>其他页面综合信号</b>' +
+    var personality = row.personality;
+    var predictionText = personality
+      ? (personality.current.predictedRate * 100).toFixed(1) + "% / 基准 " +
+        (personality.current.baseline * 100).toFixed(1) + "% / 增量 " +
+        (personality.current.edge >= 0 ? "+" : "") + (personality.current.edge * 100).toFixed(1) + "pp"
+      : "模型未加载";
+    return '<div class="daily-report-section" data-report-section="cross-page"><b>其他页面信号与验证</b>' +
       '<div class="daily-report-source-grid">' +
+        '<div><span>逐线三期预测</span><strong>' + predictionText + '</strong></div>' +
+        '<div><span>走步验证</span><strong>' + dailyReportPersonalityValidationText(personality) + '</strong></div>' +
         '<div><span>公式表</span><strong>' + signals.formulaText + '</strong></div>' +
         '<div><span>当前窗口</span><strong>' + signals.windowText + '</strong></div>' +
-        '<div><span>' + row.underlying.source + '</span><strong>' + signals.underlyingText + '</strong></div>' +
-        '<div><span>样本量</span><strong>' + signals.sampleText + '</strong></div>' +
       '</div>' +
-      '<small>综合分由窗口表现、性格一致性、公式验证、当前窗口状态、尾号/概率信号和样本量共同构成；仓位和金额不参与评分。</small></div>';
+      '<small>' + row.underlying.source + '：' + signals.underlyingText + '。样本：' + signals.sampleText +
+      '。排名只使用逐线长期性格预测；公式、窗口状态和信号只解释风险，不再混合成统一权重；仓位和金额不参与评分或排名。</small></div>';
   }
 
   function dailyReportWeightRows(model) {
@@ -2175,52 +2212,64 @@
       return dailyReportLineStats(line, index);
     });
     rows.sort(function (a, b) {
-      return b.score - a.score || a.order - b.order;
+      if (a.entryEligible !== b.entryEligible) return a.entryEligible ? -1 : 1;
+      var aPersonality = a.personality && a.personality.current || {};
+      var bPersonality = b.personality && b.personality.current || {};
+      return Number(bPersonality.predictedRate || 0) - Number(aPersonality.predictedRate || 0) ||
+        Number(bPersonality.edge || 0) - Number(aPersonality.edge || 0) ||
+        a.order - b.order;
     });
 
     var latestRow = D[D.length - 1] || {};
     var html = '<div class="section"><div class="panel daily-report-panel">';
     html += '<div class="daily-report-head">' +
       '<div><span class="daily-report-kicker">每日最终报告</span>' +
-      '<h2>13线综合分析报告</h2>' +
+      '<h2>13线逐线长期性格报告</h2>' +
       '<p>数据截至第' + latestRow.p + '期 · 已开奖尾数 ' + tailsOf(latest).join(" ") + ' · 下一期待开奖第' + (Number(latestRow.p) + 1) + '期</p></div>' +
-      '<strong>一期 / 两期 / 三期热图分别分析后综合<br>排序不按金额、不按单一窗口或下一期Top1</strong></div>';
+      '<strong>一期 / 两期 / 三期热图分别分析后综合<br>逐线长期性格模型独立预测，不使用统一权重</strong></div>';
 
     var totalHits = rows.reduce(function (sum, row) { return sum + row.recentHits; }, 0);
     var totalWindows = rows.reduce(function (sum, row) { return sum + row.recent.length; }, 0);
     var activeCount = rows.filter(function (row) { return row.status !== "可开新窗"; }).length;
-    var averageScore = rows.reduce(function (sum, row) { return sum + row.score; }, 0) / Math.max(1, rows.length);
+    var averagePrediction = rows.reduce(function (sum, row) { return sum + row.score; }, 0) / Math.max(1, rows.length);
     html += '<div class="daily-report-metrics">' +
-      '<div><b>' + averageScore.toFixed(1) + '</b><span>13线综合状态平均分</span></div>' +
+      '<div><b>' + averagePrediction.toFixed(1) + '%</b><span>13线平均三期预测</span></div>' +
       '<div><b>' + totalHits + ' / ' + totalWindows + '</b><span>近3窗命中 / 样本</span></div>' +
       '<div><b>' + activeCount + ' / 13</b><span>当前进行中或等待重开</span></div>' +
-      '<div><b>' + rows.filter(function (row) { return row.trend === "走弱"; }).length + '</b><span>近3窗转弱线路</span></div>' +
+      '<div><b>' + rows.filter(function (row) { return row.personality && row.personality.current.edge > 0; }).length + '</b><span>预测高于自身基准</span></div>' +
       '</div>';
+    html += dailyReportPersonalitySnapshotHTML();
 
-    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线综合优秀度排名</h3><span>一期/两期/三期分别按随机基准归一化，再结合窗口性格综合；同分保持线路顺序</span></div>';
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线长期性格三期排名</h3><span>逐线长期性格模型 · 按各自下一三期窗口命中概率排序 · 一期/两期只作诊断</span></div>';
     html += '<div class="daily-report-rank-card" data-daily-report-rank-card>';
     rows.forEach(function (row, index) {
+      var personality = row.personality;
+      var current = personality && personality.current ? personality.current : {};
       html += '<div class="daily-report-rank-item" data-daily-report-row data-daily-report-rank-item data-report-rate="' +
-        (row.recent.length ? row.recentRate.toFixed(6) : "-1") + '" data-report-score="' + row.score.toFixed(3) +
+        Number(current.predictedRate || 0).toFixed(6) + '" data-report-score="' + row.score.toFixed(6) +
+        '" data-line-id="' + row.line.id +
+        '" data-report-eligible="' + (row.entryEligible ? "true" : "false") +
+        '" data-report-personality-state="' + String(current.state || "") +
+        '" data-personality-predicted="' + Number(current.predictedRate || 0).toFixed(6) +
+        '" data-personality-edge="' + Number(current.edge || 0).toFixed(6) +
         '" data-report-mode-rates="' + [row.modes.one.recentRate, row.modes.two.recentRate, row.modes.three.recentRate].map(function (rate) {
           return Math.round(rate * 1000) / 10;
         }).join("/") + '">' +
         '<span class="daily-report-rank-item__no">#' + (index + 1) + '</span>' +
         '<div class="daily-report-rank-item__main">' +
           '<div class="daily-report-rank-item__top"><b>' + row.line.label + '</b>' +
-            '<strong style="color:' + row.advice.color + '">' + row.score.toFixed(1) + '</strong>' +
+            '<strong style="color:' + row.advice.color + '">' + row.score.toFixed(1) + '%</strong>' +
             '<em data-report-advice style="color:' + row.advice.color + '">' + row.advice.label + '</em></div>' +
           '<div class="daily-report-rank-item__reason" data-report-reason title="' + row.reason + '">' + row.reason + '</div>' +
         '</div>' +
         '<div class="daily-report-rank-item__side"><b style="color:' + row.color + '">' + row.status + '</b>' +
-          '<small title="一期/两期/三期近期命中率">1/2/3 ' +
-          [row.modes.one, row.modes.two, row.modes.three].map(function (mode) {
-            return (mode.recentRate * 100).toFixed(0);
-          }).join('/') + '</small></div></div>';
+          '<small title="预测三期命中率 / 自身随机基准 / 模型增量">模型 ' +
+          (Number(current.predictedRate || 0) * 100).toFixed(1) + '% / 基准 ' +
+          (Number(current.baseline || 0) * 100).toFixed(1) + '%</small></div></div>';
     });
     html += '</div></div>';
 
-    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13份单线综合报告</h3><span>固定线路顺序 · 每卡综合全部分析页面 · 左右滑动查看</span></div>';
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13份逐线性格报告</h3><span>固定线路顺序 · 每条线独立长期画像与走步验证 · 左右滑动查看</span></div>';
     html += '<div class="daily-report-strip" data-daily-report-strip>';
     EXEC_LINES.forEach(function (line) {
       var row = rows.filter(function (item) { return item.line.id === line.id; })[0];
@@ -2237,13 +2286,18 @@
       var yearText = row.yearStats.slice(0, 3).map(function (item) {
         return item.year + "年 " + item.stats.hits + "/" + item.stats.n + "（" + (item.stats.rate * 100).toFixed(1) + "%）";
       }).join(" · ") || "年度已完成窗口不足";
+      var personalityYearText = row.personality
+        ? row.personality.yearly.slice().reverse().slice(0, 3).map(function (item) {
+          return item.year + "年 " + item.hits + "/" + item.windows + "（" + (item.rate * 100).toFixed(1) + "%）";
+        }).join(" · ")
+        : "逐线年度画像未加载";
       var planText = (line.plan || []).join(" / ");
       var auditText = row.formulaAudit
         ? (row.formulaAudit.formula || "无公式") +
           " · 训练" + (Number(row.formulaAudit.trainNet) >= 0 ? "+" : "") + Number(row.formulaAudit.trainNet || 0) +
           " / 验证" + (Number(row.formulaAudit.validNet) >= 0 ? "+" : "") + Number(row.formulaAudit.validNet || 0)
         : "公式表暂无这条线的审计记录";
-      var sourceTags = ["下注执行表", "公式表", "13线规律中心", "一期热图", "两期热图", "三期热图"];
+      var sourceTags = ["逐线长期性格模型", "下注执行表", "公式表", "13线规律中心", "一期热图", "两期热图", "三期热图"];
       sourceTags.push(line.kind === "probability" ? "动态概率" : "尾号性格");
       html += '<article class="daily-report-line-card" data-daily-report-card data-line-id="' + line.id + '"' +
         (row.probabilitySignal
@@ -2255,6 +2309,7 @@
         '<div class="daily-report-section daily-report-section--conclusion" data-report-section="conclusion"><b>当下结论</b><p>' + row.advice.reason + '</p></div>' +
         '<div class="daily-report-section" data-report-section="reason"><b>为什么</b><p>' + row.reason + '</p></div>' +
         '<div class="daily-report-section" data-report-section="window"><b>当前窗口</b><p>' + currentWindowText + '</p><small>' + row.underlying.source + '：' + row.underlying.text + '</small></div>' +
+        dailyReportPersonalityHTML(row) +
         dailyReportModeComparisonHTML(row) +
         dailyReportSourceAnalysisHTML(row) +
         '<div class="daily-report-section" data-report-section="recent"><b>近期表现</b><div class="daily-report-recent-metrics"><span>近3窗 ' + row.recentHits + '/' + row.recent.length + '</span><span>近6窗 ' + row.recent6Hits + '/' + row.recent6.length + '</span><span>近12窗 ' + row.recent12Hits + '/' + row.recent12.length + '</span><span>趋势 ' + row.trend + '</span></div>';
@@ -2262,7 +2317,13 @@
       if (row.recent.length) row.recent.slice().reverse().forEach(function (w) { html += dailyReportWindowChipHTML(w); });
       else html += '<div class="daily-report-empty">暂无已完成窗口</div>';
       html += '</div></div>';
-      html += '<div class="daily-report-section" data-report-section="longterm"><b>长期与年度</b><p>全历史 ' + row.historyHits + '/' + row.windows.length + ' 窗（' + (row.historyRate * 100).toFixed(1) + '%）；首次命中分布 第1期' + row.allFirst + ' / 第2期' + row.allSecond + ' / 第3期' + row.allThird + '。</p><small>' + yearText + '。' + (row.currentRun.kind === "hit" ? "当前年度已完成窗口连中" + row.currentRun.len + "窗。" : (row.currentRun.kind === "miss" ? "当前年度已完成窗口连错" + row.currentRun.len + "窗。" : "")) + '</small></div>' +
+      html += '<div class="daily-report-section" data-report-section="longterm"><b>长期与年度</b><p>逐线长期画像 ' +
+        (row.personality ? row.personality.longTerm.hits + '/' + row.personality.longTerm.windows +
+          ' 窗（' + (row.personality.longTerm.rate * 100).toFixed(1) + '%），自身随机基准 ' +
+          (row.personality.longTerm.baseline * 100).toFixed(1) + '%' : '未加载') +
+        '；首次命中分布 第1期' + row.allFirst + ' / 第2期' + row.allSecond + ' / 第3期' + row.allThird + '。</p><small>' +
+        personalityYearText + '。' + yearText + '。' +
+        (row.currentRun.kind === "hit" ? "当前年度已完成窗口连中" + row.currentRun.len + "窗。" : (row.currentRun.kind === "miss" ? "当前年度已完成窗口连错" + row.currentRun.len + "窗。" : "")) + '</small></div>' +
         '<div class="daily-report-section" data-report-section="formula"><b>公式验证</b><p>' + auditText + '。</p><small>正式公式 ' + planText + ' · 只验证训练/验证表现，仓位和金额不参与综合报告。</small></div>' +
         '<div class="daily-report-section daily-report-section--risk" data-report-section="risk"><b>风险与解读</b><p>' + row.risk + '</p><small>' + row.interpretation + '</small></div>' +
         '</article>';
