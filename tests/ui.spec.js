@@ -13,6 +13,7 @@ const TAB_IDS = [
   "segments",
   "missorder",
   "windowmiss",
+  "windowmiss2",
   "parity",
   "trend",
   "zodtrend",
@@ -684,6 +685,27 @@ test("window omission and hit strips start with the current live state", async (
     await expect(strip.locator("[data-wm-live-state]").first()).toHaveCount(1);
     await expect(strip.locator("[data-wm-live-state]").first()).toHaveText(/进\d|等尾\d/);
   }
+});
+
+test("two-period window omission heatmap has its own page and live strips", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmiss2"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return document.body.dataset.page === "windowmiss2" &&
+      view instanceof HTMLElement &&
+      view.innerText.includes("两期窗口遗漏热图") &&
+      document.querySelectorAll(".trend-run-strip").length === 26;
+  });
+
+  await expect(page.locator(".panel--wmheat")).toHaveCount(1);
+  await expect(page.locator("[data-wm-mode]")).toHaveCount(0);
+  await expect(page.locator(".trend-run-strip")).toHaveCount(26);
+  await expect(page.locator("[data-wm-live-state]")).toHaveCount(26);
+  await expect(page.locator("#view")).toContainText("两期窗口（一个窗口最多第2期）");
 });
 
 test("long right swipe on the first page does not open the directory", async ({ page }) => {

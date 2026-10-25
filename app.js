@@ -270,6 +270,7 @@
     year: latest ? rec(2026, latest) ? 2026 : 2026 : 2026,
     missOrderYear: DATA_YEARS[0] || 2026,
     windowMissYear: DATA_YEARS[0] || 2026,
+    windowMiss2Year: DATA_YEARS[0] || 2026,
     recordPage: 0,
     orderTail: lsGet("v2_order_tail", "all"),
     windowMultLine: "tail1",
@@ -282,7 +283,6 @@
     numSearchMode: "all",
     numSearchType: "tail",
     betPlanMode: "three",
-    windowMissMode: "three",   // 窗口遗漏热图自己的方案开关（与下注执行表完全独立）
     betLineMode: "all",
     betResearchOpen: false,
   };
@@ -299,6 +299,7 @@
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
     { id: "windowmiss", label: "窗口遗漏热图" },
+    { id: "windowmiss2", label: "两期窗口遗漏热图" },
     { id: "parity", label: "单双热图" },
     { id: "trend", label: "遗漏热图" },
     { id: "zodtrend", label: "生肖走势" },
@@ -318,7 +319,7 @@
   var NAV_GROUPS = [
     { id: "recommend", label: "模型流程", tabs: ["dailyreport", "pick3", "betexec", "formulas", "windowmult", "orderlog"] },
     { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
-    { id: "miss", label: "遗漏分析", tabs: ["trend", "missorder", "windowmiss", "parity"] },
+    { id: "miss", label: "遗漏分析", tabs: ["trend", "missorder", "windowmiss", "windowmiss2", "parity"] },
     { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
     { id: "tools", label: "分析工具", tabs: ["numsearch", "personality", "datarecord", "tails", "backtest", "notes"] },
   ];
@@ -1249,7 +1250,7 @@
     if (state.tab === "pick3" || state.tab === "selector" || state.tab === "chasenumber" || state.tab === "chaserecommend" || state.tab === "orderlog") return;
     // 窗口遗漏热图：切页会先回顶，等布局完成后再把“最新”行滚到可视区底部，
     // 只滚到最新记录，不再把整页滚到最底下。
-    if (state.tab === "windowmiss") {
+    if (state.tab === "windowmiss" || state.tab === "windowmiss2") {
       var jumpLatest = function () {
         var heat = view.querySelector(".panel--wmheat .heatmap");
         var latestRow = view.querySelector(".panel--wmheat tbody tr:last-child");
@@ -1290,6 +1291,7 @@
     else if (state.tab === "segments") renderSegments();
     else if (state.tab === "trend") renderTrend();
     else if (state.tab === "windowmiss") renderWindowMiss();
+    else if (state.tab === "windowmiss2") renderWindowMiss2();
     else if (state.tab === "windowk") renderWindowK();
     else if (state.tab === "missorder") view.innerHTML = renderMissOrderHeatmap();
     else if (state.tab === "parity") view.innerHTML = renderParityHeatmap();
@@ -2693,13 +2695,14 @@
   }
 
   // 窗口遗漏热图：单位=窗口（不是期），13条线一屏，绿=中窗、红=错窗（数字=连错到第几窗），可左右上下滚动
-  function renderWindowMiss() {
+  function renderWindowMiss(mode) {
+    var maxStage = Number(mode) === 2 ? 2 : 3;
+    var yearStateKey = maxStage === 2 ? "windowMiss2Year" : "windowMissYear";
+    var windowLabel = maxStage === 2 ? "两期窗口" : "三期窗口";
     var latestYear = Number((D[D.length - 1] || {}).y);
-    var curYear = DATA_YEARS.indexOf(Number(state.windowMissYear)) >= 0 ? Number(state.windowMissYear) : latestYear;
-    state.windowMissYear = curYear;
+    var curYear = DATA_YEARS.indexOf(Number(state[yearStateKey])) >= 0 ? Number(state[yearStateKey]) : latestYear;
+    state[yearStateKey] = curYear;
     var isCurrentYear = curYear === latestYear;
-    // 本页自己的方案开关：两期=一个窗口最多2期。两期/三期各自一套窗口、各自命中率、各自规律，互不引用
-    var maxStage = state.windowMissMode === "two" ? 2 : 3;
     var perLine = EXEC_LINES.map(function (line) {
       var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
       var stNow = wmStageNow(line, maxStage);
@@ -2743,13 +2746,10 @@
     perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
     var html = '<div class="section"><div class="panel" style="padding:10px;margin-bottom:8px">';
-    html += yearChipsHTML(curYear, "data-window-miss-year");
-    html += '<div class="wm-view-tabs" style="margin-bottom:6px">';
-    html += '<button class="chip wm-view-tab' + (maxStage === 3 ? " is-active" : "") + '" type="button" data-wm-mode="three">三期窗口</button>';
-    html += '<button class="chip wm-view-tab' + (maxStage === 2 ? " is-active" : "") + '" type="button" data-wm-mode="two">两期窗口</button>';
-    html += '</div><div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + (maxStage === 2 ? "两期窗口（一个窗口最多第2期）" : "三期窗口（一个窗口最多第3期）") + '</b> · 本页独立开关，只影响这一页；两期和三期各自一套窗口、命中率、性格规律，互不引用。</div></div></div>';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏热图 · ' + curYear + '年</h2><span class="section__hint">每年独立 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
-    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=13条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/2/3）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第2期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
+    html += yearChipsHTML(curYear, maxStage === 2 ? "data-window-miss2-year" : "data-window-miss-year");
+    html += '<div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + windowLabel + '（一个窗口最多' + maxStage + '期）</b> · 本页只计算' + windowLabel + '，与' + (maxStage === 2 ? "三期窗口遗漏热图" : "两期窗口遗漏热图") + '完全独立；年份、热图、连中遗漏链互不混算。</div></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">' + windowLabel + '遗漏热图 · ' + curYear + '年</h2><span class="section__hint">每年独立 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
+    html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=13条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/' + maxStage + '）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第' + Math.min(maxStage, 2) + '期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
     html += '<div class="panel panel--wmheat"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
     html += "</tr></thead><tbody>";
@@ -2789,6 +2789,10 @@
     view.innerHTML = html;
     var hm = view.querySelector(".panel--wmheat .heatmap");
     if (hm) hm.scrollTop = hm.scrollHeight;
+  }
+
+  function renderWindowMiss2() {
+    renderWindowMiss(2);
   }
 
   function renderTrendImpl() {
@@ -7238,6 +7242,12 @@
       render();
       return;
     }
+    var windowMiss2YearBtn = e.target.closest("[data-window-miss2-year]");
+    if (windowMiss2YearBtn) {
+      state.windowMiss2Year = Number(windowMiss2YearBtn.dataset.windowMiss2Year);
+      render();
+      return;
+    }
     var perfMore = e.target.closest("[data-perf-more]");
     if (perfMore) {
       perfExpandAll[perfMore.dataset.perfMore] = true;
@@ -7279,13 +7289,6 @@
     if (betMode) {
       state.betPlanMode = betMode.dataset.betMode === "three" ? "three" : "two";
       renderBetExec();
-      return;
-    }
-    var wmMode = e.target.closest("[data-wm-mode]");
-    if (wmMode) {
-      // 窗口遗漏热图自己的开关，只重渲染本页，不动下注执行表的方案
-      state.windowMissMode = wmMode.dataset.wmMode === "two" ? "two" : "three";
-      renderWindowMiss();
       return;
     }
     var betResearch = e.target.closest("#view details > summary");
