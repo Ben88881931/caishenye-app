@@ -298,10 +298,10 @@
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
-    { id: "windowmiss", label: "窗口遗漏热图" },
-    { id: "windowmiss2", label: "两期窗口遗漏热图" },
+    { id: "windowmiss", label: "三期热图" },
+    { id: "windowmiss2", label: "两期热图" },
     { id: "parity", label: "单双热图" },
-    { id: "trend", label: "遗漏热图" },
+    { id: "trend", label: "一期热图" },
     { id: "zodtrend", label: "生肖走势" },
     { id: "zodwindow", label: "生肖窗口" },
     { id: "zodmonitor", label: "生肖遗漏" },
@@ -1432,12 +1432,28 @@
           note: "生肖每年会变化，跨年比较必须分开看。"
         },
         {
-          name: "遗漏热图",
+          name: "一期热图",
           summary: "用热图直接看哪些尾号长期没出、哪些刚出过。",
           look: ["遗漏长度", "冷热颜色", "历史遗漏分布"],
           use: "快速发现长期遗漏和集中开出区域。",
           source: "真实历史开奖数据。",
           note: "遗漏长不等于马上会出，不能只看一个指标。"
+        },
+        {
+          name: "两期热图",
+          summary: "按两期窗口查看13条线的命中、错窗和等待重开。",
+          look: ["两期窗口状态", "窗口遗漏", "窗口连中"],
+          use: "只研究两期窗口规律，不参与三期正式执行口径。",
+          source: "真实历史开奖数据。",
+          note: "两期与三期各算各的，不能混用。"
+        },
+        {
+          name: "三期热图",
+          summary: "按三期窗口查看13条线的命中、错窗和等待重开。",
+          look: ["三期窗口状态", "窗口遗漏", "窗口连中"],
+          use: "查看正式三期的窗口状态和连续规律。",
+          source: "真实历史开奖数据。",
+          note: "三期与两期各算各的，不能混用。"
         },
         {
           name: "遗漏排序",
@@ -1546,7 +1562,7 @@
     {
       title: "数据参考",
       desc: "这些页面只看走势、遗漏、冷热和规律，不直接决定今天下注。",
-      names: ["总览", "分段对比", "窗口分析", "号码走势", "生肖走势", "遗漏热图", "遗漏排序", "单双热图", "冷热分析", "三期规律"]
+      names: ["总览", "分段对比", "窗口分析", "号码走势", "生肖走势", "一期热图", "两期热图", "三期热图", "遗漏排序", "单双热图", "冷热分析", "三期规律"]
     },
     {
       title: "生肖与辅助",
@@ -1624,7 +1640,9 @@
     "窗口分析": "windowk",
     "号码走势": "numtrend",
     "生肖走势": "zodtrend",
-    "遗漏热图": "trend",
+    "一期热图": "trend",
+    "两期热图": "windowmiss2",
+    "三期热图": "windowmiss",
     "遗漏排序": "missorder",
     "单双热图": "parity",
     "冷热分析": "tails",
@@ -2456,7 +2474,8 @@
   function wmRunHistoryHTML(maxStage, year) {
     var latestYear = Number((D[D.length - 1] || {}).y);
     var isCurrentYear = Number(year) === latestYear;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗口遗漏 / 窗口连中滚动记录 · ' + year + '年</h2><span class="section__hint">单位=一个完整窗口，不是一期 · 每年重新开窗、跨年断段 · 新→旧 · 横向滑动看全部</span></div></div>';
+    var stageLabel = maxStage === 2 ? "两期" : "三期";
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">窗漏 / 连中铁链 · ' + stageLabel + ' · ' + year + '年</h2><span class="section__hint">单位=一个完整窗口，不是一期 · 每年重新开窗、跨年断段 · 新→旧 · 横向滑动看全部</span></div></div>';
     html += '<div class="section"><div class="panel trend-run-guide"><b>怎么看：</b>“漏2窗”=连续2个窗口三期全错；“连3窗”=连续3个窗口在三期内命中。遗漏铁链和连中铁链都按新→旧排列：最左第一格是当前未结算的实时状态，后面接已完成同类段。<b>每块连接牌都写两组数：起点差=本次段起点减上次段起点；中间隔X窗=两段之间完整隔开的窗口数</b>。实时格显示“进N”=窗口进行到第N期，“等尾X”=等待该尾号重新开出；实时格不计入连中或连错统计。</div></div>';
     EXEC_LINES.forEach(function (line) {
       var data = wmWindowRunData(line, maxStage, year);
@@ -2699,7 +2718,8 @@
   function renderWindowMiss(mode) {
     var maxStage = Number(mode) === 2 ? 2 : 3;
     var yearStateKey = maxStage === 2 ? "windowMiss2Year" : "windowMissYear";
-    var windowLabel = maxStage === 2 ? "两期窗口" : "三期窗口";
+    var periodLabel = maxStage === 2 ? "两期" : "三期";
+    var windowLabel = periodLabel + "窗口";
     var latestYear = Number((D[D.length - 1] || {}).y);
     var curYear = DATA_YEARS.indexOf(Number(state[yearStateKey])) >= 0 ? Number(state[yearStateKey]) : latestYear;
     state[yearStateKey] = curYear;
@@ -2748,8 +2768,8 @@
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
     var html = '<div class="section"><div class="panel" style="padding:10px;margin-bottom:8px">';
     html += yearChipsHTML(curYear, maxStage === 2 ? "data-window-miss2-year" : "data-window-miss-year");
-    html += '<div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + windowLabel + '（一个窗口最多' + maxStage + '期）</b> · 本页只计算' + windowLabel + '，与' + (maxStage === 2 ? "三期窗口遗漏热图" : "两期窗口遗漏热图") + '完全独立；年份、热图、连中遗漏链互不混算。</div></div></div>';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">' + windowLabel + '遗漏热图 · ' + curYear + '年</h2><span class="section__hint">每年独立 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
+    html += '<div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + windowLabel + '（一个窗口最多' + maxStage + '期）</b> · 本页只计算' + windowLabel + '，与' + (maxStage === 2 ? "三期热图" : "两期热图") + '完全独立；年份、热图、连中遗漏链互不混算。</div></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">' + periodLabel + '热图 · ' + curYear + '年</h2><span class="section__hint">每年独立 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
     html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=13条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/' + maxStage + '）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第' + Math.min(maxStage, 2) + '期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
     html += '<div class="panel panel--wmheat"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
     perLine.forEach(function (p) { html += "<th>" + p.label.replace("追号码 ", "号").replace("追推荐 ", "推") + "</th>"; });
@@ -2798,7 +2818,7 @@
 
   function renderTrendImpl() {
     var heatPeriods = perfRows("trend", periods);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">一期热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
     html += "</tr></thead><tbody>";

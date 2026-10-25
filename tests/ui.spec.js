@@ -672,7 +672,7 @@ test("window omission and hit strips start with the current live state", async (
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement &&
-      view.innerText.includes("窗口遗漏 / 窗口连中滚动记录") &&
+      view.innerText.includes("窗漏 / 连中铁链") &&
       document.querySelectorAll(".trend-run-strip").length === 26;
   });
 
@@ -697,7 +697,7 @@ test("two-period window omission heatmap has its own page and live strips", asyn
     const view = document.querySelector("#view");
     return document.body.dataset.page === "windowmiss2" &&
       view instanceof HTMLElement &&
-      view.innerText.includes("两期窗口遗漏热图") &&
+      view.innerText.includes("两期热图") &&
       document.querySelectorAll(".trend-run-strip").length === 26;
   });
 
@@ -713,6 +713,23 @@ test("two-period window omission heatmap has its own page and live strips", asyn
   }));
   expect(stripLayout.display).toBe("flex");
   expect(stripLayout.scrollWidth).toBeGreaterThan(stripLayout.clientWidth);
+});
+
+test("heatmap pages use the one-period, two-period, three-period names", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmiss"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.body.dataset.page === "windowmiss");
+  await expect(page.locator("#view")).toContainText("三期热图");
+  await expect(page.locator('.nav-subtabs .tab[data-tab="windowmiss"]')).toHaveText("三期热图");
+  await page.locator('.nav-subtabs .tab[data-tab="windowmiss2"]').click();
+  await expect(page.locator("#view")).toContainText("两期热图");
+  await expect(page.locator('.nav-subtabs .tab[data-tab="windowmiss2"]')).toHaveText("两期热图");
+  await page.locator('.nav-subtabs .tab[data-tab="trend"]').click();
+  await expect(page.locator("#view")).toContainText("一期热图");
+  await expect(page.locator('.nav-subtabs .tab[data-tab="trend"]')).toHaveText("一期热图");
 });
 
 test("long right swipe on the first page does not open the directory", async ({ page }) => {
