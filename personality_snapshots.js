@@ -135,7 +135,7 @@ window.APP_PERSONALITY_SNAPSHOTS = {
         }
       ],
       "superseded": true,
-      "supersededBy": "next-window-v6-20261026"
+      "supersededBy": "next-window-v7-20261026"
     },
     {
       "version": "next-window-v2-20261026",
@@ -323,7 +323,7 @@ window.APP_PERSONALITY_SNAPSHOTS = {
         }
       ],
       "superseded": true,
-      "supersededBy": "next-window-v6-20261026"
+      "supersededBy": "next-window-v7-20261026"
     },
     {
       "version": "next-window-v3-20261026",
@@ -511,7 +511,7 @@ window.APP_PERSONALITY_SNAPSHOTS = {
         }
       ],
       "superseded": true,
-      "supersededBy": "next-window-v6-20261026"
+      "supersededBy": "next-window-v7-20261026"
     },
     {
       "version": "next-window-v5-20261026",
@@ -699,7 +699,7 @@ window.APP_PERSONALITY_SNAPSHOTS = {
         }
       ],
       "superseded": true,
-      "supersededBy": "next-window-v6-20261026"
+      "supersededBy": "next-window-v7-20261026"
     },
     {
       "version": "next-window-v6-20261026",
@@ -885,9 +885,444 @@ window.APP_PERSONALITY_SNAPSHOTS = {
           "status": "pending",
           "hitIndex": null
         }
+      ],
+      "superseded": true,
+      "supersededBy": "next-window-v7-20261026"
+    },
+    {
+      "version": "next-window-v7-20261026",
+      "generatedAt": "2026-10-25T17:15:18.868Z",
+      "year": 2026,
+      "basedOn": 298,
+      "target": 299,
+      "targetGlobal": 1464,
+      "candidates": [
+        "prob3",
+        "tail2",
+        "prob1",
+        "tail7",
+        "tail5",
+        "tail8",
+        "tail3",
+        "tail4",
+        "tail0",
+        "tail1",
+        "tail6",
+        "tail9",
+        "prob2"
+      ],
+      "top3": [
+        "prob3",
+        "tail2",
+        "prob1"
+      ],
+      "lines": [
+        {
+          "id": "prob3",
+          "label": "A3",
+          "tail": 5,
+          "predictedRate": 0.9288580197779328,
+          "baseline": 0.9106693967900266,
+          "edge": 0.018188622987906244,
+          "state": "after_one_miss",
+          "riskPattern": "risk-safe-safe|safe-safe-risk",
+          "riskLevels": [
+            "risk",
+            "safe",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "risk-safe-safe",
+            "predictedRate": 0.9288580197779328,
+            "hits": 68,
+            "samples": 73
+          },
+          "reverse": {
+            "pattern": "safe-safe-risk",
+            "predictedRate": 0.9288580197779328,
+            "hits": 68,
+            "samples": 73
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail2",
+          "label": "尾2",
+          "tail": 2,
+          "predictedRate": 0.9257495700036239,
+          "baseline": 0.9253535500801866,
+          "edge": 0.0003960199234372963,
+          "state": "after_three_plus_misses",
+          "riskPattern": "risk-safe-risk|risk-safe-risk",
+          "riskLevels": [
+            "risk",
+            "safe",
+            "risk"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.9257495700036239,
+            "hits": 40,
+            "samples": 43
+          },
+          "reverse": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.9257495700036239,
+            "hits": 40,
+            "samples": 43
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob1",
+          "label": "A1",
+          "tail": 0,
+          "predictedRate": 0.9223466884072619,
+          "baseline": 0.8553392602150206,
+          "edge": 0.06700742819224126,
+          "state": "after_hit",
+          "riskPattern": "safe-safe-safe|safe-safe-safe",
+          "riskLevels": [
+            "safe",
+            "safe",
+            "safe"
+          ],
+          "cascadeDecision": "双向全安全·高分",
+          "forward": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.9223466884072619,
+            "hits": 548,
+            "samples": 594
+          },
+          "reverse": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.9223466884072619,
+            "hits": 548,
+            "samples": 594
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail7",
+          "label": "尾7",
+          "tail": 7,
+          "predictedRate": 0.920313134244872,
+          "baseline": 0.9098473411574023,
+          "edge": 0.010465793087469755,
+          "state": "after_hit",
+          "riskPattern": "risk-risk-safe|safe-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "risk-risk-safe",
+            "predictedRate": 0.920313134244872,
+            "hits": 440,
+            "samples": 478
+          },
+          "reverse": {
+            "pattern": "safe-risk-risk",
+            "predictedRate": 0.920313134244872,
+            "hits": 440,
+            "samples": 478
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail5",
+          "label": "尾5",
+          "tail": 5,
+          "predictedRate": 0.9153757825975558,
+          "baseline": 0.9106693967900266,
+          "edge": 0.004706385807529245,
+          "state": "after_one_miss",
+          "riskPattern": "risk-safe-safe|safe-safe-risk",
+          "riskLevels": [
+            "risk",
+            "safe",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "risk-safe-safe",
+            "predictedRate": 0.9153757825975558,
+            "hits": 120,
+            "samples": 131
+          },
+          "reverse": {
+            "pattern": "safe-safe-risk",
+            "predictedRate": 0.9153757825975558,
+            "hits": 120,
+            "samples": 131
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail8",
+          "label": "尾8",
+          "tail": 8,
+          "predictedRate": 0.9060856498873028,
+          "baseline": 0.9060856498873028,
+          "edge": 0,
+          "state": "after_hit",
+          "riskPattern": "safe-safe-safe|safe-safe-safe",
+          "riskLevels": [
+            "safe",
+            "safe",
+            "safe"
+          ],
+          "cascadeDecision": "双向全安全·高分",
+          "forward": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.8974677936395875,
+            "hits": 657,
+            "samples": 732
+          },
+          "reverse": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.8974677936395875,
+            "hits": 657,
+            "samples": 732
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail3",
+          "label": "尾3",
+          "tail": 3,
+          "predictedRate": 0.8976852425428935,
+          "baseline": 0.9118930865565257,
+          "edge": -0.014207844013632176,
+          "state": "after_hit",
+          "riskPattern": "safe-risk-safe|safe-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8976852425428935,
+            "hits": 121,
+            "samples": 135
+          },
+          "reverse": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8976852425428935,
+            "hits": 121,
+            "samples": 135
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail4",
+          "label": "尾4",
+          "tail": 4,
+          "predictedRate": 0.8956097522394106,
+          "baseline": 0.8978036637001049,
+          "edge": -0.0021939114606942534,
+          "state": "after_hit",
+          "riskPattern": "safe-risk-safe|safe-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8956097522394106,
+            "hits": 402,
+            "samples": 449
+          },
+          "reverse": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8956097522394106,
+            "hits": 402,
+            "samples": 449
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail0",
+          "label": "尾0",
+          "tail": 0,
+          "predictedRate": 0.8553392602150206,
+          "baseline": 0.8553392602150206,
+          "edge": 0,
+          "state": "after_hit",
+          "riskPattern": "safe-safe-safe|safe-safe-safe",
+          "riskLevels": [
+            "safe",
+            "safe",
+            "safe"
+          ],
+          "cascadeDecision": "双向全安全·高分",
+          "forward": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.8534186487620724,
+            "hits": 462,
+            "samples": 541
+          },
+          "reverse": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.8534186487620724,
+            "hits": 462,
+            "samples": 541
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail1",
+          "label": "尾1",
+          "tail": 1,
+          "predictedRate": 0.8346644596978603,
+          "baseline": 0.9094344288563013,
+          "edge": -0.07476996915844103,
+          "state": "after_hit",
+          "riskPattern": "risk-risk-safe|safe-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "risk-risk-safe",
+            "predictedRate": 0.8346644596978603,
+            "hits": 16,
+            "samples": 21
+          },
+          "reverse": {
+            "pattern": "safe-risk-risk",
+            "predictedRate": 0.8346644596978603,
+            "hits": 16,
+            "samples": 21
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail6",
+          "label": "尾6",
+          "tail": 6,
+          "predictedRate": 0.6602880087323288,
+          "baseline": 0.9170666787949012,
+          "edge": -0.2567786700625724,
+          "state": "after_hit",
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "双向全风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.927276789453051,
+            "hits": 663,
+            "samples": 715
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.927276789453051,
+            "hits": 663,
+            "samples": 715
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail9",
+          "label": "尾9",
+          "tail": 9,
+          "predictedRate": 0.6602880087323288,
+          "baseline": 0.9170666787949012,
+          "edge": -0.2567786700625724,
+          "state": "after_one_miss",
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "双向全风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9316445345078256,
+            "hits": 116,
+            "samples": 124
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9316445345078256,
+            "hits": 116,
+            "samples": 124
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob2",
+          "label": "A2",
+          "tail": 3,
+          "predictedRate": 0.651981029686582,
+          "baseline": 0.9118930865565257,
+          "edge": -0.2599120568699437,
+          "state": "after_hit",
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "双向全风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9055292078980306,
+            "hits": 422,
+            "samples": 466
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9055292078980306,
+            "hits": 422,
+            "samples": 466
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        }
       ]
     }
   ],
   "latestPeriod": 298,
-  "updatedAt": "2026-10-25T17:03:35.100Z"
+  "updatedAt": "2026-10-25T17:15:18.868Z"
 };

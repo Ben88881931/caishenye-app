@@ -1,7 +1,7 @@
 {
-  "version": "next-window-v6-20261026",
+  "version": "next-window-v7-20261026",
   "method": "per-line-dual-direction-risk-cascade-v6",
-  "generatedAt": "2026-10-25T17:03:35.100Z",
+  "generatedAt": "2026-10-25T17:15:18.868Z",
   "asOfPeriod": 1463,
   "target": 1464,
   "trainingYears": [
@@ -1835,7 +1835,7 @@
     },
     {
       "id": "prob1",
-      "label": "概率第1",
+      "label": "A1",
       "kind": "probability",
       "longTerm": {
         "windows": 1451,
@@ -2012,7 +2012,7 @@
     },
     {
       "id": "prob2",
-      "label": "概率第2",
+      "label": "A2",
       "kind": "probability",
       "longTerm": {
         "windows": 1451,
@@ -2189,7 +2189,7 @@
     },
     {
       "id": "prob3",
-      "label": "概率第3",
+      "label": "A3",
       "kind": "probability",
       "longTerm": {
         "windows": 1451,
@@ -2373,7 +2373,7 @@
     {
       "rank": 1,
       "id": "prob3",
-      "label": "概率第3",
+      "label": "A3",
       "kind": "probability",
       "longTerm": {
         "windows": 1451,
@@ -2737,7 +2737,7 @@
     {
       "rank": 3,
       "id": "prob1",
-      "label": "概率第1",
+      "label": "A1",
       "kind": "probability",
       "longTerm": {
         "windows": 1451,
@@ -4553,7 +4553,7 @@
     {
       "rank": 13,
       "id": "prob2",
-      "label": "概率第2",
+      "label": "A2",
       "kind": "probability",
       "longTerm": {
         "windows": 1451,

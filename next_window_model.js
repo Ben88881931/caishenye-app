@@ -8,7 +8,7 @@
   "use strict";
 
   var METHOD = "per-line-dual-direction-risk-cascade-v6";
-  var VERSION = "next-window-v6-20261026";
+  var VERSION = "next-window-v7-20261026";
   var LINE_PRIOR = 30;
   var STATE_PRIOR = 20;
   var PATTERN_PRIOR = 20;
@@ -24,9 +24,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7 },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8 },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9 },
-    { id: "prob1", label: "概率第1", kind: "probability", rank: 0 },
-    { id: "prob2", label: "概率第2", kind: "probability", rank: 1 },
-    { id: "prob3", label: "概率第3", kind: "probability", rank: 2 }
+    { id: "prob1", label: "A1", kind: "probability", rank: 0 },
+    { id: "prob2", label: "A2", kind: "probability", rank: 1 },
+    { id: "prob3", label: "A3", kind: "probability", rank: 2 }
   ];
 
   function clamp(value, min, max) {

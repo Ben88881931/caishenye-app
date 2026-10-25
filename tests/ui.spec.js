@@ -824,6 +824,10 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator("[data-report-personality-state]")).toHaveCount(13);
   await expect(page.locator('[data-report-section="snapshot"]')).toHaveCount(1);
   await expect(page.locator('[data-report-section="snapshot"]')).toContainText("每期前2/3选线走步验证");
+  await expect(page.locator("[data-report-ranking-card]")).toHaveCount(1);
+  await expect(page.locator("[data-report-ranking-card]").first()).toContainText("第299期");
+  await expect(page.locator("[data-report-ranking-card]").first()).toContainText("A1");
+  await expect(page.locator("#view")).not.toContainText("概率第1");
   await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
   await expect(page.locator("#view")).toContainText("逐线长期性格模型");
   await expect(page.locator("#view")).not.toContainText("20% / 30% / 40%");

@@ -29,6 +29,7 @@ assert.equal(model.bidirectionalRiskCascade, true);
 assert.equal(model.overlappingWindows, true);
 assert.equal(model.lines.length, 13);
 assert.deepEqual(model.lines.map((line) => line.id), expectedLines);
+assert.deepEqual(model.lines.filter((line) => line.kind === "probability").map((line) => line.label), ["A1", "A2", "A3"]);
 assert.equal(model.ranking.length, 13);
 assert.ok(model.ranking.every((line, index, rows) => (
   index === 0 || rows[index - 1].current.predictedRate >= line.current.predictedRate
@@ -63,6 +64,7 @@ for (const line of model.lines) {
   assert.equal(line.current.riskLevels.length, 3);
   assert.ok(Number.isFinite(line.current.directionPredictions.forward.predictedRate));
   assert.ok(Number.isFinite(line.current.directionPredictions.reverse.predictedRate));
+  assert.ok(line.current.cascadeDecision);
   if (
     line.current.directionPredictions.forward.riskLevels.every((level) => level === "risk") &&
     line.current.directionPredictions.reverse.riskLevels.every((level) => level === "risk")

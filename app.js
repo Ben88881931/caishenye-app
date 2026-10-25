@@ -1351,7 +1351,7 @@
           look: ["13线长期性格三期排名", "每条线独立的三期预测、自身基准和模型增量", "长期画像、年度稳定性、走步验证和当前风险"],
           use: "每天先看这一页，直接知道哪条线值得关注、为什么、当前能不能执行。",
           source: "真实开奖窗口、真实快照、公式审计、年度统计、尾号性格和概率模型记录。",
-          note: "综合分不按金额排序；结论只解释真实数据，概率三条线继续标明296期旧快照边界。"
+          note: "综合分不按金额排序；结论只解释真实数据，A1/A2/A3继续标明296期旧快照边界。"
         },
         {
           name: "动态概率",
@@ -1921,6 +1921,45 @@
     }).join(" · ");
   }
 
+  function dailyReportRankingSnapshots() {
+    if (!PERSONALITY_SNAPSHOTS || !Array.isArray(PERSONALITY_SNAPSHOTS.records) || !PERSONALITY_MODEL) return [];
+    return PERSONALITY_SNAPSHOTS.records.filter(function (record) {
+      return record.version === PERSONALITY_MODEL.version && !record.superseded &&
+        Array.isArray(record.lines) && record.lines.length === 13;
+    }).sort(function (a, b) {
+      return Number(b.target) - Number(a.target);
+    });
+  }
+
+  function dailyReportRankingHistoryHTML() {
+    var records = dailyReportRankingSnapshots();
+    var html = '<div class="daily-report-block"><div class="daily-report-block__head"><h3>每期排名快照卡</h3>' +
+      '<span>开奖前冻结 · 新→旧 · 每期完整13线排名 · 左右滑动对比</span></div>';
+    html += '<div class="daily-report-ranking-strip" data-ranking-history-strip>';
+    records.forEach(function (record) {
+      html += '<article class="daily-report-ranking-card" data-report-ranking-card data-ranking-target="' + record.target + '">' +
+        '<div class="daily-report-ranking-card__head"><b>第' + record.target + '期 · 13线排名</b>' +
+        '<span>基于第' + record.basedOn + '期</span></div><div class="daily-report-ranking-card__list">';
+      record.lines.forEach(function (line, index) {
+        var forward = String(line.forward && line.forward.pattern || "").split("-").map(function (level) {
+          return level === "safe" ? "安" : "险";
+        }).join("→");
+        var reverse = String(line.reverse && line.reverse.pattern || "").split("-").map(function (level) {
+          return level === "safe" ? "安" : "险";
+        }).join("→");
+        html += '<div class="daily-report-ranking-card__row" data-ranking-line="' + line.id + '">' +
+          '<b>#' + (index + 1) + ' ' + line.label + '</b>' +
+          '<span>尾' + line.tail + ' · ' + (Number(line.predictedRate) * 100).toFixed(1) + '%</span>' +
+          '<small>正 ' + forward + ' / 反 ' + reverse + '</small>' +
+          '<em>' + line.cascadeDecision + '</em></div>';
+      });
+      html += '</div></article>';
+    });
+    if (!records.length) html += '<div class="daily-report-empty">尚无真实排名快照；从首个保存期开始累计，不补造历史。</div>';
+    html += '</div><small class="daily-report-ranking-note">只展示当前正式模型保存过的期次；旧版本快照保留但标记为已替代，不混入当前排名。</small></div>';
+    return html;
+  }
+
   function dailyReportPersonalitySnapshotHTML() {
     var snapshot = dailyReportPersonalitySnapshot();
     if (!snapshot) return '<div class="daily-report-section" data-report-section="snapshot"><b>真实开奖前快照</b><p>当前没有第' + ((D[D.length - 1] || {}).p ? Number(D[D.length - 1].p) + 1 : "-") + '期候选快照。</p></div>';
@@ -2298,6 +2337,7 @@
           (Number(current.baseline || 0) * 100).toFixed(1) + '%</small></div></div>';
     });
     html += '</div></div>';
+    html += dailyReportRankingHistoryHTML();
 
     html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13份逐线性格报告</h3><span>固定线路顺序 · 每条线独立长期画像与走步验证 · 左右滑动查看</span></div>';
     html += '<div class="daily-report-strip" data-daily-report-strip>';
@@ -2394,7 +2434,7 @@
         '研究风险保留：验证段仍少0.87个百分点，不能因为2026暂时领先就取消监控。</span></div>';
       html += '</div>';
     }
-    html += '<p class="disclaimer">本页只解读真实开奖窗口、真实快照和独立训练权重，不保证中奖，不自动生成金额。排名口径是每条线最近3个已完成三期窗口；概率三线使用新方法选号，仓位公式仍需单独验证。</p>';
+    html += '<p class="disclaimer">本页只解读真实开奖窗口、真实快照和独立训练权重，不保证中奖，不自动生成金额。排名口径是每条线最近3个已完成三期窗口；A1/A2/A3使用新方法选号，仓位公式仍需单独验证。</p>';
     html += '</div></div>';
     view.innerHTML = html;
   }
@@ -3561,9 +3601,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
-    { id: "prob1", label: "概率第1", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
-    { id: "prob2", label: "概率第2", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
-    { id: "prob3", label: "概率第3", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob1", label: "A1", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob2", label: "A2", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob3", label: "A3", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
   ];
 
   // 公式来源：2021-2023训练段 + 2024-2026验证段，两段均为正的阶段系数才配仓。
@@ -6526,7 +6566,7 @@
     var trainingYear = year >= 2021 && year <= 2024;
     var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "正式");
     var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026正式记录 · 294-296保留切换前快照");
-    var labels = ["概率第1", "概率第2", "概率第3"];
+    var labels = ["A1", "A2", "A3"];
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">' + year + segment + '窗口 · 切换年份查看全部历史 · ' + WINDOW_RECORD_FORMAT + '</span></div></div>';
     html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '窗口</b><span>' + segmentNote + '</span></div>';
     labels.forEach(function (label, rank) {
