@@ -1865,7 +1865,7 @@
       if (personality) {
         return {
           source: "逐线下一窗口模型",
-          text: "第" + personality.current.target + "期独立新窗口锁定尾" +
+          text: wmPeriodLabel(personality.current.target) + "独立新窗口锁定尾" +
             personality.current.tail + "，预测三期命中" +
             (personality.current.predictedRate * 100).toFixed(1) + "%。"
         };
@@ -2240,7 +2240,7 @@
     }
     var windowText = "可开新窗";
     if (row.personality) {
-      windowText = "第" + row.personality.current.target + "期新窗口 · 锁尾" + row.personality.current.tail;
+      windowText = wmPeriodLabel(row.personality.current.target) + "新窗口 · 锁尾" + row.personality.current.tail;
     }
     var underlyingText = row.underlying.text;
     var sampleText = row.personality
@@ -2352,7 +2352,7 @@
     EXEC_LINES.forEach(function (line) {
       var row = rows.filter(function (item) { return item.line.id === line.id; })[0];
       var currentWindowText = row.personality
-        ? "第" + row.personality.current.target + "期重新开一个独立三期窗口，锁定尾" +
+        ? wmPeriodLabel(row.personality.current.target) + "重新开一个独立三期窗口，锁定尾" +
           row.personality.current.tail + "；每期重新选线，不沿袭上一期。"
         : "逐线下一窗口模型未加载。";
       var yearText = row.yearStats.slice(0, 3).map(function (item) {

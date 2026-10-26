@@ -834,6 +834,8 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
   await expect(page.locator("#view")).toContainText("逐线长期性格模型");
   await expect(page.locator("#view")).not.toContainText("20% / 30% / 40%");
+  await expect(page.locator("[data-daily-report-card]").first()).toContainText("2026年第300期");
+  await expect(page.locator("#view")).not.toContainText("第1465期");
 
   const rankLayout = await page.locator("[data-daily-report-rank-card]").evaluate((card) => ({
     cardWidth: card.clientWidth,
