@@ -2349,7 +2349,7 @@
       "generatedAt": "2026-10-25T14:09:27.566Z",
       "basedOn": 298,
       "target": 299,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -2369,11 +2369,74 @@
             }
           ]
         }
+      },
+      "actualTails": [
+        2,
+        3,
+        5,
+        8,
+        9
+      ],
+      "actualPeriod": 299,
+      "settledAt": "2026-10-26T14:59:10.681Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            6,
+            4
+          ],
+          "perPick": [
+            {
+              "tail": 6,
+              "score": 93.9,
+              "tag": "连出3",
+              "grade": "A",
+              "hit": false
+            },
+            {
+              "tail": 4,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C",
+              "hit": false
+            }
+          ],
+          "hits": [],
+          "count": 0,
+          "hit": false
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-10-26T14:59:10.681Z",
+      "basedOn": 299,
+      "target": 300,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "ambiguous": true,
+          "picks": [
+            {
+              "tail": 6,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            },
+            {
+              "tail": 7,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 298,
-  "updatedAt": "2026-10-25T14:09:27.615Z",
+  "latestPeriod": 299,
+  "updatedAt": "2026-10-26T14:59:10.715Z",
   "threePeriodRecords": [
     {
       "target": 273,
@@ -3122,7 +3185,7 @@
       "tail": 5,
       "score": 93.9,
       "grade": "A",
-      "status": "pending",
+      "status": "hit",
       "attempts": [
         {
           "period": 298,
@@ -3137,11 +3200,23 @@
             8
           ],
           "hit": false
+        },
+        {
+          "period": 299,
+          "tail": 5,
+          "actualTails": [
+            2,
+            3,
+            5,
+            8,
+            9
+          ],
+          "hit": true
         }
       ],
-      "hitIndex": null,
-      "settledPeriod": null,
-      "settledAt": null
+      "hitIndex": 2,
+      "settledPeriod": 299,
+      "settledAt": "2026-10-26T14:59:10.679Z"
     },
     {
       "target": 299,
@@ -3160,6 +3235,24 @@
       "hitIndex": null,
       "settledPeriod": 299,
       "settledAt": "2026-10-25T14:09:27.614Z"
+    },
+    {
+      "target": 300,
+      "basedOn": 299,
+      "generatedAt": "2026-10-26T14:59:10.714Z",
+      "action": "观望",
+      "source": null,
+      "rule": "P5/P6",
+      "reason": "双号未确认，空仓观望",
+      "stream": null,
+      "tail": null,
+      "score": null,
+      "grade": null,
+      "status": "skip",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": 300,
+      "settledAt": "2026-10-26T14:59:10.714Z"
     }
   ],
   "sourceWindows": [
@@ -4545,7 +4638,20 @@
       "grade": "A",
       "tag": "连出3",
       "status": "pending",
-      "attempts": [],
+      "attempts": [
+        {
+          "period": 299,
+          "tail": 6,
+          "actualTails": [
+            2,
+            3,
+            5,
+            8,
+            9
+          ],
+          "hit": false
+        }
+      ],
       "hitIndex": null,
       "settledPeriod": null,
       "settledAt": null
@@ -4561,7 +4667,20 @@
       "grade": "C",
       "tag": "5期3次",
       "status": "pending",
-      "attempts": [],
+      "attempts": [
+        {
+          "period": 299,
+          "tail": 4,
+          "actualTails": [
+            2,
+            3,
+            5,
+            8,
+            9
+          ],
+          "hit": false
+        }
+      ],
       "hitIndex": null,
       "settledPeriod": null,
       "settledAt": null
