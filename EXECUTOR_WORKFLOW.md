@@ -1,10 +1,19 @@
 # 财神爷小程序执行端工作流
 
-版本：`executor-v3-20261022`
+版本：`executor-v4-20261026`
 
 本文件只定义执行端。执行端只更新开奖数据、生成派生文件、同步快照、提交推送和回报最小执行结果，不做审计、不签收、不做模型判断、不改模型或页面。
 
 每日完整审计、页面实测、模型判断和最终报告只由监督线程执行一次。执行端不得重复运行审计命令，也不得生成四层对账报告。
+
+## 0. 零审计边界
+
+- 只有收到用户新开奖号码后才启动。
+- 若没有收到新开奖号码，只回复 `无新号码，不执行`，不得拉取、运行脚本、审计、生成报告或推送。
+- 不得运行任何测试、审计、回测、健康检查或模型报告。
+- 只允许本文第1节的 `git pull --ff-only`、`git status` 预检、第3节的7个数据更新步骤，以及第5节六行回报；其他命令一律不运行。
+- 禁止运行 `npm test`、`npm run test:*`、`npm run lint`、`node page_audit.js`、`python check_app.py`、`node health_check.js`、`node score_calibration.js`、`node ultimate_backtest.js`、`node selector_backtest.js`、`node model_supervisor.js report`、`node _probability_model_check.js`。
+- 本文第6步的 `git status`、`git diff --stat`、`git diff` 只用于核对许可文件范围，不是审计，不得据此写命中率、页面、模型或发布结论。
 
 ## 1. 工作区规则
 
@@ -126,7 +135,7 @@ node model_supervisor.js sync
 
 十二处必须完全一致。
 
-### 第 6 步：检查改动范围
+### 第 6 步：核对改动范围（不是审计）
 
 ```powershell
 git status --short
@@ -173,6 +182,7 @@ git push origin main
 - 禁止为了让检查通过而修改测试、护栏或断言。
 - 禁止写“审计通过”“可以发布”“模型正常”等结论。
 - 禁止运行 `score_calibration.js`、`ultimate_backtest.js`、`selector_backtest.js`、`page_audit.js`、`check_app.py`、`health_check.js`、`model_supervisor.js report`、`_probability_model_check.js`。这些全部由监督线程执行。
+- 禁止运行 `npm test`、`npm run test:*`、`npm run lint` 或任何测试套件；执行端只核对 `git status` 和 `git diff` 的改动文件范围。
 - 禁止生成 Markdown 审计表、命中率分析、页面检查结论、模型报告、趋势判断或签收意见。
 - 禁止把浏览器 `localStorage` 当成共享真源。
 

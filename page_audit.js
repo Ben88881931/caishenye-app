@@ -198,15 +198,25 @@ must(appText.includes("exec-seq__cell") && appText.includes("窗口对错序列 
 must(workflowText.includes("执行提示、资金调度已彻底删除") && !appText.includes("function renderOrderHint") && !appText.includes("function renderFunds"), "权威工作流必须写明执行提示/资金调度已彻底删除（连代码一起删），且 app.js 不得残留");
 must(workflowText.includes("第 6 步：执行端结束（不做审计）") && workflowText.includes("执行端不得汇报或生成模型命中率"), "权威工作流必须禁止执行端运行审计、汇报审计结论或生成最终签收意见");
 must(
-  executorWorkflowText.includes("executor-v3-20261022") &&
+  executorWorkflowText.includes("executor-v4-20261026") &&
+  executorWorkflowText.includes("零审计边界") &&
+  executorWorkflowText.includes("无新号码，不执行") &&
+  executorWorkflowText.includes("只允许本文第1节的 `git pull --ff-only`、`git status` 预检、第3节的7个数据更新步骤") &&
+  executorWorkflowText.includes("不得运行任何测试、审计、回测、健康检查或模型报告") &&
+  executorWorkflowText.includes("禁止运行 `npm test`") &&
+  executorWorkflowText.includes("npm run test:*") &&
   executorWorkflowText.includes("不得超过六行") &&
   executorWorkflowText.includes("禁止运行 `score_calibration.js`") &&
+  executorPromptText.includes("财神爷小程序每日执行机器人（零审计版）") &&
+  executorPromptText.includes("无新号码，不执行") &&
+  executorPromptText.includes("除工作区预检的 git pull --ff-only、git status，以及 EXECUTOR_WORKFLOW.md 第3节的7个更新步骤外，不运行任何其他命令") &&
   executorPromptText.includes("每日完整审计由监督线程独立执行一次") &&
   executorPromptText.includes("不得超过六行") &&
   !["score_calibration.js", "ultimate_backtest.js", "selector_backtest.js", "page_audit.js", "check_app.py", "health_check.js", "_probability_model_check.js"].some((name) => (
     new RegExp("^(?:node|python) " + name.replace(/\./g, "\\."), "m").test(executorWorkflowText)
-  )),
-  "执行端工作流只能更新数据，不得重复运行审计脚本或生成第二份报告"
+  )) &&
+  !/^(?:npm (?:test|run test:)|node page_audit\.js|python check_app\.py)/m.test(executorWorkflowText),
+  "执行端工作流必须为零审计版本，只能更新数据，不得重复运行测试、审计脚本或生成第二份报告"
 );
 must(!/mock|demo|sampleData|假数据|模拟数据/i.test(appText), "所有页面都不得内置伪造、演示或模拟数据");
 
