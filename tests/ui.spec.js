@@ -802,6 +802,47 @@ test("long right swipe on a later page returns one navigation page", async ({ pa
   expect(result).toEqual({ before: "betexec", after: "pick3" });
 });
 
+test("bet execution uses each line formula and shows period amount and profit", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    const view = document.querySelector("#view");
+    return view instanceof HTMLElement &&
+      view.innerText.includes("今日规划") &&
+      view.querySelectorAll("[data-bet-plan-card]").length > 0;
+  });
+
+  const planCards = await page.locator("[data-bet-plan-card]").evaluateAll((cards) => (
+    cards.map((card) => ({
+      lineId: card.getAttribute("data-line-id"),
+      stage: Number(card.getAttribute("data-plan-stage")),
+      amount: Number(card.getAttribute("data-plan-amount")),
+      values: card.getAttribute("data-plan-values").split("/").map(Number),
+      text: card.innerText,
+    }))
+  ));
+  expect(planCards.length).toBeGreaterThan(0);
+  for (const card of planCards) {
+    expect(card.lineId).toBeTruthy();
+    expect(card.stage).toBeGreaterThanOrEqual(1);
+    expect(card.stage).toBeLessThanOrEqual(3);
+    expect(card.amount).toBe(card.values[card.stage - 1]);
+    expect(card.text).toContain(`窗口第${card.stage}期`);
+  }
+
+  const strips = page.locator("[data-bet-period-strip]");
+  expect(await strips.count()).toBeGreaterThan(0);
+  const firstStrip = strips.first();
+  const periodCards = firstStrip.locator("[data-bet-period-row]");
+  expect(await periodCards.count()).toBeGreaterThan(0);
+  await expect(periodCards.first()).toContainText("窗口第");
+  await expect(periodCards.first()).toContainText("下注");
+  await expect(periodCards.first()).toContainText("盈亏");
+});
+
 test("daily report ranks all 13 lines by the combined analysis score", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {

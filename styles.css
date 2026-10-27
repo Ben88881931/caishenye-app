@@ -2061,7 +2061,64 @@ body {
   gap: 6px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
   padding-bottom: 8px;
+}
+
+.exec-bet-period {
+  margin-top: 5px;
+  padding: 5px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.exec-bet-period__head,
+.exec-bet-period__body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.exec-bet-period__head {
+  color: #475569;
+  font-size: 10px;
+}
+
+.exec-bet-period__head b {
+  color: #1d4ed8;
+  font-weight: 900;
+}
+
+.exec-bet-period__head em {
+  margin-left: auto;
+  color: #0f172a;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.exec-bet-period__body {
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 10px;
+}
+
+.exec-bet-period__body strong,
+.exec-bet-period__body b {
+  font-weight: 900;
+}
+
+.exec-plan-stage {
+  margin-top: 3px;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.exec-plan-formula {
+  color: #475569;
+  font-size: 10px;
+  font-weight: 800;
 }
 .exec-window-card--current {
   order: -1;
@@ -2356,6 +2413,12 @@ body {
   padding: 8px 10px;
 }
 
+.position-card-grid > .position-card--execution {
+  height: 132px;
+  min-height: 132px;
+  max-height: 132px;
+}
+
 .position-card__title {
   min-height: 30px;
   font-size: 12px;
@@ -2389,6 +2452,11 @@ body {
     min-height: 104px;
     max-height: 104px;
     padding: 8px;
+  }
+  .position-card-grid > .position-card.position-card--execution {
+    height: 168px;
+    min-height: 168px;
+    max-height: 168px;
   }
   .position-card__title {
     font-size: 12px;

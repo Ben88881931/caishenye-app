@@ -244,7 +244,7 @@ def main():
             pass_("三期内记录与调度记录均紧接卡片下方展示")
         else:
             fail("三期内记录未紧接卡片下方展示")
-        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "EXEC_LINES" in app_text and "13条独立线路" in app_text and "3期内命中率" in app_text and "首次命中分布" in app_text and "对错滚动记录 · ' + WINDOW_RECORD_FORMAT + ' · 已结算" in app_text and "exec-line__scroll" in app_text and "公式（元）" in app_text and "等待尾" in app_text and "重新开出后再开新窗口" in app_text and "金额 ' + planText" not in app_text and "slice(-30).reverse()" not in app_text and "function renderOrderHint" not in app_text and "function renderFunds" not in app_text:
+        if "v2_simple_order_log" in app_text and "simpleOrderProfit" in app_text and "下单金额" in app_text and "固定 1.8" in app_text and "累计收益" in app_text and "data-order-tail" in app_text and "历史下单轨迹" in app_text and "三期内锁定窗口" in app_text and "EXEC_LINES" in app_text and "13条独立线路" in app_text and "3期内命中率" in app_text and "首次命中分布" in app_text and "逐期下注金额与盈亏记录 · 每卡一个窗口" in app_text and "exec-line__scroll" in app_text and "本线公式（元）" in app_text and "等待尾" in app_text and "重新开出后再开新窗口" in app_text and "金额 ' + planText" not in app_text and "slice(-30).reverse()" not in app_text and "function renderOrderHint" not in app_text and "function renderFunds" not in app_text:
             pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和13条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
@@ -284,7 +284,7 @@ def main():
             pass_("所有页面顶部显示新方法三期前三名，并保留296期锁定快照")
         else:
             fail("页面顶部缺少新方法三期前三名或296期锁定快照")
-        if "function renderBetExec" in app_text and "今日规划 · 第" in app_text and "按固定线路顺序排列" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:
+        if "function renderBetExec" in app_text and "今日规划 · 第" in app_text and "固定线路顺序" in app_text and "自己的最优公式 line.plan" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:
             pass_("下注执行表今日规划按固定线路顺序显示并汇总金额与风险")
         else:
             fail("下注执行表缺少今日规划汇总或未按固定线路顺序显示")
