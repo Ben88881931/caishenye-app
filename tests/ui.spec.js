@@ -1422,6 +1422,40 @@ test("two and three period heatmaps separate heat view from chain history", asyn
   }
 });
 
+test("heatmap task buttons never cover the number header", async ({ page }) => {
+  for (const tabId of ["trend", "missorder", "windowmiss2", "windowmiss"]) {
+    await page.goto("/");
+    await page.evaluate((id) => {
+      localStorage.setItem("v2_current_tab", JSON.stringify(id));
+    }, tabId);
+    await page.reload();
+    await page.waitForFunction((id) => document.body.dataset.page === id, tabId);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+
+    const geometry = await page.evaluate(() => {
+      const task = document.querySelector(".task-tabs");
+      const header = document.querySelector(".heatmap__table thead th");
+      const appbar = document.querySelector(".appbar");
+      if (!task || !header || !appbar) return null;
+      return {
+        taskPosition: getComputedStyle(task).position,
+        taskBottom: task.getBoundingClientRect().bottom,
+        headerTop: header.getBoundingClientRect().top,
+        appbarBottom: appbar.getBoundingClientRect().bottom,
+      };
+    });
+    expect(geometry).toBeTruthy();
+    expect(geometry.taskPosition).toBe("static");
+    expect(geometry.taskBottom).toBeLessThanOrEqual(geometry.appbarBottom + 1);
+    if (geometry.headerTop >= 0) {
+      expect(geometry.headerTop).toBeGreaterThanOrEqual(geometry.appbarBottom - 1);
+    }
+    if (geometry.taskBottom > geometry.appbarBottom) {
+      expect(geometry.headerTop).toBeGreaterThanOrEqual(geometry.taskBottom - 1);
+    }
+  }
+});
+
 test("one-period heatmap and miss ordering expose task tabs instead of one long page", async ({ page }) => {
   for (const tabId of ["trend", "missorder"]) {
     await page.goto("/");

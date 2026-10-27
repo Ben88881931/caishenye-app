@@ -4751,6 +4751,14 @@ body[data-page="dailyreport"] .daily-report-line-card.daily-report-line-card--ac
   background: #fff;
 }
 
+body[data-page="trend"] .task-tabs,
+body[data-page="missorder"] .task-tabs,
+body[data-page="windowmiss"] .task-tabs,
+body[data-page="windowmiss2"] .task-tabs {
+  position: static;
+  top: auto;
+}
+
 .daily-report-history {
   margin-bottom: 12px;
   border: 1px solid #dfe5eb;
