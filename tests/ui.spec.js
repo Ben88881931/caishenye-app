@@ -1345,8 +1345,13 @@ test("today dashboard is compact and exposes the daily decision surface", async 
   await expect(page.locator("[data-dashboard-pick]")).toHaveCount(3);
   await expect(page.locator("[data-dashboard-window-state]")).toHaveCount(13);
   await expect(page.locator("[data-dashboard-shortcut]")).toHaveCount(6);
+  await expect(page.locator("[data-plan-history-strip]")).toHaveCount(1);
+  await expect(page.locator("[data-plan-history-card]").first()).toContainText("今日下注");
+  await expect(page.locator("[data-plan-history-card]").first()).toContainText("总下注");
+  await expect(page.locator("[data-plan-history-card]").nth(1)).toContainText("已开奖");
+  await expect(page.locator("[data-plan-history-card]").nth(1)).toBeVisible();
   await expect(page.locator("[data-today-dashboard]")).toContainText("下一期");
-  await expect(page.locator("[data-today-dashboard]")).toContainText("今日计划");
+  await expect(page.locator("[data-today-dashboard]")).toContainText("今日下注");
   await expect(page.locator("[data-today-dashboard]")).not.toContainText("页面说明 · 大白话版");
 
   const height = await page.evaluate(() => document.documentElement.scrollHeight);

@@ -2769,6 +2769,115 @@
     view.innerHTML = html;
   }
 
+  function dailyPlanItemHTML(item) {
+    var tone = item.pending ? "#2563eb" : (item.hit ? "#16a34a" : "#dc2626");
+    var result = item.pending ? "待开奖" : (item.hit ? "中" : "错");
+    var pnl = item.pending
+      ? "待结算"
+      : (item.pnl > 0 ? "盈利+" + Math.round(item.pnl) + "元"
+        : (item.pnl < 0 ? "亏损" + Math.abs(Math.round(item.pnl)) + "元" : "持平0元"));
+    return '<div class="daily-plan-card__row">' +
+      '<b>' + lineDisplayLabel(item.line, item.tail) + '</b>' +
+      '<span>窗口第' + item.stage + '期 · 下注' + item.amount + '元</span>' +
+      '<em style="color:' + tone + '">' + result + ' · ' + pnl + '</em></div>';
+  }
+
+  function dailyPlanHistoryCardsHTML(maxStage, currentPlanRows) {
+    var lastRow = D[D.length - 1] || {};
+    var currentYear = Number(lastRow.y);
+    var byPeriod = {};
+    D.forEach(function (row) {
+      if (Number(row.y) !== currentYear) return;
+      byPeriod[Number(row.p)] = {
+        year: Number(row.y),
+        period: Number(row.p),
+        items: [],
+        planned: 0,
+        pnl: 0,
+        hits: 0,
+        misses: 0,
+      };
+    });
+
+    function addAttempt(line, plan, attempt, stage) {
+      if (!attempt || attempt.period == null) return;
+      var sourceRow = D[Number(attempt.period) - 1];
+      if (!sourceRow || Number(sourceRow.y) !== currentYear) return;
+      var amount = line.hold ? 0 : Number(plan[stage] || 0);
+      if (amount <= 0) return;
+      var card = byPeriod[Number(sourceRow.p)];
+      if (!card) return;
+      var pnl = attempt.hit ? amount * (BET_ODDS - 1) : -amount;
+      card.planned += amount;
+      card.pnl += pnl;
+      if (attempt.hit) card.hits++;
+      else card.misses++;
+      card.items.push({
+        line: line,
+        tail: attempt.tail,
+        stage: stage + 1,
+        amount: amount,
+        hit: !!attempt.hit,
+        pnl: pnl,
+      });
+    }
+
+    EXEC_LINES.forEach(function (line) {
+      var plan = betPlanFor(line, maxStage);
+      wmWindowsForStage(line, maxStage).forEach(function (window) {
+        (window.attempts || []).forEach(function (attempt, index) {
+          addAttempt(line, plan, attempt, index);
+        });
+      });
+      var live = wmStageNow(line, maxStage);
+      if (live.active) {
+        (live.active.attempts || []).forEach(function (attempt, index) {
+          addAttempt(line, plan, attempt, index);
+        });
+      }
+    });
+
+    var nextItems = currentPlanRows.map(function (row) {
+      return {
+        line: row.line,
+        tail: row.tail,
+        stage: row.live.stage,
+        amount: row.amount,
+        pending: true,
+        pnl: 0,
+      };
+    });
+    var nextTotal = nextItems.reduce(function (sum, item) { return sum + item.amount; }, 0);
+    var nextHTML = '<article class="daily-plan-card is-current" data-plan-history-card data-plan-period="' + (latest + 1) + '">' +
+      '<div class="daily-plan-card__head"><b>第' + (latest + 1) + '期 · 今日下注</b><span>待开奖</span></div>' +
+      '<div class="daily-plan-card__summary"><b>总下注' + nextTotal + '元</b><span>' + nextItems.length + '条线路 · 待结算</span></div>' +
+      '<div class="daily-plan-card__rows">' +
+      (nextItems.length ? nextItems.map(dailyPlanItemHTML).join("") : '<div class="daily-plan-card__empty">本期没有下注</div>') +
+      '</div></article>';
+
+    var historyHTML = Object.keys(byPeriod).map(function (key) {
+      return byPeriod[key];
+    }).sort(function (a, b) {
+      return b.period - a.period;
+    }).map(function (card) {
+      var settled = card.hits + card.misses;
+      var result = !settled ? "空仓" : (card.hits ? "中" + card.hits + "条" : "全错");
+      var pnlText = card.pnl > 0
+        ? "盈利+" + Math.round(card.pnl) + "元"
+        : (card.pnl < 0 ? "亏损" + Math.abs(Math.round(card.pnl)) + "元" : "持平0元");
+      return '<article class="daily-plan-card" data-plan-history-card data-plan-period="' + card.period + '">' +
+        '<div class="daily-plan-card__head"><b>' + card.year + '年第' + card.period + '期</b><span>已开奖 · ' + result + '</span></div>' +
+        '<div class="daily-plan-card__summary"><b>总下注' + Math.round(card.planned) + '元</b><span style="color:' +
+        (card.pnl > 0 ? "#16a34a" : (card.pnl < 0 ? "#dc2626" : "#64748b")) + '">' + pnlText + '</span></div>' +
+        '<div class="daily-plan-card__rows">' +
+        (card.items.length ? card.items.map(dailyPlanItemHTML).join("") : '<div class="daily-plan-card__empty">该期没有下注</div>') +
+        '</div></article>';
+    }).join("");
+
+    return '<div class="daily-plan-scroll record-scroll" data-plan-history-strip>' + nextHTML + historyHTML + '</div>' +
+      '<small class="section__hint daily-plan-history-note">最新在左 · 每一期对应一个开奖日 · 历史卡按当前正式公式回溯，不是历史真账快照</small>';
+  }
+
   function renderOverview() {
     var latestTails = tailsOf(latest);
     var target = latest + 1;
@@ -2849,25 +2958,9 @@
       '<div class="today-summary__item"><b>' + todayTotal + ' 元</b><span>本期公式合计 · 最大风险 ' + todayRisk + ' 元</span></div>' +
       '</div></section>';
 
-    html += '<section class="today-section"><div class="today-section__head"><h2>今日计划</h2><span>' +
-      (planRows.length ? planRows.length + ' 条线路有金额' : '当前全部空仓') + '</span></div>';
-    if (planRows.length) {
-      html += '<div class="today-plan-list">';
-      planRows.forEach(function (row) {
-        var currentPeriod = row.live.active
-          ? betLocalPeriod(Number(row.live.active.start) + row.live.stage - 1)
-          : null;
-        html += '<div class="today-plan-row">' +
-          '<div class="today-plan-row__main"><b>' + lineDisplayLabel(row.line, row.tail) + '</b><small>窗口第' + row.live.stage + '期' +
-            (currentPeriod != null ? " · 第" + currentPeriod + "期" : "") +
-            ' · 公式 ' + row.formula.join(" / ") + '</small></div>' +
-          '<strong>' + row.amount + ' 元</strong></div>';
-      });
-      html += '</div>';
-    } else {
-      html += '<div class="today-plan-empty">今日没有金额大于 0 的执行线路，等待下一窗口。</div>';
-    }
-    html += '</section>';
+    html += '<section class="today-section"><div class="today-section__head"><h2>逐日计划对照</h2><span>' +
+      (planRows.length ? planRows.length + ' 条线路有金额' : '当前全部空仓') + ' · 横向滑动对比</span></div>' +
+      dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
 
     html += '<section class="today-section"><div class="today-section__head"><h2>13线窗口状态</h2><span>左起固定线路顺序</span></div>' +
       '<div class="today-window-strip">';

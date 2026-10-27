@@ -286,10 +286,10 @@ def main():
             pass_("公式表页面包含13线训练验证系数和配仓状态")
         else:
             fail("公式表页面缺少历史系数或配仓状态")
-        if "function renderOverview" in app_text and "data-today-dashboard" in app_text and "data-dashboard-pick" in app_text and "data-dashboard-window-state" in app_text and "data-dashboard-shortcut" in app_text and "今日计划" in app_text and "13线窗口状态" in app_text and "常用入口" in app_text and "function pageGuideHTML" in app_text and "today-page-map" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS.forEach" in app_text and "data-overview-tab" in app_text and "pageGuideHTML()" in app_text and "function historyStackHTML" in app_text and "function stepGroupHistory" in app_text and "function stepTabHistory" in app_text and "orderedGroupAt" in app_text and "orderedTabAt" in app_text and "getConfiguredGroups()" in app_text and "var SWIPE_X = 48" in app_text and 'addEventListener("pointermove"' in app_text and "gesture-active" in app_text and "gestureClickGuard" in app_text and 'e.target.closest("input, select, textarea, a, [contenteditable=\'true\']")' in app_text and "pointerdown" in app_text and "pointerup" in app_text:
-            pass_("今日驾驶舱集中展示候选、执行面、窗口状态和页面职责，并保留整屏翻页手势")
+        if "function renderOverview" in app_text and "data-today-dashboard" in app_text and "data-dashboard-pick" in app_text and "data-dashboard-window-state" in app_text and "data-dashboard-shortcut" in app_text and "今日下注" in app_text and "function dailyPlanHistoryCardsHTML" in app_text and "data-plan-history-strip" in app_text and "data-plan-history-card" in app_text and "总下注" in app_text and "13线窗口状态" in app_text and "常用入口" in app_text and "function pageGuideHTML" in app_text and "today-page-map" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS.forEach" in app_text and "data-overview-tab" in app_text and "pageGuideHTML()" in app_text and "function historyStackHTML" in app_text and "function stepGroupHistory" in app_text and "function stepTabHistory" in app_text and "orderedGroupAt" in app_text and "orderedTabAt" in app_text and "getConfiguredGroups()" in app_text and "var SWIPE_X = 48" in app_text and 'addEventListener("pointermove"' in app_text and "gesture-active" in app_text and "gestureClickGuard" in app_text and 'e.target.closest("input, select, textarea, a, [contenteditable=\'true\']")' in app_text and "pointerdown" in app_text and "pointerup" in app_text:
+            pass_("今日驾驶舱集中展示候选、执行面、逐日下注滚动卡、窗口状态和页面职责，并保留整屏翻页手势")
         else:
-            fail("今日驾驶舱缺少候选、执行面、窗口状态、页面职责或整屏翻页手势")
+            fail("今日驾驶舱缺少候选、执行面、逐日下注滚动卡、窗口状态、页面职责或整屏翻页手势")
         if (
             "var COMMON_SHORTCUTS" in app_text
             and "function pageQuickAccessHTML" in app_text

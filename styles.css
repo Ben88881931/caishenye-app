@@ -5424,62 +5424,119 @@ body[data-page="overview"] .view {
   line-height: 1.35;
 }
 
-.today-plan-list {
-  overflow: hidden;
+.daily-plan-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1px 1px 8px;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.daily-plan-card {
+  flex: 0 0 252px;
+  max-width: calc(100vw - 52px);
+  box-sizing: border-box;
+  padding: 10px;
   border: 1px solid #dfe5eb;
   border-radius: 8px;
   background: #fff;
+  scroll-snap-align: start;
 }
 
-.today-plan-row {
-  min-height: 54px;
-  padding: 8px 10px;
-  border-top: 1px solid #edf0f3;
+.daily-plan-card.is-current {
+  border-color: #176f5b;
+  background: #f4fbf8;
 }
 
-.today-plan-row:first-child {
-  border-top: 0;
+.daily-plan-card__head,
+.daily-plan-card__summary,
+.daily-plan-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.today-plan-row__main {
-  min-width: 0;
+.daily-plan-card__head {
+  padding-bottom: 7px;
+  border-bottom: 1px solid #e8edf1;
 }
 
-.today-plan-row__main b,
-.today-plan-row__main small {
-  display: block;
-}
-
-.today-plan-row__main b {
-  overflow: hidden;
-  color: #1d2939;
+.daily-plan-card__head b {
+  color: #172334;
   font-size: 13px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.today-plan-row__main small {
-  margin-top: 2px;
-  color: #758193;
+.daily-plan-card__head span {
+  color: #176f5b;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.daily-plan-card__summary {
+  margin: 8px 0;
+}
+
+.daily-plan-card__summary b {
+  color: #1d4ed8;
+  font-size: 18px;
+}
+
+.daily-plan-card__summary span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.daily-plan-card__rows {
+  display: grid;
+  gap: 5px;
+}
+
+.daily-plan-card__row {
+  min-height: 30px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  background: #f8fafb;
+}
+
+.daily-plan-card__row b {
+  min-width: 34px;
+  color: #172334;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-plan-card__row span {
+  min-width: 0;
+  flex: 1;
+  color: #64748b;
   font-size: 10px;
 }
 
-.today-plan-row strong {
+.daily-plan-card__row em {
   flex: 0 0 auto;
-  color: #176f5b;
-  font-size: 15px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
 }
 
-.today-plan-empty {
-  min-height: 58px;
+.daily-plan-card__empty {
+  min-height: 44px;
   display: grid;
   place-items: center;
-  padding: 10px;
-  border: 1px dashed #cbd5df;
-  border-radius: 8px;
-  background: #f8fafb;
-  color: #657386;
-  font-size: 12px;
+  border: 1px dashed #d7dee6;
+  border-radius: 6px;
+  color: #7b8796;
+  font-size: 11px;
+}
+
+.daily-plan-history-note {
+  display: block;
+  margin-top: 2px;
 }
 
 .today-window-strip {
