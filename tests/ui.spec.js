@@ -732,6 +732,27 @@ test("heatmap pages use the one-period, two-period, three-period names", async (
   await expect(page.locator('.nav-subtabs .tab[data-tab="trend"]')).toHaveText("一期热图");
 });
 
+test("two and three period heatmaps never show live before a new window starts", async ({ page }) => {
+  for (const tabId of ["windowmiss", "windowmiss2"]) {
+    await page.goto("/");
+    await page.evaluate((id) => {
+      localStorage.setItem("v2_current_tab", JSON.stringify(id));
+    }, tabId);
+    await page.reload();
+    await page.waitForFunction(() => document.querySelectorAll(".panel--wmheat tbody tr:last-child [data-window-state]").length > 0);
+
+    const latest = await page.evaluate(() => window.APP_DATA.d.length);
+    const lastRow = page.locator(".panel--wmheat tbody tr:last-child").first();
+    await expect(lastRow.locator("[data-window-state]")).toHaveCount(13);
+    await expect(lastRow.locator('[data-window-state="live"][data-window-start-pending="true"]')).toHaveCount(0);
+
+    const liveStarts = await lastRow.locator('[data-window-state="live"]').evaluateAll((cells) => (
+      cells.map((cell) => Number(cell.getAttribute("data-window-start")))
+    ));
+    expect(liveStarts.every((start) => Number.isFinite(start) && start <= latest)).toBe(true);
+  }
+});
+
 test("long right swipe on the first page does not open the directory", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
