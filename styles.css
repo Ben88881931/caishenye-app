@@ -2714,33 +2714,34 @@ button.chip {
 }
 
 .model-pair-card {
-  min-height: 76px;
+  min-height: 88px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 3px;
-  padding: 8px 10px;
+  gap: 2px;
+  padding: 9px 10px;
   border: 2px solid #2563eb;
   border-radius: 8px;
   background: #eff6ff;
 }
 
 .model-pair-card span {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
   color: #1e3a8a;
 }
 
 .model-pair-card b {
-  font-size: 21px;
+  font-size: 30px;
   line-height: 1;
   color: #1d4ed8;
+  font-variant-numeric: tabular-nums;
 }
 
 .model-pair-card small {
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.35;
   color: #475569;
   white-space: normal;

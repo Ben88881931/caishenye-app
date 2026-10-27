@@ -1284,13 +1284,14 @@
     var result = PROB_MODEL.analyze(RAW, period - 1);
     var picks = result.top || [];
     var lineNames = ["A", "B", "C"];
-    var labels = picks.map(function (row, index) {
-      return lineNames[index] + row.tail + (result.legacyLocked ? " · 296锁定" : " · 正式候选");
+    var candidateLabels = picks.map(function (row, index) {
+      return lineNames[index] + row.tail;
     });
+    var statusLabel = result.legacyLocked ? "296锁定" : "正式候选";
     var tones = ["model-pair-card--p1", "model-pair-card--p2", "model-pair-card--p3"];
     return '<div class="model-pair-grid">' +
       picks.map(function (row, index) {
-        return '<div class="model-pair-card ' + tones[index] + '"><span>' + labels[index] + '</span><b>下期 ' + (row.nextProb * 100).toFixed(1) + '%</b><small>三期 ' + (row.window3Prob * 100).toFixed(1) + '%</small></div>';
+        return '<div class="model-pair-card ' + tones[index] + '"><span>' + statusLabel + '</span><b>' + candidateLabels[index] + '</b><small>三期窗口 ' + (row.window3Prob * 100).toFixed(1) + '% · 单期诊断 ' + (row.nextProb * 100).toFixed(1) + '%</small></div>';
       }).join("") +
       (result.ambiguous ? '<div class="model-pair-note">前三名概率接近，当前排序不代表明显强弱</div>' : '') +
       '</div>';
