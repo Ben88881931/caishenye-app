@@ -2759,12 +2759,6 @@
         '<b>等尾' + activeState.waiting.tail + '</b><small>重新开出后开窗</small></span>';
     }
     if (!activeState.active) return "";
-    if (Number(activeState.active.start) > D.length) {
-      var pendingTail = activeState.active.lockedTail != null ? activeState.active.lockedTail : null;
-      return '<span class="trend-run-chip trend-run-chip--live" data-wm-live-state="waiting" title="' +
-        line.label + '新窗口尚未开始，等待下一期开新窗">' +
-        '<b>' + (pendingTail != null ? "等尾" + pendingTail : "等待") + '</b><small>等待新窗口开出</small></span>';
-    }
     var stage = Math.min(maxStage, (activeState.active.attempts || []).length + 1);
     var startPeriod = betLocalPeriod(activeState.active.start);
     var tailText = activeState.active.lockedTail != null ? " · 锁尾" + activeState.active.lockedTail : "";
@@ -3067,8 +3061,6 @@
     var perLine = EXEC_LINES.map(function (line) {
       var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
       var stNow = wmStageNow(line, maxStage);
-      var activeStarted = !!(isCurrentYear && stNow && stNow.active && Number(stNow.active.start) <= D.length);
-      var activePendingOpen = !!(isCurrentYear && stNow && stNow.active && Number(stNow.active.start) > D.length);
       var nextStartFull = isCurrentYear && stNow && stNow.active ? Number(stNow.active.start) : null;
       // 每条线自己的竖排事件流：一窗一格；窗与窗之间“等号重开”的空档单独占一格
       var out = [], streak = 0;
@@ -3083,28 +3075,17 @@
         // 命中的那一格写“在第几期中的”（窗口内第1/2/3期）
         out.push({ kind: hit ? "hit" : "miss", hitAt: hit ? Number(w.hitIndex) : null, miss: streak });
         // 错窗后等多号重新开出的空档：单独一格，写等了几期
-        if (wait > 0) out.push({ kind: "wait", wait: wait });
+        if (wait > 0) out.push({ kind: "wait", wait: wait, ruleWait: true });
       });
       // 现在还在等号重开、还没开出下一窗：最后一格必须是“等”（按已经等了几期算）
       if (isCurrentYear && stNow && stNow.waiting && rows.length) {
         var lastW = rows[rows.length - 1];
         var endP = betLocalPeriod(lastW.start) + ((lastW.attempts || []).length) - 1;
         var waitNow = latest - endP + 1;
-        if (waitNow > 0) out.push({ kind: "wait", wait: waitNow, tail: stNow.waiting.tail, amount: 0 });
+        if (waitNow > 0) out.push({ kind: "wait", wait: waitNow, tail: stNow.waiting.tail, amount: 0, ruleWait: true });
       }
-      // 新窗口还没真正开始：最新格继续写“等/等开”，不能提前写“进”
-      if (activePendingOpen) {
-        var pendingTail = stNow.active.lockedTail != null ? stNow.active.lockedTail : null;
-        var lastEvent = out.length ? out[out.length - 1] : null;
-        if (lastEvent && lastEvent.kind === "wait") {
-          lastEvent.pendingOpen = true;
-          if (pendingTail != null) lastEvent.tail = pendingTail;
-        } else {
-          out.push({ kind: "wait", wait: 0, tail: pendingTail, amount: 0, pendingOpen: true });
-        }
-      }
-      // 只有窗口起始期已经进入真实开奖数据，才显示“进第几期”
-      if (activeStarted) {
+      // 只要窗口已经建立，就正常显示“进第几期”；等待只由真正的 waiting 状态产生
+      if (isCurrentYear && stNow && stNow.active) {
         out.push({
           kind: "live",
           stage: (stNow.active.attempts || []).length + 1,
@@ -3140,9 +3121,9 @@
         var c = p.events[r - (maxN - p.events.length)];
         if (!c) { html += '<td data-window-state="empty"><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
         if (c.kind === "wait") {
-          var waitLabel = c.pendingOpen ? "等待" : "等" + c.wait;
-          var waitTitle = c.pendingOpen ? "新窗口尚未开始 · 等待下一期开新窗" : "等待尾" + (c.tail != null ? c.tail : "-") + "重新开出";
-          html += '<td data-window-state="wait" data-window-start-pending="' + (c.pendingOpen ? "true" : "false") + '" data-window-amount="0" title="' + waitTitle + ' · 本期0元"><span class="heat-cell cell-wait">' + waitLabel;
+          var waitLabel = "等" + c.wait;
+          var waitTitle = "等待尾" + (c.tail != null ? c.tail : "-") + "重新开出";
+          html += '<td data-window-state="wait" data-window-rule-wait="true" data-window-start-pending="false" data-window-amount="0" title="' + waitTitle + ' · 本期0元"><span class="heat-cell cell-wait">' + waitLabel;
           if (c.tail != null) html += '<span class="heat-cell__sub">尾' + c.tail + "</span>";
           html += "</span></td>";
           return;

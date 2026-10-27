@@ -732,7 +732,7 @@ test("heatmap pages use the one-period, two-period, three-period names", async (
   await expect(page.locator('.nav-subtabs .tab[data-tab="trend"]')).toHaveText("一期热图");
 });
 
-test("two and three period heatmaps never show live before a new window starts", async ({ page }) => {
+test("two and three period heatmaps show waiting only for rule waits", async ({ page }) => {
   for (const tabId of ["windowmiss", "windowmiss2"]) {
     await page.goto("/");
     await page.evaluate((id) => {
@@ -744,12 +744,21 @@ test("two and three period heatmaps never show live before a new window starts",
     const latest = await page.evaluate(() => window.APP_DATA.d.length);
     const lastRow = page.locator(".panel--wmheat tbody tr:last-child").first();
     await expect(lastRow.locator("[data-window-state]")).toHaveCount(13);
-    await expect(lastRow.locator('[data-window-state="live"][data-window-start-pending="true"]')).toHaveCount(0);
+    await expect(lastRow.locator('[data-window-state="wait"][data-window-start-pending="true"]')).toHaveCount(0);
 
-    const liveStarts = await lastRow.locator('[data-window-state="live"]').evaluateAll((cells) => (
-      cells.map((cell) => Number(cell.getAttribute("data-window-start")))
+    const states = await lastRow.locator("[data-window-state]").evaluateAll((cells) => (
+      cells.map((cell) => ({
+        state: cell.getAttribute("data-window-state"),
+        ruleWait: cell.getAttribute("data-window-rule-wait"),
+        start: Number(cell.getAttribute("data-window-start")),
+        text: cell.innerText.trim(),
+      }))
     ));
-    expect(liveStarts.every((start) => Number.isFinite(start) && start <= latest)).toBe(true);
+    const live = states.filter((cell) => cell.state === "live");
+    expect(live.length).toBeGreaterThan(0);
+    expect(live.every((cell) => cell.text.startsWith("进"))).toBe(true);
+    expect(live.some((cell) => cell.start === latest + 1)).toBe(true);
+    expect(states.filter((cell) => cell.state === "wait").every((cell) => cell.ruleWait === "true")).toBe(true);
   }
 });
 
