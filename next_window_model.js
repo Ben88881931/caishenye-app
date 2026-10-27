@@ -24,9 +24,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7 },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8 },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9 },
-    { id: "prob1", label: "A线", kind: "probability", rank: 0 },
-    { id: "prob2", label: "B线", kind: "probability", rank: 1 },
-    { id: "prob3", label: "C线", kind: "probability", rank: 2 }
+    { id: "prob1", label: "A", kind: "probability", rank: 0 },
+    { id: "prob2", label: "B", kind: "probability", rank: 1 },
+    { id: "prob3", label: "C", kind: "probability", rank: 2 }
   ];
 
   function clamp(value, min, max) {

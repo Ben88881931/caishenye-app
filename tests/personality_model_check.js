@@ -29,7 +29,7 @@ assert.equal(model.bidirectionalRiskCascade, true);
 assert.equal(model.overlappingWindows, true);
 assert.equal(model.lines.length, 13);
 assert.deepEqual(model.lines.map((line) => line.id), expectedLines);
-assert.deepEqual(model.lines.filter((line) => line.kind === "probability").map((line) => line.label), ["A线", "B线", "C线"]);
+assert.deepEqual(model.lines.filter((line) => line.kind === "probability").map((line) => line.label), ["A", "B", "C"]);
 assert.equal(model.ranking.length, 13);
 assert.ok(model.ranking.every((line, index, rows) => (
   index === 0 || rows[index - 1].current.predictedRate >= line.current.predictedRate

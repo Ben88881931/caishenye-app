@@ -319,8 +319,8 @@ def main():
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
             fail("窗口倍投测试缺少今年最优规律或正式版候选标注")
-        if "function modelPairStrip" in app_text and "PROB_MODEL.analyze" in app_text and 'var lineNames = ["A线", "B线", "C线"]' in app_text and 'name + (result.legacyLocked ? " · 296锁定" : " · 正式候选")' in app_text and "model-pair-card--p3" in app_text and "前三名概率接近" in app_text and "modelPairStrip(latest + 1)" in app_text:
-            pass_("所有页面顶部显示A/B/C线三期前三名，并保留296期锁定快照")
+        if "function modelPairStrip" in app_text and "PROB_MODEL.analyze" in app_text and 'var lineNames = ["A", "B", "C"]' in app_text and 'lineNames[index] + row.tail + (result.legacyLocked ? " · 296锁定" : " · 正式候选")' in app_text and "model-pair-card--p3" in app_text and "前三名概率接近" in app_text and "modelPairStrip(latest + 1)" in app_text:
+            pass_("所有页面顶部显示A/B/C加当期尾号，并保留296期锁定快照")
         else:
             fail("页面顶部缺少新方法三期前三名或296期锁定快照")
         if (

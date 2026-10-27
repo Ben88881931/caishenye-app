@@ -1,7 +1,7 @@
 {
   "version": "next-window-v7-20261026",
   "method": "per-line-dual-direction-risk-cascade-v6",
-  "generatedAt": "2026-10-27T13:53:37.129Z",
+  "generatedAt": "2026-10-27T14:16:15.390Z",
   "asOfPeriod": 1465,
   "target": 1466,
   "trainingYears": [
@@ -1835,7 +1835,7 @@
     },
     {
       "id": "prob1",
-      "label": "A线",
+      "label": "A",
       "kind": "probability",
       "longTerm": {
         "windows": 1453,
@@ -2012,7 +2012,7 @@
     },
     {
       "id": "prob2",
-      "label": "B线",
+      "label": "B",
       "kind": "probability",
       "longTerm": {
         "windows": 1453,
@@ -2189,7 +2189,7 @@
     },
     {
       "id": "prob3",
-      "label": "C线",
+      "label": "C",
       "kind": "probability",
       "longTerm": {
         "windows": 1453,
@@ -2555,7 +2555,7 @@
     {
       "rank": 2,
       "id": "prob3",
-      "label": "C线",
+      "label": "C",
       "kind": "probability",
       "longTerm": {
         "windows": 1453,
@@ -2919,7 +2919,7 @@
     {
       "rank": 4,
       "id": "prob1",
-      "label": "A线",
+      "label": "A",
       "kind": "probability",
       "longTerm": {
         "windows": 1453,
@@ -4371,7 +4371,7 @@
     {
       "rank": 12,
       "id": "prob2",
-      "label": "B线",
+      "label": "B",
       "kind": "probability",
       "longTerm": {
         "windows": 1453,

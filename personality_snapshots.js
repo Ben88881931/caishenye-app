@@ -2002,7 +2002,7 @@ window.APP_PERSONALITY_SNAPSHOTS = {
         },
         {
           "id": "prob3",
-          "label": "C线",
+          "label": "C",
           "tail": 5,
           "predictedRate": 0.9296378503963071,
           "baseline": 0.9106260349100137,
@@ -2064,7 +2064,7 @@ window.APP_PERSONALITY_SNAPSHOTS = {
         },
         {
           "id": "prob1",
-          "label": "A线",
+          "label": "A",
           "tail": 3,
           "predictedRate": 0.9226398666104925,
           "baseline": 0.912253441583299,
@@ -2312,7 +2312,7 @@ window.APP_PERSONALITY_SNAPSHOTS = {
         },
         {
           "id": "prob2",
-          "label": "B线",
+          "label": "B",
           "tail": 2,
           "predictedRate": 0.652271819174871,
           "baseline": 0.9256588521547695,

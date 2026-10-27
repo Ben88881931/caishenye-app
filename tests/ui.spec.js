@@ -908,10 +908,11 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator('[data-report-section="snapshot"]')).toContainText("每期前2/3选线走步验证");
   await expect(page.locator("[data-report-ranking-card]")).toHaveCount(1);
   await expect(page.locator("[data-report-ranking-card]").first()).toContainText("第299期");
-  await expect(page.locator("[data-report-ranking-card]").first()).toContainText("A线");
-  await expect(page.locator("[data-daily-report-rank-card]")).toContainText(/A线 · 尾\d/);
+  await expect(page.locator("[data-report-ranking-card]").first()).toContainText(/A\d/);
+  await expect(page.locator("[data-daily-report-rank-card]")).toContainText(/A\d/);
   await expect(page.locator("#view")).toContainText("下一独立三期窗口预测排名");
   await expect(page.locator("#view")).not.toContainText("概率第1");
+  await expect(page.locator("#view")).not.toContainText("A线");
   await expect(page.locator("#view")).not.toContainText("长期偏强");
   await expect(page.locator("#view")).not.toContainText("长期偏弱");
   await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
