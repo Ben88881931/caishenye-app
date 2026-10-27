@@ -276,6 +276,14 @@
     betPlanMode: "three",
     betLineMode: "all",
     betResearchOpen: false,
+    betExecView: lsGet("v2_bet_exec_view", "today"),
+    windowMissView: lsGet("v2_window_miss_view", "heat"),
+    windowMiss2View: lsGet("v2_window_miss2_view", "heat"),
+    trendView: lsGet("v2_trend_view", "heat"),
+    missOrderView: lsGet("v2_miss_order_view", "heat"),
+    probView: lsGet("v2_prob_view", "overview"),
+    personalityView: lsGet("v2_personality_view", "overview"),
+    navSearch: "",
   };
 
   var TABS = [
@@ -320,9 +328,13 @@
   var navDrawerEl = document.querySelector("[data-nav-drawer]");
   var navHandleEl = document.querySelector("[data-nav-handle]");
   var navEdgeEl = document.querySelector("[data-nav-edge]");
+  var navSearchEl = document.querySelector("[data-nav-search]");
+  var topTabsEl = document.getElementById("topTabs");
+  var topContextEl = document.getElementById("topContext");
   var pageTitleEl = document.getElementById("pageTitle");
   var NAV_HANDLE_TOP_KEY = "v2_nav_handle_top";
   var NAV_HANDLE_HIDDEN_KEY = "v2_nav_handle_hidden";
+  var NAV_RECENT_KEY = "v2_recent_tabs";
   var navHandleMoved = false;
   var navHandleSuppressClick = false;
 
@@ -384,7 +396,6 @@
       navHandleMoved = false;
       navHandleEl.classList.add("is-dragging");
       try { navHandleEl.setPointerCapture(event.pointerId); } catch (e) {}
-      event.preventDefault();
     });
     navHandleEl.addEventListener("pointermove", function (event) {
       if (!drag || event.pointerId !== drag.id) return;
@@ -405,10 +416,6 @@
         setNavHandleTop(Number.parseFloat(window.getComputedStyle(navHandleEl).top), true);
         navHandleSuppressClick = true;
         window.setTimeout(function () { navHandleSuppressClick = false; }, 350);
-      } else {
-        setNavDrawer(!document.body.classList.contains("nav-drawer-open"));
-        navHandleSuppressClick = true;
-        window.setTimeout(function () { navHandleSuppressClick = false; }, 0);
       }
     }
     navHandleEl.addEventListener("pointerup", finishHandlePointer);
@@ -418,8 +425,9 @@
         event.preventDefault();
         return;
       }
-      if (event.detail === 0) setNavDrawer(!document.body.classList.contains("nav-drawer-open"));
+      setNavDrawer(!document.body.classList.contains("nav-drawer-open"));
     });
+    navHandleEl.addEventListener("contextmenu", function (event) { event.preventDefault(); });
 
     document.querySelectorAll("[data-nav-close]").forEach(function (button) {
       button.addEventListener("click", closeNavDrawer);
@@ -439,12 +447,38 @@
     if (navEdgeEl) {
       navEdgeEl.addEventListener("click", function () { setNavDrawer(true); });
     }
+    if (navSearchEl) {
+      navSearchEl.addEventListener("input", function () {
+        state.navSearch = String(navSearchEl.value || "").trim();
+        renderTabs();
+      });
+    }
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") closeNavDrawer();
     });
     window.addEventListener("resize", function () {
       setNavHandleTop(Number.parseFloat(window.getComputedStyle(navHandleEl).top), false);
     });
+  }
+
+  function recentTabIds() {
+    var saved = lsGet(NAV_RECENT_KEY, []);
+    if (!Array.isArray(saved)) return [];
+    return saved.filter(function (id) {
+      return TABS.some(function (tab) { return tab.id === id; });
+    }).slice(0, 6);
+  }
+
+  function rememberRecentTab(tabId) {
+    if (!tabId || tabId === "directory" || tabId === "overview") return;
+    var ids = recentTabIds().filter(function (id) { return id !== tabId; });
+    ids.unshift(tabId);
+    lsSet(NAV_RECENT_KEY, ids.slice(0, 6));
+  }
+
+  function clearNavSearch() {
+    state.navSearch = "";
+    if (navSearchEl) navSearchEl.value = "";
   }
 
 
@@ -651,7 +685,9 @@
   function openNavSortDialog(gesture) {
     closeNavSortDialog(true);
     var kind = gesture.kind;
-    var tabId = kind === "tab" ? gesture.target.dataset.tab : null;
+    var tabId = kind === "tab"
+      ? (gesture.tabId || gesture.target.dataset.tab || gesture.target.dataset.topTab)
+      : null;
     var groupButton = kind === "group" ? gesture.target.querySelector(".nav-group[data-nav-group]") : null;
     var groupId = kind === "group" ? (gesture.groupId || groupButton.dataset.navGroup) : (groupForTab(tabId) || NAV_GROUPS[0]).id;
     var tab = TABS.filter(function (item) { return item.id === tabId; })[0];
@@ -704,7 +740,6 @@
       if (e.key === "Escape") closeNavSortDialog();
       if (e.key === "Enter") dialog.querySelector("[data-nav-sort-apply]").click();
     });
-    requestAnimationFrame(function () { input.focus(); input.select(); });
   }
 
   var navDragState = null;
@@ -723,6 +758,62 @@
     navDragClickGuard = true;
     openNavSortDialog({ kind: "group", groupId: sortState.groupId, target: sortState.target });
   }
+
+  var topNavSortState = null;
+
+  function clearTopNavSortState() {
+    if (topNavSortState && topNavSortState.timer) clearTimeout(topNavSortState.timer);
+    topNavSortState = null;
+  }
+
+  function startTopNavSort() {
+    var sortState = topNavSortState;
+    if (!sortState) return;
+    topNavSortState = null;
+    navDragClickGuard = true;
+    openNavSortDialog({
+      kind: sortState.kind,
+      tabId: sortState.tabId,
+      groupId: sortState.groupId,
+      target: sortState.target,
+    });
+    window.setTimeout(function () { navDragClickGuard = false; }, 650);
+  }
+
+  function bindTopNavLongPress(container, kind) {
+    if (!container) return;
+    container.addEventListener("pointerdown", function (event) {
+      if (event.button != null && event.button !== 0) return;
+      var target = event.target.closest(kind === "tab" ? "[data-top-tab]" : "[data-top-group]");
+      if (!target) return;
+      clearTopNavSortState();
+      topNavSortState = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        kind: kind,
+        tabId: kind === "tab" ? target.dataset.topTab : null,
+        groupId: kind === "group" ? target.dataset.topGroup : groupForTab(target.dataset.topTab).id,
+        target: target,
+        timer: null,
+      };
+      topNavSortState.timer = window.setTimeout(startTopNavSort, 500);
+    }, { passive: true });
+  }
+
+  bindTopNavLongPress(topTabsEl, "tab");
+  document.addEventListener("pointermove", function (event) {
+    if (!topNavSortState || event.pointerId !== topNavSortState.pointerId) return;
+    if (Math.abs(event.clientX - topNavSortState.startX) > 8 ||
+        Math.abs(event.clientY - topNavSortState.startY) > 8) {
+      clearTopNavSortState();
+    }
+  }, { passive: true });
+  document.addEventListener("pointerup", clearTopNavSortState, true);
+  document.addEventListener("pointercancel", clearTopNavSortState, true);
+  document.addEventListener("contextmenu", function (event) {
+    if (event.target.closest("[data-top-tab], [data-top-group]")) event.preventDefault();
+  });
 
   view.addEventListener("pointerdown", function (e) {
     if (e.button != null && e.button !== 0) return;
@@ -1043,6 +1134,21 @@
     }
   }
 
+  function renderTopNavigation() {
+    var currentGroup = groupById(state.group) || getConfiguredGroups()[0];
+    if (topContextEl) topContextEl.textContent = currentGroup ? currentGroup.label : "工具";
+    if (topTabsEl) {
+      topTabsEl.innerHTML = getVisibleTabs(state.group).map(function (tab) {
+        return '<button class="topnav__tab' + (tab.id === state.tab ? " is-active" : "") +
+          '" type="button" data-top-tab="' + tab.id + '" aria-pressed="' +
+          (tab.id === state.tab ? "true" : "false") + '">' + tab.label + "</button>";
+      }).join("");
+      requestAnimationFrame(function () {
+        nudgeNavItem(topTabsEl, topTabsEl.querySelector(".topnav__tab.is-active"));
+      });
+    }
+  }
+
   function renderTabs() {
     var groups = getConfiguredGroups();
     var group = groupById(state.group) || groups[0];
@@ -1056,7 +1162,12 @@
         (item.id === group.id ? " is-active" : "") +
         '" type="button" data-nav-group="' + item.id + '">' + item.label + "</button></div>";
     }).join("");
-    var tabs = getVisibleTabs(group.id);
+    var query = String(state.navSearch || "").toLowerCase();
+    var tabs = query
+      ? getOrderedAllTabs().filter(function (tab) {
+        return tab.id !== "directory" && tab.label.toLowerCase().indexOf(query) >= 0;
+      })
+      : getVisibleTabs(group.id);
     var tabsHtml = tabs.map(function (t) {
       return '<button class="tab ' + (state.tab === t.id ? "is-active" : "") +
         '" type="button" data-tab="' + t.id + '">' + t.label + "</button>";
@@ -1068,7 +1179,7 @@
 
     tabsEl.classList.remove("sorting");
     tabsEl.innerHTML = '<div class="nav-groups" aria-label="页面分类">' + groupHtml + "</div>" +
-      '<div class="nav-subtabs" aria-label="' + group.label + '页面">' + tabsHtml + "</div>";
+      '<div class="nav-subtabs" aria-label="' + (query ? "搜索结果" : group.label + "页面") + '">' + tabsHtml + "</div>";
     var nextGroups = tabsEl.querySelector(".nav-groups");
     var nextSubtabs = tabsEl.querySelector(".nav-subtabs");
     if (nextGroups) nextGroups.scrollLeft = groupScroll;
@@ -1412,8 +1523,10 @@
       }
     }
     var tabChanged = state.tab !== renderedTab;
+    if (tabChanged) rememberRecentTab(state.tab);
     // 给 body 打上当前页面标记，方便按页面单独定尺寸（不同页面内容不一样，不能一刀切）
     document.body.dataset.page = state.tab;
+    renderTopNavigation();
     renderTabs();
     renderHeader();
     if (state.tab === "directory") renderDirectory();
@@ -2451,10 +2564,11 @@
           (Number(current.baseline || 0) * 100).toFixed(1) + '%</small></div></div>';
     });
     html += '</div></div>';
-    html += dailyReportRankingHistoryHTML();
+    html += '<details class="daily-report-history"><summary>历史排名快照 · 点开按期对比</summary>' +
+      dailyReportRankingHistoryHTML() + '</details>';
 
-    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13份逐线性格报告</h3><span>固定线路顺序 · 每条线独立长期画像与走步验证 · 左右滑动查看</span></div>';
-    html += '<div class="daily-report-strip" data-daily-report-strip>';
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13份逐线性格报告</h3><span>默认折叠 · 点开某条线看完整依据 · 不再默认铺开13份长报告</span></div>';
+    html += '<div class="daily-report-accordion" data-daily-report-accordion>';
     EXEC_LINES.forEach(function (line) {
       var row = rows.filter(function (item) { return item.line.id === line.id; })[0];
       var currentWindowText = row.personality
@@ -2477,12 +2591,19 @@
         : "公式表暂无这条线的审计记录";
       var sourceTags = ["逐线长期性格模型", "下注执行表", "公式表", "13线规律中心", "一期热图", "两期热图", "三期热图"];
       sourceTags.push(line.kind === "probability" ? "动态概率" : "尾号性格");
-      html += '<article class="daily-report-line-card" data-daily-report-card data-line-id="' + line.id + '"' +
+      html += '<details class="daily-report-line-card daily-report-line-card--accordion" data-daily-report-card data-line-id="' + line.id + '"' +
         (row.probabilitySignal
           ? ' data-report-probability-target="' + row.probabilitySignal.target +
             '" data-report-probability-snapshot="' + (row.probabilitySignal.snapshot ? "found" : "missing") + '"'
           : "") + '>' +
-        '<div class="daily-report-line-card__head"><div><span>' + (line.kind === "probability" ? "新方法概率线" : "真实窗口线") + '</span><h3>' + line.label + '</h3></div><b style="color:' + row.advice.color + '" data-report-advice>' + row.advice.label + '</b></div>' +
+        '<summary class="daily-report-line-summary">' +
+          '<span class="daily-report-line-summary__no">#' + (rows.map(function (item) { return item.line.id; }).indexOf(line.id) + 1) + '</span>' +
+          '<span class="daily-report-line-summary__main"><small>' + (line.kind === "probability" ? "新方法概率线" : "真实窗口线") + '</small><b>' + line.label + '</b></span>' +
+          '<strong style="color:' + row.advice.color + '" data-report-advice>' + row.advice.label + '</strong>' +
+          '<em>' + row.score.toFixed(1) + '%</em>' +
+        '</summary>' +
+        '<div class="daily-report-line-body">' +
+        '<div class="daily-report-line-card__head"><div><span>逐线报告</span><h3>' + line.label + '</h3></div><b style="color:' + row.advice.color + '">' + row.advice.label + '</b></div>' +
         '<div class="daily-report-sources" data-report-sources="' + sourceTags.join("|") + '">' + sourceTags.map(function (source) { return '<span>' + source + '</span>'; }).join("") + '</div>' +
         '<div class="daily-report-section daily-report-section--conclusion" data-report-section="conclusion"><b>当下结论</b><p>' + row.advice.reason + '</p></div>' +
         '<div class="daily-report-section" data-report-section="reason"><b>为什么</b><p>' + row.reason + '</p></div>' +
@@ -2505,7 +2626,7 @@
         personalityYearText + '。历史窗口对照：' + yearText + '。</small></div>' +
         '<div class="daily-report-section" data-report-section="formula"><b>公式验证</b><p>' + auditText + '。</p><small>正式公式 ' + planText + ' · 只验证训练/验证表现，仓位和金额不参与综合报告。</small></div>' +
         '<div class="daily-report-section daily-report-section--risk" data-report-section="risk"><b>风险与解读</b><p>' + row.risk + '</p><small>' + row.interpretation + '</small></div>' +
-        '</article>';
+        '</div></details>';
     });
     html += '</div></div>';
 
@@ -2661,7 +2782,14 @@
         '" data-dashboard-window-state title="' + stateRow.line.label + '：' + stateRow.text + '">' +
         stateRow.text + '</span>';
     });
-    html += '</div></section>';
+    html += '</div><small class="section__hint">进N = 当前窗口正在进行到第N期；等尾X = 上一窗全错，等尾X重新开出后才开新窗。</small></section>';
+
+    html += '<details class="term-guide"><summary>术语速查 · 第一次使用先看这里</summary><div class="term-guide__body">' +
+      '<div><b>A1 / A2 / A3</b>：动态概率排序的三个候选尾号，排名不代表证明能长期跑赢随机。</div>' +
+      '<div><b>D1 / D2</b>：旧诊断账，仅保留历史核对，不再作为正式推荐。</div>' +
+      '<div><b>一期 / 两期 / 三期</b>：同一个新窗口允许检查的期数；正式执行只认三期口径。</div>' +
+      '<div><b>窗口第N期</b>：一个窗口从第1期开始检查，命中或达到上限后结束。</div>' +
+      '</div></details>';
 
     var shortcuts = [
       { tab: "dailyreport", label: "排名理由", note: "看13线为什么这样排" },
@@ -2678,6 +2806,17 @@
         '<span><b>' + item.label + '</b><small>' + item.note + '</small></span></button>';
     });
     html += '</div></section>';
+
+    var recentTabs = recentTabIds().map(function (id) {
+      return TABS.filter(function (tab) { return tab.id === id; })[0];
+    }).filter(Boolean);
+    if (recentTabs.length) {
+      html += '<details class="recent-pages"><summary>最近访问 · 一键直达</summary><div class="recent-pages__list">';
+      recentTabs.forEach(function (tab) {
+        html += '<button type="button" data-overview-tab="' + tab.id + '">' + tab.label + '</button>';
+      });
+      html += '</div></details>';
+    }
 
     html += pageGuideHTML();
     html += '</div>';
@@ -3098,11 +3237,19 @@
     var year = DATA_YEARS.indexOf(Number(state.missOrderYear)) >= 0 ? Number(state.missOrderYear) : DATA_YEARS[0];
     state.missOrderYear = year;
     var rows = D.filter(function (row) { return Number(row.y) === year; });
+    var activeView = state.missOrderView === "chain" ? "chain" : "heat";
+    state.missOrderView = activeView;
 
     var order = missOrderTailsForRows(rows);
     var missInfo = buildMissInfoForRows(rows);
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">遗漏排序热图 · ' + year + '年</h2><span class="section__hint">每年独立排序 · 按该年最近遗漏满3期排序，最新放最后</span></div>';
     html += yearChipsHTML(year, "data-miss-order-year");
+    html += '<div class="task-tabs" data-flow-tabs role="tablist" aria-label="遗漏排序任务">' +
+      '<button class="task-tab ' + (activeView === "heat" ? "is-active" : "") + '" type="button" data-flow-task="heat" role="tab">遗漏热图</button>' +
+      '<button class="task-tab ' + (activeView === "chain" ? "is-active" : "") + '" type="button" data-flow-task="chain" role="tab">遗漏连出链</button>' +
+      '</div>';
+    if (activeView === "heat") {
+    html += '<div data-flow-panel="heat">';
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     order.forEach(function (t) {
       html += '<th>尾' + t + '<span class="heat-order-miss">漏' + currentMissForRows(rows, t) + '</span></th>';
@@ -3130,7 +3277,10 @@
     html += "</tbody></table></div></div>";
     html += perfMoreBtn("missorder:" + year, rows.length, shownRows.length);
     html += '<p class="disclaimer">' + year + '年独立排序：按该年每个尾数最近一次遗漏满 3 期及以上的时间排序，旧的放左、最新的放右；正在遗漏满 3 期及以上的放在最后。</p>';
-    html += fullRunHistoryHTML();
+    html += '</div>';
+    } else {
+      html += '<div data-flow-panel="chain">' + fullRunHistoryHTML() + '</div>';
+    }
     return html;
   }
 
@@ -3258,10 +3408,20 @@
     });
     var maxN = 0;
     perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
+    var activeView = maxStage === 2 ? state.windowMiss2View : state.windowMissView;
+    if (activeView !== "heat" && activeView !== "chain") activeView = "heat";
+    if (maxStage === 2) state.windowMiss2View = activeView;
+    else state.windowMissView = activeView;
     // 与「遗漏热图（尾数）」完全同一套风格与排序：旧在上、新在下，进页面自动滚到底；绿格=中，红格=连错第几窗（中文数字）
     var html = '<div class="section"><div class="panel" style="padding:10px;margin-bottom:8px">';
     html += yearChipsHTML(curYear, maxStage === 2 ? "data-window-miss2-year" : "data-window-miss-year");
     html += '<div style="font-size:12px;color:#475569;line-height:1.7">当前：<b>' + windowLabel + '（一个窗口最多' + maxStage + '期）</b> · 本页只计算' + windowLabel + '，与' + (maxStage === 2 ? "三期热图" : "两期热图") + '完全独立；年份、热图、连中遗漏链互不混算。</div></div></div>';
+    html += '<div class="task-tabs" data-window-miss-tabs role="tablist" aria-label="' + periodLabel + '热图任务">' +
+      '<button class="task-tab ' + (activeView === "heat" ? "is-active" : "") + '" type="button" data-window-miss-task="heat" role="tab" aria-selected="' + (activeView === "heat" ? "true" : "false") + '">热图</button>' +
+      '<button class="task-tab ' + (activeView === "chain" ? "is-active" : "") + '" type="button" data-window-miss-task="chain" role="tab" aria-selected="' + (activeView === "chain" ? "true" : "false") + '">遗漏连中铁链</button>' +
+      '</div>';
+    if (activeView === "heat") {
+    html += '<div data-window-miss-panel="heat">';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">' + periodLabel + '热图 · ' + curYear + '年</h2><span class="section__hint">每年独立 · 每条线一竖列，从上往下走：旧在上、新在下，最底一行=最新 · 左起第一列是行号：最底一行「最新」=各线当下状态，往上依次 1、2、3…（数字=往前第几格，一格=一个窗口）· 只看窗口，不管期号</span></div>';
     html += '<div class="panel" style="padding:8px 10px;margin-bottom:8px"><div style="font-size:12px;line-height:1.8;color:#334155">最底下一行「最新」=13条线各自当前的状态；往上就是更早的窗口=比最新早1格、2格（一格=一个窗口或一个等待格）。<br>格子：<span class="heat-cell cell-hit">2</span> 红=这个窗口中了，数字=<b>在本窗第几期中的</b>（1/' + maxStage + '）；<span class="heat-cell cell-miss1">一</span><span class="heat-cell cell-miss2">二</span><span class="heat-cell cell-miss3">三</span> 蓝/绿/黄=错窗，<b>连错到第几窗</b>；<span class="heat-cell cell-wait">等3</span> 浅绿格=正在等号重开（或两窗之间空等了几期）；<span class="heat-cell cell-live">进2</span> 淡紫格=这条线现在有窗口在跑、已经跑到第' + Math.min(maxStage, 2) + '期（还没开奖，不算结果）；空格=该线当年还没走到这一件。</div></div>';
     html += '<div class="panel panel--wmheat"><div class="panel__body heatmap wm-heat"><table class="heatmap__table"><thead><tr><th class="row-label">行</th>';
@@ -3301,7 +3461,10 @@
     }
     html += "</tbody></table></div></div></div>";
     html += perfMoreBtn("windowMiss", maxN, showRows, "行");
-    html += wmRunHistoryHTML(maxStage, curYear);
+    html += '</div>';
+    } else {
+      html += '<div data-window-miss-panel="chain">' + wmRunHistoryHTML(maxStage, curYear) + '</div>';
+    }
     view.innerHTML = html;
     var hm = view.querySelector(".panel--wmheat .heatmap");
     if (hm) hm.scrollTop = hm.scrollHeight;
@@ -3313,7 +3476,15 @@
 
   function renderTrendImpl() {
     var heatPeriods = perfRows("trend", periods);
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">一期热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
+    var activeView = ["heat", "chain", "chart"].indexOf(state.trendView) >= 0 ? state.trendView : "heat";
+    state.trendView = activeView;
+    var html = '<div class="task-tabs" data-flow-tabs role="tablist" aria-label="一期热图任务">' +
+      '<button class="task-tab ' + (activeView === "heat" ? "is-active" : "") + '" type="button" data-flow-task="heat" role="tab">热图</button>' +
+      '<button class="task-tab ' + (activeView === "chain" ? "is-active" : "") + '" type="button" data-flow-task="chain" role="tab">遗漏连出链</button>' +
+      '<button class="task-tab ' + (activeView === "chart" ? "is-active" : "") + '" type="button" data-flow-task="chart" role="tab">滚动开出率</button>' +
+      '</div>';
+    if (activeView === "heat") {
+    html += '<div data-flow-panel="heat"><div class="section"><div class="section__head"><h2 class="section__title">一期热图</h2><span class="section__hint">第 ' + periods[0] + ' 期 - 第 ' + latest + " 期 · 共 " + periods.length + " 期</span></div>";
     html += '<div class="panel"><div class="panel__body heatmap"><table class="heatmap__table"><thead><tr><th class="row-label">期</th><th>开出</th><th>个</th>';
     for (var t = 0; t < 10; t++) html += "<th>" + t + "</th>";
     html += "</tr></thead><tbody>";
@@ -3334,9 +3505,11 @@
     });
     html += "</tbody></table></div></div></div>";
     html += perfMoreBtn("trend", periods.length, heatPeriods.length);
-    html += fullRunHistoryHTML();
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">' + state.rollWindow + ' 期窗口 · 红点 = 开出</span></div>';
+    html += '</div>';
+    } else if (activeView === "chain") {
+      html += '<div data-flow-panel="chain">' + fullRunHistoryHTML() + '</div>';
+    } else {
+    html += '<div data-flow-panel="chart"><div class="section"><div class="section__head"><h2 class="section__title">尾数滚动开出率</h2><span class="section__hint">' + state.rollWindow + ' 期窗口 · 红点 = 开出</span></div>';
     html += '<div class="chips" style="margin-bottom:8px">';
     [5, 7, 10, 15, 20, 30].forEach(function (n) {
       html += '<button class="chip ' + (state.rollWindow === n ? "is-active" : "") + '" data-rollw="' + n + '">' + n + " 期</button>";
@@ -3347,11 +3520,12 @@
       html += '<button class="chip ' + (state.tail === k ? "is-active" : "") + '" data-tail="' + k + '">尾 ' + k + "</button>";
     }
     html += "</div>";
-    html += '<div class="panel"><div class="panel__body"><div id="linechart" class="linechart"></div></div></div></div>';
+    html += '<div class="panel"><div class="panel__body"><div id="linechart" class="linechart"></div></div></div></div></div>';
+    }
 
     view.innerHTML = html;
 
-    drawLineChart();
+    if (activeView === "chart") drawLineChart();
     var hm = view.querySelector(".heatmap");
     if (hm) hm.scrollTop = hm.scrollHeight;
   }
@@ -4345,9 +4519,102 @@
     var skipCount = plan.filter(function (r) { return !(r.betStake > 0); }).length;
     var yearNet = plan.reduce(function (s, r) { return s + r.acc.net; }, 0);
     var yearCost = plan.reduce(function (s, r) { return s + r.acc.cost; }, 0);
+    var refRows = betPickRefRows(maxStage);
 
     var modeShort = maxStage === 2 ? "两期窗口 · 各线公式" : "三期窗口 · 各线公式";
-    var html = '';
+    var activeView = ["today", "windows", "profit", "research"].indexOf(state.betExecView) >= 0
+      ? state.betExecView
+      : "today";
+    state.betExecView = activeView;
+    var html = '<div class="task-tabs" data-bet-exec-tabs role="tablist" aria-label="下注执行任务">' +
+      '<button class="task-tab ' + (activeView === "today" ? "is-active" : "") + '" type="button" data-bet-exec-task="today" role="tab" aria-selected="' + (activeView === "today" ? "true" : "false") + '">今日规划</button>' +
+      '<button class="task-tab ' + (activeView === "windows" ? "is-active" : "") + '" type="button" data-bet-exec-task="windows" role="tab" aria-selected="' + (activeView === "windows" ? "true" : "false") + '">当前窗口</button>' +
+      '<button class="task-tab ' + (activeView === "profit" ? "is-active" : "") + '" type="button" data-bet-exec-task="profit" role="tab" aria-selected="' + (activeView === "profit" ? "true" : "false") + '">逐期盈亏</button>' +
+      '<button class="task-tab ' + (activeView === "research" ? "is-active" : "") + '" type="button" data-bet-exec-task="research" role="tab" aria-selected="' + (activeView === "research" ? "true" : "false") + '">研究明细</button>' +
+      '</div>';
+
+    if (activeView === "today") {
+      var todayPlanRows = plan.filter(function (r) { return r.betStake > 0; });
+      html += '<div data-bet-task-panel="today">';
+      html += '<div class="task-summary">' +
+        '<div><b>' + todayTotal + ' 元</b><span>本期计划金额</span></div>' +
+        '<div><b>' + todayRisk + ' 元</b><span>本窗最大风险</span></div>' +
+        '<div><b>' + todayPlanRows.length + ' 条</b><span>本期有金额线路</span></div>' +
+        '<div><b>' + skipCount + ' 条</b><span>本期不下注</span></div>' +
+        '</div>';
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">今日规划 · 第' + (latest + 1) + '期</h2><span class="section__hint">每条线按自己的公式取窗口第几期金额</span></div>';
+      if (!todayPlanRows.length) {
+        html += '<div class="task-empty">今天没有金额大于 0 的仓位，全部空仓。</div>';
+      } else {
+        html += '<div class="task-plan-list">';
+        todayPlanRows.forEach(function (r) {
+          var line = r.line;
+          var live = r.live;
+          var tail = line.kind === "tail" ? line.tail
+            : (live.active && live.active.lockedTail != null
+              ? live.active.lockedTail
+              : (live.active ? wmLiveTailFor(line, live.active, Number(live.active.start) + live.stage - 1) : null));
+          var currentPeriod = live.active ? betLocalPeriod(Number(live.active.start) + live.stage - 1) : null;
+          html += '<div class="task-plan-row" data-bet-plan-card data-line-id="' + line.id +
+            '" data-plan-stage="' + live.stage + '" data-plan-amount="' + Number(r.basePlan[live.stage - 1] || 0) +
+            '" data-effective-amount="' + r.betStake + '" data-plan-values="' + r.basePlan.join("/") + '">' +
+            '<div><b>' + line.label + (tail != null ? ' · 尾' + tail : '') + '</b>' +
+            '<small>当前窗口第' + live.stage + '期' + (currentPeriod ? ' · 第' + currentPeriod + '期' : '') +
+            ' · 公式 ' + r.basePlan.join(' / ') + ' 元</small></div>' +
+            '<strong>' + r.betStake + ' 元</strong></div>';
+        });
+        html += '</div>';
+      }
+      html += '</div></div>';
+    } else if (activeView === "windows") {
+      html += '<div data-bet-task-panel="windows">';
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">当前窗口</h2><span class="section__hint">只看每条线现在走到哪里，不展开历史</span></div><div class="task-window-list">';
+      plan.forEach(function (row) {
+        var line = row.line;
+        var live = row.live;
+        var status = live.waiting
+          ? "上一窗全错，等尾" + live.waiting.tail + "重新开出"
+          : (live.active ? "当前窗口第" + live.stage + "期 · 本期 " + row.betStake + " 元" : "空仓，等新窗口");
+        html += '<article class="task-window-card" data-bet-task-window="' + line.id + '">' +
+          '<div class="task-window-card__head"><b>' + line.label + '</b><span>' + status + '</span></div>';
+        if (live.active) {
+          html += '<div class="task-window-card__meta">起始第' + betLocalPeriod(live.active.start) + '期 · ' +
+            (live.active.lockedTail != null ? '锁定尾' + live.active.lockedTail : '每期最新推荐') +
+            ' · 本窗剩余风险 ' + row.risk + ' 元</div>';
+          html += betWindowRowsHTML(line, live.active, maxStage);
+        } else if (live.waiting) {
+          html += '<div class="task-window-card__wait">等尾' + live.waiting.tail + '开出后，下一期才正常开新窗，本期不下注。</div>';
+        }
+        html += '</article>';
+      });
+      html += '</div></div></div>';
+    } else if (activeView === "profit") {
+      var curYear = Number((D[D.length - 1] || {}).y);
+      html += '<div data-bet-task-panel="profit">';
+      html += '<div class="section"><div class="section__head"><h2 class="section__title">逐期下注金额与盈亏</h2><span class="section__hint">每张卡一个窗口，卡内标清窗口第几期</span></div>';
+      plan.forEach(function (row) {
+        var line = row.line;
+        var windows = wmWindowsForStage(line, maxStage)
+          .filter(function (w) { return wmYearOf(w.start) === curYear; })
+          .slice(-6)
+          .reverse();
+        html += '<article class="task-profit-card"><div class="task-profit-card__head"><b>' + line.label +
+          '</b><span>2026年 ' + (row.acc.net >= 0 ? '+' : '') + Math.round(row.acc.net) +
+          ' 元 · 命中率 ' + (row.acc.windows ? (row.acc.hit / row.acc.windows * 100).toFixed(1) : "0.0") + '%</span></div>' +
+          '<div class="task-profit-strip">';
+        windows.forEach(function (w) {
+          var result = betWindowRow(w, maxStage, line);
+          html += '<div class="task-profit-window ' + (result.hitAt ? "is-hit" : "is-miss") + '">' +
+            '<div><b>第' + betLocalPeriod(w.start) + '期起</b><span>' + (result.hitAt ? '第' + result.hitAt + '期中' : '全错') + '</span></div>' +
+            betWindowRowsHTML(line, w, maxStage) +
+            '<strong>本窗 ' + (result.net >= 0 ? '+' : '') + Math.round(result.net) + ' 元</strong></div>';
+        });
+        if (!windows.length) html += '<div class="task-empty">今年暂无已完成窗口。</div>';
+        html += '</div></article>';
+      });
+      html += '</div></div>';
+    } else {
+      html += '<div data-bet-task-panel="research">';
     // 和追号码/追推荐同一个交互：一个页面，上面两个按钮点一下切换
     html += '<div class="section"><div class="panel" style="padding:12px">';
     html += '<div class="wm-view-tabs" style="margin-bottom:8px">';
@@ -4459,7 +4726,6 @@
     html += '</div></div>';
 
     // 选号参考表：14 条线一行，自己挑 2-3 条下（只做参考，不是指令，也不自动下单）
-    var refRows = betPickRefRows(maxStage);
     html += '<div class="section"><div class="section__head"><h2 class="section__title">选号参考表 · 自己挑 2-3 条下</h2><span class="section__hint">' + (maxStage === 2 ? "两期口径（一个窗口最多2期，没有第3期）" : "三期口径（一个窗口最多3期）") + ' · 不是指令：只看状态与规律，这窗下哪几条、下不下，你自己定</span></div>';
     html += '<div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1080px;font-size:12px"><thead><tr><th>线路</th><th>当前状态</th><th>对错性格</th><th>窗口命中率</th><th>第1期中</th><th>第2期中</th>' + (maxStage === 3 ? "<th>第3期中</th>" : "") + '<th>当前连错</th><th>错1窗后</th><th>今年净收益<br>（按本线公式）</th><th>参考</th></tr></thead><tbody>';
     EXEC_LINES.forEach(function (line) {
@@ -4695,6 +4961,8 @@
       html += "</div></div>";
     });
 
+    html += "</div>";
+    }
     html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。下单主口径=三期窗口（三期命中或三期全错才关窗）。10条尾号线窗口由真实开奖算出；3条概率线使用5/7/15/21/30新方法正式选号并继续按三期窗口记录，仓位公式尚未验证，暂不配仓。第294-296期保留切换前真实快照。</p>';
     view.innerHTML = html;
   }
@@ -4709,25 +4977,26 @@
     html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + disabled + '</div><div class="stat__label">未通过验证，不配仓</div></div>';
     html += '</div></div>';
     html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.7">公式按真实三期窗口逐期测试，选择训练段和验证段都盈利的方案。命中只按实际开奖记录结算；全错窗口会结束当前窗口，等锁定号重新开出后再开新窗。</div></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1180px"><thead><tr><th>线路</th><th>最终公式</th><th>第1/2/3期金额（元）</th><th>全周期净收益 / ROI</th><th>训练 / 验证净收益</th><th>最大回撤</th><th>全错窗口</th><th>状态</th></tr></thead><tbody>';
+    html += '<div class="section"><div class="formula-card-list">';
     EXEC_LINES.forEach(function (line) {
       var audit = EXEC_FORMULA_AUDIT[line.id] || { formula: "阶段公式", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 };
       var enabledLine = planRisk(line.plan) > 0;
       var fullColor = audit.fullNet > 0 ? "#16a34a" : audit.fullNet < 0 ? "#dc2626" : "#475569";
-      html += '<tr>';
-      html += '<td><b>' + line.label + '</b></td>';
-      html += '<td><b>' + audit.formula + '</b></td>';
-      html += '<td><b>' + line.plan.join(" / ") + '</b></td>';
-      html += '<td style="color:' + fullColor + ';font-weight:900">' + (audit.fullNet >= 0 ? "+" : "") + audit.fullNet + ' / ' + (audit.fullRoi * 100).toFixed(2) + '%</td>';
-      html += '<td>' + (audit.trainNet >= 0 ? "+" : "") + audit.trainNet + ' / ' + (audit.validNet >= 0 ? "+" : "") + audit.validNet + '</td>';
-      html += '<td>' + audit.maxDrawdown + '</td>';
-      html += '<td>' + audit.miss + '</td>';
-      html += '<td><b style="color:' + (line.hold ? "#d97706" : (enabledLine ? "#16a34a" : "#dc2626")) + '">' +
-        (line.hold ? "暂停建仓·观察" : (enabledLine ? "配仓" : "不配仓")) + "</b>" +
-        (line.hold ? '<div style="font-size:10px;color:#92400e;margin-top:2px">' + line.hold + "</div>" : "") + "</td>";
-      html += '</tr>';
+      var statusText = line.hold ? "暂停建仓·观察" : (enabledLine ? "配仓" : "不配仓");
+      var statusColor = line.hold ? "#b45309" : (enabledLine ? "#15803d" : "#b91c1c");
+      html += '<details class="formula-card" data-formula-card="' + line.id + '">' +
+        '<summary><span><b>' + line.label + '</b><small>' + audit.formula + ' · ' + line.plan.join(" / ") + ' 元</small></span>' +
+        '<strong style="color:' + statusColor + '">' + statusText + '</strong></summary>' +
+        '<div class="formula-card__body"><div class="formula-card__metrics">' +
+        '<div><span>全周期净收益</span><b style="color:' + fullColor + '">' + (audit.fullNet >= 0 ? "+" : "") + audit.fullNet + '</b><small>ROI ' + (audit.fullRoi * 100).toFixed(2) + '%</small></div>' +
+        '<div><span>训练 / 验证</span><b>' + (audit.trainNet >= 0 ? "+" : "") + audit.trainNet + ' / ' + (audit.validNet >= 0 ? "+" : "") + audit.validNet + '</b><small>两段同为正才配仓</small></div>' +
+        '<div><span>最大回撤</span><b>' + audit.maxDrawdown + '</b><small>历史窗口模拟</small></div>' +
+        '<div><span>全错窗口</span><b>' + audit.miss + '</b><small>真实开奖结算</small></div>' +
+        '</div>';
+      if (line.hold) html += '<div class="formula-card__hold">' + line.hold + '</div>';
+      html += '</div></details>';
     });
-    html += '</tbody></table></div></div>';
+    html += '</div></div>';
     html += '<p class="disclaimer">公式表只展示历史验证结果，不预测下一期，不自动下单。训练或验证任一段不能稳定盈利时整条线不配仓；金额只表示历史测试中该线路在第1、2、3期应重或应轻。</p>';
     view.innerHTML = html;
   }
@@ -6968,16 +7237,33 @@
     var methodHint = result.legacyLocked
       ? "旧10期权重已于开奖前锁定，保留原预测不改写；新方法从第297期开始"
       : "生产方法 " + PROB_MODEL.META.productionMethod.windows.join(" / ") + " 期 · 三期概率排序 · 下一期概率作诊断";
+    var activeView = ["overview", "history", "snapshot"].indexOf(state.probView) >= 0 ? state.probView : "overview";
+    state.probView = activeView;
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · ' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
     html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
+    html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="动态概率任务">' +
+      '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前候选</button>' +
+      '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">测试记录</button>' +
+      '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">10尾快照</button>' +
+      '</div>';
+    if (activeView === "overview") {
+      html += '<div data-model-detail-panel="overview"><div class="section"><div class="section__head"><h2 class="section__title">当前候选</h2><span class="section__hint">A1 / A2 / A3 已在上方展示；本页只保留概率证据，不重复执行金额</span></div></div>' +
+        '<div class="task-empty">需要核对历史时，切换到“测试记录”；需要核对每期10尾排序时，切换到“10尾快照”。</div></div>';
+    } else if (activeView === "history") {
+      html += '<div data-model-detail-panel="history">';
     html += '<div class="section"><div class="panel"><div class="wm-subhead">测试历史年份 · 2021-2026各年独立</div><div class="wm-view-tabs">' + yearTabs + '</div></div></div>';
     html += probabilityTestWindowHTML(selectedYear, result);
+      html += '</div>';
+    } else {
+      html += '<div data-model-detail-panel="snapshot">';
     html += '<div class="section"><div class="section__head"><h2 class="section__title">每期10尾完整排序快照</h2><span class="section__hint">真实保存 · 最新在左 · 完整10尾排序 · 每期10项 · 左右滑动</span></div></div>';
     html += '<div class="section"><div id="probabilitySnapshotMount" class="panel prob-snapshot-mount"><div class="trend-run-empty">概率快照读取中...</div></div></div>';
+      html += '</div>';
+    }
     html += '<p class="disclaimer">生产权重改为5/7/15/21/30期，各自使用训练段学出的系数并按完整三期内概率排序。第294-296期真实快照保持原样；第296期开奖前已锁定的旧模型前三名不得事后改写，新方法从第297期开始生成生产快照。</p>';
     view.innerHTML = modelPairStrip(latest + 1) + html;
-    mountProbabilitySnapshots(result);
-    hydrateProbabilitySinglePeriods(selectedYear, result);
+    if (activeView === "snapshot") mountProbabilitySnapshots(result);
+    if (activeView === "history") hydrateProbabilitySinglePeriods(selectedYear, result);
   }
 
 
@@ -7085,7 +7371,17 @@
       });
     }
 
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">尾号性格 · 当下速览</h2><span class="section__hint">先看当前遗漏、连出和短窗热度，再查看下方明细</span></div>';
+    var activeView = ["overview", "history", "snapshot"].indexOf(state.personalityView) >= 0
+      ? state.personalityView
+      : "overview";
+    state.personalityView = activeView;
+    var html = '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="尾号性格任务">' +
+      '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前速览</button>' +
+      '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">遗漏反弹</button>' +
+      '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">连出延续</button>' +
+      '</div>';
+    if (activeView === "overview") {
+    html += '<div data-model-detail-panel="overview"><div class="section"><div class="section__head"><h2 class="section__title">尾号性格 · 当下速览</h2><span class="section__hint">先看当前遗漏、连出和短窗热度，再查看下方明细</span></div>';
     html += '<div class="panel"><table class="table"><thead><tr><th>尾号</th><th>当前（漏/连）</th><th>近15期</th><th>近5期</th><th>反弹性格</th><th>连出性格</th><th>当前判定</th></tr></thead><tbody>';
     rows.forEach(function (r) {
       var bounceLimit = MODEL.bounceCritical && MODEL.bounceCritical[r.tail] != null ? MODEL.bounceCritical[r.tail] : 2;
@@ -7098,8 +7394,9 @@
       html += '<td style="color:' + statusColor + ';font-weight:700">' + status + "</td></tr>";
     });
     html += "</tbody></table></div></div>";
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">遗漏后反弹明细</h2><span class="section__hint">遗漏1至10期后，下一期开出的历史命中率 · 横向滑动</span></div>';
+    html += '<p class="disclaimer">当前速览只负责指出冷热与遗漏状态；历史反弹与连出概率在另外两个页签查看。</p></div>';
+    } else if (activeView === "history") {
+    html += '<div data-model-detail-panel="history"><div class="section"><div class="section__head"><h2 class="section__title">遗漏后反弹明细</h2><span class="section__hint">遗漏1至10期后，下一期开出的历史命中率 · 横向滑动</span></div>';
     html += '<div class="panel"><div class="panel__body" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1180px"><thead><tr><th style="position:sticky;left:0;z-index:2;background:#fafafa">尾号</th>';
     for (var bx = 1; bx <= 10; bx++) html += "<th>遗漏" + bx + "期后</th>";
     html += "<th>反弹判定</th></tr></thead><tbody>";
@@ -7109,9 +7406,9 @@
       html += '<td style="color:' + r.bounceGrade.color + ';font-weight:700">' + r.bounceGrade.txt + "</td></tr>";
     });
     html += "</tbody></table></div></div></div>";
-    html += '<p class="disclaimer">样本不足时只显示记录数；10~19期为观察样本，达到20期后再用命中率判断稳定程度。</p>';
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">连出后延续明细</h2><span class="section__hint">连出1至10期后，下一期继续开出的历史命中率 · 横向滑动</span></div>';
+    html += '<p class="disclaimer">样本不足时只显示记录数；10~19期为观察样本，达到20期后再用命中率判断稳定程度。</p></div>';
+    } else {
+    html += '<div data-model-detail-panel="snapshot"><div class="section"><div class="section__head"><h2 class="section__title">连出后延续明细</h2><span class="section__hint">连出1至10期后，下一期继续开出的历史命中率 · 横向滑动</span></div>';
     html += '<div class="panel"><div class="panel__body" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="table" style="min-width:1180px"><thead><tr><th style="position:sticky;left:0;z-index:2;background:#fafafa">尾号</th>';
     for (var sx = 1; sx <= 10; sx++) html += "<th>连出" + sx + "期后</th>";
     html += "<th>连出判定</th></tr></thead><tbody>";
@@ -7121,7 +7418,8 @@
       html += '<td style="color:' + r.streakGrade.color + ';font-weight:700">' + r.streakGrade.txt + "</td></tr>";
     });
     html += "</tbody></table></div></div></div>";
-    html += '<p class="disclaimer">判定综合连出1至10期的历史表现；样本较少时以观察为主，不单独作为推荐依据。</p>';
+    html += '<p class="disclaimer">判定综合连出1至10期的历史表现；样本较少时以观察为主，不单独作为推荐依据。</p></div>';
+    }
 
     view.innerHTML = html;
   }
@@ -7747,6 +8045,24 @@
     e.stopPropagation();
   }, true);
 
+  if (topTabsEl) {
+    topTabsEl.addEventListener("click", function (e) {
+      if (navDragClickGuard) {
+        e.preventDefault();
+        e.stopPropagation();
+        navDragClickGuard = false;
+        return;
+      }
+      var button = e.target.closest("[data-top-tab]");
+      if (!button || button.dataset.topTab === state.tab) return;
+      perfResetAll();
+      state.tab = button.dataset.topTab;
+      rememberTabInGroup(state.group, state.tab);
+      lsSet("v2_current_tab", state.tab);
+      render();
+    });
+  }
+
   tabsEl.addEventListener("click", function (e) {
     if (navDragClickGuard) {
       e.preventDefault();
@@ -7756,6 +8072,7 @@
     }
     var directoryBtn = e.target.closest("[data-directory]");
     if (directoryBtn) {
+      clearNavSearch();
       state.tab = "directory";
       state.directoryGroup = null;
       try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
@@ -7766,8 +8083,10 @@
     }
     var groupBtn = e.target.closest(".nav-group[data-nav-group]");
     if (groupBtn) {
+      clearNavSearch();
       state.group = groupBtn.dataset.navGroup;
       lsSet(NAV_GROUP_KEY, state.group);
+      renderTopNavigation();
       renderTabs();
       return;
     }
@@ -7784,6 +8103,7 @@
     }
     var btn = e.target.closest(".tab");
     if (btn && !btn.dataset.sortToggle && !btn.dataset.sortReset) {
+      clearNavSearch();
       perfResetAll();
       state.tab = btn.dataset.tab;
       rememberTabInGroup(state.group, state.tab);
@@ -7853,6 +8173,62 @@
     if (betMode) {
       state.betPlanMode = betMode.dataset.betMode === "three" ? "three" : "two";
       renderBetExec();
+      return;
+    }
+    var betExecTask = e.target.closest("[data-bet-exec-task]");
+    if (betExecTask) {
+      var nextBetView = betExecTask.dataset.betExecTask;
+      state.betExecView = ["today", "windows", "profit", "research"].indexOf(nextBetView) >= 0
+        ? nextBetView
+        : "today";
+      lsSet("v2_bet_exec_view", state.betExecView);
+      renderBetExec();
+      requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
+      return;
+    }
+    var windowMissTask = e.target.closest("[data-window-miss-task]");
+    if (windowMissTask) {
+      var nextMissView = windowMissTask.dataset.windowMissTask === "chain" ? "chain" : "heat";
+      if (state.tab === "windowmiss2") {
+        state.windowMiss2View = nextMissView;
+        lsSet("v2_window_miss2_view", nextMissView);
+      } else {
+        state.windowMissView = nextMissView;
+        lsSet("v2_window_miss_view", nextMissView);
+      }
+      render();
+      requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
+      return;
+    }
+    var flowTask = e.target.closest("[data-flow-task]");
+    if (flowTask) {
+      var nextFlowView = flowTask.dataset.flowTask;
+      if (state.tab === "trend") {
+        state.trendView = ["heat", "chain", "chart"].indexOf(nextFlowView) >= 0 ? nextFlowView : "heat";
+        lsSet("v2_trend_view", state.trendView);
+      } else if (state.tab === "missorder") {
+        state.missOrderView = nextFlowView === "chain" ? "chain" : "heat";
+        lsSet("v2_miss_order_view", state.missOrderView);
+      }
+      render();
+      requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
+      return;
+    }
+    var modelDetailTask = e.target.closest("[data-model-detail-task]");
+    if (modelDetailTask) {
+      var nextDetailView = ["overview", "history", "snapshot"].indexOf(modelDetailTask.dataset.modelDetailTask) >= 0
+        ? modelDetailTask.dataset.modelDetailTask
+        : "overview";
+      if (state.tab === "pick3") {
+        state.probView = nextDetailView;
+        lsSet("v2_prob_view", nextDetailView);
+        renderProbabilityModel();
+      } else if (state.tab === "personality") {
+        state.personalityView = nextDetailView;
+        lsSet("v2_personality_view", nextDetailView);
+        renderPersonality();
+      }
+      requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
       return;
     }
     var betResearch = e.target.closest("#view details > summary");

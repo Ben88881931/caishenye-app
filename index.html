@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="data:,">
   <title>财神爷尾数分析</title>
-  <link rel="stylesheet" href="styles.css?v=20261027-1">
+  <link rel="stylesheet" href="styles.css?v=20261027-8">
 </head>
 <body>
   <header class="appbar">
@@ -18,6 +18,13 @@
       <div class="appbar__badge" id="latestTails">-</div>
     </div>
   </header>
+
+  <nav class="topnav" data-top-nav aria-label="当前页面分类">
+    <div class="topnav__bar">
+      <span class="topnav__context" id="topContext" data-top-context>今日</span>
+      <div class="topnav__tabs" id="topTabs" data-top-tabs aria-label="当前工具页面"></div>
+    </div>
+  </nav>
 
   <button class="nav-edge-trigger" data-nav-edge type="button" aria-label="从左边缘打开导航"></button>
   <button class="nav-handle" data-nav-handle type="button" aria-label="打开页面导航" aria-controls="navDrawer" aria-expanded="false">
@@ -32,6 +39,10 @@
       </div>
       <button class="nav-drawer__close" data-nav-close type="button" aria-label="收起页面导航">×</button>
     </div>
+    <label class="nav-drawer__search">
+      <span>搜索页面</span>
+      <input type="search" data-nav-search placeholder="例如：热图、报告、公式" autocomplete="off">
+    </label>
     <nav class="tabs" id="tabs" aria-label="主导航"></nav>
     <div class="nav-drawer__settings">
       <button class="nav-drawer__setting" data-nav-hide type="button">
@@ -47,16 +58,16 @@
 
   <main class="view" id="view"></main>
 
-  <script src="data.js?v=20261027-1"></script>
-  <script src="model_core.js?v=20261027-1"></script>
-  <script src="model_selector.js?v=20261027-1"></script>
-  <script src="probability_weight_research.js?v=20261027-1"></script>
-  <script src="model_probability.js?v=20261027-1"></script>
-  <script src="personality_model_data.js?v=20261027-1"></script>
-  <script src="personality_snapshots.js?v=20261027-1"></script>
-  <script src="ultimate_model.js?v=20261027-1"></script>
-  <script src="snapshots.js?v=20261027-1"></script>
-  <script src="probability_snapshots.js?v=20261027-1"></script>
-  <script src="app.js?v=20261027-1"></script>
+  <script src="data.js?v=20261027-8"></script>
+  <script src="model_core.js?v=20261027-8"></script>
+  <script src="model_selector.js?v=20261027-8"></script>
+  <script src="probability_weight_research.js?v=20261027-8"></script>
+  <script src="model_probability.js?v=20261027-8"></script>
+  <script src="personality_model_data.js?v=20261027-8"></script>
+  <script src="personality_snapshots.js?v=20261027-8"></script>
+  <script src="ultimate_model.js?v=20261027-8"></script>
+  <script src="snapshots.js?v=20261027-8"></script>
+  <script src="probability_snapshots.js?v=20261027-8"></script>
+  <script src="app.js?v=20261027-8"></script>
 </body>
 </html>

@@ -227,20 +227,32 @@ def main():
             fail("追号/追推荐页面观望与锁定文案不清晰")
         index_text = (REPO / "index.html").read_text(encoding="utf-8")
         if (
-            'data-nav-drawer' in index_text
+            'data-top-nav' in index_text
+            and 'data-top-context' in index_text
+            and 'data-top-tabs' in index_text
+            and 'topTabs' in index_text
+            and 'data-top-group' not in index_text
+            and 'data-nav-drawer' in index_text
             and 'data-nav-handle' in index_text
             and 'data-nav-hide' in index_text
             and 'data-nav-edge' in index_text
             and 'nav-drawer__setting' in index_text
+            and 'data-nav-search' in index_text
             and "function initNavDrawer" in app_text
             and "function setNavDrawer" in app_text
+            and "function renderTopNavigation" in app_text
+            and "data-top-tab" in app_text
+            and "function bindTopNavLongPress" in app_text
+            and 'navHandleEl.addEventListener("contextmenu"' in app_text
             and "NAV_HANDLE_TOP_KEY" in app_text
             and "NAV_HANDLE_HIDDEN_KEY" in app_text
+            and "NAV_RECENT_KEY" in app_text
+            and "function recentTabIds" in app_text
             and "closeNavDrawer()" in app_text
         ):
-            pass_("左侧拇指抽屉支持页面选择自动收起、上下拖动和隐藏恢复")
+            pass_("顶部用工具类型标签加可排序的二级页面表头，左侧抽屉支持轻触、搜索、最近访问、拖动和隐藏恢复")
         else:
-            fail("左侧拇指抽屉缺少自动收起、拖动定位或隐藏恢复逻辑")
+            fail("顶部分类表头缺失，或左侧抽屉缺少轻触、页面搜索、最近访问、自动收起、拖动或隐藏恢复逻辑")
         flow_ids = ["pick3", "betexec", "formulas", "windowmult", "orderlog"]
         flow_pos = [app_text.find(chr(34) + fid + chr(34)) for fid in flow_ids]
         if all(pos >= 0 for pos in flow_pos) and flow_pos == sorted(flow_pos):
@@ -296,10 +308,21 @@ def main():
             pass_("所有页面顶部显示新方法三期前三名，并保留296期锁定快照")
         else:
             fail("页面顶部缺少新方法三期前三名或296期锁定快照")
-        if "function renderBetExec" in app_text and "今日规划 · 第" in app_text and "固定线路顺序" in app_text and "自己的最优公式 line.plan" in app_text and "今日合计（元）" in app_text and "本窗最大风险（元）" in app_text and "今日不下注（条）" in app_text:
-            pass_("下注执行表今日规划按固定线路顺序显示并汇总金额与风险")
+        if (
+            "function renderBetExec" in app_text
+            and "data-bet-exec-task" in app_text
+            and 'data-bet-task-panel="today"' in app_text
+            and 'data-bet-task-panel="windows"' in app_text
+            and 'data-bet-task-panel="profit"' in app_text
+            and 'data-bet-task-panel="research"' in app_text
+            and "今日规划 · 第" in app_text
+            and "自己的最优公式 line.plan" in app_text
+            and "本期计划金额" in app_text
+            and "本窗最大风险" in app_text
+        ):
+            pass_("下注执行表默认只显示今日规划，其余任务拆成当前窗口、逐期盈亏和研究明细")
         else:
-            fail("下注执行表缺少今日规划汇总或未按固定线路顺序显示")
+            fail("下注执行表未按今日规划、当前窗口、逐期盈亏和研究明细拆成任务页签")
         if "function wmPositionForPlan" in app_text and "正式执行公式" in app_text and "正式执行仓位" in app_text and "今年测试仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text and "wmPositionForPlan(line, line.plan)" in app_text:
             pass_("正式执行仓位统一以公式表line.plan为准")
         else:

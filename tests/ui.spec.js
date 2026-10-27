@@ -32,6 +32,12 @@ const TAB_IDS = [
 
 let server;
 
+async function openProbabilityView(page, view) {
+  const tab = page.locator(`[data-model-detail-task="${view}"]`);
+  await expect(tab).toHaveCount(1);
+  await tab.click();
+}
+
 test.beforeAll(async () => {
   server = spawn(process.execPath, [path.join(__dirname, "server.js")], {
     stdio: "ignore",
@@ -153,6 +159,7 @@ test("dynamic probability page shows the current live window for all three ranks
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -188,6 +195,7 @@ test("dynamic probability window cards expose three separate step cells", async 
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -217,10 +225,8 @@ test("dynamic probability shows every saved ten-tail snapshot newest first", asy
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("每期10尾完整排序快照");
-  });
+  await openProbabilityView(page, "snapshot");
+  await page.waitForFunction(() => document.querySelectorAll(".prob-snapshot-card").length > 0);
 
   const expected = snapshots.records.slice().sort((a, b) => Number(b.target) - Number(a.target));
   const cards = page.locator("[data-prob-snapshot-strip] .prob-snapshot-card");
@@ -242,19 +248,13 @@ test("dynamic probability cards move with their horizontal strips", async ({ pag
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement &&
-      view.innerText.includes("测试窗口记录") &&
-      view.innerText.includes("每期10尾完整排序快照") &&
-      view.querySelectorAll(".prob-snapshot-card").length > 0;
+    return view instanceof HTMLElement && view.querySelectorAll(".prob-test-strip").length === 3;
   });
 
-  const strips = [
-    page.locator(".prob-test-strip").first(),
-    page.locator("[data-prob-snapshot-strip]").first(),
-  ];
-  for (const strip of strips) {
+  const checkStrip = async (strip) => {
     await strip.evaluate((element) => {
       element.scrollLeft = element.scrollWidth;
     });
@@ -269,7 +269,12 @@ test("dynamic probability cards move with their horizontal strips", async ({ pag
     });
     expect(geometry.scrollLeft).toBeGreaterThan(0);
     expect(geometry.cardLeft).toBeLessThan(geometry.stripLeft - 100);
-  }
+  };
+  await checkStrip(page.locator(".prob-test-strip").first());
+
+  await openProbabilityView(page, "snapshot");
+  await page.waitForFunction(() => document.querySelectorAll(".prob-snapshot-card").length > 0);
+  await checkStrip(page.locator("[data-prob-snapshot-strip]").first());
 });
 
 async function swipeHorizontalScrollbar(page, side) {
@@ -278,6 +283,7 @@ async function swipeHorizontalScrollbar(page, side) {
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -335,6 +341,7 @@ test("left-bottom one-hand scrollbar-edge swipe flips pages", async ({ page }) =
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -369,6 +376,7 @@ test("bottom-center swipes inside a horizontal scroll region never flip pages", 
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -403,6 +411,7 @@ test("horizontal scroll region swipes in the center keep the same page", async (
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -441,6 +450,7 @@ test("full-screen content swipes flip navigation pages", async ({ page }) => {
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -478,6 +488,7 @@ test("a page swipe still commits when the touch system omits pointerup", async (
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -509,6 +520,7 @@ test("a short touch swipe commits once when the browser cancels the pointer stre
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -669,12 +681,9 @@ test("window omission and hit strips start with the current live state", async (
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmiss"));
   });
   await page.reload();
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement &&
-      view.innerText.includes("窗漏 / 连中铁链") &&
-      document.querySelectorAll(".trend-run-strip").length === 26;
-  });
+  await page.waitForFunction(() => document.querySelectorAll("[data-window-miss-task]").length === 2);
+  await page.locator('[data-window-miss-task="chain"]').click();
+  await page.waitForFunction(() => document.querySelectorAll(".trend-run-strip").length === 26);
 
   const strips = page.locator(".trend-run-strip");
   await expect(strips).toHaveCount(26);
@@ -693,16 +702,12 @@ test("two-period window omission heatmap has its own page and live strips", asyn
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmiss2"));
   });
   await page.reload();
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return document.body.dataset.page === "windowmiss2" &&
-      view instanceof HTMLElement &&
-      view.innerText.includes("两期热图") &&
-      document.querySelectorAll(".trend-run-strip").length === 26;
-  });
-
+  await page.waitForFunction(() => document.querySelectorAll("[data-window-miss-panel='heat']").length === 1);
   await expect(page.locator(".panel--wmheat")).toHaveCount(1);
   await expect(page.locator("[data-wm-mode]")).toHaveCount(0);
+  await expect(page.locator(".trend-run-strip")).toHaveCount(0);
+  await page.locator('[data-window-miss-task="chain"]').click();
+  await page.waitForFunction(() => document.querySelectorAll(".trend-run-strip").length === 26);
   await expect(page.locator(".trend-run-strip")).toHaveCount(26);
   await expect(page.locator("[data-wm-live-state]")).toHaveCount(26);
   await expect(page.locator("#view")).toContainText("两期窗口（一个窗口最多第2期）");
@@ -769,6 +774,7 @@ test("long right swipe on the first page does not open the directory", async ({ 
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
@@ -906,6 +912,7 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
   await expect(page.locator("#view")).toContainText("逐线长期性格模型");
   await expect(page.locator("#view")).not.toContainText("20% / 30% / 40%");
+  await page.locator("[data-daily-report-card]").first().locator("summary").click();
   await expect(page.locator("[data-daily-report-card]").first()).toContainText("2026年第300期");
   await expect(page.locator("#view")).not.toContainText("第1465期");
 
@@ -917,18 +924,17 @@ test("daily report ranks all 13 lines by the combined analysis score", async ({ 
   expect(rankLayout.scrollWidth).toBeLessThanOrEqual(rankLayout.cardWidth + 1);
   expect(rankLayout.cardWidth).toBeLessThanOrEqual(rankLayout.viewportWidth);
 
-  const cardLayout = await page.locator("[data-daily-report-strip]").evaluate((strip) => {
-    const card = strip.querySelector("[data-daily-report-card]");
+  const cardLayout = await page.locator("[data-daily-report-accordion]").evaluate((accordion) => {
+    const card = accordion.querySelector("[data-daily-report-card]");
     const rect = card.getBoundingClientRect();
     return {
       cardWidth: rect.width,
-      stripWidth: strip.clientWidth,
-      scrollable: strip.scrollWidth > strip.clientWidth,
+      accordionWidth: accordion.clientWidth,
+      accordionScrollWidth: accordion.scrollWidth,
     };
   });
-  expect(cardLayout.cardWidth).toBeLessThanOrEqual(300);
-  expect(cardLayout.cardWidth).toBeLessThan(cardLayout.stripWidth);
-  expect(cardLayout.scrollable).toBe(true);
+  expect(cardLayout.cardWidth).toBeLessThanOrEqual(cardLayout.accordionWidth + 1);
+  expect(cardLayout.accordionScrollWidth).toBeLessThanOrEqual(cardLayout.accordionWidth + 1);
 
   const rankingRows = await page.locator("[data-daily-report-row]").evaluateAll((rows) => (
     rows.map((row) => ({
@@ -963,6 +969,9 @@ test("daily reports synthesize every analysis section for all 13 lines", async (
   await page.waitForFunction(() => {
     const cards = document.querySelectorAll("[data-daily-report-card]");
     return cards.length === 13;
+  });
+  await page.locator("[data-daily-report-card]").evaluateAll((cards) => {
+    cards.forEach((card) => { card.open = true; });
   });
 
   const required = ["conclusion", "reason", "window", "period-comparison", "personality", "cross-page", "recent", "longterm", "formula", "risk"];
@@ -1023,7 +1032,7 @@ test("daily reports synthesize every analysis section for all 13 lines", async (
   }
 });
 
-test("vertical wheel over a horizontal report strip scrolls the page", async ({ page }) => {
+test("expanded daily report lines remain inside the phone viewport", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
@@ -1031,15 +1040,10 @@ test("vertical wheel over a horizontal report strip scrolls the page", async ({ 
   await page.reload();
   await page.waitForFunction(() => document.querySelectorAll("[data-daily-report-card]").length === 13);
 
-  const strip = page.locator("[data-daily-report-strip]");
-  await strip.scrollIntoViewIfNeeded();
-  const before = await page.evaluate(() => window.scrollY);
-  await strip.hover();
-  await page.mouse.wheel(0, 320);
-  await page.waitForTimeout(250);
-  const after = await page.evaluate(() => window.scrollY);
-
-  expect(after).toBeGreaterThan(before);
+  await page.locator("[data-daily-report-card]").first().locator("summary").click();
+  const width = await page.evaluate(() => document.documentElement.scrollWidth);
+  const viewport = await page.evaluate(() => document.documentElement.clientWidth);
+  expect(width).toBeLessThanOrEqual(viewport + 1);
 });
 
 test("dynamic probability ranks have independent single-period hit records", async ({ page }) => {
@@ -1059,6 +1063,7 @@ test("dynamic probability ranks have independent single-period hit records", asy
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
     return view instanceof HTMLElement &&
@@ -1111,24 +1116,28 @@ test("horizontal record strips preserve vertical page panning", async ({ page })
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
   });
   await page.reload();
+  await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement &&
-      view.querySelectorAll(".prob-single-period-strip").length === 3 &&
-      view.querySelectorAll(".prob-snapshot-strip").length > 0;
+    return view instanceof HTMLElement && view.querySelectorAll(".prob-single-period-strip").length === 3;
   });
 
-  const selectors = [
+  for (const selector of [
     ".prob-test-strip",
     ".prob-single-period-strip",
-    ".prob-snapshot-strip",
-  ];
-  for (const selector of selectors) {
+  ]) {
     const touchAction = await page.locator(selector).first().evaluate((element) => (
       getComputedStyle(element).touchAction
     ));
     expect(touchAction.split(/\s+/)).toEqual(expect.arrayContaining(["pan-x", "pan-y"]));
   }
+
+  await openProbabilityView(page, "snapshot");
+  await page.waitForFunction(() => document.querySelectorAll(".prob-snapshot-strip").length > 0);
+  const touchAction = await page.locator(".prob-snapshot-strip").first().evaluate((element) => (
+    getComputedStyle(element).touchAction
+  ));
+  expect(touchAction.split(/\s+/)).toEqual(expect.arrayContaining(["pan-x", "pan-y"]));
 });
 
 test("left thumb drawer replaces the permanent top navigation", async ({ page }) => {
@@ -1151,6 +1160,76 @@ test("left thumb drawer replaces the permanent top navigation", async ({ page })
   expect(layout.right).toBeLessThanOrEqual(0);
   expect(layout.width).toBeGreaterThan(250);
   expect(layout.width).toBeLessThan(layout.viewport);
+});
+
+test("compact top header keeps the current category and page clear", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  const topNav = page.locator("[data-top-nav]");
+  await expect(topNav).toBeVisible();
+  await expect(page.locator("[data-top-group]")).toHaveCount(0);
+  await expect(page.locator("[data-top-context]")).toHaveText("今日");
+  expect(await topNav.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+
+  await page.locator("[data-nav-handle]").click();
+  await page.locator('[data-nav-group="model"]').click();
+
+  await expect(page.locator("[data-top-context]")).toHaveText("模型");
+  await expect(page.locator('[data-top-tab="dailyreport"]')).toBeVisible();
+});
+
+test("top header exposes second-level page tabs with direct page switching", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  await expect(page.locator("[data-top-tab]")).toHaveCount(2);
+  await page.locator("[data-nav-handle]").click();
+  await page.locator('[data-nav-group="model"]').click();
+  await page.locator(".nav-drawer__close").click();
+  await expect(page.locator('[data-top-tab="dailyreport"]')).toHaveClass(/is-active/);
+  await page.locator('[data-top-tab="pick3"]').click();
+
+  await expect(page.locator("body")).toHaveAttribute("data-page", "pick3");
+  await expect(page.locator("#pageTitle")).toHaveText("动态概率");
+  await expect(page.locator('[data-top-tab="pick3"]')).toHaveClass(/is-active/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(await page.evaluate(() => document.documentElement.clientWidth) + 1);
+});
+
+test("long press on a top second-level tab opens numeric order adjustment", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  await page.locator("[data-nav-handle]").click();
+  await page.locator('[data-nav-group="model"]').click();
+  await page.locator(".nav-drawer__close").click();
+  const tab = page.locator('[data-top-tab="dailyreport"]');
+  const box = await tab.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(520);
+  await page.mouse.up();
+
+  const dialog = page.locator("[data-nav-sort-dialog]");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator("[data-nav-sort-position]")).toHaveValue("1");
+  await expect(dialog).toContainText("每日最终报告");
+  expect(await page.evaluate(() => (
+    document.activeElement?.hasAttribute("data-nav-sort-position") || false
+  ))).toBe(false);
+});
+
+test("drawer handle opens from a quick tap without holding", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  const handle = page.locator("[data-nav-handle]");
+  const box = await handle.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.up();
+  await expect(page.locator("body")).toHaveClass(/nav-drawer-open/, { timeout: 350 });
 });
 
 test("drawer opens, closes, and auto-closes after choosing a page", async ({ page }) => {
@@ -1228,5 +1307,141 @@ test("today dashboard is compact and exposes the daily decision surface", async 
 
   const height = await page.evaluate(() => document.documentElement.scrollHeight);
   expect(height).toBeLessThan(5000);
+});
+
+test("bet execution page defaults to today planning and separates the other tasks", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
+    localStorage.removeItem("v2_bet_exec_view");
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.body.dataset.page === "betexec");
+
+  const taskTabs = page.locator("[data-bet-exec-task]");
+  await expect(taskTabs).toHaveCount(4);
+  await expect(page.locator('[data-bet-exec-task="today"]')).toHaveClass(/is-active/);
+  await expect(page.locator('[data-bet-task-panel="today"]')).toBeVisible();
+  await expect(page.locator('[data-bet-task-panel="windows"]')).toHaveCount(0);
+
+  const desktopOnlyTable = page.locator('table[style*="min-width:1080px"]');
+  await expect(desktopOnlyTable).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(5000);
+
+  await page.locator('[data-bet-exec-task="windows"]').click();
+  await expect(page.locator('[data-bet-task-panel="windows"]')).toBeVisible();
+  await expect(page.locator('[data-bet-task-panel="today"]')).toHaveCount(0);
+
+  await page.locator('[data-bet-exec-task="profit"]').click();
+  await expect(page.locator('[data-bet-task-panel="profit"]')).toBeVisible();
+
+  await page.locator('[data-bet-exec-task="research"]').click();
+  await expect(page.locator('[data-bet-task-panel="research"]')).toBeVisible();
+});
+
+test("two and three period heatmaps separate heat view from chain history", async ({ page }) => {
+  for (const tabId of ["windowmiss2", "windowmiss"]) {
+    await page.goto("/");
+    await page.evaluate((id) => {
+      localStorage.setItem("v2_current_tab", JSON.stringify(id));
+      localStorage.removeItem("v2_window_miss_view");
+      localStorage.removeItem("v2_window_miss2_view");
+    }, tabId);
+    await page.reload();
+    await page.waitForFunction((id) => document.body.dataset.page === id, tabId);
+
+    await expect(page.locator("[data-window-miss-task]")).toHaveCount(2);
+    await expect(page.locator('[data-window-miss-task="heat"]')).toHaveClass(/is-active/);
+    await expect(page.locator('[data-window-miss-panel="heat"]')).toBeVisible();
+    await expect(page.locator('[data-window-miss-panel="chain"]')).toHaveCount(0);
+
+    await page.locator('[data-window-miss-task="chain"]').click();
+    await expect(page.locator('[data-window-miss-panel="chain"]')).toBeVisible();
+    await expect(page.locator('[data-window-miss-panel="heat"]')).toHaveCount(0);
+  }
+});
+
+test("one-period heatmap and miss ordering expose task tabs instead of one long page", async ({ page }) => {
+  for (const tabId of ["trend", "missorder"]) {
+    await page.goto("/");
+    await page.evaluate((id) => {
+      localStorage.setItem("v2_current_tab", JSON.stringify(id));
+      localStorage.removeItem("v2_trend_view");
+      localStorage.removeItem("v2_miss_order_view");
+    }, tabId);
+    await page.reload();
+    await page.waitForFunction((id) => document.body.dataset.page === id, tabId);
+
+    const tasks = page.locator("[data-flow-task]");
+    expect(await tasks.count()).toBeGreaterThanOrEqual(2);
+    await expect(page.locator('[data-flow-panel="heat"]')).toBeVisible();
+    await expect(page.locator('[data-flow-panel="chain"]')).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(3500);
+
+    await page.locator('[data-flow-task="chain"]').click();
+    await expect(page.locator('[data-flow-panel="chain"]')).toBeVisible();
+    await expect(page.locator('[data-flow-panel="heat"]')).toHaveCount(0);
+  }
+});
+
+test("dynamic probability and personality pages separate current view from history detail", async ({ page }) => {
+  for (const tabId of ["pick3", "personality"]) {
+    await page.goto("/");
+    await page.evaluate((id) => {
+      localStorage.setItem("v2_current_tab", JSON.stringify(id));
+      localStorage.removeItem("v2_prob_view");
+      localStorage.removeItem("v2_personality_view");
+    }, tabId);
+    await page.reload();
+    await page.waitForFunction((id) => document.body.dataset.page === id, tabId);
+
+    const tasks = page.locator("[data-model-detail-task]");
+    expect(await tasks.count()).toBeGreaterThanOrEqual(3);
+    await expect(page.locator('[data-model-detail-panel="overview"]')).toBeVisible();
+    await expect(page.locator('[data-model-detail-panel="history"]')).toHaveCount(0);
+
+    await page.locator('[data-model-detail-task="history"]').click();
+    await expect(page.locator('[data-model-detail-panel="history"]')).toBeVisible();
+    await expect(page.locator('[data-model-detail-panel="overview"]')).toHaveCount(0);
+  }
+});
+
+test("daily report keeps one ranking card and collapses each line report", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-daily-report-card]").length === 13);
+
+  await expect(page.locator("[data-daily-report-rank-card]")).toHaveCount(1);
+  const cards = page.locator("[data-daily-report-card]");
+  await expect(cards).toHaveCount(13);
+  expect(await cards.evaluateAll((nodes) => nodes.filter((node) => node.open).length)).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(3500);
+
+  await cards.first().locator("summary").click();
+  expect(await cards.first().evaluate((node) => node.open)).toBe(true);
+});
+
+test("task tabs and primary controls meet mobile touch and type minimums", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-bet-exec-task]").length === 4);
+
+  const controls = await page.locator("[data-bet-exec-task]").evaluateAll((nodes) => (
+    nodes.map((node) => {
+      const rect = node.getBoundingClientRect();
+      return {
+        height: rect.height,
+        fontSize: Number(window.getComputedStyle(node).fontSize.replace("px", "")),
+      };
+    })
+  ));
+  expect(controls.every((item) => item.height >= 44)).toBe(true);
+  expect(controls.every((item) => item.fontSize >= 12)).toBe(true);
 });
 
