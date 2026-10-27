@@ -2751,6 +2751,14 @@
       "当年第" + run.startPeriod + "–" + run.endPeriod + "期" + gapText;
   }
 
+  function wmPendingReopenForLine(line, maxStage, activeState) {
+    if (!activeState || !activeState.active || Number(activeState.active.start) <= D.length) return false;
+    var latestYear = Number((D[D.length - 1] || {}).y);
+    var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === latestYear; });
+    var last = rows.length ? rows[rows.length - 1] : null;
+    return !!(last && last.hitIndex === 0);
+  }
+
   function wmRunLiveChipHTML(line, activeState, maxStage) {
     if (!activeState) return "";
     if (activeState.waiting) {
@@ -2759,6 +2767,12 @@
         '<b>等尾' + activeState.waiting.tail + '</b><small>重新开出后开窗</small></span>';
     }
     if (!activeState.active) return "";
+    if (wmPendingReopenForLine(line, maxStage, activeState)) {
+      var pendingTail = activeState.active.lockedTail != null ? activeState.active.lockedTail : null;
+      return '<span class="trend-run-chip trend-run-chip--live" data-wm-live-state="waiting" title="' +
+        line.label + '错窗后已等到重开号，等待下一期正式建立新窗口">' +
+        '<b>等待</b><small>' + (pendingTail != null ? "尾" + pendingTail + " · " : "") + '等新窗口建立</small></span>';
+    }
     var stage = Math.min(maxStage, (activeState.active.attempts || []).length + 1);
     var startPeriod = betLocalPeriod(activeState.active.start);
     var tailText = activeState.active.lockedTail != null ? " · 锁尾" + activeState.active.lockedTail : "";
@@ -2818,6 +2832,9 @@
       if (isCurrentYear) {
         if (activeState && activeState.waiting) {
           status = "当前等待重开 · 尾" + activeState.waiting.tail;
+        } else if (wmPendingReopenForLine(line, maxStage, activeState)) {
+          status = "错窗后已等到重开号 · 等待新窗口建立" +
+            (activeState.active.lockedTail != null ? " · 尾" + activeState.active.lockedTail : "");
         } else if (activeState && activeState.active) {
           status = "当前窗口进行中 · 第" + Math.min(maxStage, (activeState.active.attempts || []).length + 1) + "期";
         } else {
@@ -3061,6 +3078,9 @@
     var perLine = EXEC_LINES.map(function (line) {
       var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
       var stNow = wmStageNow(line, maxStage);
+      var lastCompletedWindow = rows.length ? rows[rows.length - 1] : null;
+      var missReopenPendingOpen = !!(isCurrentYear && stNow && stNow.active &&
+        Number(stNow.active.start) > D.length && lastCompletedWindow && lastCompletedWindow.hitIndex === 0);
       var nextStartFull = isCurrentYear && stNow && stNow.active ? Number(stNow.active.start) : null;
       // 每条线自己的竖排事件流：一窗一格；窗与窗之间“等号重开”的空档单独占一格
       var out = [], streak = 0;
@@ -3084,8 +3104,19 @@
         var waitNow = latest - endP + 1;
         if (waitNow > 0) out.push({ kind: "wait", wait: waitNow, tail: stNow.waiting.tail, amount: 0, ruleWait: true });
       }
+      // 错窗后等到了重开号，但新窗口要到下一期才真正建立：最新格仍保留“等待”
+      if (missReopenPendingOpen) {
+        var lastEvent = out.length ? out[out.length - 1] : null;
+        if (lastEvent && lastEvent.kind === "wait") {
+          lastEvent.pendingOpen = true;
+          lastEvent.ruleWait = true;
+          lastEvent.tail = stNow.active.lockedTail != null ? stNow.active.lockedTail : lastEvent.tail;
+        } else {
+          out.push({ kind: "wait", wait: 0, tail: stNow.active.lockedTail, amount: 0, ruleWait: true, pendingOpen: true });
+        }
+      }
       // 只要窗口已经建立，就正常显示“进第几期”；等待只由真正的 waiting 状态产生
-      if (isCurrentYear && stNow && stNow.active) {
+      if (isCurrentYear && stNow && stNow.active && !missReopenPendingOpen) {
         out.push({
           kind: "live",
           stage: (stNow.active.attempts || []).length + 1,
@@ -3121,9 +3152,9 @@
         var c = p.events[r - (maxN - p.events.length)];
         if (!c) { html += '<td data-window-state="empty"><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
         if (c.kind === "wait") {
-          var waitLabel = "等" + c.wait;
-          var waitTitle = "等待尾" + (c.tail != null ? c.tail : "-") + "重新开出";
-          html += '<td data-window-state="wait" data-window-rule-wait="true" data-window-start-pending="false" data-window-amount="0" title="' + waitTitle + ' · 本期0元"><span class="heat-cell cell-wait">' + waitLabel;
+          var waitLabel = c.pendingOpen ? "等待" : "等" + c.wait;
+          var waitTitle = c.pendingOpen ? "等待新窗口正式建立" : "等待尾" + (c.tail != null ? c.tail : "-") + "重新开出";
+          html += '<td data-window-state="wait" data-window-rule-wait="true" data-window-pending-open="' + (c.pendingOpen ? "true" : "false") + '" data-window-start-pending="false" data-window-amount="0" title="' + waitTitle + ' · 本期0元"><span class="heat-cell cell-wait">' + waitLabel;
           if (c.tail != null) html += '<span class="heat-cell__sub">尾' + c.tail + "</span>";
           html += "</span></td>";
           return;

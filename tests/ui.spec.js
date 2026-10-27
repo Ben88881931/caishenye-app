@@ -750,15 +750,19 @@ test("two and three period heatmaps show waiting only for rule waits", async ({ 
       cells.map((cell) => ({
         state: cell.getAttribute("data-window-state"),
         ruleWait: cell.getAttribute("data-window-rule-wait"),
+        pendingOpen: cell.getAttribute("data-window-pending-open"),
         start: Number(cell.getAttribute("data-window-start")),
         text: cell.innerText.trim(),
       }))
     ));
     const live = states.filter((cell) => cell.state === "live");
+    const waiting = states.filter((cell) => cell.state === "wait");
     expect(live.length).toBeGreaterThan(0);
     expect(live.every((cell) => cell.text.startsWith("进"))).toBe(true);
     expect(live.some((cell) => cell.start === latest + 1)).toBe(true);
-    expect(states.filter((cell) => cell.state === "wait").every((cell) => cell.ruleWait === "true")).toBe(true);
+    expect(waiting.length).toBeGreaterThan(0);
+    expect(waiting.every((cell) => cell.ruleWait === "true")).toBe(true);
+    expect(waiting.some((cell) => cell.pendingOpen === "true")).toBe(true);
   }
 });
 
