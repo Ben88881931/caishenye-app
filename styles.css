@@ -86,21 +86,6 @@ body {
   gap: 7px;
 }
 
-.topnav__context {
-  min-height: 44px;
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-  border: 1px solid #b9dcd1;
-  border-radius: 7px;
-  background: #e7f4ef;
-  color: #176f5b;
-  font-size: 12px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
 .topnav__tabs {
   min-width: 0;
   flex: 1;
@@ -5216,7 +5201,6 @@ body.nav-handle-hidden .nav-handle {
   width: 14px;
   height: 96px;
   padding: 0;
-  transform: translateY(-50%);
   border: 1px solid #b9dcd1;
   border-left: 0;
   border-radius: 0 10px 10px 0;
@@ -5595,6 +5579,87 @@ body[data-page="overview"] .view {
   font-weight: 800;
   text-align: left;
   cursor: pointer;
+}
+
+.quick-access {
+  margin: 4px 0 14px;
+  padding: 10px;
+  border: 1px solid #dfe5eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.quick-access__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.quick-access__head b {
+  color: #172334;
+  font-size: 14px;
+}
+
+.quick-access__head span {
+  color: #758193;
+  font-size: 12px;
+}
+
+.quick-access__group + .quick-access__group {
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid #edf0f3;
+}
+
+.quick-access__label {
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quick-access__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.quick-access__item {
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 9px;
+  border: 1px solid #dfe5eb;
+  border-radius: 7px;
+  background: #f8fafb;
+  color: #253449;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quick-access__item b,
+.quick-access__item small {
+  display: block;
+}
+
+.quick-access__item b {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-access__item small {
+  margin-top: 2px;
+  color: #758193;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.quick-access__empty {
+  color: #7a8797;
+  font-size: 12px;
 }
 
 .today-page-map summary {

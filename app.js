@@ -246,7 +246,7 @@
 
   var state = {
     tab: lsGet("v2_current_tab", "overview"),
-    group: lsGet("v2_nav_group", "today"),
+    group: lsGet("v2_nav_group", "all"),
     directoryGroup: lsGet("v2_directory_group", null),
     groupHistory: [],
     groupHistoryIndex: -1,
@@ -288,7 +288,6 @@
 
   var TABS = [
     { id: "overview", label: "今日" },
-    { id: "directory", label: "全部页面" },
     { id: "dailyreport", label: "每日最终报告" },
     { id: "pick3", label: "动态概率" },
     { id: "betexec", label: "下注执行表" },
@@ -316,11 +315,16 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "today", label: "今日", tabs: ["overview", "directory"] },
-    { id: "model", label: "模型", tabs: ["dailyreport", "pick3", "betexec", "formulas", "windowmult", "orderlog"] },
-    { id: "window", label: "窗口", tabs: ["trend", "windowmiss2", "windowmiss", "missorder", "parity", "windowk", "segments"] },
-    { id: "records", label: "记录", tabs: ["datarecord", "zodrecords", "zodtrend", "zodwindow", "zodmonitor", "tails"] },
-    { id: "tools", label: "工具", tabs: ["personality", "numtrend", "numsearch", "backtest", "notes"] },
+    { id: "all", label: "全部页面", tabs: TABS.map(function (tab) { return tab.id; }) },
+  ];
+
+  var COMMON_SHORTCUTS = [
+    { tab: "dailyreport", label: "排名理由", note: "看13线为什么这样排" },
+    { tab: "betexec", label: "逐期执行", note: "看每条线买第几期" },
+    { tab: "pick3", label: "动态概率", note: "看A1 / A2 / A3" },
+    { tab: "windowmiss", label: "三期热图", note: "看窗口与等待状态" },
+    { tab: "personality", label: "尾号性格", note: "看长期画像与风险" },
+    { tab: "notes", label: "我的笔记", note: "记录当天观察" },
   ];
 
   var view = document.getElementById("view");
@@ -330,7 +334,6 @@
   var navEdgeEl = document.querySelector("[data-nav-edge]");
   var navSearchEl = document.querySelector("[data-nav-search]");
   var topTabsEl = document.getElementById("topTabs");
-  var topContextEl = document.getElementById("topContext");
   var pageTitleEl = document.getElementById("pageTitle");
   var NAV_HANDLE_TOP_KEY = "v2_nav_handle_top";
   var NAV_HANDLE_HIDDEN_KEY = "v2_nav_handle_hidden";
@@ -349,6 +352,7 @@
     if (!navHandleEl) return;
     var next = clampNavHandleTop(top);
     navHandleEl.style.top = next + "px";
+    if (navEdgeEl) navEdgeEl.style.top = next + "px";
     if (persist) {
       try { localStorage.setItem(NAV_HANDLE_TOP_KEY, String(Math.round(next))); } catch (e) {}
     }
@@ -449,16 +453,36 @@
       var edgeClickGuard = false;
       navEdgeEl.addEventListener("pointerdown", function (event) {
         if (event.button != null && event.button !== 0) return;
-        edgeGesture = { id: event.pointerId, startX: event.clientX };
+        edgeGesture = {
+          id: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          startTop: Number.parseFloat(window.getComputedStyle(navEdgeEl).top) || 0,
+          verticalMoved: false,
+        };
         try { navEdgeEl.setPointerCapture(event.pointerId); } catch (e) {}
       });
       navEdgeEl.addEventListener("pointermove", function (event) {
         if (!edgeGesture || event.pointerId !== edgeGesture.id) return;
-        if (event.clientX - edgeGesture.startX > 8) event.preventDefault();
+        var dx = event.clientX - edgeGesture.startX;
+        var dy = event.clientY - edgeGesture.startY;
+        if (Math.abs(dy) > 8 && Math.abs(dy) >= Math.abs(dx)) {
+          edgeGesture.verticalMoved = true;
+          setNavHandleTop(edgeGesture.startTop + dy, false);
+          event.preventDefault();
+        } else if (dx > 8) {
+          event.preventDefault();
+        }
       });
       navEdgeEl.addEventListener("pointerup", function (event) {
         if (!edgeGesture || event.pointerId !== edgeGesture.id) return;
-        if (event.clientX - edgeGesture.startX >= 14) {
+        var dx = event.clientX - edgeGesture.startX;
+        var dy = event.clientY - edgeGesture.startY;
+        if (edgeGesture.verticalMoved) {
+          setNavHandleTop(Number.parseFloat(window.getComputedStyle(navEdgeEl).top), true);
+          edgeClickGuard = true;
+          window.setTimeout(function () { edgeClickGuard = false; }, 400);
+        } else if (dx >= 14 && dx > Math.abs(dy)) {
           edgeClickGuard = true;
           setNavDrawer(true);
           window.setTimeout(function () { edgeClickGuard = false; }, 400);
@@ -506,6 +530,31 @@
   function clearNavSearch() {
     state.navSearch = "";
     if (navSearchEl) navSearchEl.value = "";
+  }
+
+  function pageQuickAccessHTML() {
+    var recent = recentTabIds().map(function (id) {
+      return TABS.filter(function (tab) { return tab.id === id; })[0];
+    }).filter(Boolean);
+    function buttonHTML(item, recentItem) {
+      return '<button class="quick-access__item" type="button" data-overview-tab="' + item.tab +
+        '" data-quick-tab="' + item.tab + '"' + (recentItem ? " data-quick-recent" : " data-quick-common") + '>' +
+        '<b>' + item.label + '</b><small>' + (item.note || "最近打开") + '</small></button>';
+    }
+    var recentHTML = recent.map(function (tab) {
+      return buttonHTML({ tab: tab.id, label: tab.label, note: "最近打开" }, true);
+    }).join("");
+    var commonHTML = COMMON_SHORTCUTS.map(function (item) {
+      return buttonHTML(item, false);
+    }).join("");
+    return '<section class="quick-access" data-page-quick-access>' +
+      '<div class="quick-access__head"><b>快捷直达</b><span>最近访问与常用入口</span></div>' +
+      '<div class="quick-access__group"><div class="quick-access__label">最近访问</div><div class="quick-access__grid">' +
+        (recentHTML || '<div class="quick-access__empty">暂无最近访问</div>') +
+      '</div></div>' +
+      '<div class="quick-access__group"><div class="quick-access__label">常用入口</div><div class="quick-access__grid">' +
+        commonHTML +
+      '</div></div></section>';
   }
 
 
@@ -724,6 +773,7 @@
       : getConfiguredGroups().map(function (item) { return item.id; }).indexOf(groupId) + 1;
     if (position < 1) position = 1;
     var maxPosition = kind === "tab" ? getVisibleTabs(groupId).length : getConfiguredGroups().length;
+    var hasMultipleGroups = getConfiguredGroups().length > 1;
     var groupOptions = getConfiguredGroups().map(function (item) {
       return '<option value="' + item.id + '"' + (item.id === groupId ? " selected" : "") + '>' + escapeHTML(item.label) + "</option>";
     }).join("");
@@ -734,7 +784,7 @@
     dialog.setAttribute("aria-modal", "true");
     dialog.innerHTML = '<div class="nav-sort-dialog__panel">' +
       '<div class="nav-sort-dialog__head"><b>调整“' + escapeHTML(kind === "tab" ? tab.label : group.label) + '”</b><button class="nav-sort-dialog__close" type="button" data-nav-sort-cancel="1" aria-label="关闭">×</button></div>' +
-      (kind === "tab" ? '<label class="nav-sort-field"><span>所属类目</span><select data-nav-sort-group="1">' + groupOptions + '</select></label>' : "") +
+      (kind === "tab" && hasMultipleGroups ? '<label class="nav-sort-field"><span>所属类目</span><select data-nav-sort-group="1">' + groupOptions + '</select></label>' : "") +
       '<label class="nav-sort-field"><span>' + (kind === "tab" ? "类目内顺位" : "一级类目顺位") + '</span><input data-nav-sort-position="1" type="number" inputmode="numeric" min="1" max="' + maxPosition + '" value="' + position + '"></label>' +
       '<div class="nav-sort-dialog__actions"><button class="chip" type="button" data-nav-sort-cancel="1">取消</button><button class="chip nav-sort-dialog__apply" type="button" data-nav-sort-apply="1">应用排序</button></div>' +
       '</div>';
@@ -799,28 +849,25 @@
     topNavSortState = null;
     navDragClickGuard = true;
     openNavSortDialog({
-      kind: sortState.kind,
+      kind: "tab",
       tabId: sortState.tabId,
-      groupId: sortState.groupId,
       target: sortState.target,
     });
     window.setTimeout(function () { navDragClickGuard = false; }, 650);
   }
 
-  function bindTopNavLongPress(container, kind) {
+  function bindTopNavLongPress(container) {
     if (!container) return;
     container.addEventListener("pointerdown", function (event) {
       if (event.button != null && event.button !== 0) return;
-      var target = event.target.closest(kind === "tab" ? "[data-top-tab]" : "[data-top-group]");
+      var target = event.target.closest("[data-top-tab]");
       if (!target) return;
       clearTopNavSortState();
       topNavSortState = {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
-        kind: kind,
-        tabId: kind === "tab" ? target.dataset.topTab : null,
-        groupId: kind === "group" ? target.dataset.topGroup : groupForTab(target.dataset.topTab).id,
+        tabId: target.dataset.topTab,
         target: target,
         timer: null,
       };
@@ -828,7 +875,7 @@
     }, { passive: true });
   }
 
-  bindTopNavLongPress(topTabsEl, "tab");
+  bindTopNavLongPress(topTabsEl);
   document.addEventListener("pointermove", function (event) {
     if (!topNavSortState || event.pointerId !== topNavSortState.pointerId) return;
     if (Math.abs(event.clientX - topNavSortState.startX) > 8 ||
@@ -839,7 +886,7 @@
   document.addEventListener("pointerup", clearTopNavSortState, true);
   document.addEventListener("pointercancel", clearTopNavSortState, true);
   document.addEventListener("contextmenu", function (event) {
-    if (event.target.closest("[data-top-tab], [data-top-group]")) event.preventDefault();
+    if (event.target.closest("[data-top-tab]")) event.preventDefault();
   });
 
   view.addEventListener("pointerdown", function (e) {
@@ -1162,8 +1209,6 @@
   }
 
   function renderTopNavigation() {
-    var currentGroup = groupById(state.group) || getConfiguredGroups()[0];
-    if (topContextEl) topContextEl.textContent = currentGroup ? currentGroup.label : "工具";
     if (topTabsEl) {
       topTabsEl.innerHTML = getVisibleTabs(state.group).map(function (tab) {
         return '<button class="topnav__tab' + (tab.id === state.tab ? " is-active" : "") +
@@ -1178,41 +1223,27 @@
 
   function renderTabs() {
     var groups = getConfiguredGroups();
-    var group = groupById(state.group) || groups[0];
-    var oldGroups = tabsEl.querySelector(".nav-groups");
+    var group = groups[0];
     var oldSubtabs = tabsEl.querySelector(".nav-subtabs");
-    var groupScroll = oldGroups ? oldGroups.scrollLeft : 0;
     var tabScroll = oldSubtabs ? oldSubtabs.scrollLeft : 0;
-    var directoryActive = state.tab === "directory";
-    var groupHtml = groups.map(function (item) {
-      return '<div class="nav-group-wrap"><button class="nav-group' +
-        (item.id === group.id ? " is-active" : "") +
-        '" type="button" data-nav-group="' + item.id + '">' + item.label + "</button></div>";
-    }).join("");
     var query = String(state.navSearch || "").toLowerCase();
     var tabs = query
       ? getOrderedAllTabs().filter(function (tab) {
-        return tab.id !== "directory" && tab.label.toLowerCase().indexOf(query) >= 0;
+        return tab.label.toLowerCase().indexOf(query) >= 0;
       })
       : getVisibleTabs(group.id);
     var tabsHtml = tabs.map(function (t) {
       return '<button class="tab ' + (state.tab === t.id ? "is-active" : "") +
         '" type="button" data-tab="' + t.id + '">' + t.label + "</button>";
     }).join("");
-    tabsHtml = '<button class="tab nav-directory-tab ' + (directoryActive ? "is-active" : "") +
-      '" type="button" data-directory="1">全部页面</button>' + tabsHtml;
 
     tabsHtml += '<button class="tab sort-reset nav-sort-reset" type="button" data-sort-reset="1">恢复默认</button>';
 
     tabsEl.classList.remove("sorting");
-    tabsEl.innerHTML = '<div class="nav-groups" aria-label="页面分类">' + groupHtml + "</div>" +
-      '<div class="nav-subtabs" aria-label="' + (query ? "搜索结果" : group.label + "页面") + '">' + tabsHtml + "</div>";
-    var nextGroups = tabsEl.querySelector(".nav-groups");
+    tabsEl.innerHTML = '<div class="nav-subtabs" aria-label="' + (query ? "搜索结果" : "全部页面") + '">' + tabsHtml + "</div>";
     var nextSubtabs = tabsEl.querySelector(".nav-subtabs");
-    if (nextGroups) nextGroups.scrollLeft = groupScroll;
     if (nextSubtabs) nextSubtabs.scrollLeft = tabScroll;
     requestAnimationFrame(function () {
-      nudgeNavItem(nextGroups, nextGroups && nextGroups.querySelector(".nav-group.is-active"));
       nudgeNavItem(nextSubtabs, nextSubtabs && nextSubtabs.querySelector(".tab.is-active"));
     });
   }
@@ -1529,6 +1560,10 @@
 
   function render() {
     if (state.tab === "selector" || state.tab === "chasenumber" || state.tab === "chaserecommend") state.tab = "pick3";
+    if (state.tab === "directory") {
+      state.tab = "overview";
+      lsSet("v2_current_tab", state.tab);
+    }
     // 「执行提示」「资金调度」已并入「下注执行表」：老入口一律转到主页面
     if (state.tab === "orderhint" || state.tab === "funds") {
       state.tab = "betexec";
@@ -1590,6 +1625,9 @@
       pagePrefix += modelPairStrip(latest + 1);
     }
     if (pagePrefix) view.innerHTML = pagePrefix + view.innerHTML;
+    if (state.tab !== "overview" && state.tab !== "directory") {
+      view.insertAdjacentHTML("beforeend", pageQuickAccessHTML());
+    }
     applySavedTableColumnOrders();
     scrollToLatest();
     if (tabChanged) {
@@ -2818,17 +2856,9 @@
       '<div><b>窗口第N期</b>：一个窗口从第1期开始检查，命中或达到上限后结束。</div>' +
       '</div></details>';
 
-    var shortcuts = [
-      { tab: "dailyreport", label: "排名理由", note: "看13线为什么这样排" },
-      { tab: "betexec", label: "逐期执行", note: "看每条线买第几期" },
-      { tab: "pick3", label: "动态概率", note: "看A1 / A2 / A3" },
-      { tab: "windowmiss", label: "三期热图", note: "看窗口与等待状态" },
-      { tab: "personality", label: "尾号性格", note: "看长期画像与风险" },
-      { tab: "directory", label: "全部页面", note: "按任务查找页面" },
-    ];
     html += '<section class="today-section"><div class="today-section__head"><h2>常用入口</h2><span>一页只做一件事</span></div>' +
       '<div class="today-shortcuts">';
-    shortcuts.forEach(function (item) {
+    COMMON_SHORTCUTS.forEach(function (item) {
       html += '<button class="today-shortcut" type="button" data-overview-tab="' + item.tab + '" data-dashboard-shortcut>' +
         '<span><b>' + item.label + '</b><small>' + item.note + '</small></span></button>';
     });

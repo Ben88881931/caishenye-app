@@ -176,10 +176,10 @@ def main():
             pass_("renderTabs 通过 getVisibleTabs 生成导航")
         else:
             fail("renderTabs 未通过 getVisibleTabs 生成导航")
-        if "var NAV_GROUPS" in app_text and 'data-directory-group="' in app_text and "nav-subtabs" in app_text and "nav-groups" in app_text:
-            pass_("app.js 含两级导航分类")
+        if "var NAV_GROUPS" in app_text and '{ id: "all", label: "全部页面"' in app_text and "nav-subtabs" in app_text and "getVisibleTabs" in app_text:
+            pass_("app.js 使用全部页面单级扁平导航")
         else:
-            fail("app.js 缺少两级导航分类")
+            fail("app.js 未收敛为全部页面扁平导航")
         if (
             "navDragState" in app_text
             and "function startNavDrag" in app_text
@@ -228,7 +228,7 @@ def main():
         index_text = (REPO / "index.html").read_text(encoding="utf-8")
         if (
             'data-top-nav' in index_text
-            and 'data-top-context' in index_text
+            and 'data-top-context' not in index_text
             and 'data-top-tabs' in index_text
             and 'topTabs' in index_text
             and 'data-top-group' not in index_text
@@ -238,12 +238,15 @@ def main():
             and 'data-nav-edge' in index_text
             and 'nav-drawer__setting' in index_text
             and 'data-nav-search' in index_text
+            and '{ id: "all", label: "全部页面"' in app_text
             and "function initNavDrawer" in app_text
             and "edgeGesture" in app_text
+            and "verticalMoved" in app_text
             and "function setNavDrawer" in app_text
             and "function renderTopNavigation" in app_text
             and "data-top-tab" in app_text
             and "function bindTopNavLongPress" in app_text
+            and "hasMultipleGroups" in app_text
             and 'navHandleEl.addEventListener("contextmenu"' in app_text
             and "NAV_HANDLE_TOP_KEY" in app_text
             and "NAV_HANDLE_HIDDEN_KEY" in app_text
@@ -285,6 +288,17 @@ def main():
             pass_("今日驾驶舱集中展示候选、执行面、窗口状态和页面职责，并保留整屏翻页手势")
         else:
             fail("今日驾驶舱缺少候选、执行面、窗口状态、页面职责或整屏翻页手势")
+        if (
+            "var COMMON_SHORTCUTS" in app_text
+            and "function pageQuickAccessHTML" in app_text
+            and "data-page-quick-access" in app_text
+            and "data-quick-recent" in app_text
+            and "data-quick-common" in app_text
+            and 'view.insertAdjacentHTML("beforeend", pageQuickAccessHTML())' in app_text
+        ):
+            pass_("除今日外的每个页面都显示最近访问和六个常用入口")
+        else:
+            fail("页面底部缺少统一的最近访问和常用入口快捷区")
         if "WM_BASE = 100" in app_text and "wmPlanText" in app_text and "每个号码的最优下注公式" in app_text and "lineBest" in app_text and "最优 " in app_text and "未通过" in app_text:
             pass_("窗口倍投测试100元起并逐线标注最优下注公式")
         else:

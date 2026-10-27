@@ -3,7 +3,6 @@ const path = require("path");
 const { test, expect } = require("@playwright/test");
 
 const TAB_IDS = [
-  "directory",
   "overview",
   "pick3",
   "betexec",
@@ -98,6 +97,7 @@ test("all pages render on a phone viewport without page-level overflow", async (
         overflow: Math.max(root.scrollWidth - root.clientWidth, Math.abs(pageScrollX)),
         height: root.scrollHeight,
         textLength: document.querySelector("#view")?.innerText.trim().length || 0,
+        quickAccess: document.querySelectorAll("[data-page-quick-access]").length,
         offenders: Array.from(document.body.querySelectorAll("*"))
           .map((element) => {
             const rect = element.getBoundingClientRect();
@@ -137,6 +137,10 @@ test("all pages render on a phone viewport without page-level overflow", async (
 
     expect(result.textLength, `${tabId} should not render an empty page`).toBeGreaterThan(0);
     expect(result.height, `${tabId} should not be a blank page`).toBeGreaterThan(150);
+    expect(
+      result.quickAccess,
+      tabId === "overview" ? "overview already has its own quick access" : `${tabId} missing shared quick access`,
+    ).toBe(tabId === "overview" ? 0 : 1);
     expect(
       result.overflow,
       `${tabId} should not overflow the page viewport: ${JSON.stringify(result.offenders)}`,
@@ -1162,32 +1166,40 @@ test("left thumb drawer replaces the permanent top navigation", async ({ page })
   expect(layout.width).toBeLessThan(layout.viewport);
 });
 
-test("compact top header keeps the current category and page clear", async ({ page }) => {
+test("top header is one flat page list without category controls", async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   const topNav = page.locator("[data-top-nav]");
   await expect(topNav).toBeVisible();
   await expect(page.locator("[data-top-group]")).toHaveCount(0);
-  await expect(page.locator("[data-top-context]")).toHaveText("今日");
-  expect(await topNav.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+  await expect(page.locator("[data-top-context]")).toHaveCount(0);
+  expect(await page.locator("[data-top-tab]").count()).toBe(TAB_IDS.length);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
 
   await page.locator("[data-nav-handle]").click();
-  await page.locator('[data-nav-group="model"]').click();
-
-  await expect(page.locator("[data-top-context]")).toHaveText("模型");
-  await expect(page.locator('[data-top-tab="dailyreport"]')).toBeVisible();
+  await expect(page.locator("[data-nav-group]")).toHaveCount(0);
+  expect(await page.locator("#tabs [data-tab]").count()).toBe(TAB_IDS.length);
+  const drawerLayout = await page.locator("#tabs .nav-subtabs").evaluate((list) => {
+    const tabs = [...list.querySelectorAll("[data-tab]")];
+    return {
+      direction: window.getComputedStyle(list).flexDirection,
+      topDeltas: tabs.slice(1, 6).map((tab, index) => (
+        tab.getBoundingClientRect().top - tabs[index].getBoundingClientRect().top
+      )),
+      widths: tabs.slice(0, 3).map((tab) => tab.getBoundingClientRect().width),
+    };
+  });
+  expect(drawerLayout.direction).toBe("column");
+  expect(drawerLayout.topDeltas.every((delta) => delta > 0)).toBe(true);
+  expect(drawerLayout.widths.every((width) => width > 240)).toBe(true);
 });
 
-test("top header exposes second-level page tabs with direct page switching", async ({ page }) => {
+test("flat top page tabs switch pages directly", async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
-  await expect(page.locator("[data-top-tab]")).toHaveCount(2);
-  await page.locator("[data-nav-handle]").click();
-  await page.locator('[data-nav-group="model"]').click();
-  await page.locator(".nav-drawer__close").click();
-  await expect(page.locator('[data-top-tab="dailyreport"]')).toHaveClass(/is-active/);
+  await expect(page.locator("[data-top-tab]")).toHaveCount(TAB_IDS.length);
   await page.locator('[data-top-tab="pick3"]').click();
 
   await expect(page.locator("body")).toHaveAttribute("data-page", "pick3");
@@ -1201,9 +1213,6 @@ test("long press on a top second-level tab opens numeric order adjustment", asyn
   await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
-  await page.locator("[data-nav-handle]").click();
-  await page.locator('[data-nav-group="model"]').click();
-  await page.locator(".nav-drawer__close").click();
   const tab = page.locator('[data-top-tab="dailyreport"]');
   const box = await tab.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -1215,6 +1224,7 @@ test("long press on a top second-level tab opens numeric order adjustment", asyn
   await expect(dialog).toBeVisible();
   await expect(dialog.locator("[data-nav-sort-position]")).toHaveValue("1");
   await expect(dialog).toContainText("每日最终报告");
+  await expect(dialog.locator("[data-nav-sort-group]")).toHaveCount(0);
   expect(await page.evaluate(() => (
     document.activeElement?.hasAttribute("data-nav-sort-position") || false
   ))).toBe(false);
@@ -1245,8 +1255,6 @@ test("drawer opens, closes, and auto-closes after choosing a page", async ({ pag
   await expect(page.locator("[data-nav-drawer]")).toHaveAttribute("aria-hidden", "true");
 
   await page.locator("[data-nav-handle]").click();
-  const modelGroup = page.locator('[data-nav-group="model"]');
-  await modelGroup.click();
   await page.locator('[data-tab="dailyreport"]').click();
 
   await expect(page.locator("body")).toHaveAttribute("data-page", "dailyreport");
@@ -1281,6 +1289,29 @@ test("hidden navigation handle can be restored from the left edge", async ({ pag
 
   await expect(page.locator("body")).not.toHaveClass(/nav-handle-hidden/);
   await expect(page.locator("[data-nav-handle]")).toBeVisible();
+});
+
+test("hidden edge handle can be dragged vertically and remembers its position", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  await page.locator("[data-nav-handle]").click();
+  await page.locator("[data-nav-hide]").click();
+  const edge = page.locator("[data-nav-edge]");
+  const box = await edge.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 120, { steps: 7 });
+  await page.mouse.up();
+
+  const movedTop = await edge.evaluate((element) => Number.parseFloat(window.getComputedStyle(element).top));
+  expect(movedTop).toBeLessThan(box.y - 80);
+  await page.reload();
+  await page.waitForFunction(() => document.body.classList.contains("nav-handle-hidden"));
+  const reloadedTop = await page.locator("[data-nav-edge]").evaluate((element) => (
+    Number.parseFloat(window.getComputedStyle(element).top)
+  ));
+  expect(Math.abs(reloadedTop - movedTop)).toBeLessThanOrEqual(2);
 });
 
 test("navigation handle remembers its vertical position", async ({ page }) => {
@@ -1318,6 +1349,25 @@ test("today dashboard is compact and exposes the daily decision surface", async 
 
   const height = await page.evaluate(() => document.documentElement.scrollHeight);
   expect(height).toBeLessThan(5000);
+});
+
+test("shared quick access appears on non-home pages and links directly", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.body.dataset.page === "pick3");
+
+  const quick = page.locator("[data-page-quick-access]");
+  await expect(quick).toHaveCount(1);
+  await expect(quick.locator("[data-quick-recent]")).not.toHaveCount(0);
+  await expect(quick.locator("[data-quick-common]")).toHaveCount(6);
+
+  await quick.locator('[data-quick-common][data-quick-tab="dailyreport"]').click();
+  await expect(page.locator("body")).toHaveAttribute("data-page", "dailyreport");
+  await expect(page.locator("[data-page-quick-access]")).toHaveCount(1);
+  await expect(page.locator('[data-quick-recent][data-quick-tab="pick3"]')).toHaveCount(1);
 });
 
 test("bet execution page defaults to today planning and separates the other tasks", async ({ page }) => {
