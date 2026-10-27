@@ -543,7 +543,7 @@ window.APP_PROBABILITY_SNAPSHOTS = {
       "basedOn": 299,
       "target": 300,
       "rankingMetric": "window3Prob",
-      "settled": false,
+      "settled": true,
       "top3": [
         {
           "tail": 3,
@@ -612,9 +612,99 @@ window.APP_PROBABILITY_SNAPSHOTS = {
           "nextProb": 0.540317,
           "window3Prob": 0.883714
         }
+      ],
+      "actualTails": [
+        1,
+        2,
+        3,
+        7,
+        8,
+        9
+      ],
+      "settledAt": "2026-10-27T13:53:37.248Z",
+      "results": {
+        "top1": true,
+        "top3": true
+      }
+    },
+    {
+      "modelVersion": "prob-v2-20261022-57152130",
+      "generatedAt": "2026-10-27T13:53:37.250Z",
+      "basedOn": 300,
+      "target": 301,
+      "rankingMetric": "window3Prob",
+      "settled": false,
+      "top3": [
+        {
+          "tail": 2,
+          "nextProb": 0.57511,
+          "window3Prob": 0.931958
+        },
+        {
+          "tail": 3,
+          "nextProb": 0.587956,
+          "window3Prob": 0.929563
+        },
+        {
+          "tail": 7,
+          "nextProb": 0.576734,
+          "window3Prob": 0.920311
+        }
+      ],
+      "allTails": [
+        {
+          "tail": 2,
+          "nextProb": 0.57511,
+          "window3Prob": 0.931958
+        },
+        {
+          "tail": 3,
+          "nextProb": 0.587956,
+          "window3Prob": 0.929563
+        },
+        {
+          "tail": 7,
+          "nextProb": 0.576734,
+          "window3Prob": 0.920311
+        },
+        {
+          "tail": 1,
+          "nextProb": 0.544049,
+          "window3Prob": 0.904162
+        },
+        {
+          "tail": 4,
+          "nextProb": 0.539796,
+          "window3Prob": 0.898754
+        },
+        {
+          "tail": 5,
+          "nextProb": 0.535029,
+          "window3Prob": 0.897833
+        },
+        {
+          "tail": 9,
+          "nextProb": 0.549457,
+          "window3Prob": 0.897241
+        },
+        {
+          "tail": 0,
+          "nextProb": 0.531851,
+          "window3Prob": 0.893414
+        },
+        {
+          "tail": 8,
+          "nextProb": 0.555934,
+          "window3Prob": 0.889768
+        },
+        {
+          "tail": 6,
+          "nextProb": 0.524545,
+          "window3Prob": 0.888467
+        }
       ]
     }
   ],
-  "latestPeriod": 299,
-  "updatedAt": "2026-10-26T14:59:10.242Z"
+  "latestPeriod": 300,
+  "updatedAt": "2026-10-27T13:53:37.250Z"
 };

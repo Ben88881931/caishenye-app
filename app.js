@@ -321,7 +321,7 @@
   var COMMON_SHORTCUTS = [
     { tab: "dailyreport", label: "排名理由", note: "看13线为什么这样排" },
     { tab: "betexec", label: "逐期执行", note: "看每条线买第几期" },
-    { tab: "pick3", label: "动态概率", note: "看A1 / A2 / A3" },
+    { tab: "pick3", label: "动态概率", note: "看A线 / B线 / C线" },
     { tab: "windowmiss", label: "三期热图", note: "看窗口与等待状态" },
     { tab: "personality", label: "尾号性格", note: "看长期画像与风险" },
     { tab: "notes", label: "我的笔记", note: "记录当天观察" },
@@ -555,6 +555,33 @@
       '<div class="quick-access__group"><div class="quick-access__label">常用入口</div><div class="quick-access__grid">' +
         commonHTML +
       '</div></div></section>';
+  }
+
+  function recommendationTailForLine(line) {
+    if (!line) return null;
+    if (line.kind === "tail") return Number(line.tail);
+    var personality = PERSONALITY_BY_ID && PERSONALITY_BY_ID[line.id];
+    if (personality && personality.current && personality.current.tail != null) {
+      return Number(personality.current.tail);
+    }
+    if (PROB_MODEL && PROB_MODEL.analyze && line.rank != null) {
+      var result = PROB_MODEL.analyze(RAW, latest);
+      var pick = result && result.top ? result.top[Number(line.rank)] : null;
+      if (pick && pick.tail != null) return Number(pick.tail);
+    }
+    return null;
+  }
+
+  function lineDisplayLabel(line, tail) {
+    if (!line) return "";
+    if (line.kind !== "probability") return line.label;
+    var resolved = tail == null ? recommendationTailForLine(line) : Number(tail);
+    return line.label + (resolved == null ? "" : " · 尾" + resolved);
+  }
+
+  function storedLineDisplayLabel(id, tail, fallback) {
+    var line = EXEC_LINES.filter(function (item) { return item.id === id; })[0];
+    return line ? lineDisplayLabel(line, tail) : (fallback || id || "");
   }
 
 
@@ -1256,9 +1283,10 @@
     if (!PROB_MODEL || !PROB_MODEL.analyze) return "";
     var result = PROB_MODEL.analyze(RAW, period - 1);
     var picks = result.top || [];
-    var labels = result.legacyLocked
-      ? ["锁定第1 · 296快照", "锁定第2 · 296快照", "锁定第3 · 296快照"]
-      : ["三期第1 · 正式", "三期第2 · 正式", "三期第3 · 正式"];
+    var lineNames = ["A线", "B线", "C线"];
+    var labels = lineNames.map(function (name) {
+      return name + (result.legacyLocked ? " · 296锁定" : " · 正式候选");
+    });
     var tones = ["model-pair-card--p1", "model-pair-card--p2", "model-pair-card--p3"];
     return '<div class="model-pair-grid">' +
       picks.map(function (row, index) {
@@ -1654,7 +1682,7 @@
           look: ["13线长期性格三期排名", "每条线独立的三期预测、自身基准和模型增量", "长期画像、年度稳定性、走步验证和当前风险"],
           use: "每天先看这一页，直接知道哪条线值得关注、为什么、当前能不能执行。",
           source: "真实开奖窗口、真实快照、公式审计、年度统计、尾号性格和概率模型记录。",
-          note: "综合分不按金额排序；结论只解释真实数据，A1/A2/A3继续标明296期旧快照边界。"
+          note: "综合分不按金额排序；结论只解释真实数据，A线/B线/C线继续标明296期旧快照边界。"
         },
         {
           name: "动态概率",
@@ -2232,7 +2260,7 @@
           return level === "safe" ? "安" : "险";
         }).join("→");
         html += '<div class="daily-report-ranking-card__row" data-ranking-line="' + line.id + '">' +
-          '<b>#' + (index + 1) + ' ' + line.label + '</b>' +
+          '<b>#' + (index + 1) + ' ' + storedLineDisplayLabel(line.id, line.tail, line.label) + '</b>' +
           '<span>尾' + line.tail + ' · ' + (Number(line.predictedRate) * 100).toFixed(1) + '%</span>' +
           '<small>正 ' + forward + ' / 反 ' + reverse + '</small>' +
           '<em>' + line.cascadeDecision + '</em></div>';
@@ -2251,7 +2279,7 @@
     (snapshot.lines || []).forEach(function (line) { byId[line.id] = line; });
     var top3 = (snapshot.top3 || []).map(function (id, index) {
       var line = byId[id] || {};
-      return "#" + (index + 1) + " " + (line.label || id) +
+      return "#" + (index + 1) + " " + storedLineDisplayLabel(id, line && line.tail, line && line.label) +
         (line.tail != null && String(id).indexOf("tail") !== 0 ? " 尾" + line.tail : "") +
         " " + (Number(line.predictedRate || 0) * 100).toFixed(1) + "%";
     }).join(" · ");
@@ -2618,7 +2646,7 @@
         }).join("/") + '">' +
         '<span class="daily-report-rank-item__no">#' + (index + 1) + '</span>' +
         '<div class="daily-report-rank-item__main">' +
-          '<div class="daily-report-rank-item__top"><b>' + row.line.label + '</b>' +
+          '<div class="daily-report-rank-item__top"><b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
             '<strong style="color:' + row.advice.color + '">' + row.score.toFixed(1) + '%</strong>' +
             '<em data-report-advice style="color:' + row.advice.color + '">' + row.advice.label + '</em></div>' +
           '<div class="daily-report-rank-item__reason" data-report-reason title="' + row.reason + '">' + row.reason + '</div>' +
@@ -2636,6 +2664,8 @@
     html += '<div class="daily-report-accordion" data-daily-report-accordion>';
     EXEC_LINES.forEach(function (line) {
       var row = rows.filter(function (item) { return item.line.id === line.id; })[0];
+      var currentPersonality = row.personality && row.personality.current || {};
+      var displayLineName = lineDisplayLabel(line, currentPersonality.tail);
       var currentWindowText = row.personality
         ? wmPeriodLabel(row.personality.current.target) + "重新开一个独立三期窗口，锁定尾" +
           row.personality.current.tail + "；每期重新选线，不沿袭上一期。"
@@ -2663,12 +2693,12 @@
           : "") + '>' +
         '<summary class="daily-report-line-summary">' +
           '<span class="daily-report-line-summary__no">#' + (rows.map(function (item) { return item.line.id; }).indexOf(line.id) + 1) + '</span>' +
-          '<span class="daily-report-line-summary__main"><small>' + (line.kind === "probability" ? "新方法概率线" : "真实窗口线") + '</small><b>' + line.label + '</b></span>' +
+          '<span class="daily-report-line-summary__main"><small>' + (line.kind === "probability" ? "新方法概率线" : "真实窗口线") + '</small><b>' + displayLineName + '</b></span>' +
           '<strong style="color:' + row.advice.color + '" data-report-advice>' + row.advice.label + '</strong>' +
           '<em>' + row.score.toFixed(1) + '%</em>' +
         '</summary>' +
         '<div class="daily-report-line-body">' +
-        '<div class="daily-report-line-card__head"><div><span>逐线报告</span><h3>' + line.label + '</h3></div><b style="color:' + row.advice.color + '">' + row.advice.label + '</b></div>' +
+        '<div class="daily-report-line-card__head"><div><span>逐线报告</span><h3>' + displayLineName + '</h3></div><b style="color:' + row.advice.color + '">' + row.advice.label + '</b></div>' +
         '<div class="daily-report-sources" data-report-sources="' + sourceTags.join("|") + '">' + sourceTags.map(function (source) { return '<span>' + source + '</span>'; }).join("") + '</div>' +
         '<div class="daily-report-section daily-report-section--conclusion" data-report-section="conclusion"><b>当下结论</b><p>' + row.advice.reason + '</p></div>' +
         '<div class="daily-report-section" data-report-section="reason"><b>为什么</b><p>' + row.reason + '</p></div>' +
@@ -2734,7 +2764,7 @@
         '研究风险保留：验证段仍少0.87个百分点，不能因为2026暂时领先就取消监控。</span></div>';
       html += '</div>';
     }
-    html += '<p class="disclaimer">本页只解读真实开奖窗口、真实快照和独立训练权重，不保证中奖，不自动生成金额。排名口径是每条线最近3个已完成三期窗口；A1/A2/A3使用新方法选号，仓位公式仍需单独验证。</p>';
+    html += '<p class="disclaimer">本页只解读真实开奖窗口、真实快照和独立训练权重，不保证中奖，不自动生成金额。排名口径是每条线最近3个已完成三期窗口；A线/B线/C线使用新方法选号，仓位公式仍需单独验证。</p>';
     html += '</div></div>';
     view.innerHTML = html;
   }
@@ -2807,8 +2837,8 @@
       var tailText = current.tail != null ? "尾" + current.tail : "候选";
       html += '<div class="today-pick" data-dashboard-pick>' +
         '<span>#' + (index + 1) + ' · ' + row.advice.label + '</span>' +
-        '<b>' + row.line.label + '</b>' +
-        '<small>' + tailText + ' · ' + (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</small></div>';
+        '<b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
+        '<small>' + (current.tail != null ? "" : tailText + " · ") + (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</small></div>';
     });
     html += '</div></section>';
 
@@ -2850,7 +2880,7 @@
     html += '</div><small class="section__hint">进N = 当前窗口正在进行到第N期；等尾X = 上一窗全错，等尾X重新开出后才开新窗。</small></section>';
 
     html += '<details class="term-guide"><summary>术语速查 · 第一次使用先看这里</summary><div class="term-guide__body">' +
-      '<div><b>A1 / A2 / A3</b>：动态概率排序的三个候选尾号，排名不代表证明能长期跑赢随机。</div>' +
+      '<div><b>A线 / B线 / C线</b>：动态概率排序的三个候选尾号，排名不代表证明能长期跑赢随机。</div>' +
       '<div><b>D1 / D2</b>：旧诊断账，仅保留历史核对，不再作为正式推荐。</div>' +
       '<div><b>一期 / 两期 / 三期</b>：同一个新窗口允许检查的期数；正式执行只认三期口径。</div>' +
       '<div><b>窗口第N期</b>：一个窗口从第1期开始检查，命中或达到上限后结束。</div>' +
@@ -3461,7 +3491,12 @@
         });
       }
       // 保持时间正序（旧→新）：渲染时各线从底部对齐，最新的那件事永远在最下面一行
-      return { label: line.label, events: out };
+      var currentTail = line.kind === "probability"
+        ? (stNow && stNow.active
+          ? wmLiveTailFor(line, stNow.active, Number(stNow.active.start) + (stNow.active.attempts || []).length)
+          : (stNow && stNow.waiting ? stNow.waiting.tail : null))
+        : null;
+      return { label: lineDisplayLabel(line, currentTail), events: out };
     });
     var maxN = 0;
     perLine.forEach(function (p) { if (p.events.length > maxN) maxN = p.events.length; });
@@ -4001,9 +4036,9 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
-    { id: "prob1", label: "A1", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
-    { id: "prob2", label: "A2", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
-    { id: "prob3", label: "A3", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob1", label: "A线", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob2", label: "B线", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob3", label: "C线", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
   ];
 
   // 公式来源：2021-2023训练段 + 2024-2026验证段，两段均为正的阶段系数才配仓。
@@ -4633,7 +4668,7 @@
           ? "上一窗全错，等尾" + live.waiting.tail + "重新开出"
           : (live.active ? "当前窗口第" + live.stage + "期 · 本期 " + row.betStake + " 元" : "空仓，等新窗口");
         html += '<article class="task-window-card" data-bet-task-window="' + line.id + '">' +
-          '<div class="task-window-card__head"><b>' + line.label + '</b><span>' + status + '</span></div>';
+          '<div class="task-window-card__head"><b>' + lineDisplayLabel(line, live.active && live.active.lockedTail) + '</b><span>' + status + '</span></div>';
         if (live.active) {
           html += '<div class="task-window-card__meta">起始第' + betLocalPeriod(live.active.start) + '期 · ' +
             (live.active.lockedTail != null ? '锁定尾' + live.active.lockedTail : '每期最新推荐') +
@@ -4655,7 +4690,7 @@
           .filter(function (w) { return wmYearOf(w.start) === curYear; })
           .slice(-6)
           .reverse();
-        html += '<article class="task-profit-card"><div class="task-profit-card__head"><b>' + line.label +
+        html += '<article class="task-profit-card"><div class="task-profit-card__head"><b>' + lineDisplayLabel(line) +
           '</b><span>2026年 ' + (row.acc.net >= 0 ? '+' : '') + Math.round(row.acc.net) +
           ' 元 · 命中率 ' + (row.acc.windows ? (row.acc.hit / row.acc.windows * 100).toFixed(1) : "0.0") + '%</span></div>' +
           '<div class="task-profit-strip">';
@@ -5042,7 +5077,7 @@
       var statusText = line.hold ? "暂停建仓·观察" : (enabledLine ? "配仓" : "不配仓");
       var statusColor = line.hold ? "#b45309" : (enabledLine ? "#15803d" : "#b91c1c");
       html += '<details class="formula-card" data-formula-card="' + line.id + '">' +
-        '<summary><span><b>' + line.label + '</b><small>' + audit.formula + ' · ' + line.plan.join(" / ") + ' 元</small></span>' +
+        '<summary><span><b>' + lineDisplayLabel(line) + '</b><small>' + audit.formula + ' · ' + line.plan.join(" / ") + ' 元</small></span>' +
         '<strong style="color:' + statusColor + '">' + statusText + '</strong></summary>' +
         '<div class="formula-card__body"><div class="formula-card__metrics">' +
         '<div><span>全周期净收益</span><b style="color:' + fullColor + '">' + (audit.fullNet >= 0 ? "+" : "") + audit.fullNet + '</b><small>ROI ' + (audit.fullRoi * 100).toFixed(2) + '%</small></div>' +
@@ -5728,7 +5763,7 @@
       var itemData = lineBest[item.id] || {};
       var itemSim = itemData.best || (itemData.simulations || []).filter(function (s) { return s.n === activeN; })[0] || null;
       var itemRate = itemSim && itemSim.records.length ? (((itemSim.records.length - itemSim.missWindows) / itemSim.records.length) * 100).toFixed(1) + "%" : "-";
-      html += '<button class="chip wm-line-btn" type="button" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '"><span class="wm-line-btn__name">' + item.label + '</span><span class="wm-line-btn__rate">窗口命中 ' + itemRate + '</span></button>';
+      html += '<button class="chip wm-line-btn" type="button" data-wm-line="' + item.id + '" style="' + (item.id === line.id ? "background:#2563eb;color:#fff;border-color:#1d4ed8;box-shadow:0 0 0 2px #bfdbfe" : "") + '"><span class="wm-line-btn__name">' + lineDisplayLabel(item) + '</span><span class="wm-line-btn__rate">窗口命中 ' + itemRate + '</span></button>';
     });
     html += '</div>';
     html += '</div></div>';
@@ -5749,7 +5784,7 @@
       var itemTailText = item.kind === "tail" ? "" : (itemCurrentTail != null ? ' · 尾' + itemCurrentTail : '');
       var itemPositionPeriod = itemPosition.period ? wmPeriodLabel(itemPosition.period) : "-";
       html += '<div class="wm-formula-row" style="border-left:4px solid ' + (itemBest ? "#16a34a" : "#dc2626") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + item.label + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + lineDisplayLabel(item) + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
       html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
       html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">正式执行仓位 ' + itemPosition.label + itemTailText + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
       if (itemYtdBest) {
@@ -5791,7 +5826,7 @@
       var periodText = position.period ? wmPeriodLabel(position.period) : "-";
       html += '<tr>';
       html += '<td><b>#' + (index + 1) + '</b></td>';
-      html += '<td><b>' + row.item.label + '</b></td>';
+      html += '<td><b>' + lineDisplayLabel(row.item) + '</b></td>';
       html += '<td><b>' + (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "无数据") + '</b></td>';
       html += '<td><b style="color:#1d4ed8">' + (best ? wmPlanText(best.n) : "0 / 0 / 0") + '</b></td>';
       if (best) {
@@ -5815,7 +5850,7 @@
       var itemData = lineBest[item.id] || {};
       var itemBest = itemData.best;
       var itemStats = itemBest && itemData.annual ? itemData.annual[itemBest.n] : null;
-      html += '<tr><td><b>' + item.label + '</b></td><td><b>' + (itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过") + '</b></td>';
+      html += '<tr><td><b>' + lineDisplayLabel(item) + '</b></td><td><b>' + (itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过") + '</b></td>';
       annualYears.forEach(function (year) {
         var row = itemStats ? itemStats.years.filter(function (y) { return y.year === year; })[0] : null;
         if (!row) {
@@ -5837,7 +5872,7 @@
       return '<button class="chip" data-wm-n="' + n + '" style="' + (n === activeN ? "background:#2563eb;color:#fff;border-color:#1d4ed8" : "") + '">' + (n === 1 ? "不倍投" : n + "倍") + '</button>';
     }).join("");
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">总览 · ' + line.label + '</b><span class="wm-card__hint">正式执行口径 = 公式表 line.plan；年度稳健最优 / 全周期收益最高 / 今年最优只作研究参考 · 左右滑动</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">总览 · ' + lineDisplayLabel(line) + '</b><span class="wm-card__hint">正式执行口径 = 公式表 line.plan；年度稳健最优 / 全周期收益最高 / 今年最优只作研究参考 · 左右滑动</span></div>';
     html += '<div class="wm-subhead">核心结论</div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     html += wmCell("年度稳健最优", (best ? (best.n === 1 ? "不倍投" : best.n + "倍") : "未通过"), best ? ((best.net >= 0 ? "+" : "") + best.net + " · ROI " + best.roi.toFixed(2) + "%") : "训练/验证未同时通过", "#16a34a");
@@ -5925,7 +5960,7 @@
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="windows">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">窗口明细 · ' + line.label + '</b><span class="wm-card__hint">' + WINDOW_RECORD_FORMAT + '</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">窗口明细 · ' + lineDisplayLabel(line) + '</b><span class="wm-card__hint">' + WINDOW_RECORD_FORMAT + '</span></div>';
     var missRuns = [];
     var currentRun = null;
     selected.records.forEach(function (item) {
@@ -6220,7 +6255,7 @@
         adviseWhy = "历史上“" + stateText + "”之后，下一窗命中 " + pctText + "；该线平均命中 " + (natHit * 100).toFixed(1) + "%";
       }
       html += '<div class="wm-nat-card">';
-      html += '<div><span class="wm-nat-card__name">' + item.label + '</span><span class="wm-nat-card__tag" style="color:' + (playStyle === "不配仓" ? "#dc2626" : "#16a34a") + '">' + playStyle + '</span></div>';
+      html += '<div><span class="wm-nat-card__name">' + lineDisplayLabel(item) + '</span><span class="wm-nat-card__tag" style="color:' + (playStyle === "不配仓" ? "#dc2626" : "#16a34a") + '">' + playStyle + '</span></div>';
       html += '<div class="wm-nat-card__row"><span>性格</span><b style="color:#0f172a">' + nature + '</b></div>';
       html += '<div style="font-size:10px;color:#64748b;margin-top:2px;line-height:1.5">规律结论：' + natureNote + '</div>';
       html += '<div class="wm-nat-card__row"><span>窗口总数 / 命中 / 全错</span><b>' + n + '窗 · ' + (natHit * 100).toFixed(1) + '% · ' + (natPm * 100).toFixed(1) + '%</b></div>';
@@ -7095,7 +7130,7 @@
     var trainingYear = year >= 2021 && year <= 2024;
     var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "正式");
     var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026正式记录 · 294-296保留切换前快照");
-    var labels = ["A1", "A2", "A3"];
+    var labels = ["A线", "B线", "C线"];
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">' + year + segment + '窗口 · 切换年份查看全部历史 · ' + WINDOW_RECORD_FORMAT + '</span></div></div>';
     html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '窗口</b><span>' + segmentNote + '</span></div>';
     labels.forEach(function (label, rank) {
@@ -7144,7 +7179,10 @@
             };
           }
         }
-        html += '<div class="prob-test-row"><div class="prob-test-head"><b>' + label + '</b><span>共' + records.length + '窗 · 第1期中' + first + ' · 第2期中' + second + ' · 第3期中' + third + ' · 全错' + miss + '</span></div>';
+        var displayLabel = year === latestYear && liveLine
+          ? lineDisplayLabel(liveLine, liveRecord && liveRecord.tail)
+          : label;
+        html += '<div class="prob-test-row"><div class="prob-test-head"><b>' + displayLabel + '</b><span>共' + records.length + '窗 · 第1期中' + first + ' · 第2期中' + second + ' · 第3期中' + third + ' · 全错' + miss + '</span></div>';
         html += '<div class="prob-test-strip">';
         if (liveRecord && liveRecord.status === "pending") {
           html += probabilityWindowCardHTML({
@@ -7204,7 +7242,10 @@
       ? "待开奖"
       : (record.results && record.results.top1 ? "Top1中" : (record.results && record.results.top3 ? "Top3覆盖" : "未覆盖"));
     var tone = pending ? "is-pending" : (record.results && record.results.top3 ? "is-covered" : "is-miss");
-    var top3 = (record.top3 || []).map(function (row) { return "尾" + row.tail; }).join(" · ");
+    var top3Names = ["A线", "B线", "C线"];
+    var top3 = (record.top3 || []).map(function (row, index) {
+      return (top3Names[index] || "候选") + " · 尾" + row.tail;
+    }).join(" · ");
     var rankingLabel = record.rankingMetric === "window3Prob" ? "三期概率" : "下一期概率";
     var rowHTML = rows.map(function (row, index) {
       var isDrawn = actualTails.indexOf(Number(row.tail)) >= 0;
@@ -7304,7 +7345,7 @@
       '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">10尾快照</button>' +
       '</div>';
     if (activeView === "overview") {
-      html += '<div data-model-detail-panel="overview"><div class="section"><div class="section__head"><h2 class="section__title">当前候选</h2><span class="section__hint">A1 / A2 / A3 已在上方展示；本页只保留概率证据，不重复执行金额</span></div></div>' +
+      html += '<div data-model-detail-panel="overview"><div class="section"><div class="section__head"><h2 class="section__title">当前候选</h2><span class="section__hint">A线 / B线 / C线 已在上方展示；本页只保留概率证据，不重复执行金额</span></div></div>' +
         '<div class="task-empty">需要核对历史时，切换到“测试记录”；需要核对每期10尾排序时，切换到“10尾快照”。</div></div>';
     } else if (activeView === "history") {
       html += '<div data-model-detail-panel="history">';

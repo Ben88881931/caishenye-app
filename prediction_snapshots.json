@@ -2412,7 +2412,7 @@
       "generatedAt": "2026-10-26T14:59:10.681Z",
       "basedOn": 299,
       "target": 300,
-      "settled": false,
+      "settled": true,
       "models": {
         "doubleRecommendation": {
           "description": "连出惯性分层打分，推2个尾号",
@@ -2432,11 +2432,77 @@
             }
           ]
         }
+      },
+      "actualTails": [
+        1,
+        2,
+        3,
+        7,
+        8,
+        9
+      ],
+      "actualPeriod": 300,
+      "settledAt": "2026-10-27T13:53:37.323Z",
+      "results": {
+        "doubleRecommendation": {
+          "picks": [
+            6,
+            7
+          ],
+          "perPick": [
+            {
+              "tail": 6,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C",
+              "hit": false
+            },
+            {
+              "tail": 7,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C",
+              "hit": true
+            }
+          ],
+          "hits": [
+            7
+          ],
+          "count": 1,
+          "hit": true
+        }
+      }
+    },
+    {
+      "modelVersion": "core-v1",
+      "generatedAt": "2026-10-27T13:53:37.324Z",
+      "basedOn": 300,
+      "target": 301,
+      "settled": false,
+      "models": {
+        "doubleRecommendation": {
+          "description": "连出惯性分层打分，推2个尾号",
+          "ambiguous": false,
+          "picks": [
+            {
+              "tail": 8,
+              "score": 93.9,
+              "tag": "连出3",
+              "grade": "A"
+            },
+            {
+              "tail": 1,
+              "score": 92.5,
+              "tag": "5期3次",
+              "grade": "C"
+            }
+          ]
+        }
       }
     }
   ],
-  "latestPeriod": 299,
-  "updatedAt": "2026-10-26T14:59:10.715Z",
+  "latestPeriod": 300,
+  "updatedAt": "2026-10-27T13:53:37.329Z",
   "threePeriodRecords": [
     {
       "target": 273,
@@ -3253,6 +3319,24 @@
       "hitIndex": null,
       "settledPeriod": 300,
       "settledAt": "2026-10-26T14:59:10.714Z"
+    },
+    {
+      "target": 301,
+      "basedOn": 300,
+      "generatedAt": "2026-10-27T13:53:37.328Z",
+      "action": "跟双号",
+      "source": "double",
+      "rule": "P1/P6",
+      "reason": "双号达到A级且未触发过热或备选连中限制",
+      "stream": "D1",
+      "tail": 8,
+      "score": 93.9,
+      "grade": "A",
+      "status": "pending",
+      "attempts": [],
+      "hitIndex": null,
+      "settledPeriod": null,
+      "settledAt": null
     }
   ],
   "sourceWindows": [
@@ -4650,6 +4734,19 @@
             9
           ],
           "hit": false
+        },
+        {
+          "period": 300,
+          "tail": 6,
+          "actualTails": [
+            1,
+            2,
+            3,
+            7,
+            8,
+            9
+          ],
+          "hit": false
         }
       ],
       "hitIndex": null,
@@ -4675,6 +4772,19 @@
             2,
             3,
             5,
+            8,
+            9
+          ],
+          "hit": false
+        },
+        {
+          "period": 300,
+          "tail": 4,
+          "actualTails": [
+            1,
+            2,
+            3,
+            7,
             8,
             9
           ],

@@ -8,6 +8,8 @@ const snapshots = JSON.parse(fs.readFileSync("probability_snapshots.json", "utf8
 const latest = Math.max(...Object.keys(raw).map(Number));
 const prediction = model.analyze(raw, latest);
 const freshPrediction = model.analyze(raw, latest, { method: "new" });
+const legacyPrediction = model.analyze(raw, 295);
+const legacySnapshot = (snapshots.records || []).find((record) => Number(record.target) === 296);
 const pending = (snapshots.records || []).filter((record) => !record.settled);
 const target = latest + 1;
 const uiText = fs.readFileSync("app.js", "utf8");
@@ -26,8 +28,15 @@ check(prediction.top.length === 3, "动态概率必须输出前三名");
 check(new Set(prediction.top.map((row) => row.tail)).size === 3, "概率前三名不得重复号码");
 check(prediction.rows.every((row) => Number.isFinite(row.nextProb) && row.nextProb > 0 && row.nextProb < 1), "下一期概率必须在0到1之间");
 check(prediction.rows.every((row) => Number.isFinite(row.window3Prob) && row.window3Prob > 0 && row.window3Prob < 1), "三期概率必须在0到1之间");
-check(prediction.rows.every((row, index, rows) => index === 0 || rows[index - 1].nextProb >= row.nextProb), "概率结果必须按下一期概率降序排列");
-check(prediction.legacyLocked && prediction.version === model.LEGACY_VERSION, "第296期必须保留切换前旧模型锁定结果");
+check(prediction.version === model.VERSION && !prediction.legacyLocked, "当前最新期必须使用新方法生产排序");
+check(prediction.rows.every((row, index, rows) => index === 0 || rows[index - 1].window3Prob >= row.window3Prob), "概率结果必须按三期概率降序排列");
+check(legacyPrediction.legacyLocked && legacyPrediction.version === model.LEGACY_VERSION && legacyPrediction.target === 296, "第296期旧模型锁定结果必须可复现");
+check(
+  legacySnapshot && legacySnapshot.modelVersion === model.LEGACY_VERSION &&
+  legacySnapshot.settled === true &&
+  legacySnapshot.top3.map((row) => Number(row.tail)).join(",") === "8,3,7",
+  "第296期冻结快照必须保留原预测和已结算状态"
+);
 check(freshPrediction.version === model.VERSION && !freshPrediction.legacyLocked, "新方法必须使用新版本");
 check(freshPrediction.rows.every((row, index, rows) => index === 0 || rows[index - 1].window3Prob >= row.window3Prob), "新方法必须按三期概率降序排列");
 check(model.META.productionMethod.windows.join(",") === "5,7,15,21,30", "生产方法必须使用5/7/15/21/30窗口");
