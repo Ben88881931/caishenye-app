@@ -732,7 +732,7 @@ test("heatmap pages use the one-period, two-period, three-period names", async (
   await expect(page.locator('.nav-subtabs .tab[data-tab="trend"]')).toHaveText("一期热图");
 });
 
-test("two and three period heatmaps show waiting only for rule waits", async ({ page }) => {
+test("two and three period heatmaps show waiting only before the tail reopens", async ({ page }) => {
   for (const tabId of ["windowmiss", "windowmiss2"]) {
     await page.goto("/");
     await page.evaluate((id) => {
@@ -744,13 +744,12 @@ test("two and three period heatmaps show waiting only for rule waits", async ({ 
     const latest = await page.evaluate(() => window.APP_DATA.d.length);
     const lastRow = page.locator(".panel--wmheat tbody tr:last-child").first();
     await expect(lastRow.locator("[data-window-state]")).toHaveCount(13);
-    await expect(lastRow.locator('[data-window-state="wait"][data-window-start-pending="true"]')).toHaveCount(0);
+    await expect(lastRow.locator('[data-window-state="wait"][data-window-pending-open="true"]')).toHaveCount(0);
 
     const states = await lastRow.locator("[data-window-state]").evaluateAll((cells) => (
       cells.map((cell) => ({
         state: cell.getAttribute("data-window-state"),
         ruleWait: cell.getAttribute("data-window-rule-wait"),
-        pendingOpen: cell.getAttribute("data-window-pending-open"),
         start: Number(cell.getAttribute("data-window-start")),
         text: cell.innerText.trim(),
       }))
@@ -760,9 +759,7 @@ test("two and three period heatmaps show waiting only for rule waits", async ({ 
     expect(live.length).toBeGreaterThan(0);
     expect(live.every((cell) => cell.text.startsWith("进"))).toBe(true);
     expect(live.some((cell) => cell.start === latest + 1)).toBe(true);
-    expect(waiting.length).toBeGreaterThan(0);
     expect(waiting.every((cell) => cell.ruleWait === "true")).toBe(true);
-    expect(waiting.some((cell) => cell.pendingOpen === "true")).toBe(true);
   }
 });
 
@@ -1132,5 +1129,104 @@ test("horizontal record strips preserve vertical page panning", async ({ page })
     ));
     expect(touchAction.split(/\s+/)).toEqual(expect.arrayContaining(["pan-x", "pan-y"]));
   }
+});
+
+test("left thumb drawer replaces the permanent top navigation", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  await expect(page.locator("[data-nav-handle]")).toBeVisible();
+  await expect(page.locator("[data-nav-drawer]")).toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator(".appbar .tabs")).toHaveCount(0);
+
+  const layout = await page.locator("[data-nav-drawer]").evaluate((drawer) => {
+    const rect = drawer.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      width: rect.width,
+      viewport: window.innerWidth,
+    };
+  });
+  expect(layout.right).toBeLessThanOrEqual(0);
+  expect(layout.width).toBeGreaterThan(250);
+  expect(layout.width).toBeLessThan(layout.viewport);
+});
+
+test("drawer opens, closes, and auto-closes after choosing a page", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  await page.locator("[data-nav-handle]").click();
+  await expect(page.locator("body")).toHaveClass(/nav-drawer-open/);
+  await expect(page.locator("[data-nav-drawer]")).toHaveAttribute("aria-hidden", "false");
+
+  await page.locator("[data-nav-close]").click();
+  await expect(page.locator("body")).not.toHaveClass(/nav-drawer-open/);
+  await expect(page.locator("[data-nav-drawer]")).toHaveAttribute("aria-hidden", "true");
+
+  await page.locator("[data-nav-handle]").click();
+  const modelGroup = page.locator('[data-nav-group="model"]');
+  await modelGroup.click();
+  await page.locator('[data-tab="dailyreport"]').click();
+
+  await expect(page.locator("body")).toHaveAttribute("data-page", "dailyreport");
+  await expect(page.locator("body")).not.toHaveClass(/nav-drawer-open/);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("v2_current_tab")))).toBe("dailyreport");
+});
+
+test("hidden navigation handle can be restored from the left edge", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  await page.locator("[data-nav-handle]").click();
+  await page.locator("[data-nav-hide]").click();
+  await expect(page.locator("body")).toHaveClass(/nav-handle-hidden/);
+  await expect(page.locator("[data-nav-handle]")).toBeHidden();
+
+  await page.locator("[data-nav-edge]").click({ position: { x: 8, y: 180 } });
+  await expect(page.locator("body")).toHaveClass(/nav-drawer-open/);
+  await expect(page.locator("[data-nav-show]")).toBeVisible();
+  await page.locator("[data-nav-show]").click();
+
+  await expect(page.locator("body")).not.toHaveClass(/nav-handle-hidden/);
+  await expect(page.locator("[data-nav-handle]")).toBeVisible();
+});
+
+test("navigation handle remembers its vertical position", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+
+  const handle = page.locator("[data-nav-handle]");
+  const start = await handle.boundingBox();
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(start.x + start.width / 2, start.y - 150, { steps: 8 });
+  await page.mouse.up();
+
+  const savedTop = await page.evaluate(() => Number(localStorage.getItem("v2_nav_handle_top")));
+  expect(savedTop).toBeGreaterThan(100);
+  await page.reload();
+  const reloaded = await page.locator("[data-nav-handle]").evaluate((element) => (
+    Number.parseFloat(getComputedStyle(element).top)
+  ));
+  expect(Math.abs(reloaded - savedTop)).toBeLessThanOrEqual(2);
+});
+
+test("today dashboard is compact and exposes the daily decision surface", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+  await page.waitForFunction(() => document.body.dataset.page === "overview");
+
+  await expect(page.locator("[data-today-dashboard]")).toBeVisible();
+  await expect(page.locator("[data-dashboard-pick]")).toHaveCount(3);
+  await expect(page.locator("[data-dashboard-window-state]")).toHaveCount(13);
+  await expect(page.locator("[data-dashboard-shortcut]")).toHaveCount(6);
+  await expect(page.locator("[data-today-dashboard]")).toContainText("下一期");
+  await expect(page.locator("[data-today-dashboard]")).toContainText("今日计划");
+  await expect(page.locator("[data-today-dashboard]")).not.toContainText("页面说明 · 大白话版");
+
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  expect(height).toBeLessThan(5000);
 });
 

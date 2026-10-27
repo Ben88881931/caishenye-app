@@ -84,23 +84,6 @@
   // 每期开 7 个不同号码，尾数至少出现一次的概率 = 1 - C(49-c,7)/C(49,7)。
   var BASE_RATE = [0.4717, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539, 0.5539];
 
-  function missRebound(tail) {
-    var k = currentMiss(tail);
-    var total = 0, hits = 0, run = 0;
-    for (var i = 0; i < periods.length - 1; i++) {
-      if (hit(periods[i], tail)) {
-        run = 0;
-      } else {
-        run++;
-        if (run >= k) {
-          total++;
-          if (hit(periods[i + 1], tail)) hits++;
-        }
-      }
-    }
-    return { k: k, hits: hits, total: total, rate: total ? hits / total : 0 };
-  }
-
   function countEnding(tail, upto, w) {
     var c = 0;
     for (var j = Math.max(0, upto - w + 1); j <= upto; j++) {
@@ -262,8 +245,8 @@
   }
 
   var state = {
-    tab: lsGet("v2_current_tab", "directory"),
-    group: lsGet("v2_nav_group", "recommend"),
+    tab: lsGet("v2_current_tab", "overview"),
+    group: lsGet("v2_nav_group", "today"),
     directoryGroup: lsGet("v2_directory_group", null),
     groupHistory: [],
     groupHistoryIndex: -1,
@@ -296,8 +279,8 @@
   };
 
   var TABS = [
-    { id: "directory", label: "目录" },
-    { id: "overview", label: "总览" },
+    { id: "overview", label: "今日" },
+    { id: "directory", label: "全部页面" },
     { id: "dailyreport", label: "每日最终报告" },
     { id: "pick3", label: "动态概率" },
     { id: "betexec", label: "下注执行表" },
@@ -325,15 +308,144 @@
   ];
 
   var NAV_GROUPS = [
-    { id: "recommend", label: "模型流程", tabs: ["dailyreport", "pick3", "betexec", "formulas", "windowmult", "orderlog"] },
-    { id: "trends", label: "走势总览", tabs: ["overview", "segments", "windowk", "numtrend", "zodtrend"] },
-    { id: "miss", label: "遗漏分析", tabs: ["trend", "missorder", "windowmiss", "windowmiss2", "parity"] },
-    { id: "zodiac", label: "生肖专区", tabs: ["zodrecords", "zodwindow", "zodmonitor"] },
-    { id: "tools", label: "分析工具", tabs: ["numsearch", "personality", "datarecord", "tails", "backtest", "notes"] },
+    { id: "today", label: "今日", tabs: ["overview", "directory"] },
+    { id: "model", label: "模型", tabs: ["dailyreport", "pick3", "betexec", "formulas", "windowmult", "orderlog"] },
+    { id: "window", label: "窗口", tabs: ["trend", "windowmiss2", "windowmiss", "missorder", "parity", "windowk", "segments"] },
+    { id: "records", label: "记录", tabs: ["datarecord", "zodrecords", "zodtrend", "zodwindow", "zodmonitor", "tails"] },
+    { id: "tools", label: "工具", tabs: ["personality", "numtrend", "numsearch", "backtest", "notes"] },
   ];
 
   var view = document.getElementById("view");
   var tabsEl = document.getElementById("tabs");
+  var navDrawerEl = document.querySelector("[data-nav-drawer]");
+  var navHandleEl = document.querySelector("[data-nav-handle]");
+  var navEdgeEl = document.querySelector("[data-nav-edge]");
+  var pageTitleEl = document.getElementById("pageTitle");
+  var NAV_HANDLE_TOP_KEY = "v2_nav_handle_top";
+  var NAV_HANDLE_HIDDEN_KEY = "v2_nav_handle_hidden";
+  var navHandleMoved = false;
+  var navHandleSuppressClick = false;
+
+  function clampNavHandleTop(top) {
+    var height = navHandleEl ? navHandleEl.offsetHeight || 94 : 94;
+    var min = 92;
+    var max = Math.max(min, window.innerHeight - height - 28);
+    return Math.max(min, Math.min(max, Number(top) || window.innerHeight * 0.56));
+  }
+
+  function setNavHandleTop(top, persist) {
+    if (!navHandleEl) return;
+    var next = clampNavHandleTop(top);
+    navHandleEl.style.top = next + "px";
+    if (persist) {
+      try { localStorage.setItem(NAV_HANDLE_TOP_KEY, String(Math.round(next))); } catch (e) {}
+    }
+  }
+
+  function setNavDrawer(open) {
+    var next = !!open;
+    document.body.classList.toggle("nav-drawer-open", next);
+    if (navDrawerEl) navDrawerEl.setAttribute("aria-hidden", next ? "false" : "true");
+    if (navHandleEl) navHandleEl.setAttribute("aria-expanded", next ? "true" : "false");
+    if (!next) {
+      var focusTarget = document.activeElement;
+      if (focusTarget && navDrawerEl && navDrawerEl.contains(focusTarget)) {
+        navHandleEl.focus();
+      }
+    }
+  }
+
+  function closeNavDrawer() {
+    setNavDrawer(false);
+  }
+
+  function setNavHandleHidden(hidden) {
+    var next = !!hidden;
+    document.body.classList.toggle("nav-handle-hidden", next);
+    try { localStorage.setItem(NAV_HANDLE_HIDDEN_KEY, next ? "1" : "0"); } catch (e) {}
+    if (!next && navHandleEl) navHandleEl.focus();
+  }
+
+  function initNavDrawer() {
+    if (!navDrawerEl || !navHandleEl) return;
+    var savedTop = 0;
+    try { savedTop = Number(localStorage.getItem(NAV_HANDLE_TOP_KEY)); } catch (e) {}
+    setNavHandleTop(Number.isFinite(savedTop) && savedTop > 0 ? savedTop : window.innerHeight * 0.56, false);
+    try { setNavHandleHidden(localStorage.getItem(NAV_HANDLE_HIDDEN_KEY) === "1"); } catch (e) {}
+
+    var drag = null;
+    navHandleEl.addEventListener("pointerdown", function (event) {
+      if (event.button != null && event.button !== 0) return;
+      drag = {
+        id: event.pointerId,
+        startY: event.clientY,
+        startTop: Number.parseFloat(window.getComputedStyle(navHandleEl).top) || navHandleEl.offsetTop,
+      };
+      navHandleMoved = false;
+      navHandleEl.classList.add("is-dragging");
+      try { navHandleEl.setPointerCapture(event.pointerId); } catch (e) {}
+      event.preventDefault();
+    });
+    navHandleEl.addEventListener("pointermove", function (event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      var delta = event.clientY - drag.startY;
+      if (Math.abs(delta) > 6) navHandleMoved = true;
+      setNavHandleTop(drag.startTop + delta, false);
+      event.preventDefault();
+    });
+    function finishHandlePointer(event) {
+      if (!drag || event.pointerId !== drag.id) return;
+      var wasMoved = navHandleMoved;
+      drag = null;
+      navHandleEl.classList.remove("is-dragging");
+      try {
+        if (navHandleEl.hasPointerCapture(event.pointerId)) navHandleEl.releasePointerCapture(event.pointerId);
+      } catch (e) {}
+      if (wasMoved) {
+        setNavHandleTop(Number.parseFloat(window.getComputedStyle(navHandleEl).top), true);
+        navHandleSuppressClick = true;
+        window.setTimeout(function () { navHandleSuppressClick = false; }, 350);
+      } else {
+        setNavDrawer(!document.body.classList.contains("nav-drawer-open"));
+        navHandleSuppressClick = true;
+        window.setTimeout(function () { navHandleSuppressClick = false; }, 0);
+      }
+    }
+    navHandleEl.addEventListener("pointerup", finishHandlePointer);
+    navHandleEl.addEventListener("pointercancel", finishHandlePointer);
+    navHandleEl.addEventListener("click", function (event) {
+      if (navHandleSuppressClick) {
+        event.preventDefault();
+        return;
+      }
+      if (event.detail === 0) setNavDrawer(!document.body.classList.contains("nav-drawer-open"));
+    });
+
+    document.querySelectorAll("[data-nav-close]").forEach(function (button) {
+      button.addEventListener("click", closeNavDrawer);
+    });
+    document.querySelectorAll("[data-nav-hide]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        setNavHandleHidden(true);
+        closeNavDrawer();
+      });
+    });
+    document.querySelectorAll("[data-nav-show]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        setNavHandleHidden(false);
+        closeNavDrawer();
+      });
+    });
+    if (navEdgeEl) {
+      navEdgeEl.addEventListener("click", function () { setNavDrawer(true); });
+    }
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") closeNavDrawer();
+    });
+    window.addEventListener("resize", function () {
+      setNavHandleTop(Number.parseFloat(window.getComputedStyle(navHandleEl).top), false);
+    });
+  }
 
 
 
@@ -939,26 +1051,24 @@
     var groupScroll = oldGroups ? oldGroups.scrollLeft : 0;
     var tabScroll = oldSubtabs ? oldSubtabs.scrollLeft : 0;
     var directoryActive = state.tab === "directory";
-    var groupHtml = "";
-    if (directoryActive) {
-      groupHtml = '<button class="nav-group nav-group--directory is-active" type="button" data-directory="1">目录</button>';
-    } else {
-      groupHtml = "";
-    }
-    var tabs = directoryActive ? [] : getVisibleTabs(group.id);
+    var groupHtml = groups.map(function (item) {
+      return '<div class="nav-group-wrap"><button class="nav-group' +
+        (item.id === group.id ? " is-active" : "") +
+        '" type="button" data-nav-group="' + item.id + '">' + item.label + "</button></div>";
+    }).join("");
+    var tabs = getVisibleTabs(group.id);
     var tabsHtml = tabs.map(function (t) {
       return '<button class="tab ' + (state.tab === t.id ? "is-active" : "") +
         '" type="button" data-tab="' + t.id + '">' + t.label + "</button>";
     }).join("");
-    if (!directoryActive) {
-      tabsHtml = '<button class="tab nav-back-tab" type="button" data-directory="1">← 返回目录</button>' + tabsHtml;
-    }
+    tabsHtml = '<button class="tab nav-directory-tab ' + (directoryActive ? "is-active" : "") +
+      '" type="button" data-directory="1">全部页面</button>' + tabsHtml;
 
     tabsHtml += '<button class="tab sort-reset nav-sort-reset" type="button" data-sort-reset="1">恢复默认</button>';
 
     tabsEl.classList.remove("sorting");
-    tabsEl.innerHTML = (groupHtml ? '<div class="nav-groups">' + groupHtml + '</div>' : "") +
-      '<div class="nav-subtabs">' + tabsHtml + "</div>";
+    tabsEl.innerHTML = '<div class="nav-groups" aria-label="页面分类">' + groupHtml + "</div>" +
+      '<div class="nav-subtabs" aria-label="' + group.label + '页面">' + tabsHtml + "</div>";
     var nextGroups = tabsEl.querySelector(".nav-groups");
     var nextSubtabs = tabsEl.querySelector(".nav-subtabs");
     if (nextGroups) nextGroups.scrollLeft = groupScroll;
@@ -992,6 +1102,8 @@
   function renderHeader() {
     document.getElementById("latestPeriod").textContent = latest;
     document.getElementById("latestTails").textContent = "尾 " + tailsOf(latest).join(" ");
+    var current = TABS.filter(function (item) { return item.id === state.tab; })[0];
+    if (pageTitleEl) pageTitleEl.textContent = current ? current.label : "今日";
   }
 
 
@@ -1288,10 +1400,22 @@
       state.tab = "trend";
       lsSet("v2_current_tab", state.tab);
     }
+    if (!TABS.some(function (item) { return item.id === state.tab; })) {
+      state.tab = "overview";
+      lsSet("v2_current_tab", state.tab);
+    }
+    if (state.tab !== "directory") {
+      var currentGroup = groupForTab(state.tab);
+      if (currentGroup && currentGroup.id !== state.group) {
+        state.group = currentGroup.id;
+        lsSet(NAV_GROUP_KEY, state.group);
+      }
+    }
     var tabChanged = state.tab !== renderedTab;
     // 给 body 打上当前页面标记，方便按页面单独定尺寸（不同页面内容不一样，不能一刀切）
     document.body.dataset.page = state.tab;
     renderTabs();
+    renderHeader();
     if (state.tab === "directory") renderDirectory();
     else if (state.tab === "overview") renderOverview();
     else if (state.tab === "dailyreport") renderDailyReport();
@@ -1321,7 +1445,8 @@
     else if (state.tab === "notes") renderNotes();
     else if (state.tab === "numsearch") renderNumSearch();
     var pagePrefix = historyStackHTML();
-    if (state.tab !== "directory" && view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
+    if (state.tab !== "directory" && state.tab !== "overview" &&
+        view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
       pagePrefix += modelPairStrip(latest + 1);
     }
     if (pagePrefix) view.innerHTML = pagePrefix + view.innerHTML;
@@ -1663,44 +1788,25 @@
   };
 
   function pageGuideHTML() {
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">页面说明 · 大白话版</h2><span class="section__hint">每个页面是干什么的、怎么看、怎么用、数据从哪里来，都在这里说清楚</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.8">总览按四层理解：先看“每日操作”决定今天怎么做，再看“公式验证”确认执行依据，然后看“数据参考”研究历史，最后看“生肖与辅助”做补充判断。</div></div></div>';
-    function appendGuideGroup(group) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">' + group.title + '</h2><span class="section__hint">' + group.desc + '</span></div></div>';
-      html += '<div class="section"><div class="overview-pages-grid">';
+    var html = '<details class="today-page-map"><summary>页面职责地图 · 需要时再展开</summary><div class="today-page-map__body">';
+    PAGE_GUIDE_DISPLAY_GROUPS.forEach(function (group) {
+      html += '<div class="today-page-map__group"><b>' + group.title + '</b><span>' + group.desc + '</span>';
       group.names.forEach(function (name) {
         var item = PAGE_GUIDE_BY_NAME[name];
         if (!item) return;
         var tabId = PAGE_GUIDE_TAB_MAP[item.name] || "";
-        html += '<article class="overview-page-card overview-page-card--guide" style="--guide-accent:#2563eb;--guide-soft:#eff6ff">';
-        html += '<div class="overview-page-card__head"><span class="overview-page-card__group">' + group.title + '</span><h3>' + item.name + '</h3></div>';
-        html += '<p class="overview-page-card__desc"><b>' + item.summary + '</b></p>';
-        html += '<div class="overview-page-card__when"><b>主要看什么</b><span><ul style="margin:2px 0 0 16px;padding:0">';
-        item.look.forEach(function (line) { html += '<li>' + line + '</li>'; });
-        html += '</ul></span></div>';
-        html += '<div class="overview-page-card__when"><b>怎么用</b><span>' + item.use + '</span></div>';
-        html += '<div class="overview-page-card__when"><b>数据来源</b><span>' + item.source + '</span></div>';
-        html += '<div class="overview-page-card__when" style="background:#fff7ed"><b>注意</b><span>' + item.note + '</span></div>';
-        if (tabId) html += '<button class="overview-page-card__cta" data-overview-tab="' + tabId + '">打开页面 <span aria-hidden="true">→</span></button>';
-        html += '</article>';
+        html += '<button class="today-page-map__item" type="button"' +
+          (tabId ? ' data-overview-tab="' + tabId + '"' : "") + '>' +
+          '<strong>' + item.name + '</strong><small>' + item.summary + '</small></button>';
       });
-      html += '</div></div>';
-    }
-
-    appendGuideGroup(PAGE_GUIDE_DISPLAY_GROUPS[0]);
-
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">页面上的标语怎么看</h2><span class="section__hint">先看懂这些常用标签，再看每个页面的明细就不会乱</span></div></div>';
-    html += '<div class="section"><div class="overview-pages-grid">';
-    PAGE_LABEL_GUIDE.forEach(function (group) {
-      html += '<article class="overview-page-card overview-page-card--guide overview-page-card--label-guide" style="--guide-accent:#0f766e;--guide-soft:#ecfdf5">';
-      html += '<div class="overview-page-card__head"><span class="overview-page-card__group">标语说明</span><h3>' + group.title + '</h3></div>';
-      group.rows.forEach(function (row) {
-        html += '<div class="label-guide-row"><b>' + row[0] + '</b><span>' + row[1] + '</span></div>';
-      });
-      html += '</article>';
+      html += '</div>';
     });
-    html += '</div></div>';
-    PAGE_GUIDE_DISPLAY_GROUPS.slice(1).forEach(appendGuideGroup);
+    html += '<div class="today-page-map__group"><b>标语说明</b>';
+    PAGE_LABEL_GUIDE.forEach(function (group) {
+      html += '<span><strong>' + group.title + '：</strong>' +
+        group.rows.map(function (row) { return row[0]; }).join(" · ") + '</span>';
+    });
+    html += '</div></div></details>';
     return html;
   }
 
@@ -2448,81 +2554,133 @@
   }
 
   function renderOverview() {
-    var latestRec = rec(2026, latest);
     var latestTails = tailsOf(latest);
+    var target = latest + 1;
+    var reportRows = EXEC_LINES.map(function (line, index) {
+      return dailyReportLineStats(line, index);
+    }).sort(function (a, b) {
+      if (a.entryEligible !== b.entryEligible) return a.entryEligible ? -1 : 1;
+      var aCurrent = a.personality && a.personality.current || {};
+      var bCurrent = b.personality && b.personality.current || {};
+      return Number(bCurrent.predictedRate || 0) - Number(aCurrent.predictedRate || 0) ||
+        Number(bCurrent.edge || 0) - Number(aCurrent.edge || 0) ||
+        a.order - b.order;
+    });
+    var topPicks = reportRows.slice(0, 3);
 
-    var freq = [];
-    for (var t = 0; t < 10; t++) freq.push({ tail: t, count: countWindow(t, 15) });
-    var maxFreq = Math.max.apply(null, freq.map(function (f) { return f.count; }));
-
-    var misses = [];
-    for (var d = 0; d < 10; d++) misses.push({ tail: d, miss: currentMiss(d) });
-    var topMiss = misses.slice().sort(function (a, b) { return b.miss - a.miss; })[0];
-
-    var refs = [];
-    for (var k = 0; k < 10; k++) {
-      if (!hit(latest, k)) {
-        var mb = missRebound(k);
-        refs.push({
-          tail: k,
-          miss: mb.k,
-          base: BASE_RATE[k],
-          rate: mb.rate,
-          sample: mb.total,
-          hits: mb.hits,
-          edge: mb.total ? mb.rate - BASE_RATE[k] : 0
-        });
+    var windowStates = EXEC_LINES.map(function (line) {
+      var current = wmCurrentState(line);
+      if (current.waiting) return { line: line, kind: "wait", text: "等尾" + current.waiting.tail };
+      if (current.active) {
+        return {
+          line: line,
+          kind: "live",
+          text: "进" + Math.min(3, (current.active.attempts || []).length + 1),
+        };
       }
-    }
-    refs.sort(function (a, b) { return b.edge - a.edge; });
+      return { line: line, kind: "new", text: "新窗" };
+    });
 
-    var html = "";
-    html += pageGuideHTML();
+    var planRows = EXEC_LINES.map(function (line) {
+      var basePlan = betPlanFor(line, 3);
+      var verdict = state.betLineMode === "verdict" ? betVerdictFor(line, 3) : null;
+      var effectivePlan = verdict ? betPlanScale(basePlan, verdict.scale) : basePlan.slice();
+      var live = betLiveInfo(line, 3, effectivePlan);
+      var amount = line.hold ? 0 : live.stake;
+      var tail = null;
+      if (amount > 0 && live.active) {
+        tail = line.kind === "tail"
+          ? line.tail
+          : (live.active.lockedTail != null
+            ? live.active.lockedTail
+            : wmLiveTailFor(line, live.active, Number(live.active.start) + live.stage - 1));
+      }
+      return {
+        line: line,
+        live: live,
+        amount: amount,
+        risk: line.hold ? 0 : live.risk,
+        tail: tail,
+        formula: effectivePlan,
+      };
+    }).filter(function (row) { return row.amount > 0; });
+    var todayTotal = planRows.reduce(function (sum, row) { return sum + row.amount; }, 0);
+    var todayRisk = planRows.reduce(function (sum, row) { return sum + row.risk; }, 0);
+    var waitingCount = windowStates.filter(function (row) { return row.kind === "wait"; }).length;
+    var liveCount = windowStates.filter(function (row) { return row.kind === "live"; }).length;
 
+    var html = '<div class="today-dashboard" data-today-dashboard>';
+    html += '<section class="today-hero">' +
+      '<div class="today-hero__top"><span class="today-hero__eyebrow">下一独立三期窗口 · 第' + target + '期</span>' +
+      '<span class="today-hero__status">数据截至第' + latest + '期</span></div>' +
+      '<div class="today-hero__value"><b>' + topPicks.length + ' 条</b><span>今日优先观察 · 最新尾 ' +
+        latestTails.join(" ") + '</span></div>' +
+      '<div class="today-picks">';
+    topPicks.forEach(function (row, index) {
+      var current = row.personality && row.personality.current || {};
+      var tailText = current.tail != null ? "尾" + current.tail : "候选";
+      html += '<div class="today-pick" data-dashboard-pick>' +
+        '<span>#' + (index + 1) + ' · ' + row.advice.label + '</span>' +
+        '<b>' + row.line.label + '</b>' +
+        '<small>' + tailText + ' · ' + (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</small></div>';
+    });
+    html += '</div></section>';
 
-    html += '<div class="section">';
-    html += '<div class="grid-3">';
-    html += '<div class="stat"><div class="stat__value">' + latest + "</div><div class=\"stat__label\">最新期数</div></div>";
-    html += '<div class="stat"><div class="stat__value">' + latestTails.length + "</div><div class=\"stat__label\">本期尾数</div></div>";
-    html += '<div class="stat"><div class="stat__value">尾' + topMiss.tail + "</div><div class=\"stat__label\">遗漏最长 " + topMiss.miss + " 期</div></div>";
-    html += "</div></div>";
+    html += '<section class="today-section"><div class="today-section__head"><h2>今天的执行面</h2><span>只汇总当前真实窗口</span></div>' +
+      '<div class="today-summary">' +
+      '<div class="today-summary__item"><b>' + liveCount + ' / 13</b><span>正在进窗</span></div>' +
+      '<div class="today-summary__item"><b>' + waitingCount + '</b><span>等待规则重开</span></div>' +
+      '<div class="today-summary__item"><b>' + todayTotal + ' 元</b><span>本期公式合计 · 最大风险 ' + todayRisk + ' 元</span></div>' +
+      '</div></section>';
 
-    if (latestRec) {
-      html += '<div class="section"><div class="section__head"><h2 class="section__title">第 ' + latest + " 期开奖</h2></div>";
-      html += '<div class="panel"><div class="panel__body"><div class="num-list">';
-      latestRec.nums.forEach(function (n, i) {
-        html += '<div style="text-align:center"><div class="num">' + n + '</div><div class="zod">' + latestRec.zods[i] + "</div></div>";
+    html += '<section class="today-section"><div class="today-section__head"><h2>今日计划</h2><span>' +
+      (planRows.length ? planRows.length + ' 条线路有金额' : '当前全部空仓') + '</span></div>';
+    if (planRows.length) {
+      html += '<div class="today-plan-list">';
+      planRows.forEach(function (row) {
+        var currentPeriod = row.live.active
+          ? betLocalPeriod(Number(row.live.active.start) + row.live.stage - 1)
+          : null;
+        html += '<div class="today-plan-row">' +
+          '<div class="today-plan-row__main"><b>' + row.line.label +
+            (row.tail != null ? " · 尾" + row.tail : "") + '</b><small>窗口第' + row.live.stage + '期' +
+            (currentPeriod != null ? " · 第" + currentPeriod + "期" : "") +
+            ' · 公式 ' + row.formula.join(" / ") + '</small></div>' +
+          '<strong>' + row.amount + ' 元</strong></div>';
       });
-      html += "</div></div></div></div>";
+      html += '</div>';
+    } else {
+      html += '<div class="today-plan-empty">今日没有金额大于 0 的执行线路，等待下一窗口。</div>';
     }
+    html += '</section>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">近 15 期尾数频次</h2><span class="section__hint">共 ' + maxFreq + " 次为上限</span></div>";
-    html += '<div class="panel"><div class="panel__body"><div class="bars">';
-    freq.forEach(function (f) {
-      var width = maxFreq ? Math.round(f.count / maxFreq * 100) : 0;
-      html += '<div class="bar-row"><span class="bar-row__label">' + f.tail + '</span><div class="bar-track"><div class="bar-fill" style="width:' + width + '%"></div></div><span class="bar-row__value">' + f.count + "</span></div>";
+    html += '<section class="today-section"><div class="today-section__head"><h2>13线窗口状态</h2><span>左起固定线路顺序</span></div>' +
+      '<div class="today-window-strip">';
+    windowStates.forEach(function (stateRow) {
+      html += '<span class="today-window-cell' + (stateRow.kind === "wait" ? " is-wait" : "") +
+        '" data-dashboard-window-state title="' + stateRow.line.label + '：' + stateRow.text + '">' +
+        stateRow.text + '</span>';
     });
-    html += "</div></div></div></div>";
+    html += '</div></section>';
 
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">统计参考</h2><span class="section__hint">上期未出 · 与理论基准对比</span></div>';
-    html += '<div class="panel"><table class="table"><thead><tr><th>尾数</th><th>遗漏</th><th>理论基准</th><th>命中/错</th><th>样本</th><th>多/少中</th><th>判定</th></tr></thead><tbody>';
-    refs.forEach(function (r) {
-      var verdict = "无信号";
-      if (r.sample >= 20 && r.edge >= 0.04) verdict = "偏热";
-      else if (r.sample >= 20 && r.edge <= -0.04) verdict = "偏冷";
-      var verdictCls = verdict === "偏热" ? "cell--hot" : verdict === "偏冷" ? "cell--cold" : "";
-      var rhitTxt, rhitColor;
-      if (r.sample < 10) { rhitTxt = "样本不足"; rhitColor = "#94a3b8"; }
-      else { rhitTxt = "中" + r.hits + "·错" + (r.sample - r.hits); rhitColor = r.sample < 20 ? "#eab308" : "#16a34a"; }
-      var rbaseHit = Math.round(r.sample * r.base);
-      var redgeCnt = r.hits - rbaseHit;
-      var redgeTxt = redgeCnt >= 0 ? "多中" + redgeCnt + "个" : "少中" + (-redgeCnt) + "个";
-      html += "<tr><td>" + r.tail + '</td><td class="' + (r.miss >= 4 ? "cell--hot" : "cell--cold") + '">' + r.miss + '</td><td>' + pct(r.base) + "</td><td style=\"color:" + rhitColor + ";font-weight:700\">" + rhitTxt + "</td><td>" + r.sample + "</td><td>" + redgeTxt + '</td><td class="' + verdictCls + '">' + verdict + "</td></tr>";
+    var shortcuts = [
+      { tab: "dailyreport", label: "排名理由", note: "看13线为什么这样排" },
+      { tab: "betexec", label: "逐期执行", note: "看每条线买第几期" },
+      { tab: "pick3", label: "动态概率", note: "看A1 / A2 / A3" },
+      { tab: "windowmiss", label: "三期热图", note: "看窗口与等待状态" },
+      { tab: "personality", label: "尾号性格", note: "看长期画像与风险" },
+      { tab: "directory", label: "全部页面", note: "按任务查找页面" },
+    ];
+    html += '<section class="today-section"><div class="today-section__head"><h2>常用入口</h2><span>一页只做一件事</span></div>' +
+      '<div class="today-shortcuts">';
+    shortcuts.forEach(function (item) {
+      html += '<button class="today-shortcut" type="button" data-overview-tab="' + item.tab + '" data-dashboard-shortcut>' +
+        '<span><b>' + item.label + '</b><small>' + item.note + '</small></span></button>';
     });
-    html += "</tbody></table></div></div>";
+    html += '</div></section>';
 
-    html += '<p class="disclaimer">理论基准率：尾数 0 为 47.17%，尾数 1-9 为 55.39%（因为 1-49 中尾数 0 只有 4 个号，其余各有 5 个号）。差值需样本足够才有参考意义；当前多数信号都在统计噪声范围内，不应据此追号。</p>';
-
+    html += pageGuideHTML();
+    html += '</div>';
     view.innerHTML = html;
   }
 
@@ -2751,14 +2909,6 @@
       "当年第" + run.startPeriod + "–" + run.endPeriod + "期" + gapText;
   }
 
-  function wmPendingReopenForLine(line, maxStage, activeState) {
-    if (!activeState || !activeState.active || Number(activeState.active.start) <= D.length) return false;
-    var latestYear = Number((D[D.length - 1] || {}).y);
-    var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === latestYear; });
-    var last = rows.length ? rows[rows.length - 1] : null;
-    return !!(last && last.hitIndex === 0);
-  }
-
   function wmRunLiveChipHTML(line, activeState, maxStage) {
     if (!activeState) return "";
     if (activeState.waiting) {
@@ -2767,12 +2917,6 @@
         '<b>等尾' + activeState.waiting.tail + '</b><small>重新开出后开窗</small></span>';
     }
     if (!activeState.active) return "";
-    if (wmPendingReopenForLine(line, maxStage, activeState)) {
-      var pendingTail = activeState.active.lockedTail != null ? activeState.active.lockedTail : null;
-      return '<span class="trend-run-chip trend-run-chip--live" data-wm-live-state="waiting" title="' +
-        line.label + '错窗后已等到重开号，等待下一期正式建立新窗口">' +
-        '<b>等待</b><small>' + (pendingTail != null ? "尾" + pendingTail + " · " : "") + '等新窗口建立</small></span>';
-    }
     var stage = Math.min(maxStage, (activeState.active.attempts || []).length + 1);
     var startPeriod = betLocalPeriod(activeState.active.start);
     var tailText = activeState.active.lockedTail != null ? " · 锁尾" + activeState.active.lockedTail : "";
@@ -2832,9 +2976,6 @@
       if (isCurrentYear) {
         if (activeState && activeState.waiting) {
           status = "当前等待重开 · 尾" + activeState.waiting.tail;
-        } else if (wmPendingReopenForLine(line, maxStage, activeState)) {
-          status = "错窗后已等到重开号 · 等待新窗口建立" +
-            (activeState.active.lockedTail != null ? " · 尾" + activeState.active.lockedTail : "");
         } else if (activeState && activeState.active) {
           status = "当前窗口进行中 · 第" + Math.min(maxStage, (activeState.active.attempts || []).length + 1) + "期";
         } else {
@@ -3078,9 +3219,6 @@
     var perLine = EXEC_LINES.map(function (line) {
       var rows = wmWindowsForStage(line, maxStage).filter(function (w) { return wmYearOf(w.start) === curYear; });
       var stNow = wmStageNow(line, maxStage);
-      var lastCompletedWindow = rows.length ? rows[rows.length - 1] : null;
-      var missReopenPendingOpen = !!(isCurrentYear && stNow && stNow.active &&
-        Number(stNow.active.start) > D.length && lastCompletedWindow && lastCompletedWindow.hitIndex === 0);
       var nextStartFull = isCurrentYear && stNow && stNow.active ? Number(stNow.active.start) : null;
       // 每条线自己的竖排事件流：一窗一格；窗与窗之间“等号重开”的空档单独占一格
       var out = [], streak = 0;
@@ -3104,19 +3242,8 @@
         var waitNow = latest - endP + 1;
         if (waitNow > 0) out.push({ kind: "wait", wait: waitNow, tail: stNow.waiting.tail, amount: 0, ruleWait: true });
       }
-      // 错窗后等到了重开号，但新窗口要到下一期才真正建立：最新格仍保留“等待”
-      if (missReopenPendingOpen) {
-        var lastEvent = out.length ? out[out.length - 1] : null;
-        if (lastEvent && lastEvent.kind === "wait") {
-          lastEvent.pendingOpen = true;
-          lastEvent.ruleWait = true;
-          lastEvent.tail = stNow.active.lockedTail != null ? stNow.active.lockedTail : lastEvent.tail;
-        } else {
-          out.push({ kind: "wait", wait: 0, tail: stNow.active.lockedTail, amount: 0, ruleWait: true, pendingOpen: true });
-        }
-      }
       // 只要窗口已经建立，就正常显示“进第几期”；等待只由真正的 waiting 状态产生
-      if (isCurrentYear && stNow && stNow.active && !missReopenPendingOpen) {
+      if (isCurrentYear && stNow && stNow.active) {
         out.push({
           kind: "live",
           stage: (stNow.active.attempts || []).length + 1,
@@ -3152,9 +3279,9 @@
         var c = p.events[r - (maxN - p.events.length)];
         if (!c) { html += '<td data-window-state="empty"><span class="heat-cell cell-empty">&nbsp;</span></td>'; return; }
         if (c.kind === "wait") {
-          var waitLabel = c.pendingOpen ? "等待" : "等" + c.wait;
-          var waitTitle = c.pendingOpen ? "等待新窗口正式建立" : "等待尾" + (c.tail != null ? c.tail : "-") + "重新开出";
-          html += '<td data-window-state="wait" data-window-rule-wait="true" data-window-pending-open="' + (c.pendingOpen ? "true" : "false") + '" data-window-start-pending="false" data-window-amount="0" title="' + waitTitle + ' · 本期0元"><span class="heat-cell cell-wait">' + waitLabel;
+          var waitLabel = "等" + c.wait;
+          var waitTitle = "等待尾" + (c.tail != null ? c.tail : "-") + "重新开出";
+          html += '<td data-window-state="wait" data-window-rule-wait="true" data-window-start-pending="false" data-window-amount="0" title="' + waitTitle + ' · 本期0元"><span class="heat-cell cell-wait">' + waitLabel;
           if (c.tail != null) html += '<span class="heat-cell__sub">尾' + c.tail + "</span>";
           html += "</span></td>";
           return;
@@ -7539,6 +7666,11 @@
       historyPointerStart = null;
       return;
     }
+    if (document.body.classList.contains("nav-drawer-open") ||
+        e.target.closest("[data-nav-drawer], [data-nav-handle], [data-nav-edge], [data-nav-close]")) {
+      historyPointerStart = null;
+      return;
+    }
     if (e.target.closest("input, select, textarea, a, [contenteditable='true']")) {
       historyPointerStart = null;
       return;
@@ -7629,6 +7761,14 @@
       try { localStorage.removeItem("v2_directory_group"); } catch (err) {}
       lsSet("v2_current_tab", state.tab);
       render();
+      closeNavDrawer();
+      return;
+    }
+    var groupBtn = e.target.closest(".nav-group[data-nav-group]");
+    if (groupBtn) {
+      state.group = groupBtn.dataset.navGroup;
+      lsSet(NAV_GROUP_KEY, state.group);
+      renderTabs();
       return;
     }
     // 恢复默认顺序
@@ -7649,6 +7789,7 @@
       rememberTabInGroup(state.group, state.tab);
       lsSet("v2_current_tab", state.tab);
       render();
+      closeNavDrawer();
     }
   });
 
@@ -8036,8 +8177,8 @@
   var validTabs = TABS.map(function (t) { return t.id; });
   var validGroups = NAV_GROUPS.map(function (g) { return g.id; });
   if (validGroups.indexOf(state.group) === -1) state.group = NAV_GROUPS[0].id;
-  // 刷新后停在原来那个页面（用户要求）；只有存的页面已经不存在了才回目录
-  if (validTabs.indexOf(state.tab) === -1) state.tab = "directory";
+  // 刷新后停在原来那个页面（用户要求）；只有存的页面已经不存在了才回“今日”
+  if (validTabs.indexOf(state.tab) === -1) state.tab = "overview";
   var currentGroup = groupForTab(state.tab) || groupById(state.group) || NAV_GROUPS[0];
   state.group = currentGroup.id;
   if (state.tab !== "directory") {
@@ -8047,6 +8188,7 @@
   lsSet(NAV_GROUP_KEY, state.group);
   lsSet("v2_current_tab", state.tab);
   autoSettleUltimateOrders();
+  initNavDrawer();
   renderHeader();
   render();
 })();

@@ -6,33 +6,57 @@
   <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="data:,">
   <title>财神爷尾数分析</title>
-  <link rel="stylesheet" href="styles.css?v=20261026-18">
+  <link rel="stylesheet" href="styles.css?v=20261027-1">
 </head>
 <body>
   <header class="appbar">
     <div class="appbar__inner">
       <div>
-        <h1 class="appbar__title">财神爷尾数分析</h1>
+        <h1 class="appbar__title">财神爷 · <span id="pageTitle">今日</span></h1>
         <p class="appbar__sub">数据截至第 <span id="latestPeriod">-</span> 期</p>
       </div>
       <div class="appbar__badge" id="latestTails">-</div>
     </div>
   </header>
 
-  <nav class="tabs" id="tabs" aria-label="主导航"></nav>
+  <button class="nav-edge-trigger" data-nav-edge type="button" aria-label="从左边缘打开导航"></button>
+  <button class="nav-handle" data-nav-handle type="button" aria-label="打开页面导航" aria-controls="navDrawer" aria-expanded="false">
+    <span>导航</span>
+  </button>
+  <button class="nav-scrim" data-nav-close type="button" aria-label="收起页面导航"></button>
+  <aside class="nav-drawer" id="navDrawer" data-nav-drawer aria-hidden="true" aria-label="页面导航">
+    <div class="nav-drawer__head">
+      <div>
+        <b>页面导航</b>
+        <span>选择后自动收起 · 长按可调整顺序</span>
+      </div>
+      <button class="nav-drawer__close" data-nav-close type="button" aria-label="收起页面导航">×</button>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="主导航"></nav>
+    <div class="nav-drawer__settings">
+      <button class="nav-drawer__setting" data-nav-hide type="button">
+        <span>隐藏导航按钮</span>
+        <small>隐藏后从左边缘右滑恢复</small>
+      </button>
+      <button class="nav-drawer__setting" data-nav-show type="button">
+        <span>显示导航按钮</span>
+        <small>恢复到屏幕左侧中间</small>
+      </button>
+    </div>
+  </aside>
 
   <main class="view" id="view"></main>
 
-  <script src="data.js?v=20261026-18"></script>
-  <script src="model_core.js?v=20261026-18"></script>
-  <script src="model_selector.js?v=20261026-18"></script>
-  <script src="probability_weight_research.js?v=20261026-18"></script>
-  <script src="model_probability.js?v=20261026-18"></script>
-  <script src="personality_model_data.js?v=20261026-18"></script>
-  <script src="personality_snapshots.js?v=20261026-18"></script>
-  <script src="ultimate_model.js?v=20261026-18"></script>
-  <script src="snapshots.js?v=20261026-18"></script>
-  <script src="probability_snapshots.js?v=20261026-18"></script>
-  <script src="app.js?v=20261026-18"></script>
+  <script src="data.js?v=20261027-1"></script>
+  <script src="model_core.js?v=20261027-1"></script>
+  <script src="model_selector.js?v=20261027-1"></script>
+  <script src="probability_weight_research.js?v=20261027-1"></script>
+  <script src="model_probability.js?v=20261027-1"></script>
+  <script src="personality_model_data.js?v=20261027-1"></script>
+  <script src="personality_snapshots.js?v=20261027-1"></script>
+  <script src="ultimate_model.js?v=20261027-1"></script>
+  <script src="snapshots.js?v=20261027-1"></script>
+  <script src="probability_snapshots.js?v=20261027-1"></script>
+  <script src="app.js?v=20261027-1"></script>
 </body>
 </html>

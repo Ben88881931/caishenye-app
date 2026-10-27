@@ -137,7 +137,7 @@ def main():
         except subprocess.CalledProcessError as e:
             fail("app.js 语法错误：" + (e.stderr or "").strip())
 
-        for func in ["missRebound", "backtestSignal", "calcGapStats"]:
+        for func in ["backtestSignal", "calcGapStats"]:
             if f"function {func}" not in app_text:
                 fail(f"app.js 缺少关键函数 {func}")
         else:
@@ -225,10 +225,22 @@ def main():
             pass_("追号/追推荐页面观望与锁定文案分层正确")
         else:
             fail("追号/追推荐页面观望与锁定文案不清晰")
-        if "function nudgeNavItem" in app_text and "renderedTab" in app_text and "data-directory-tab" in app_text and "v2_directory_group" in app_text and "window.scrollTo" in app_text:
-            pass_("顶部导航支持粘性定位、位置保持和当前项可见")
+        index_text = (REPO / "index.html").read_text(encoding="utf-8")
+        if (
+            'data-nav-drawer' in index_text
+            and 'data-nav-handle' in index_text
+            and 'data-nav-hide' in index_text
+            and 'data-nav-edge' in index_text
+            and 'nav-drawer__setting' in index_text
+            and "function initNavDrawer" in app_text
+            and "function setNavDrawer" in app_text
+            and "NAV_HANDLE_TOP_KEY" in app_text
+            and "NAV_HANDLE_HIDDEN_KEY" in app_text
+            and "closeNavDrawer()" in app_text
+        ):
+            pass_("左侧拇指抽屉支持页面选择自动收起、上下拖动和隐藏恢复")
         else:
-            fail("顶部导航缺少粘性定位、位置保持或当前项可见逻辑")
+            fail("左侧拇指抽屉缺少自动收起、拖动定位或隐藏恢复逻辑")
         flow_ids = ["pick3", "betexec", "formulas", "windowmult", "orderlog"]
         flow_pos = [app_text.find(chr(34) + fid + chr(34)) for fid in flow_ids]
         if all(pos >= 0 for pos in flow_pos) and flow_pos == sorted(flow_pos):
@@ -256,10 +268,10 @@ def main():
             pass_("公式表页面包含13线训练验证系数和配仓状态")
         else:
             fail("公式表页面缺少历史系数或配仓状态")
-        if "PAGE_GUIDE_GROUPS" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS" in app_text and 'title: "每日操作"' in app_text and 'title: "公式验证"' in app_text and 'title: "数据参考"' in app_text and 'title: "生肖与辅助"' in app_text and "appendGuideGroup(PAGE_GUIDE_DISPLAY_GROUPS[0])" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS.slice(1).forEach(appendGuideGroup)" in app_text and "PAGE_LABEL_GUIDE" in app_text and "PAGE_GUIDE_TAB_MAP" in app_text and "function pageGuideHTML" in app_text and "页面说明 · 大白话版" in app_text and "页面上的标语怎么看" in app_text and "label-guide-row" in app_text and "overview-page-card--guide" in app_text and "data-overview-tab" in app_text and "pageGuideHTML()" in app_text and "function historyStackHTML" in app_text and "function stepGroupHistory" in app_text and "function stepTabHistory" in app_text and "orderedGroupAt" in app_text and "orderedTabAt" in app_text and "getConfiguredGroups()" in app_text and "getVisibleTabs(state.group)" in app_text and "var SWIPE_X = 48" in app_text and 'addEventListener("pointermove"' in app_text and "gesture-active" in app_text and "gestureClickGuard" in app_text and 'e.target.closest("input, select, textarea, a, [contenteditable=\'true\']")' in app_text and "pointerdown" in app_text and "pointerup" in app_text and "history-nav-row" not in app_text and "每日选号下单顺序" not in app_text:
-            pass_("总览页把每日操作放第一并排列说明卡片、标语解释、跳转按钮，排序翻页卡隐藏、按钮密集页面也支持整屏即时手势")
+        if "function renderOverview" in app_text and "data-today-dashboard" in app_text and "data-dashboard-pick" in app_text and "data-dashboard-window-state" in app_text and "data-dashboard-shortcut" in app_text and "今日计划" in app_text and "13线窗口状态" in app_text and "常用入口" in app_text and "function pageGuideHTML" in app_text and "today-page-map" in app_text and "PAGE_GUIDE_DISPLAY_GROUPS.forEach" in app_text and "data-overview-tab" in app_text and "pageGuideHTML()" in app_text and "function historyStackHTML" in app_text and "function stepGroupHistory" in app_text and "function stepTabHistory" in app_text and "orderedGroupAt" in app_text and "orderedTabAt" in app_text and "getConfiguredGroups()" in app_text and "var SWIPE_X = 48" in app_text and 'addEventListener("pointermove"' in app_text and "gesture-active" in app_text and "gestureClickGuard" in app_text and 'e.target.closest("input, select, textarea, a, [contenteditable=\'true\']")' in app_text and "pointerdown" in app_text and "pointerup" in app_text:
+            pass_("今日驾驶舱集中展示候选、执行面、窗口状态和页面职责，并保留整屏翻页手势")
         else:
-            fail("总览页未把每日操作放第一，或缺少页面说明、标语解释、跳转按钮、按钮密集页手势或即时整屏手势")
+            fail("今日驾驶舱缺少候选、执行面、窗口状态、页面职责或整屏翻页手势")
         if "WM_BASE = 100" in app_text and "wmPlanText" in app_text and "每个号码的最优下注公式" in app_text and "lineBest" in app_text and "最优 " in app_text and "未通过" in app_text:
             pass_("窗口倍投测试100元起并逐线标注最优下注公式")
         else:
