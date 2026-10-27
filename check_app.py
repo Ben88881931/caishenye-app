@@ -239,6 +239,7 @@ def main():
             and 'nav-drawer__setting' in index_text
             and 'data-nav-search' in index_text
             and "function initNavDrawer" in app_text
+            and "edgeGesture" in app_text
             and "function setNavDrawer" in app_text
             and "function renderTopNavigation" in app_text
             and "data-top-tab" in app_text

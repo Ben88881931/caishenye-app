@@ -445,7 +445,34 @@
       });
     });
     if (navEdgeEl) {
-      navEdgeEl.addEventListener("click", function () { setNavDrawer(true); });
+      var edgeGesture = null;
+      var edgeClickGuard = false;
+      navEdgeEl.addEventListener("pointerdown", function (event) {
+        if (event.button != null && event.button !== 0) return;
+        edgeGesture = { id: event.pointerId, startX: event.clientX };
+        try { navEdgeEl.setPointerCapture(event.pointerId); } catch (e) {}
+      });
+      navEdgeEl.addEventListener("pointermove", function (event) {
+        if (!edgeGesture || event.pointerId !== edgeGesture.id) return;
+        if (event.clientX - edgeGesture.startX > 8) event.preventDefault();
+      });
+      navEdgeEl.addEventListener("pointerup", function (event) {
+        if (!edgeGesture || event.pointerId !== edgeGesture.id) return;
+        if (event.clientX - edgeGesture.startX >= 14) {
+          edgeClickGuard = true;
+          setNavDrawer(true);
+          window.setTimeout(function () { edgeClickGuard = false; }, 400);
+        }
+        edgeGesture = null;
+      });
+      navEdgeEl.addEventListener("pointercancel", function () { edgeGesture = null; });
+      navEdgeEl.addEventListener("click", function (event) {
+        if (edgeClickGuard) {
+          event.preventDefault();
+          return;
+        }
+        setNavDrawer(true);
+      });
     }
     if (navSearchEl) {
       navSearchEl.addEventListener("input", function () {

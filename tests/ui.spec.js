@@ -1263,7 +1263,18 @@ test("hidden navigation handle can be restored from the left edge", async ({ pag
   await expect(page.locator("body")).toHaveClass(/nav-handle-hidden/);
   await expect(page.locator("[data-nav-handle]")).toBeHidden();
 
-  await page.locator("[data-nav-edge]").click({ position: { x: 8, y: 180 } });
+  const edgeStyle = await page.locator("[data-nav-edge]").evaluate((element) => ({
+    opacity: Number(window.getComputedStyle(element).opacity),
+    pointerEvents: window.getComputedStyle(element).pointerEvents,
+  }));
+  expect(edgeStyle.opacity).toBeGreaterThan(0.4);
+  expect(edgeStyle.pointerEvents).toBe("auto");
+
+  const edgeBox = await page.locator("[data-nav-edge]").boundingBox();
+  await page.mouse.move(edgeBox.x + 2, edgeBox.y + edgeBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(edgeBox.x + 42, edgeBox.y + edgeBox.height / 2, { steps: 6 });
+  await page.mouse.up();
   await expect(page.locator("body")).toHaveClass(/nav-drawer-open/);
   await expect(page.locator("[data-nav-show]")).toBeVisible();
   await page.locator("[data-nav-show]").click();

@@ -5212,19 +5212,32 @@ body.nav-handle-hidden .nav-handle {
   position: fixed;
   z-index: 44;
   left: 0;
-  top: 32%;
-  width: 18px;
-  height: 36%;
+  top: 50%;
+  width: 14px;
+  height: 96px;
   padding: 0;
-  border: 0;
-  background: transparent;
+  transform: translateY(-50%);
+  border: 1px solid #b9dcd1;
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+  background: rgba(23, 111, 91, 0.68);
+  color: #fff;
   opacity: 0;
   pointer-events: none;
-  touch-action: pan-y;
+  touch-action: none;
+  box-shadow: 5px 3px 14px rgba(15, 23, 42, 0.12);
+}
+
+.nav-edge-trigger::before {
+  content: "›";
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 body.nav-handle-hidden .nav-edge-trigger {
-  opacity: 1;
+  opacity: 0.78;
   pointer-events: auto;
 }
 
