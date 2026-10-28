@@ -4672,6 +4672,25 @@ body[data-page="overview"] .window-execution-history__item.is-miss {
   color: #b91c1c;
 }
 
+.window-history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.window-history-line {
+  min-width: 0;
+}
+
+.window-history-line h3 {
+  margin: 0;
+  color: #172334;
+  font-size: 14px;
+}
+
+.window-history-line .today-section__head {
+  margin-bottom: 6px;
+}
+
 /* 唯一窗口卡母版：逐线窗口记录 */
 .window-record-card {
   flex: 0 0 252px;
