@@ -2927,7 +2927,7 @@
         attempts: [],
         lockedTail: row.tail,
       };
-      var recent = windows.slice(-8).reverse().map(function (w) {
+      var recent = windows.slice().reverse().map(function (w) {
         var hit = Number(w.hitIndex) >= 1 && Number(w.hitIndex) <= 3;
         return '<span class="window-execution-history__item ' + (hit ? "is-hit" : "is-miss") + '">' +
           (hit ? "中" + w.hitIndex : "错") + '</span>';
@@ -2940,63 +2940,6 @@
         tone: row.live.waiting ? "is-waiting" : "is-live",
         attrs: ' data-window-execution-card="' + row.line.id + '" data-window-record-card="1"'
       });
-    });
-    return html + '</div>';
-  }
-
-  function windowHistoryLineCardsHTML(planAllRows) {
-    var html = '<div class="window-history-list">';
-    planAllRows.forEach(function (row) {
-      var windows = wmWindowsForStage(row.line, 3);
-      html += '<section class="window-history-line" data-window-history-line="' + row.line.id + '">' +
-        '<div class="today-section__head"><h3>' + lineDisplayLabel(row.line, row.tail) +
-        '</h3><span>全部历史 · ' + windows.length + ' 个已完成窗口</span></div>' +
-        '<div class="window-execution-line-strip record-scroll" data-window-history-strip="' + row.line.id + '">';
-      if (row.live.waiting) {
-        var waitSteps = "";
-        for (var ws = 1; ws <= 3; ws++) {
-          waitSteps += '<div class="exec-bet-period window-record-step is-future">' +
-            '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + ws + '期</b>' +
-            '<span>尚未开窗</span><em>尾' + row.live.waiting.tail + '</em></div>' +
-            '<div class="exec-bet-period__body window-record-step__body"><span>等待重开</span>' +
-            '<strong>待定</strong><b>无盈亏</b></div></div>';
-        }
-        html += windowRecordCardHTML({
-          label: lineDisplayLabel(row.line, row.live.waiting.tail),
-          state: "等待重开",
-          history: '<em>上一窗口已结束，等尾' + row.live.waiting.tail + '开出后开新窗口</em>',
-          historyLabel: "当前状态",
-          steps: waitSteps,
-          tone: "is-live is-waiting",
-          attrs: ' data-window-history-card="waiting"'
-        });
-      } else if (row.live.active) {
-        html += windowRecordCardHTML({
-          label: lineDisplayLabel(row.line, row.live.active.lockedTail || row.tail),
-          state: "进行中 · 第" + row.live.stage + "/3期",
-          history: '<em>起始第' + betLocalPeriod(row.live.active.start) + '期</em>',
-          historyLabel: "当前状态",
-          steps: betWindowRowsHTML(row.line, row.live.active, 3),
-          tone: "is-live",
-          attrs: ' data-window-history-card="live"'
-        });
-      }
-      windows.slice().reverse().forEach(function (w) {
-        var hit = Number(w.hitIndex) > 0;
-        var tail = w.attempts && w.attempts[0] && w.attempts[0].tail != null
-          ? w.attempts[0].tail
-          : row.tail;
-        html += windowRecordCardHTML({
-          label: lineDisplayLabel(row.line, tail),
-          state: hit ? "第" + w.hitIndex + "期中" : "三期全错",
-          history: '<em>' + wmYearOf(w.start) + '年 · 起始第' + betLocalPeriod(w.start) + '期</em>',
-          historyLabel: "窗口",
-          steps: betWindowRowsHTML(row.line, w, 3),
-          tone: hit ? "is-hit" : "is-miss",
-          attrs: ' data-window-history-card="' + w.start + '"'
-        });
-      });
-      html += '</div></section>';
     });
     return html + '</div>';
   }
@@ -3019,8 +2962,8 @@
 
   function windowReportHistoryHTML(planAllRows, planRows) {
     return '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>三期窗口 · 历史记录</h2>' +
-      '<span>每条线全部往期窗口 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
-      windowHistoryLineCardsHTML(planAllRows) + '</section>' +
+      '<span>逐线窗口记录 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
+      windowExecutionLineCardsHTML(planAllRows) + '</section>' +
       '<section class="today-section" data-window-daily-plan><div class="today-section__head"><h2>逐日计划对照</h2><span>每张卡=一个开奖日 · 新→旧 · 横向滑动</span></div>' +
       dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
   }
