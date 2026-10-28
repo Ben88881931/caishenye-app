@@ -1282,20 +1282,24 @@
 
   function modelPairStrip(period) {
     if (!PROB_MODEL || !PROB_MODEL.analyze) return "";
-    var result = PROB_MODEL.analyze(RAW, period - 1);
-    var picks = result.top || [];
+    var source = probabilityTopPicksForTarget(period);
+    var picks = source.picks || [];
     var lineNames = ["A", "B", "C"];
     var candidateLabels = picks.map(function (row, index) {
       return lineNames[index] + row.tail;
     });
-    var statusLabel = result.legacyLocked ? "296锁定" : "正式候选";
+    var statusLabel = source.source === "snapshot" ? "开奖前快照" :
+      (source.legacyLocked ? "296锁定" : "正式候选");
     var tones = ["model-pair-card--p1", "model-pair-card--p2", "model-pair-card--p3"];
-    return '<div class="model-pair-grid">' +
+    return '<div class="section" data-single-probability-summary><div class="section__head"><h2 class="section__title">今日单期概率候选</h2>' +
+      '<span class="section__hint">第' + period + '期 · A、B、C三条单期候选，只显示单期概率</span></div></div>' +
+      '<div class="model-pair-grid" data-today-candidate-grid>' +
       picks.map(function (row, index) {
-        return '<div class="model-pair-card ' + tones[index] + '"><span>' + statusLabel + '</span><b>' + candidateLabels[index] + '</b><small>三期窗口 ' + (row.window3Prob * 100).toFixed(1) + '% · 单期诊断 ' + (row.nextProb * 100).toFixed(1) + '%</small></div>';
+        return '<div class="model-pair-card ' + tones[index] + '"><span>' + statusLabel + '</span><b>' + candidateLabels[index] + '</b><small>单期概率 ' + (row.nextProb * 100).toFixed(1) + '%</small></div>';
       }).join("") +
-      (result.ambiguous ? '<div class="model-pair-note">前三名概率接近，当前排序不代表明显强弱</div>' : '') +
-      '</div>';
+      (source.ambiguous ? '<div class="model-pair-note">前三名概率接近，当前排序不代表明显强弱</div>' : '') +
+      '</div><div class="panel" data-single-probability-note style="margin-top:8px;padding:9px 11px;color:#475569;font-size:12px;font-weight:800;line-height:1.65">' +
+      '候选表示下一期出现概率相对靠前，不代表必出；金额和是否下注由你决定。</div>';
   }
 
   function renderHeader() {
@@ -3142,50 +3146,6 @@
     return selected.sort(function (a, b) {
       return order[a.line.id] - order[b.line.id];
     });
-  }
-
-  function todaySinglePeriodHTML() {
-    var labels = ["A", "B", "C"];
-    var picks = labels.map(function (label, rank) {
-      var pick = probabilityPickAt(latest + 1, rank);
-      if (!pick) return null;
-      return {
-        label: label,
-        lineId: "prob" + (rank + 1),
-        tail: Number(pick.tail),
-        nextProb: Number(pick.score != null ? pick.score : (pick.nextProb || 0)),
-        window3Prob: Number(pick.window3Prob || 0),
-      };
-    }).filter(Boolean);
-    var seen = {};
-    picks = picks.filter(function (pick) {
-      if (seen[pick.tail]) return false;
-      seen[pick.tail] = true;
-      return true;
-    });
-    var html = '<div data-today-plan><div class="section"><div class="section__head"><h2 class="section__title">今日单期概率候选</h2>' +
-      '<span class="section__hint">第' + (latest + 1) + '期 · 从A、B、C三条单期概率线中取前2至3个参考尾号</span></div></div>';
-    html += '<div class="section"><div class="panel today-plan-guide"><b>单期候选尾号</b>' +
-      '<span>候选表示下一期出现概率相对靠前，不代表必出；金额与是否下注由你决定。</span></div></div>';
-    html += '<div class="today-plan-grid">';
-    picks.forEach(function (pick, index) {
-      var personality = PERSONALITY_BY_ID[pick.lineId];
-      var current = personality && personality.current || {};
-      html += '<article class="today-plan-card" data-today-plan-card data-line-id="' + pick.lineId + '"' +
-        ' data-tail="' + pick.tail + '">' +
-        '<div class="today-plan-card__top"><span>#' + (index + 1) + ' · 单期 ' + pick.label + '</span>' +
-          '<em>当前期</em></div>' +
-        '<h3>' + pick.label + pick.tail + '</h3>' +
-        '<div class="today-plan-card__main"><b>单期参考尾号</b><strong>尾' + pick.tail + '</strong></div>' +
-        '<div class="today-plan-card__meta">下一期出现概率 ' + (pick.nextProb * 100).toFixed(1) +
-          '% · 模型基准 ' + (Number(current.baseline || 0) * 100).toFixed(1) + '%</div>' +
-        '</article>';
-    });
-    html += '</div>';
-    html += '<div class="section"><div class="panel today-plan-note"><b>规则</b>' +
-      '<span>这里只给单期概率候选尾号，不显示三期窗口、金额或自动下单。候选不代表必出，系统建议不等于必须下注，最终由你决定。</span></div></div>';
-    html += '</div>';
-    return html;
   }
 
   function renderOverview() {
@@ -5647,6 +5607,39 @@
     })[0] || null;
   }
 
+  function probabilityTopPicksForTarget(targetLocalPeriod) {
+    var saved = probabilitySnapshotRecord(targetLocalPeriod);
+    if (saved && Array.isArray(saved.top3) && saved.top3.length) {
+      return {
+        source: "snapshot",
+        version: saved.modelVersion || "",
+        legacyLocked: Number(targetLocalPeriod) >= 294 && Number(targetLocalPeriod) <= 296,
+        ambiguous: false,
+        picks: saved.top3.map(function (row) {
+          return {
+            tail: Number(row.tail),
+            nextProb: Number(row.nextProb || 0),
+            window3Prob: Number(row.window3Prob || 0),
+          };
+        }),
+      };
+    }
+    var analyzed = PROB_MODEL.analyze(RAW, Number(targetLocalPeriod) - 1);
+    return {
+      source: "model",
+      version: analyzed.version || "",
+      legacyLocked: !!analyzed.legacyLocked,
+      ambiguous: !!analyzed.ambiguous,
+      picks: (analyzed.top || []).map(function (row) {
+        return {
+          tail: Number(row.tail),
+          nextProb: Number(row.nextProb || 0),
+          window3Prob: Number(row.window3Prob || 0),
+        };
+      }),
+    };
+  }
+
   function probabilityPickAt(period, rank) {
     var localPeriod = betLocalPeriod(period);
     var saved = probabilitySnapshotRecord(localPeriod);
@@ -8098,7 +8091,7 @@
     var activeView = ["overview", "history", "snapshot"].indexOf(state.probView) >= 0 ? state.probView : "overview";
     state.probView = activeView;
     var productionSummaryHTML = '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
-    var html = todaySinglePeriodHTML();
+    var html = "";
     html += '<div class="section"><div class="section__head"><h2 class="section__title">' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
     html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="单期任务">' +
       '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前</button>' +

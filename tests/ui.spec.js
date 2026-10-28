@@ -1365,7 +1365,7 @@ test("today execution selects only two or three qualified lines and leaves the r
   await expect(page.locator("[data-window-execution-panel]")).toContainText("是否下注由你决定");
 });
 
-test("single-period page merges today plan and shows two or three purchase tails without window stages or amounts", async ({ page }) => {
+test("model probability page shows one single candidate grid without duplicate today cards", async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
   await page.evaluate(() => {
@@ -1375,19 +1375,39 @@ test("single-period page merges today plan and shows two or three purchase tails
   await page.waitForFunction(() => document.body.dataset.page === "pick3");
 
   await expect(page.getByRole("heading", { name: "今日单期概率候选", exact: true })).toBeVisible();
-  const cards = page.locator("[data-today-plan-card]");
+  await expect(page.locator("[data-today-candidate-grid]")).toHaveCount(1);
+  await expect(page.locator("[data-today-plan-card]")).toHaveCount(0);
+  const cards = page.locator(".model-pair-card");
   const cardCount = await cards.count();
   expect(cardCount).toBeGreaterThanOrEqual(2);
   expect(cardCount).toBeLessThanOrEqual(3);
   for (let index = 0; index < cardCount; index++) {
     const card = cards.nth(index);
     await expect(card).toContainText(/[ABC]\d/);
-    await expect(card).toContainText(/单期参考尾号\s*尾\d/);
-    await expect(card).not.toContainText("窗口");
+    await expect(card).toContainText(/单期概率/);
+    await expect(card).not.toContainText("三期窗口");
     await expect(card).not.toContainText("元");
   }
-  await expect(page.locator("[data-today-plan]")).toContainText("是否下注由你决定");
-  await expect(page.locator("[data-today-plan]")).toContainText("候选不代表必出");
+  await expect(page.locator("[data-single-probability-note]")).toContainText("候选不代表必出");
+});
+
+test("model probability header and today candidates use the same frozen snapshot", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.body.dataset.page === "pick3");
+
+  const expected = await page.evaluate(async () => {
+    const response = await fetch("probability_snapshots.json");
+    const data = await response.json();
+    const record = data.records.find((row) => Number(row.target) === 302);
+    return record.top3.map((row, index) => ["A", "B", "C"][index] + row.tail);
+  });
+  const header = await page.locator(".model-pair-card b").allTextContents();
+  expect(header).toEqual(expected);
 });
 
 test("shared quick access appears on non-home pages and links directly", async ({ page }) => {
