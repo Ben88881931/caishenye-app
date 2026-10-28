@@ -277,7 +277,7 @@
     betLineMode: "all",
     betResearchOpen: false,
     betExecView: lsGet("v2_bet_exec_view", "today"),
-    windowReportView: lsGet("v2_window_report_view", "ranking"),
+    windowReportView: lsGet("v2_window_report_view", "current"),
     windowMissView: lsGet("v2_window_miss_view", "heat"),
     windowMiss2View: lsGet("v2_window_miss2_view", "heat"),
     trendView: lsGet("v2_trend_view", "heat"),
@@ -2888,9 +2888,6 @@
     html += '</div><div class="window-report-actions">' +
       '<button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
 
-    html += '<section class="today-section window-ranking-history" data-window-ranking-history>' +
-      dailyReportRankingHistoryHTML() + '</section>';
-
     html += '<section class="today-section"><div class="today-section__head"><h2>13线窗口状态</h2><span>' +
       liveCount + ' 条进窗 · ' + waitingCount + ' 条等待</span></div><div class="today-window-strip">';
     windowStates.forEach(function (stateRow) {
@@ -2929,7 +2926,7 @@
     return html + '</div>';
   }
 
-  function windowReportExecutionHTML(planAllRows, planRows, totalAmount, totalRisk) {
+  function windowReportCurrentExecutionHTML(planAllRows, planRows, totalAmount, totalRisk) {
     var html = '<section class="today-section" data-window-execution-panel>' +
       '<div class="today-section__head"><h2>执行与盈亏</h2><span>只按各线正式公式取当前窗口期数</span></div>' +
       '<div class="today-summary">' +
@@ -2952,14 +2949,15 @@
         '<small>公式 ' + row.formula.join(" / ") + ' 元</small></div>';
     });
     html += '</div><div class="window-report-actions"><button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
-
-    html += '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>逐线窗口记录 · 第1/2/3期</h2>' +
-      '<span>当前窗口或最近完成窗口 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
-      windowExecutionLineCardsHTML(planAllRows) + '</section>';
-
-    html += '<section class="today-section" data-window-daily-plan><div class="today-section__head"><h2>逐日计划对照</h2><span>每张卡=一个开奖日 · 新→旧 · 横向滑动</span></div>' +
-      dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
     return html;
+  }
+
+  function windowReportHistoryHTML(planAllRows, planRows) {
+    return '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>逐线窗口记录 · 第1/2/3期</h2>' +
+      '<span>当前窗口或最近完成窗口 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
+      windowExecutionLineCardsHTML(planAllRows) + '</section>' +
+      '<section class="today-section" data-window-daily-plan><div class="today-section__head"><h2>逐日计划对照</h2><span>每张卡=一个开奖日 · 新→旧 · 横向滑动</span></div>' +
+      dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
   }
 
   function renderOverview() {
@@ -3020,7 +3018,10 @@
     var todayRisk = planAllRows.reduce(function (sum, row) { return sum + row.risk; }, 0);
     var waitingCount = windowStates.filter(function (row) { return row.kind === "wait"; }).length;
     var liveCount = windowStates.filter(function (row) { return row.kind === "live"; }).length;
-    var reportView = state.windowReportView === "execution" ? "execution" : "ranking";
+    var reportView = state.windowReportView;
+    if (reportView === "ranking") reportView = "current";
+    if (reportView === "execution") reportView = "history";
+    if (["current", "history", "snapshot"].indexOf(reportView) < 0) reportView = "current";
     state.windowReportView = reportView;
 
     var html = '<div class="today-dashboard window-report" data-today-dashboard data-window-report>';
@@ -3041,13 +3042,18 @@
     html += '</div></section>';
 
     html += '<div class="task-tabs" data-window-report-tabs role="tablist" aria-label="窗口报告任务">' +
-      '<button class="task-tab ' + (reportView === "ranking" ? "is-active" : "") + '" type="button" data-window-report-task="ranking" role="tab">排名窗口</button>' +
-      '<button class="task-tab ' + (reportView === "execution" ? "is-active" : "") + '" type="button" data-window-report-task="execution" role="tab">执行盈亏</button>' +
+      '<button class="task-tab ' + (reportView === "current" ? "is-active" : "") + '" type="button" data-window-report-task="current" role="tab">当前候选</button>' +
+      '<button class="task-tab ' + (reportView === "history" ? "is-active" : "") + '" type="button" data-window-report-task="history" role="tab">测试记录</button>' +
+      '<button class="task-tab ' + (reportView === "snapshot" ? "is-active" : "") + '" type="button" data-window-report-task="snapshot" role="tab">快照</button>' +
       '</div>';
-    if (reportView === "ranking") {
+    if (reportView === "current") {
       html += windowReportRankingHTML(reportRows, windowStates, liveCount, waitingCount);
+      html += windowReportCurrentExecutionHTML(planAllRows, planRows, todayTotal, todayRisk);
+    } else if (reportView === "history") {
+      html += windowReportHistoryHTML(planAllRows, planRows);
     } else {
-      html += windowReportExecutionHTML(planAllRows, planRows, todayTotal, todayRisk);
+      html += '<section class="today-section window-ranking-history" data-window-ranking-history>' +
+        dailyReportRankingHistoryHTML() + '</section>';
     }
 
     html += '<details class="term-guide"><summary>术语速查 · 第一次使用先看这里</summary><div class="term-guide__body">' +
@@ -7513,11 +7519,11 @@
     html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="单期报告任务">' +
       '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前候选</button>' +
       '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">测试记录</button>' +
-      '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">10尾快照</button>' +
+      '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">快照</button>' +
       '</div>';
     if (activeView === "overview") {
       html += '<div data-model-detail-panel="overview"><div class="section"><div class="section__head"><h2 class="section__title">当前候选</h2><span class="section__hint">A / B / C + 当期尾号已在上方展示；本页只保留概率证据，不重复执行金额</span></div></div>' +
-        '<div class="task-empty">需要核对历史时，切换到“测试记录”；需要核对每期10尾排序时，切换到“10尾快照”。</div></div>';
+        '<div class="task-empty">需要核对历史时，切换到“测试记录”；需要核对每期10尾排序时，切换到“快照”。</div></div>';
     } else if (activeView === "history") {
       html += '<div data-model-detail-panel="history">';
     html += '<div class="section"><div class="panel"><div class="wm-subhead">测试历史年份 · 2021-2026各年独立</div><div class="wm-view-tabs">' + yearTabs + '</div></div></div>';
@@ -8440,7 +8446,10 @@
     }
     var windowReportTask = e.target.closest("[data-window-report-task]");
     if (windowReportTask) {
-      state.windowReportView = windowReportTask.dataset.windowReportTask === "execution" ? "execution" : "ranking";
+      var nextWindowReportView = windowReportTask.dataset.windowReportTask;
+      state.windowReportView = ["current", "history", "snapshot"].indexOf(nextWindowReportView) >= 0
+        ? nextWindowReportView
+        : "current";
       lsSet("v2_window_report_view", state.windowReportView);
       renderOverview();
       requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
