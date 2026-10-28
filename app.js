@@ -2510,12 +2510,28 @@
 
   function dailyReportWindowChipHTML(w) {
     var result = dailyReportResult(w);
-    return '<div class="daily-report-window-chip" style="--chip-color:' + result.color + ';--chip-soft:' + result.soft + '">' +
-      '<b>' + wmPeriodLabel(w.start) + '</b>' +
-      '<span>' + result.label + '</span>' +
-      '<small>' + (w.attempts || []).map(function (attempt) {
-        return "第" + (Number(attempt.period) - Number(w.start) + 1) + "期尾" + attempt.tail + (attempt.hit ? "中" : "错");
-      }).join(" · ") + '</small></div>';
+    var attempts = w.attempts || [];
+    var lockedTail = attempts[0] && attempts[0].tail != null ? attempts[0].tail : null;
+    var steps = "";
+    for (var stage = 1; stage <= 3; stage++) {
+      var attempt = attempts[stage - 1] || null;
+      var stateText = attempt ? (attempt.hit ? "中" : "错") : "已关窗";
+      steps += '<div class="exec-bet-period window-record-step">' +
+        '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + stage + '期</b>' +
+        '<span>第' + (Number(w.start) + stage - 1) + '期</span><em>' +
+        (lockedTail == null ? "尾待定" : "尾" + lockedTail) + '</em></div>' +
+        '<div class="exec-bet-period__body window-record-step__body"><span>窗口记录</span>' +
+        '<strong>' + stateText + '</strong><b>' + (attempt ? "已结算" : "未进入") + '</b></div></div>';
+    }
+    return windowRecordCardHTML({
+      label: wmPeriodLabel(w.start) + "起",
+      state: result.label,
+      history: '<em>独立查看第1/2/3期 · 窗口最多3期</em>',
+      historyLabel: "窗口说明",
+      steps: steps,
+      tone: result.hit ? "is-hit" : "is-miss",
+      className: "daily-report-window-chip"
+    });
   }
 
   function dailyReportModeComparisonHTML(row) {
@@ -2916,12 +2932,14 @@
         return '<span class="window-execution-history__item ' + (hit ? "is-hit" : "is-miss") + '">' +
           (hit ? "中" + w.hitIndex : "错") + '</span>';
       }).join("");
-      html += '<article class="window-execution-line-card" data-window-execution-card="' + row.line.id + '">' +
-        '<div class="window-execution-line-card__head"><b>' + lineDisplayLabel(row.line, shownWindow.lockedTail || row.tail) + '</b>' +
-        '<span>' + (row.live.waiting ? "等待尾" + row.live.waiting.tail + "重开" : (row.live.active ? "当前窗口" : "上一窗口")) + '</span></div>' +
-        '<div class="window-execution-history"><small>最近窗口</small>' + (recent || '<em>暂无</em>') + '</div>' +
-        betWindowRowsHTML(row.line, shownWindow, 3) +
-        '</article>';
+      html += windowRecordCardHTML({
+        label: lineDisplayLabel(row.line, shownWindow.lockedTail || row.tail),
+        state: row.live.waiting ? "等待尾" + row.live.waiting.tail + "重开" : (row.live.active ? "当前窗口" : "上一窗口"),
+        history: recent || '<em>暂无</em>',
+        steps: betWindowRowsHTML(row.line, shownWindow, 3),
+        tone: row.live.waiting ? "is-waiting" : "is-live",
+        attrs: ' data-window-execution-card="' + row.line.id + '" data-window-record-card="1"'
+      });
     });
     return html + '</div>';
   }
@@ -4728,13 +4746,29 @@
       if (at && amount > 0) pnl = at.hit ? amount * (BET_ODDS - 1) : -amount;
       var pnlText = pnl == null ? (period > latest && amount > 0 ? "待结算" : "—") : ((pnl >= 0 ? "+" : "") + Math.round(pnl));
       var pnlTone = pnl == null ? "#64748b" : (pnl > 0 ? "#16a34a" : (pnl < 0 ? "#dc2626" : "#475569"));
-      out += '<div class="exec-bet-period" data-bet-period-row data-bet-stage="' + (k + 1) +
+      out += '<div class="exec-bet-period window-record-step" data-bet-period-row data-bet-stage="' + (k + 1) +
         '" data-bet-amount="' + amount + '" data-bet-pnl="' + (pnl == null ? "" : Math.round(pnl)) + '">';
-      out += '<div class="exec-bet-period__head"><b>窗口第' + (k + 1) + '期</b><span>第' + period + '期</span><em>' + (tail != null ? "尾" + tail : "尾待定") + '</em></div>';
-      out += '<div class="exec-bet-period__body"><span>下注' + amount + '元</span><strong style="color:' + tone + '">' + stateText + '</strong><b style="color:' + pnlTone + '">盈亏' + pnlText + '</b></div>';
+      out += '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + (k + 1) + '期</b><span>第' + period + '期</span><em>' + (tail != null ? "尾" + tail : "尾待定") + '</em></div>';
+      out += '<div class="exec-bet-period__body window-record-step__body"><span>下注' + amount + '元</span><strong style="color:' + tone + '">' + stateText + '</strong><b style="color:' + pnlTone + '">盈亏' + pnlText + '</b></div>';
       out += "</div>";
     }
     return out;
+  }
+
+  function windowRecordCardHTML(options) {
+    var opts = options || {};
+    var history = opts.history
+      ? '<div class="window-execution-history window-record-card__history">' +
+        '<small>' + escapeHTML(opts.historyLabel || "最近窗口") + '</small>' + opts.history + '</div>'
+      : "";
+    return '<article class="window-execution-line-card window-record-card ' +
+      (opts.className || "") + ' ' + (opts.tone || "") + '"' + (opts.attrs || "") + '>' +
+      '<div class="window-execution-line-card__head window-record-card__head"><b>' +
+      escapeHTML(opts.label || "") + '</b><span>' + escapeHTML(opts.state || "") + '</span></div>' +
+      history +
+      '<div class="window-record-card__steps">' + (opts.steps || "") + '</div>' +
+      (opts.foot ? '<div class="window-record-card__foot">' + opts.foot + '</div>' : "") +
+      '</article>';
   }
 
   function renderBetExec() {
@@ -6252,45 +6286,53 @@
     }
     html += '</div>';
     function wmWindowCard(w, isLive, item) {
-      var tone = isLive ? "#2563eb" : w.hitIndex === 0 ? "#dc2626" : "#16a34a";
-      var cls = isLive ? "live" : w.hitIndex === 0 ? "miss" : "hit";
+      var cls = isLive ? "is-live" : w.hitIndex === 0 ? "is-miss" : "is-hit";
       var resultText = isLive
-        ? ("进行中 " + Math.min(w.attempts.length, 3) + "/3")
+        ? ("进行中 · 第" + Math.min(3, (w.attempts || []).length + 1) + "/3期")
         : (w.hitIndex > 0 ? "第" + w.hitIndex + "期中" : "三期全错");
-      var card = '<div class="wm-win-card wm-win-card--' + cls + '">';
-      card += '<div class="wm-win-card__start">' + (isLive ? "当前窗口 · " : "") + "起始 " + wmPeriodLabel(w.start) + '</div>';
-      card += '<div class="wm-win-card__result" style="color:' + tone + '">' + resultText + '</div>';
+      var lockedTail = w.lockedTail != null
+        ? w.lockedTail
+        : (w.attempts[0] && w.attempts[0].tail != null ? w.attempts[0].tail : null);
+      var steps = "";
       for (var k = 0; k < 3; k++) {
         var cardPeriod = w.start + k;
         var att = w.attempts[k];
-        card += '<div class="wm-win-card__row">';
-        card += '<span class="wm-win-card__stage">第' + (k + 1) + '期</span>';
+        var tail = lockedTail;
+        var stateText = "已关窗";
+        var result = "待定";
         if (att) {
-          card += '<span class="wm-win-card__period">' + wmPeriodLabel(att.period) + '</span>';
-          card += '<span class="wm-win-card__tail">尾' + att.tail + '</span>';
-          card += '<span class="wm-win-card__state" style="color:' + (att.hit ? "#16a34a" : "#dc2626") + '">' + (att.hit ? "中" : "错") + '</span>';
+          tail = att.tail;
+          stateText = att.hit ? "中" : "错";
+          result = att.hit ? "中" : "错";
         } else if (isLive) {
-          var liveTail = wmLiveTailFor(line, w, cardPeriod);
-          card += '<span class="wm-win-card__period">' + wmPeriodLabel(cardPeriod) + '</span>';
-          card += '<span class="wm-win-card__tail" style="color:' + (cardPeriod <= latest ? "#94a3b8" : "#2563eb") + '">' + (liveTail != null ? "尾" + liveTail : (cardPeriod <= latest ? "未记录" : "待开奖")) + '</span>';
-          if (liveTail != null) {
-            card += '<span class="wm-win-card__state" style="color:' + (cardPeriod <= latest ? "#94a3b8" : "#2563eb") + '">' + (cardPeriod <= latest ? "未记录" : "待开奖") + '</span>';
-          }
-        } else {
-          card += '<span class="wm-win-card__tail" style="color:#94a3b8">命中后停止</span>';
+          tail = wmLiveTailFor(line, w, cardPeriod);
+          stateText = cardPeriod <= latest ? "未记录" : (k === (w.attempts || []).length ? "待开奖" : "待定");
+          result = stateText;
         }
-        card += '</div>';
+        steps += '<div class="exec-bet-period window-record-step">' +
+          '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + (k + 1) + '期</b>' +
+          '<span>' + wmPeriodLabel(cardPeriod) + '</span><em>' + (tail != null ? "尾" + tail : "尾待定") + '</em></div>' +
+          '<div class="exec-bet-period__body window-record-step__body"><span>窗口记录</span>' +
+          '<strong>' + stateText + '</strong><b>' + result + '</b></div></div>';
       }
-      card += '<div class="wm-win-card__foot">';
+      var foot;
       if (isLive) {
-        card += '<span style="color:#1d4ed8;font-weight:900">已检查' + w.attempts.length + '期</span>';
-        card += '<span style="color:#1d4ed8;font-weight:900">下期 ' + wmPeriodLabel(w.start + w.attempts.length) + '</span>';
+        foot = '<span>已检查' + w.attempts.length + '期</span><b>下期 ' + wmPeriodLabel(w.start + w.attempts.length) + '</b>';
       } else {
-        card += '<span style="color:' + (item.missStreak ? "#dc2626" : "#94a3b8") + ';font-weight:900">' + (item.missStreak ? "第" + item.missStreak + "次连错" : "未连错") + '</span>';
-        card += '<b style="color:' + (item.profit >= 0 ? "#16a34a" : "#dc2626") + '">本窗 ' + (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</b>';
+        foot = '<span>' + (item.missStreak ? "第" + item.missStreak + "次连错" : "未连错") + '</span><b>本窗 ' +
+          (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</b>';
       }
-      card += '</div></div>';
-      return card;
+      return windowRecordCardHTML({
+        label: lineDisplayLabel(line, lockedTail),
+        state: resultText,
+        history: '<em>起始 ' + wmPeriodLabel(w.start) + (lockedTail == null ? "" : " · 锁定尾" + lockedTail) + '</em>',
+        historyLabel: "窗口说明",
+        steps: steps,
+        foot: foot,
+        tone: cls,
+        className: "wm-win-card",
+        attrs: ' data-wm-window-card="' + (isLive ? "live" : w.start) + '"'
+      });
     }
     html += '<div class="wm-subhead">窗口明细 · ' + WINDOW_RECORD_FORMAT + ' · 每年从第1期重新开窗 · <span style="font-weight:400;color:#64748b">中=绿 错=红 进行中=蓝</span></div>';
     html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口</div>';
@@ -6492,23 +6534,34 @@
     var visibleWindows = activeTail === "all" ? allWindows : allWindows.filter(function (w) { return Number(w.tail) === activeTail; });
     visibleWindows = visibleWindows.slice().sort(function (a, b) { return Number(b.startPeriod) - Number(a.startPeriod); });
     html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内锁定窗口</h2><span class="section__hint">每个号码第一次下单自动锁定3期，期间号码不变；中出或三期全错后关闭</span></div></div>';
-    html += '<div class="section"><div class="panel" style="padding:10px;overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="display:flex;gap:7px;min-width:max-content">';
+    html += '<div class="section"><div class="panel" style="padding:10px"><div class="wm-hscroll" style="display:flex;gap:7px;min-width:max-content">';
     if (!visibleWindows.length) {
       html += '<span style="font-size:12px;color:#9ca3af">暂无锁定窗口</span>';
     } else {
       visibleWindows.forEach(function (w) {
         var status = simpleWindowStatus(w);
         var statusText = status.status === "hit" ? "第" + status.hitIndex + "期中" : status.status === "miss" ? "三期全错" : "进行中";
-        var statusColor = status.status === "hit" ? "#16a34a" : status.status === "miss" ? "#dc2626" : "#2563eb";
-        var attemptsText = status.attempts.length
-          ? status.attempts.map(function (a) { return "第" + a.period + "期" + (a.hit ? "中" : "错"); }).join(" · ")
-          : "尚未开奖";
-        html += '<div style="min-width:180px;border:1px solid #e0e3e8;border-radius:8px;padding:8px 9px;background:#fff">';
-        html += '<div style="font-size:12px;font-weight:900">尾' + w.tail + ' · 起始第' + w.startPeriod + '期</div>';
-        html += '<div style="font-size:10px;color:#6b7280;margin-top:3px">窗口 第' + w.startPeriod + '–' + (Number(w.startPeriod) + 2) + '期</div>';
-        html += '<div style="font-size:13px;font-weight:900;color:' + statusColor + ';margin-top:5px">' + statusText + '</div>';
-        html += '<div style="font-size:10px;color:#6b7280;margin-top:4px;white-space:nowrap">' + attemptsText + '</div>';
-        html += '</div>';
+        var steps = "";
+        for (var stageIndex = 0; stageIndex < 3; stageIndex++) {
+          var attempt = status.attempts[stageIndex] || null;
+          var stagePeriod = Number(w.startPeriod) + stageIndex;
+          var stateText = attempt ? (attempt.hit ? "中" : "错") :
+            (status.status === "pending" && stageIndex === status.attempts.length ? "待开奖" : "待定");
+          steps += '<div class="exec-bet-period window-record-step">' +
+            '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + (stageIndex + 1) + '期</b>' +
+            '<span>第' + stagePeriod + '期</span><em>尾' + w.tail + '</em></div>' +
+            '<div class="exec-bet-period__body window-record-step__body"><span>锁定尾' + w.tail + '</span>' +
+            '<strong>' + stateText + '</strong><b>' + (attempt ? (attempt.hit ? "命中" : "未中") : "待结算") + '</b></div></div>';
+        }
+        html += windowRecordCardHTML({
+          label: "尾" + w.tail,
+          state: statusText,
+          history: '<em>起始第' + w.startPeriod + '期 · 窗口第' + w.startPeriod + '–' + (Number(w.startPeriod) + 2) + '期</em>',
+          historyLabel: "窗口说明",
+          steps: steps,
+          tone: status.status === "hit" ? "is-hit" : (status.status === "miss" ? "is-miss" : "is-live"),
+          attrs: ' data-simple-window-card="' + (w.id || w.startPeriod) + '" data-window-record-card="1"'
+        });
       });
     }
     html += '</div></div></div>';
@@ -7261,7 +7314,7 @@
   }
 
   function probabilityWindowStepsHTML(attempts, startPeriod, currentStage) {
-    var html = '<div class="prob-window-steps">';
+    var html = "";
     for (var stage = 1; stage <= 3; stage++) {
       var attempt = attempts && attempts[stage - 1] ? attempts[stage - 1] : null;
       var tone = "is-closed";
@@ -7281,24 +7334,31 @@
         }
         detail = "第" + attempt.period + "期 · 尾" + attempt.tail;
       }
-      html += '<div class="prob-window-step ' + tone + '" data-window-stage="' + stage + '">' +
-        '<b>第' + stage + '期</b><span>' + detail + '</span><em>' + result + '</em></div>';
+      html += '<div class="exec-bet-period window-record-step prob-window-step ' + tone + '" data-window-stage="' + stage + '">' +
+        '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + stage + '期</b>' +
+        '<span>' + detail + '</span><em>' + result + '</em></div>' +
+        '<div class="exec-bet-period__body window-record-step__body"><span>窗口记录</span>' +
+        '<strong>' + result + '</strong><b>' + (attempt && attempt.tail != null ? "尾" + attempt.tail : "尾待定") + '</b></div></div>';
     }
-    return html + '</div>';
+    return html;
   }
 
   function probabilityWindowCardHTML(options) {
-    var cardClass = "prob-test-card" + (options.tone ? " " + options.tone : "");
     var liveAttr = options.live ? ' data-prob-live-window="1"' : "";
     var startAttr = options.startPeriod == null ? "" : ' data-prob-window-start="' + options.startPeriod + '"';
     var meta = options.startPeriod == null
       ? "等待重开 · 等尾" + options.tail + "开出"
       : "起始第" + options.startPeriod + "期 · 锁定尾" + options.tail;
-    return '<div class="' + cardClass + '" data-prob-window-card="1"' + liveAttr + startAttr + '>' +
-      '<div class="prob-window-card__head"><b>' + options.label + '</b><span>' + options.state + '</span></div>' +
-      '<div class="prob-window-card__meta">' + meta + '</div>' +
-      probabilityWindowStepsHTML(options.attempts, options.startPeriod, options.currentStage) +
-      "</div>";
+    return windowRecordCardHTML({
+      label: options.label,
+      state: options.state,
+      history: '<em>' + escapeHTML(meta) + '</em>',
+      historyLabel: "窗口说明",
+      steps: probabilityWindowStepsHTML(options.attempts, options.startPeriod, options.currentStage),
+      tone: options.tone,
+      className: "prob-test-card",
+      attrs: ' data-prob-window-card="1"' + liveAttr + startAttr + ' data-window-record-card="1"'
+    });
   }
 
   function probabilityTestWindowHTML(selectedYear, pendingResult) {

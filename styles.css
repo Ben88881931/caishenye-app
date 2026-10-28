@@ -4672,6 +4672,149 @@ body[data-page="overview"] .window-execution-history__item.is-miss {
   color: #b91c1c;
 }
 
+/* 唯一窗口卡母版：逐线窗口记录 */
+.window-record-card {
+  flex: 0 0 252px;
+  width: 252px;
+  max-width: calc(100vw - 52px);
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 9px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: none;
+  display: block;
+  gap: 0;
+  scroll-snap-align: start;
+  justify-self: start;
+}
+
+.window-record-card.is-live,
+.window-record-card.is-hit,
+.window-record-card.is-miss,
+.window-record-card.is-waiting {
+  border: 1px solid #dbe3ee;
+  background: #fff;
+  box-shadow: none;
+}
+
+.window-record-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.window-record-card__head b {
+  color: #172334;
+  font-size: 14px;
+}
+
+.window-record-card__head span {
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.window-record-card.is-live .window-record-card__head b {
+  color: #1d4ed8;
+}
+
+.window-record-card.is-hit .window-record-card__head b {
+  color: #15803d;
+}
+
+.window-record-card.is-miss .window-record-card__head b {
+  color: #b91c1c;
+}
+
+.window-record-card__history {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: 6px 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.window-record-card__history small {
+  color: #64748b;
+  font-size: 9px;
+}
+
+.window-record-card__history em {
+  color: #64748b;
+  font-size: 9px;
+  font-style: normal;
+}
+
+.window-record-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 9px;
+}
+
+.window-record-card .window-record-step {
+  margin-top: 5px;
+  padding: 5px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .86);
+  display: block;
+  gap: 0;
+}
+
+.window-record-card .window-record-step__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 10px;
+}
+
+.window-record-card .window-record-step__head b {
+  color: #1d4ed8;
+  font-size: 10px;
+  line-height: normal;
+  white-space: normal;
+  overflow: visible;
+}
+
+.window-record-card .window-record-step__head span {
+  color: #475569;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: normal;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.window-record-card .window-record-step__head em {
+  margin-left: auto;
+  color: #0f172a;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.window-record-card .window-record-step__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 10px;
+}
+
 body[data-page="dailyreport"] .daily-report-ranking-note {
   display: block;
   margin-top: 4px;

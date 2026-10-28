@@ -1547,3 +1547,53 @@ test("task tabs and primary controls meet mobile touch and type minimums", async
   expect(controls.every((item) => item.fontSize >= 12)).toBe(true);
 });
 
+test("all window records use the line-by-line window card as the only card style", async ({ page }) => {
+  await page.goto("/");
+  const widths = [];
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("overview"));
+    localStorage.setItem("v2_window_report_view", JSON.stringify("history"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
+  widths.push(await page.locator(".window-record-card").first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+    localStorage.setItem("v2_prob_view", JSON.stringify("history"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
+  widths.push(await page.locator(".window-record-card").first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
+  });
+  await page.reload();
+  await page.locator('[data-wm-view="windows"]').click();
+  await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
+  widths.push(await page.locator('[data-wm-group="windows"] .window-record-card').first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("orderlog"));
+    localStorage.setItem("v2_simple_order_windows", JSON.stringify([
+      { id: "window-card-test", tail: 3, startPeriod: 302 },
+    ]));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
+  widths.push(await page.locator(".window-record-card").first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
+
+  const cards = page.locator(".window-record-card");
+  const structures = await cards.evaluateAll((nodes) => nodes.map((card) => ({
+    head: !!card.querySelector(".window-record-card__head"),
+    steps: card.querySelectorAll(".window-record-step").length,
+    rows: Array.from(card.querySelectorAll(".window-record-step")).every((step) => (
+      !!step.querySelector(".window-record-step__head") && !!step.querySelector(".window-record-step__body")
+    )),
+  })));
+  expect([...new Set(widths)]).toEqual([252]);
+  expect(structures.every((item) => item.head && item.steps === 3 && item.rows)).toBe(true);
+});
+
