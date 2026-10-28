@@ -1580,7 +1580,7 @@ test("a hit window marks the exact hit period in green", async ({ page }) => {
   expect(style.color).toBe("rgb(21, 128, 61)");
 });
 
-test("three-period history contains every historical window year", async ({ page }) => {
+test("three-period history loads in bounded batches", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("overview"));
@@ -1589,10 +1589,8 @@ test("three-period history contains every historical window year", async ({ page
   await page.reload();
   await page.waitForFunction(() => document.querySelectorAll("[data-window-history-card]").length > 13);
 
-  const years = await page.locator("[data-window-history-card]").evaluateAll((cards) => (
-    [...new Set(cards.map((card) => card.dataset.windowYear).filter(Boolean))].sort()
-  ));
-  expect(years).toContain("2021");
-  expect(years).toContain("2026");
+  const count = await page.locator("[data-window-history-card]").count();
+  expect(count).toBeLessThanOrEqual(80);
+  await expect(page.locator("[data-window-history-more]")).toBeVisible();
 });
 

@@ -278,6 +278,7 @@
     betResearchOpen: false,
     betExecView: lsGet("v2_bet_exec_view", "today"),
     windowReportView: lsGet("v2_window_report_view", "current"),
+    windowHistoryRenderLimit: 80,
     windowMissView: lsGet("v2_window_miss_view", "heat"),
     windowMiss2View: lsGet("v2_window_miss2_view", "heat"),
     trendView: lsGet("v2_trend_view", "heat"),
@@ -2984,6 +2985,9 @@
       });
     });
     entries.sort(function (a, b) { return b.start - a.start; });
+    var totalEntries = entries.length;
+    var renderLimit = Math.max(80, Number(state.windowHistoryRenderLimit || 80));
+    entries = entries.slice(0, renderLimit);
 
     var html = '<div class="window-execution-line-strip record-scroll" data-window-history-strip>';
     entries.forEach(function (entry) {
@@ -3021,7 +3025,14 @@
         attrs: ' data-window-history-card="' + w.start + '" data-window-year="' + (wmYearOf(w.start) || "") + '"'
       });
     });
-    return html + '</div>';
+    html += '</div>';
+    html += '<div class="window-report-actions"><span class="section__hint">已显示 ' + entries.length +
+      ' / ' + totalEntries + ' 个窗口</span>';
+    if (entries.length < totalEntries) {
+      html += '<button type="button" class="chip" data-window-history-more="1">再加载80窗</button>';
+    }
+    html += '</div>';
+    return html;
   }
 
   function windowReportCurrentExecutionHTML(planAllRows, planRows, totalAmount, totalRisk) {
@@ -8501,12 +8512,21 @@
     var windowReportTask = e.target.closest("[data-window-report-task]");
     if (windowReportTask) {
       var nextWindowReportView = windowReportTask.dataset.windowReportTask;
+      if (nextWindowReportView === "history" && state.windowReportView !== "history") {
+        state.windowHistoryRenderLimit = 80;
+      }
       state.windowReportView = ["current", "history", "snapshot"].indexOf(nextWindowReportView) >= 0
         ? nextWindowReportView
         : "current";
       lsSet("v2_window_report_view", state.windowReportView);
       renderOverview();
       requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
+      return;
+    }
+    var windowHistoryMore = e.target.closest("[data-window-history-more]");
+    if (windowHistoryMore) {
+      state.windowHistoryRenderLimit = Math.max(80, Number(state.windowHistoryRenderLimit || 80)) + 80;
+      renderOverview();
       return;
     }
     var betMode = e.target.closest("[data-bet-mode]");
