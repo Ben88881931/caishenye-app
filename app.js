@@ -2948,6 +2948,82 @@
     return html + '</div>';
   }
 
+  function windowHistoryCardsHTML(planAllRows) {
+    var entries = [];
+    planAllRows.forEach(function (row) {
+      var windows = wmWindowsForStage(row.line, 3);
+      var recent = windows.slice(-8).reverse().map(function (w) {
+        var hit = Number(w.hitIndex) > 0;
+        return '<span class="window-execution-history__item ' + (hit ? "is-hit" : "is-miss") + '">' +
+          (hit ? "中" + w.hitIndex : "错") + '</span>';
+      }).join("");
+      if (row.live.waiting) {
+        entries.push({
+          row: row,
+          kind: "waiting",
+          start: D.length + 1,
+          recent: recent
+        });
+      } else if (row.live.active) {
+        entries.push({
+          row: row,
+          kind: "live",
+          start: Number(row.live.active.start),
+          window: row.live.active,
+          recent: recent
+        });
+      }
+      windows.forEach(function (w) {
+        entries.push({
+          row: row,
+          kind: "settled",
+          start: Number(w.start),
+          window: w,
+          recent: recent
+        });
+      });
+    });
+    entries.sort(function (a, b) { return b.start - a.start; });
+
+    var html = '<div class="window-execution-line-strip record-scroll" data-window-history-strip>';
+    entries.forEach(function (entry) {
+      var row = entry.row;
+      if (entry.kind === "waiting") {
+        var waitSteps = [1, 2, 3].map(function (stage) {
+          return '<div class="exec-bet-period window-record-step is-future">' +
+            '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + stage + '期</b>' +
+            '<span>尚未开窗</span><em>尾' + row.live.waiting.tail + '</em></div>' +
+            '<div class="exec-bet-period__body window-record-step__body"><span>等待重开</span>' +
+            '<strong>待定</strong><b>无盈亏</b></div></div>';
+        }).join("");
+        html += windowRecordCardHTML({
+          label: lineDisplayLabel(row.line, row.live.waiting.tail),
+          state: "等待重开",
+          history: entry.recent || '<em>暂无</em>',
+          historyLabel: "近期记录",
+          steps: waitSteps,
+          tone: "is-waiting",
+          attrs: ' data-window-history-card="waiting" data-window-year="' + ((D[D.length - 1] || {}).y || "") + '"'
+        });
+        return;
+      }
+      var w = entry.window;
+      var hit = Number(w.hitIndex) > 0;
+      var tail = w.attempts && w.attempts[0] && w.attempts[0].tail != null ? w.attempts[0].tail : row.tail;
+      html += windowRecordCardHTML({
+        label: lineDisplayLabel(row.line, tail),
+        state: entry.kind === "live" ? "进行中 · 第" + row.live.stage + "/3期" :
+          (hit ? "第" + w.hitIndex + "期中" : "三期全错"),
+        history: entry.recent || '<em>暂无</em>',
+        historyLabel: "近期记录",
+        steps: betWindowRowsHTML(row.line, w, 3),
+        tone: entry.kind === "live" ? "is-live" : (hit ? "is-hit" : "is-miss"),
+        attrs: ' data-window-history-card="' + w.start + '" data-window-year="' + (wmYearOf(w.start) || "") + '"'
+      });
+    });
+    return html + '</div>';
+  }
+
   function windowReportCurrentExecutionHTML(planAllRows, planRows, totalAmount, totalRisk) {
     var html = '<section class="today-section" data-window-execution-panel>' +
       '<div class="today-section__head"><h2>执行与盈亏</h2><span>只按各线正式公式取当前窗口期数</span></div>' +
@@ -2966,8 +3042,8 @@
 
   function windowReportHistoryHTML(planAllRows, planRows) {
     return '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>三期窗口 · 历史记录</h2>' +
-      '<span>逐线窗口记录 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
-      windowExecutionLineCardsHTML(planAllRows) + '</section>' +
+      '<span>全部往期窗口 · 新→旧 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
+      windowHistoryCardsHTML(planAllRows) + '</section>' +
       '<section class="today-section" data-window-daily-plan><div class="today-section__head"><h2>逐日计划对照</h2><span>每张卡=一个开奖日 · 新→旧 · 横向滑动</span></div>' +
       dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
   }
