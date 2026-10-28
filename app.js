@@ -2944,6 +2944,63 @@
     return html + '</div>';
   }
 
+  function windowHistoryLineCardsHTML(planAllRows) {
+    var html = '<div class="window-history-list">';
+    planAllRows.forEach(function (row) {
+      var windows = wmWindowsForStage(row.line, 3);
+      html += '<section class="window-history-line" data-window-history-line="' + row.line.id + '">' +
+        '<div class="today-section__head"><h3>' + lineDisplayLabel(row.line, row.tail) +
+        '</h3><span>全部历史 · ' + windows.length + ' 个已完成窗口</span></div>' +
+        '<div class="window-execution-line-strip record-scroll" data-window-history-strip="' + row.line.id + '">';
+      if (row.live.waiting) {
+        var waitSteps = "";
+        for (var ws = 1; ws <= 3; ws++) {
+          waitSteps += '<div class="exec-bet-period window-record-step is-future">' +
+            '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + ws + '期</b>' +
+            '<span>尚未开窗</span><em>尾' + row.live.waiting.tail + '</em></div>' +
+            '<div class="exec-bet-period__body window-record-step__body"><span>等待重开</span>' +
+            '<strong>待定</strong><b>无盈亏</b></div></div>';
+        }
+        html += windowRecordCardHTML({
+          label: lineDisplayLabel(row.line, row.live.waiting.tail),
+          state: "等待重开",
+          history: '<em>上一窗口已结束，等尾' + row.live.waiting.tail + '开出后开新窗口</em>',
+          historyLabel: "当前状态",
+          steps: waitSteps,
+          tone: "is-live is-waiting",
+          attrs: ' data-window-history-card="waiting"'
+        });
+      } else if (row.live.active) {
+        html += windowRecordCardHTML({
+          label: lineDisplayLabel(row.line, row.live.active.lockedTail || row.tail),
+          state: "进行中 · 第" + row.live.stage + "/3期",
+          history: '<em>起始第' + betLocalPeriod(row.live.active.start) + '期</em>',
+          historyLabel: "当前状态",
+          steps: betWindowRowsHTML(row.line, row.live.active, 3),
+          tone: "is-live",
+          attrs: ' data-window-history-card="live"'
+        });
+      }
+      windows.slice().reverse().forEach(function (w) {
+        var hit = Number(w.hitIndex) > 0;
+        var tail = w.attempts && w.attempts[0] && w.attempts[0].tail != null
+          ? w.attempts[0].tail
+          : row.tail;
+        html += windowRecordCardHTML({
+          label: lineDisplayLabel(row.line, tail),
+          state: hit ? "第" + w.hitIndex + "期中" : "三期全错",
+          history: '<em>' + wmYearOf(w.start) + '年 · 起始第' + betLocalPeriod(w.start) + '期</em>',
+          historyLabel: "窗口",
+          steps: betWindowRowsHTML(row.line, w, 3),
+          tone: hit ? "is-hit" : "is-miss",
+          attrs: ' data-window-history-card="' + w.start + '"'
+        });
+      });
+      html += '</div></section>';
+    });
+    return html + '</div>';
+  }
+
   function windowReportCurrentExecutionHTML(planAllRows, planRows, totalAmount, totalRisk) {
     var html = '<section class="today-section" data-window-execution-panel>' +
       '<div class="today-section__head"><h2>执行与盈亏</h2><span>只按各线正式公式取当前窗口期数</span></div>' +
@@ -2961,9 +3018,9 @@
   }
 
   function windowReportHistoryHTML(planAllRows, planRows) {
-    return '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>三期窗口 · 历史</h2>' +
-      '<span>当前窗口或最近完成窗口 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
-      windowExecutionLineCardsHTML(planAllRows) + '</section>' +
+    return '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>三期窗口 · 历史记录</h2>' +
+      '<span>每条线全部往期窗口 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
+      windowHistoryLineCardsHTML(planAllRows) + '</section>' +
       '<section class="today-section" data-window-daily-plan><div class="today-section__head"><h2>逐日计划对照</h2><span>每张卡=一个开奖日 · 新→旧 · 横向滑动</span></div>' +
       dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
   }
@@ -3051,7 +3108,7 @@
 
     html += '<div class="task-tabs" data-window-report-tabs role="tablist" aria-label="三期窗口任务">' +
       '<button class="task-tab ' + (reportView === "current" ? "is-active" : "") + '" type="button" data-window-report-task="current" role="tab">当前</button>' +
-      '<button class="task-tab ' + (reportView === "history" ? "is-active" : "") + '" type="button" data-window-report-task="history" role="tab">三期窗口历史</button>' +
+      '<button class="task-tab ' + (reportView === "history" ? "is-active" : "") + '" type="button" data-window-report-task="history" role="tab">历史记录</button>' +
       '<button class="task-tab ' + (reportView === "snapshot" ? "is-active" : "") + '" type="button" data-window-report-task="snapshot" role="tab">快照</button>' +
       '</div>';
     if (reportView === "current") {
@@ -7354,7 +7411,7 @@
     var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "正式");
     var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026正式记录 · 294-296保留切换前快照");
     var labels = ["A", "B", "C"];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">单期 · 历史</h2><span class="section__hint">' + year + segment + ' · 切换年份查看全部单期记录</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">单期 · 历史记录</h2><span class="section__hint">' + year + segment + ' · 切换年份查看全部单期记录</span></div></div>';
     html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '单期</b><span>' + segmentNote + '</span></div>';
     labels.forEach(function (label, rank) {
         html += '<div class="prob-test-row"><div class="prob-test-head"><b>' + label + '</b><span>' + year + segment + '单期记录</span></div>';
@@ -7477,7 +7534,7 @@
     html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
     html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="单期任务">' +
       '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前</button>' +
-      '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">单期历史</button>' +
+      '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">历史记录</button>' +
       '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">快照</button>' +
       '</div>';
     if (activeView === "overview") {
