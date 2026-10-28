@@ -206,7 +206,7 @@ def main():
         if (
             'id: "pick3"' in app_text
             and "PROB_MODEL.analyze" in app_text
-            and "动态概率模型" in app_text
+            and "单期报告" in app_text
             and "window.CAISHEN_ULTIMATE" in app_text
         ):
             pass_("app.js 含动态概率模型、追三期下单和旧模型归档入口提示")
@@ -259,8 +259,8 @@ def main():
             pass_("顶部用工具类型标签加可排序的二级页面表头，左侧抽屉支持轻触、搜索、最近访问、拖动和隐藏恢复")
         else:
             fail("顶部分类表头缺失，或左侧抽屉缺少轻触、页面搜索、最近访问、自动收起、拖动或隐藏恢复逻辑")
-        flow_ids = ["pick3", "betexec", "formulas", "windowmult", "orderlog"]
-        flow_pos = [app_text.find(chr(34) + fid + chr(34)) for fid in flow_ids]
+        flow_ids = ["overview", "pick3", "formulas", "windowmult", "orderlog"]
+        flow_pos = [app_text.find("{ id: " + chr(34) + fid + chr(34)) for fid in flow_ids]
         if all(pos >= 0 for pos in flow_pos) and flow_pos == sorted(flow_pos):
             pass_("导航按模型流程排序")
         else:
@@ -278,8 +278,8 @@ def main():
             pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和13条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
-        if "function renderFunds" not in app_text and "function renderOrderHint" not in app_text and "buildExecWindows" not in app_text and "FUND_CAPITAL" not in app_text and "本金锚定" not in app_text and "本金占用率" not in app_text and "本窗剩余风险" in app_text and "本期不下注（条）" in app_text:
-            pass_("执行提示/资金调度两页已彻底删除（连代码一起删），金额与风险只保留下注执行表")
+        if "function renderFunds" not in app_text and "function renderOrderHint" not in app_text and "buildExecWindows" not in app_text and "FUND_CAPITAL" not in app_text and "本金锚定" not in app_text and "本金占用率" not in app_text and "本窗最大风险" in app_text and "有金额线路 / 全部线路" in app_text:
+            pass_("执行提示/资金调度已删除，金额与风险统一收口到窗口报告")
         else:
             fail("执行提示/资金调度仍有残留代码或主页面缺少金额与风险")
         if "function renderFormulaTable" in app_text and "EXEC_FORMULA_AUDIT" in app_text and "训练 / 验证" in app_text and "不配仓" in app_text:

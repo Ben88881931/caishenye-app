@@ -277,6 +277,7 @@
     betLineMode: "all",
     betResearchOpen: false,
     betExecView: lsGet("v2_bet_exec_view", "today"),
+    windowReportView: lsGet("v2_window_report_view", "ranking"),
     windowMissView: lsGet("v2_window_miss_view", "heat"),
     windowMiss2View: lsGet("v2_window_miss2_view", "heat"),
     trendView: lsGet("v2_trend_view", "heat"),
@@ -287,10 +288,8 @@
   };
 
   var TABS = [
-    { id: "overview", label: "今日" },
-    { id: "dailyreport", label: "每日最终报告" },
-    { id: "pick3", label: "动态概率" },
-    { id: "betexec", label: "下注执行表" },
+    { id: "overview", label: "窗口报告" },
+    { id: "pick3", label: "单期报告" },
     { id: "formulas", label: "公式表" },
     { id: "windowmult", label: "13线规律中心" },
     { id: "orderlog", label: "追三期下单" },
@@ -319,9 +318,9 @@
   ];
 
   var COMMON_SHORTCUTS = [
-    { tab: "dailyreport", label: "排名理由", note: "看13线为什么这样排" },
-    { tab: "betexec", label: "逐期执行", note: "看每条线买第几期" },
-    { tab: "pick3", label: "动态概率", note: "看A/B/C和当期尾号" },
+    { tab: "overview", label: "窗口报告", note: "看排名、窗口和下注" },
+    { tab: "pick3", label: "单期报告", note: "看A/B/C和当期尾号" },
+    { tab: "formulas", label: "公式表", note: "核对每条线下注金额" },
     { tab: "windowmiss", label: "三期热图", note: "看窗口与等待状态" },
     { tab: "personality", label: "尾号性格", note: "看长期画像与风险" },
     { tab: "notes", label: "我的笔记", note: "记录当天观察" },
@@ -700,7 +699,7 @@
   function getVisibleTabs(groupId) {
     var group = groupById(groupId || state.group) || NAV_GROUPS[0];
     var pageGroups = getPageGroupMap();
-    return getOrderedAllTabs().filter(function (t) { return pageGroups[t.id] === group.id; });
+    return getOrderedAllTabs().filter(function (t) { return !t.hidden && pageGroups[t.id] === group.id; });
   }
 
 
@@ -1256,7 +1255,7 @@
     var query = String(state.navSearch || "").toLowerCase();
     var tabs = query
       ? getOrderedAllTabs().filter(function (tab) {
-        return tab.label.toLowerCase().indexOf(query) >= 0;
+        return !tab.hidden && tab.label.toLowerCase().indexOf(query) >= 0;
       })
       : getVisibleTabs(group.id);
     var tabsHtml = tabs.map(function (t) {
@@ -1593,9 +1592,9 @@
       state.tab = "overview";
       lsSet("v2_current_tab", state.tab);
     }
-    // 「执行提示」「资金调度」已并入「下注执行表」：老入口一律转到主页面
-    if (state.tab === "orderhint" || state.tab === "funds") {
-      state.tab = "betexec";
+    // 旧报告页与旧执行入口统一收口到窗口报告
+    if (state.tab === "orderhint" || state.tab === "funds" || state.tab === "dailyreport" || state.tab === "betexec") {
+      state.tab = "overview";
       lsSet("v2_current_tab", state.tab);
     }
     if (state.tab === "miss") {
@@ -1649,7 +1648,7 @@
     else if (state.tab === "notes") renderNotes();
     else if (state.tab === "numsearch") renderNumSearch();
     var pagePrefix = historyStackHTML();
-    if (state.tab !== "directory" && state.tab !== "overview" &&
+    if (state.tab === "pick3" &&
         view.innerHTML && view.innerHTML.indexOf('class="model-pair-grid"') < 0) {
       pagePrefix += modelPairStrip(latest + 1);
     }
@@ -1678,34 +1677,26 @@
       desc: "这一组是每天真正用来选号、排仓、跟窗口和记录下单的页面。",
       items: [
         {
-          name: "每日最终报告",
-          summary: "把13条线在下注执行表、公式表、13线规律中心、窗口遗漏热图、尾号性格和动态概率里的分析综合成一份每日报告。",
-          look: ["13线长期性格三期排名", "每条线独立的三期预测、自身基准和模型增量", "长期画像、年度稳定性、走步验证和当前风险"],
-          use: "每天先看这一页，直接知道哪条线值得关注、为什么、当前能不能执行。",
-          source: "真实开奖窗口、真实快照、公式审计、年度统计、尾号性格和概率模型记录。",
-          note: "综合分不按金额排序；结论只解释真实数据，A/B/C开头的标识继续标明296期旧快照边界。"
+          name: "窗口报告",
+          summary: "一份报告统一回答13线下一窗口排名、哪2-3条值得观察、当前窗口走到第几期，以及今天下注和盈亏。",
+          look: ["13线窗口预测排名与每期冻结快照", "排名快照命中标记：中1/中2/中3/错/待", "当前窗口、下注金额、最新盈亏"],
+          use: "每天只看这一份窗口报告完成选线和执行核对。",
+          source: "真实开奖窗口、真实快照、逐线长期性格模型和公式表。",
+          note: "排名顺序固定按下一独立三期窗口命中概率；排名依据和高级执行明细保留为内部详情页。"
         },
         {
-          name: "动态概率",
-          summary: "按5/7/15/21/30五个期数窗口分别训练权重，以完整三期内概率排序10个尾号；旧D1/D2退出正式推荐。",
-          look: ["10个尾号三期概率和下一期概率", "5/7/15/21/30独立权重", "当前遗漏、连出和置信度"],
-          use: "先看概率候选，再进入下注执行表检查真实窗口和仓位。",
+          name: "单期报告",
+          summary: "只看当前一期：A/B/C候选、10尾完整概率排序和单期对错；不承担窗口选线或下注金额。",
+          look: ["A/B/C当期候选", "每期10尾完整排序快照", "单期命中、遗漏和诊断概率"],
+          use: "作为下一期的单期诊断参考，不替代窗口报告。",
           source: "2021-2024训练、2025验证、2026影子记录；只使用目标期之前的数据。",
-          note: "用户已要求切换到新方法；2025验证段仍弱于旧方法，页面继续保留风险提示，已锁定的296期快照不改写。"
-        },
-        {
-          name: "下注执行表",
-          summary: "原来的「执行提示」和「资金调度」已经并进这一页：一条节奏链条走完，① 选方向 ② 选号 ③ 定轻重。",
-          look: ["节奏链条：① 线方向（性格）→ ② 窗口选号 → ③ 第几期定轻重", "选号参考表：13条独立线路一屏对比，自己挑2-3条下", "今日规划：今天每一注的线路+尾号+金额+第几期", "每条线当前窗口第1/2/3期明细 + 对错滚动记录"],
-          use: "下单前只看这一页：先按性格挑线，再看窗口锁尾号，最后按方案金额下单。",
-          source: "公式表逐线公式、真实开奖窗口、开奖前真实快照。",
-          note: "只提示不自动下单；不锚定本金，金额按公式表取当前窗口第几期；窗口等待和开窗等待是两种不同状态。"
+          note: "2025验证段仍弱于旧方法，页面继续保留风险提示，已锁定的296期快照不改写。"
         },
         {
           name: "公式表",
           summary: "正式执行公式的唯一来源，写清每条线第1、2、3期下多少。",
           look: ["每条线正式公式金额", "训练段和验证段结果", "配仓或未配仓状态"],
-          use: "核查下注执行表是不是按正式公式在走。",
+          use: "核查窗口报告里的下注金额是不是按正式公式在走。",
           source: "真实历史窗口回测、训练段和验证段结果。",
           note: "公式表目前是稳定版本，不会每天自动改；今年最优只作参考，不能冒充正式公式。"
         },
@@ -1892,7 +1883,7 @@
     {
       title: "每日操作",
       desc: "每天按这个顺序走：先选号，再看窗口和执行，最后记录下单。",
-      names: ["每日最终报告", "动态概率", "下注执行表", "公式表", "13线规律中心", "追三期下单"]
+      names: ["窗口报告", "单期报告", "公式表", "13线规律中心", "追三期下单"]
     },
     {
       title: "公式验证",
@@ -1915,7 +1906,7 @@
     {
       title: "号码和推荐",
       rows: [
-        ["动态概率前三", "每期根据目标期之前的遗漏、连出、短中期频率重新计算10个尾号概率；概率接近时只算候选，不代表确定强弱。"],
+        ["单期A/B/C候选", "每期根据目标期之前的遗漏、连出、短中期频率重新计算10个尾号概率；概率接近时只算候选，不代表确定强弱。"],
         ["跟双号", "三期内调度建议本期按双号执行，不等于保证中奖。"],
         ["观望", "本期不建议按这条线下单。它只是建议，不会停止窗口记录。"],
         ["锁定号", "追号码窗口开始后，第1到第3期固定使用这个号码。"]
@@ -1969,9 +1960,8 @@
   ];
 
   var PAGE_GUIDE_TAB_MAP = {
-    "每日最终报告": "dailyreport",
-    "动态概率": "pick3",
-    "下注执行表": "betexec",
+    "窗口报告": "overview",
+    "单期报告": "pick3",
     "公式表": "formulas",
     "13线规律中心": "windowmult",
     "追三期下单": "orderlog",
@@ -2248,21 +2238,26 @@
     var records = dailyReportRankingSnapshots();
     var html = '<div class="daily-report-block"><div class="daily-report-block__head"><h3>每期排名快照卡</h3>' +
       '<span>开奖前冻结 · 新→旧 · 每期完整13线排名 · 左右滑动对比</span></div>';
-    html += '<div class="daily-report-ranking-strip" data-ranking-history-strip>';
+    html += '<div class="daily-report-ranking-strip record-scroll" data-ranking-history-strip data-window-ranking-strip>';
     records.forEach(function (record) {
       html += '<article class="daily-report-ranking-card" data-report-ranking-card data-ranking-target="' + record.target + '">' +
         '<div class="daily-report-ranking-card__head"><b>第' + record.target + '期 · 13线排名</b>' +
         '<span>基于第' + record.basedOn + '期</span></div><div class="daily-report-ranking-card__list">';
       record.lines.forEach(function (line, index) {
+        var attemptCount = Array.isArray(line.attempts) ? line.attempts.length : 0;
+        var hitClass = line.status === "hit" ? "is-hit" : (line.status === "miss" ? "is-miss" : "is-pending");
+        var hitText = line.status === "hit" ? "中" + (line.hitIndex || "") :
+          (line.status === "miss" ? "错" : (attemptCount ? "进" + Math.min(3, attemptCount + 1) : "待"));
         var forward = String(line.forward && line.forward.pattern || "").split("-").map(function (level) {
           return level === "safe" ? "安" : "险";
         }).join("→");
         var reverse = String(line.reverse && line.reverse.pattern || "").split("-").map(function (level) {
           return level === "safe" ? "安" : "险";
         }).join("→");
-        html += '<div class="daily-report-ranking-card__row" data-ranking-line="' + line.id + '">' +
+        html += '<div class="daily-report-ranking-card__row' + (line.status === "hit" ? " is-hit" : "") + '" data-ranking-line="' + line.id + '">' +
           '<b>#' + (index + 1) + ' ' + storedLineDisplayLabel(line.id, line.tail, line.label) + '</b>' +
           '<span>' + (String(line.id).indexOf("tail") === 0 ? '尾' + line.tail + ' · ' : '') + (Number(line.predictedRate) * 100).toFixed(1) + '%</span>' +
+          '<i class="daily-report-ranking-card__hit ' + hitClass + '" data-ranking-hit="' + hitClass + '">' + hitText + '</i>' +
           '<small>正 ' + forward + ' / 反 ' + reverse + '</small>' +
           '<em>' + line.cascadeDecision + '</em></div>';
       });
@@ -2878,6 +2873,95 @@
       '<small class="section__hint daily-plan-history-note">最新在左 · 每一期对应一个开奖日 · 历史卡按当前正式公式回溯，不是历史真账快照</small>';
   }
 
+  function windowReportRankingHTML(rows, windowStates, liveCount, waitingCount) {
+    var html = '<section class="today-section" data-window-ranking-panel>' +
+      '<div class="today-section__head"><h2>13条独立线路 · 窗口预测排名</h2><span>排名顺序固定 · 不按金额调整</span></div>' +
+      '<div class="window-report-ranking-list">';
+    rows.forEach(function (row, index) {
+      var current = row.personality && row.personality.current || {};
+      html += '<div class="window-report-rank-row" data-window-rank-item>' +
+        '<span>#' + (index + 1) + '</span>' +
+        '<b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
+        '<strong>' + (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</strong>' +
+        '<small>' + row.advice.label + '</small></div>';
+    });
+    html += '</div><div class="window-report-actions">' +
+      '<button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
+
+    html += '<section class="today-section window-ranking-history" data-window-ranking-history>' +
+      dailyReportRankingHistoryHTML() + '</section>';
+
+    html += '<section class="today-section"><div class="today-section__head"><h2>13线窗口状态</h2><span>' +
+      liveCount + ' 条进窗 · ' + waitingCount + ' 条等待</span></div><div class="today-window-strip">';
+    windowStates.forEach(function (stateRow) {
+      html += '<span class="today-window-cell' + (stateRow.kind === "wait" ? " is-wait" : "") +
+        '" data-dashboard-window-state title="' + lineDisplayLabel(stateRow.line) + '：' + stateRow.text + '">' +
+        stateRow.text + '</span>';
+    });
+    html += '</div><small class="section__hint">进N = 当前窗口正在进行到第N期；等尾X = 上一窗全错，等尾X重新开出后才开新窗。</small></section>';
+    return html;
+  }
+
+  function windowExecutionLineCardsHTML(planAllRows) {
+    var currentYear = Number((D[D.length - 1] || {}).y);
+    var html = '<div class="window-execution-line-strip record-scroll" data-window-execution-strip>';
+    planAllRows.forEach(function (row) {
+      var windows = wmWindowsForStage(row.line, 3).filter(function (w) {
+        return wmYearOf(w.start) === currentYear;
+      });
+      var shownWindow = row.live.active || windows[windows.length - 1] || {
+        start: D.length + 1,
+        attempts: [],
+        lockedTail: row.tail,
+      };
+      var recent = windows.slice(-8).reverse().map(function (w) {
+        var hit = Number(w.hitIndex) >= 1 && Number(w.hitIndex) <= 3;
+        return '<span class="window-execution-history__item ' + (hit ? "is-hit" : "is-miss") + '">' +
+          (hit ? "中" + w.hitIndex : "错") + '</span>';
+      }).join("");
+      html += '<article class="window-execution-line-card" data-window-execution-card="' + row.line.id + '">' +
+        '<div class="window-execution-line-card__head"><b>' + lineDisplayLabel(row.line, shownWindow.lockedTail || row.tail) + '</b>' +
+        '<span>' + (row.live.waiting ? "等待尾" + row.live.waiting.tail + "重开" : (row.live.active ? "当前窗口" : "上一窗口")) + '</span></div>' +
+        '<div class="window-execution-history"><small>最近窗口</small>' + (recent || '<em>暂无</em>') + '</div>' +
+        betWindowRowsHTML(row.line, shownWindow, 3) +
+        '</article>';
+    });
+    return html + '</div>';
+  }
+
+  function windowReportExecutionHTML(planAllRows, planRows, totalAmount, totalRisk) {
+    var html = '<section class="today-section" data-window-execution-panel>' +
+      '<div class="today-section__head"><h2>执行与盈亏</h2><span>只按各线正式公式取当前窗口期数</span></div>' +
+      '<div class="today-summary">' +
+      '<div class="today-summary__item"><b>' + totalAmount + ' 元</b><span>本期下注</span></div>' +
+      '<div class="today-summary__item"><b>' + totalRisk + ' 元</b><span>本窗最大风险</span></div>' +
+      '<div class="today-summary__item"><b>' + planRows.length + ' / ' + planAllRows.length + '</b><span>有金额线路 / 全部线路</span></div>' +
+      '</div></section>';
+
+    html += '<section class="today-section"><div class="today-section__head"><h2>当前执行明细 · 第' + (latest + 1) + '期</h2>' +
+      '<span>固定13线顺序</span></div><div class="window-execution-list">';
+    planAllRows.forEach(function (row) {
+      var live = row.live;
+      var status = live.waiting ? "等待尾" + live.waiting.tail + "重开" :
+        (live.active ? "窗口第" + live.stage + "期" : "空仓等待");
+      var amountText = row.amount > 0 ? "下注" + row.amount + "元" : "本期不下注";
+      html += '<div class="window-execution-row' + (row.amount > 0 ? " is-active" : "") + '" data-window-execution-line="' + row.line.id + '">' +
+        '<b>' + lineDisplayLabel(row.line, row.tail) + '</b>' +
+        '<span>' + status + '</span>' +
+        '<strong>' + amountText + '</strong>' +
+        '<small>公式 ' + row.formula.join(" / ") + ' 元</small></div>';
+    });
+    html += '</div><div class="window-report-actions"><button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
+
+    html += '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>逐线窗口记录 · 第1/2/3期</h2>' +
+      '<span>当前窗口或最近完成窗口 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
+      windowExecutionLineCardsHTML(planAllRows) + '</section>';
+
+    html += '<section class="today-section" data-window-daily-plan><div class="today-section__head"><h2>逐日计划对照</h2><span>每张卡=一个开奖日 · 新→旧 · 横向滑动</span></div>' +
+      dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
+    return html;
+  }
+
   function renderOverview() {
     var latestTails = tailsOf(latest);
     var target = latest + 1;
@@ -2906,19 +2990,21 @@
       return { line: line, kind: "new", text: "新窗" };
     });
 
-    var planRows = EXEC_LINES.map(function (line) {
+    var planAllRows = EXEC_LINES.map(function (line) {
       var basePlan = betPlanFor(line, 3);
       var verdict = state.betLineMode === "verdict" ? betVerdictFor(line, 3) : null;
       var effectivePlan = verdict ? betPlanScale(basePlan, verdict.scale) : basePlan.slice();
       var live = betLiveInfo(line, 3, effectivePlan);
       var amount = line.hold ? 0 : live.stake;
       var tail = null;
-      if (amount > 0 && live.active) {
+      if (live.active) {
         tail = line.kind === "tail"
           ? line.tail
           : (live.active.lockedTail != null
             ? live.active.lockedTail
             : wmLiveTailFor(line, live.active, Number(live.active.start) + live.stage - 1));
+      } else if (live.waiting) {
+        tail = live.waiting.tail;
       }
       return {
         line: line,
@@ -2928,17 +3014,20 @@
         tail: tail,
         formula: effectivePlan,
       };
-    }).filter(function (row) { return row.amount > 0; });
+    });
+    var planRows = planAllRows.filter(function (row) { return row.amount > 0; });
     var todayTotal = planRows.reduce(function (sum, row) { return sum + row.amount; }, 0);
-    var todayRisk = planRows.reduce(function (sum, row) { return sum + row.risk; }, 0);
+    var todayRisk = planAllRows.reduce(function (sum, row) { return sum + row.risk; }, 0);
     var waitingCount = windowStates.filter(function (row) { return row.kind === "wait"; }).length;
     var liveCount = windowStates.filter(function (row) { return row.kind === "live"; }).length;
+    var reportView = state.windowReportView === "execution" ? "execution" : "ranking";
+    state.windowReportView = reportView;
 
-    var html = '<div class="today-dashboard" data-today-dashboard>';
+    var html = '<div class="today-dashboard window-report" data-today-dashboard data-window-report>';
     html += '<section class="today-hero">' +
       '<div class="today-hero__top"><span class="today-hero__eyebrow">下一独立三期窗口 · 第' + target + '期</span>' +
       '<span class="today-hero__status">数据截至第' + latest + '期</span></div>' +
-      '<div class="today-hero__value"><b>' + topPicks.length + ' 条</b><span>今日优先观察 · 最新尾 ' +
+      '<div class="today-hero__value"><b>' + topPicks.length + ' 条</b><span>窗口优先观察 · 最新尾 ' +
         latestTails.join(" ") + '</span></div>' +
       '<div class="today-picks">';
     topPicks.forEach(function (row, index) {
@@ -2951,25 +3040,15 @@
     });
     html += '</div></section>';
 
-    html += '<section class="today-section"><div class="today-section__head"><h2>今天的执行面</h2><span>只汇总当前真实窗口</span></div>' +
-      '<div class="today-summary">' +
-      '<div class="today-summary__item"><b>' + liveCount + ' / 13</b><span>正在进窗</span></div>' +
-      '<div class="today-summary__item"><b>' + waitingCount + '</b><span>等待规则重开</span></div>' +
-      '<div class="today-summary__item"><b>' + todayTotal + ' 元</b><span>本期公式合计 · 最大风险 ' + todayRisk + ' 元</span></div>' +
-      '</div></section>';
-
-    html += '<section class="today-section"><div class="today-section__head"><h2>逐日计划对照</h2><span>' +
-      (planRows.length ? planRows.length + ' 条线路有金额' : '当前全部空仓') + ' · 横向滑动对比</span></div>' +
-      dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
-
-    html += '<section class="today-section"><div class="today-section__head"><h2>13线窗口状态</h2><span>左起固定线路顺序</span></div>' +
-      '<div class="today-window-strip">';
-    windowStates.forEach(function (stateRow) {
-      html += '<span class="today-window-cell' + (stateRow.kind === "wait" ? " is-wait" : "") +
-        '" data-dashboard-window-state title="' + lineDisplayLabel(stateRow.line) + '：' + stateRow.text + '">' +
-        stateRow.text + '</span>';
-    });
-    html += '</div><small class="section__hint">进N = 当前窗口正在进行到第N期；等尾X = 上一窗全错，等尾X重新开出后才开新窗。</small></section>';
+    html += '<div class="task-tabs" data-window-report-tabs role="tablist" aria-label="窗口报告任务">' +
+      '<button class="task-tab ' + (reportView === "ranking" ? "is-active" : "") + '" type="button" data-window-report-task="ranking" role="tab">排名窗口</button>' +
+      '<button class="task-tab ' + (reportView === "execution" ? "is-active" : "") + '" type="button" data-window-report-task="execution" role="tab">执行盈亏</button>' +
+      '</div>';
+    if (reportView === "ranking") {
+      html += windowReportRankingHTML(reportRows, windowStates, liveCount, waitingCount);
+    } else {
+      html += windowReportExecutionHTML(planAllRows, planRows, todayTotal, todayRisk);
+    }
 
     html += '<details class="term-guide"><summary>术语速查 · 第一次使用先看这里</summary><div class="term-guide__body">' +
       '<div><b>A / B / C + 尾号</b>：例如 A2 表示 A 线的当期尾号是 2，排名不代表证明能长期跑赢随机。</div>' +
@@ -7429,9 +7508,9 @@
       : "生产方法 " + PROB_MODEL.META.productionMethod.windows.join(" / ") + " 期 · 三期概率排序 · 下一期概率作诊断";
     var activeView = ["overview", "history", "snapshot"].indexOf(state.probView) >= 0 ? state.probView : "overview";
     state.probView = activeView;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">动态概率模型 · ' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">单期报告 · ' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
     html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
-    html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="动态概率任务">' +
+    html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="单期报告任务">' +
       '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前候选</button>' +
       '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">测试记录</button>' +
       '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">10尾快照</button>' +
@@ -8357,6 +8436,14 @@
       state.probYear = Number(probYearBtn.dataset.probYear);
       lsSet("v2_prob_year", state.probYear);
       renderProbabilityModel();
+      return;
+    }
+    var windowReportTask = e.target.closest("[data-window-report-task]");
+    if (windowReportTask) {
+      state.windowReportView = windowReportTask.dataset.windowReportTask === "execution" ? "execution" : "ranking";
+      lsSet("v2_window_report_view", state.windowReportView);
+      renderOverview();
+      requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
       return;
     }
     var betMode = e.target.closest("[data-bet-mode]");
