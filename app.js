@@ -2954,19 +2954,9 @@
       '</div></section>';
 
     html += '<section class="today-section"><div class="today-section__head"><h2>当前执行明细 · 第' + (latest + 1) + '期</h2>' +
-      '<span>固定13线顺序</span></div><div class="window-execution-list">';
-    planAllRows.forEach(function (row) {
-      var live = row.live;
-      var status = live.waiting ? "等待尾" + live.waiting.tail + "重开" :
-        (live.active ? "窗口第" + live.stage + "期" : "空仓等待");
-      var amountText = row.amount > 0 ? "下注" + row.amount + "元" : "本期不下注";
-      html += '<div class="window-execution-row' + (row.amount > 0 ? " is-active" : "") + '" data-window-execution-line="' + row.line.id + '">' +
-        '<b>' + lineDisplayLabel(row.line, row.tail) + '</b>' +
-        '<span>' + status + '</span>' +
-        '<strong>' + amountText + '</strong>' +
-        '<small>公式 ' + row.formula.join(" / ") + ' 元</small></div>';
-    });
-    html += '</div><div class="window-report-actions"><button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
+      '<span>固定13线顺序 · 每线一张窗口卡</span></div>' +
+      windowExecutionLineCardsHTML(planAllRows) +
+      '<div class="window-report-actions"><button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
     return html;
   }
 
