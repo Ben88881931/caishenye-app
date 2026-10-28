@@ -97,10 +97,18 @@ function activeWindowNextCheck(w) {
     ? Number(w.attempts[w.attempts.length - 1].period) + 1
     : Number(w.target);
 }
-must(activeWindows.every(activeWindowAttemptsValid),
-  "每条号源当前窗口必须从锁定期起逐期记录且不换号");
-must(activeWindows.every((w) => activeWindowNextCheck(w) <= Number(w.target) + 2),
-  "每条号源当前窗口状态必须指向下一检查期");
+const latestBits = String(raw[String(latest)] || "");
+const latestTails = new Set([...latestBits].map((bit, tail) => bit === "1" ? tail : null).filter((tail) => tail != null));
+function waitingWindowValid(stream) {
+  const last = sourceWindowRecords
+    .filter((r) => r.stream === stream)
+    .sort((a, b) => Number(b.target) - Number(a.target))[0];
+  return !!last && last.status === "miss" && !latestTails.has(Number(last.tail));
+}
+must(activeWindows.every((w, index) => w ? activeWindowAttemptsValid(w) : waitingWindowValid(["D1", "D2"][index])),
+  "每条号源必须处于逐期不换号的进行中窗口，或三期全错后的等待重开状态");
+must(activeWindows.every((w) => !w || activeWindowNextCheck(w) <= Number(w.target) + 2),
+  "每条号源进行中窗口状态必须指向下一检查期");
 const sourceSummary = snapshotJs.sourceWindowSummary || {};
 must(["D1", "D2"].every((k) => sourceSummary.byStream && sourceSummary.byStream[k]), "snapshots.js 含双号原始号源窗口汇总");
 const threeSummary = snapshotJs.threePeriodSummary || {};
