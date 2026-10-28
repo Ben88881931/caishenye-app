@@ -2927,7 +2927,7 @@
         attempts: [],
         lockedTail: row.tail,
       };
-      var recent = windows.slice().reverse().map(function (w) {
+      var recent = windows.slice(-8).reverse().map(function (w) {
         var hit = Number(w.hitIndex) >= 1 && Number(w.hitIndex) <= 3;
         return '<span class="window-execution-history__item ' + (hit ? "is-hit" : "is-miss") + '">' +
           (hit ? "中" + w.hitIndex : "错") + '</span>';
@@ -2936,6 +2936,7 @@
         label: lineDisplayLabel(row.line, shownWindow.lockedTail || row.tail),
         state: row.live.waiting ? "等待尾" + row.live.waiting.tail + "重开" : (row.live.active ? "当前窗口" : "上一窗口"),
         history: recent || '<em>暂无</em>',
+        historyLabel: "近期记录",
         steps: betWindowRowsHTML(row.line, shownWindow, 3),
         tone: row.live.waiting ? "is-waiting" : "is-live",
         attrs: ' data-window-execution-card="' + row.line.id + '" data-window-record-card="1"'
@@ -6279,6 +6280,11 @@
     html += '</div>';
     function wmWindowCard(w, isLive, item) {
       var cls = isLive ? "is-live" : w.hitIndex === 0 ? "is-miss" : "is-hit";
+      var recentHtml = selected.records.slice(-8).reverse().map(function (record) {
+        var hit = Number(record.window.hitIndex) > 0;
+        return '<span class="window-execution-history__item ' + (hit ? "is-hit" : "is-miss") + '">' +
+          (hit ? "中" + record.window.hitIndex : "错") + '</span>';
+      }).join("");
       var resultText = isLive
         ? ("进行中 · 第" + Math.min(3, (w.attempts || []).length + 1) + "/3期")
         : (w.hitIndex > 0 ? "第" + w.hitIndex + "期中" : "三期全错");
@@ -6319,8 +6325,8 @@
       return windowRecordCardHTML({
         label: lineDisplayLabel(line, lockedTail),
         state: resultText,
-        history: '<em>起始 ' + wmPeriodLabel(w.start) + (lockedTail == null ? "" : " · 锁定尾" + lockedTail) + '</em>',
-        historyLabel: "窗口说明",
+        history: '<em>起始 ' + wmPeriodLabel(w.start) + (lockedTail == null ? "" : " · 锁定尾" + lockedTail) + '</em>' + recentHtml,
+        historyLabel: "近期记录",
         steps: steps,
         foot: foot,
         tone: cls,
@@ -6534,6 +6540,16 @@
     } else {
       visibleWindows.forEach(function (w) {
         var status = simpleWindowStatus(w);
+        var recentHtml = allWindows.filter(function (recentWindow) {
+          return Number(recentWindow.tail) === Number(w.tail);
+        }).sort(function (a, b) {
+          return Number(b.startPeriod) - Number(a.startPeriod);
+        }).slice(0, 8).map(function (recentWindow) {
+          var recentStatus = simpleWindowStatus(recentWindow);
+          var recentHit = recentStatus.status === "hit";
+          return '<span class="window-execution-history__item ' + (recentHit ? "is-hit" : "is-miss") + '">' +
+            (recentHit ? "中" + recentStatus.hitIndex : "错") + '</span>';
+        }).join("");
         var statusText = status.status === "hit" ? "第" + status.hitIndex + "期中" : status.status === "miss" ? "三期全错" : "进行中";
         var steps = "";
         for (var stageIndex = 0; stageIndex < 3; stageIndex++) {
@@ -6550,8 +6566,8 @@
         html += windowRecordCardHTML({
           label: "尾" + w.tail,
           state: statusText,
-          history: '<em>起始第' + w.startPeriod + '期 · 窗口第' + w.startPeriod + '–' + (Number(w.startPeriod) + 2) + '期</em>',
-          historyLabel: "窗口说明",
+          history: '<em>起始第' + w.startPeriod + '期</em>' + (recentHtml || '<em>暂无</em>'),
+          historyLabel: "近期记录",
           steps: steps,
           tone: status.status === "hit" ? "is-hit" : (status.status === "miss" ? "is-miss" : "is-live"),
           attrs: ' data-simple-window-card="' + (w.id || w.startPeriod) + '" data-window-record-card="1"'

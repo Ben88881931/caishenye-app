@@ -1512,6 +1512,7 @@ test("current window records use the line-by-line window card while test records
   });
   await page.reload();
   await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
+  await expect(page.locator(".window-record-card__history small").first()).toHaveText("近期记录");
   widths.push(await page.locator(".window-record-card").first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
 
   await page.evaluate(() => {
@@ -1528,6 +1529,7 @@ test("current window records use the line-by-line window card while test records
   await page.reload();
   await page.locator('[data-wm-view="windows"]').click();
   await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
+  await expect(page.locator('[data-wm-group="windows"] .window-record-card__history small').first()).toHaveText("近期记录");
   widths.push(await page.locator('[data-wm-group="windows"] .window-record-card').first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
 
   await page.evaluate(() => {
