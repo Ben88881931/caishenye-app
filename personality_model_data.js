@@ -1,7 +1,7 @@
 window.APP_PERSONALITY_MODEL = {
   "version": "next-window-v7-20261026",
   "method": "per-line-dual-direction-risk-cascade-v6",
-  "generatedAt": "2026-10-28T13:39:17.001Z",
+  "generatedAt": "2026-10-28T17:24:04.435Z",
   "asOfPeriod": 1466,
   "target": 1467,
   "trainingYears": [
@@ -4772,5 +4772,40 @@ window.APP_PERSONALITY_MODEL = {
       "top2Lift": -0.012863390789812246,
       "top3Lift": -0.011748563588028449
     }
-  ]
+  ],
+  "review": {
+    "policy": {
+      "maxPeriods": 30,
+      "maxDays": 30,
+      "trigger": "whichever-first"
+    },
+    "status": "waiting",
+    "dueNow": false,
+    "reviewNumber": 1,
+    "lastReviewedPeriod": 1466,
+    "lastReviewedAt": "2026-10-28T17:10:58.197Z",
+    "nextReviewPeriod": 1496,
+    "nextReviewAt": "2026-11-27T17:10:58.197Z",
+    "periodsUntilReview": 30,
+    "daysUntilReview": 30,
+    "metrics": {
+      "meanLongTermRate": 0.9054597397100836,
+      "meanCurrentPrediction": 0.802928114190107,
+      "meanBrierSkill": -0.22269427309457893,
+      "selectionTop2": 0.8928680015636536,
+      "selectionTop3": 0.8934254151645455,
+      "selectionAll": 0.9062927039515669
+    },
+    "previousMetrics": null,
+    "observedMetrics": {
+      "meanLongTermRate": 0.9054597397100836,
+      "meanCurrentPrediction": 0.802928114190107,
+      "meanBrierSkill": -0.22269427309457893,
+      "selectionTop2": 0.8928680015636536,
+      "selectionTop3": 0.8934254151645455,
+      "selectionAll": 0.9062927039515669
+    },
+    "candidateOnly": false,
+    "ruleReplacement": "hold-current"
+  }
 };

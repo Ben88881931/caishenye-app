@@ -7,10 +7,14 @@ __pycache__/
 *.pyc
 
 .chrome-*/
+.training-db-test-*/
 audit_screenshots/
 test-results/
 playwright-report/
 blob-report/
+
+/training/*.sqlite
+/training/test-*.json
 
 .deploy_key_tmp*
 *.log

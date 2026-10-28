@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "training-schema-v1",
+  "generatedAt": "2026-10-28T17:24:12.854783Z",
+  "database": "caishenye_training.sqlite",
+  "latestPeriod": 301,
+  "latestYear": 2026,
+  "personalityModelVersion": "next-window-v7-20261026",
+  "counts": {
+    "periods": 1466,
+    "lines": 13,
+    "personality_snapshots": 9,
+    "personality_predictions": 113,
+    "probability_snapshots": 9,
+    "probability_predictions": 90,
+    "core_snapshots": 41,
+    "core_picks": 82,
+    "model_line_features": 13,
+    "model_reviews": 1,
+    "training_examples": 113,
+    "historical_windows": 14640
+  },
+  "sourceHashes": {
+    "data.js": "d801c46a9e4dd0e5f38928fc54ddaa70aa6a0c5b27f1784c0702dcfaf215cdfe",
+    "personality_snapshots.json": "1f17b91d7b9ef54024b2588ab7bb17306224f91e3e843617b650b4c93127bff4",
+    "probability_snapshots.json": "1d919ffd3624b1c169629a54f38a8c91c5a6c3c8972345f085b80dba8bc8b1dd",
+    "prediction_snapshots.json": "db050d414211fb81c13e8377724cbe651a289d7ec6fd079d3a2a3047eb3bb7f4",
+    "personality_model.json": "aeebadeda087818b86000115e36fc939682d988d5a9e2a31647b55ec4b20eee9"
+  }
+}

@@ -274,7 +274,7 @@
     numSearchMode: "all",
     numSearchType: "tail",
     betPlanMode: "three",
-    betLineMode: "all",
+    betLineMode: "select3",
     betResearchOpen: false,
     betExecView: lsGet("v2_bet_exec_view", "today"),
     windowReportView: lsGet("v2_window_report_view", "current"),
@@ -292,7 +292,7 @@
 
   var TABS = [
     { id: "overview", label: "三期窗口" },
-    { id: "pick3", label: "单期" },
+    { id: "pick3", label: "模型概率" },
     { id: "formulas", label: "公式表" },
     { id: "windowmult", label: "13线规律中心" },
     { id: "orderlog", label: "追三期下单" },
@@ -321,11 +321,10 @@
   ];
 
   var COMMON_SHORTCUTS = [
+    { tab: "pick3", label: "模型概率", note: "看今日规划和2至3个单期购买尾号" },
     { tab: "overview", label: "三期窗口", note: "看三期窗口和下注" },
-    { tab: "pick3", label: "单期", note: "看A/B/C和当期尾号" },
-    { tab: "formulas", label: "公式表", note: "核对每条线下注金额" },
+    { tab: "formulas", label: "公式表", note: "核对每条线建议第几期下注" },
     { tab: "windowmiss", label: "三期热图", note: "看窗口与等待状态" },
-    { tab: "personality", label: "尾号性格", note: "看长期画像与风险" },
     { tab: "notes", label: "我的笔记", note: "记录当天观察" },
   ];
 
@@ -1591,6 +1590,7 @@
 
   function render() {
     if (state.tab === "selector" || state.tab === "chasenumber" || state.tab === "chaserecommend") state.tab = "pick3";
+    if (state.tab === "todayplan") state.tab = "pick3";
     if (state.tab === "directory") {
       state.tab = "overview";
       lsSet("v2_current_tab", state.tab);
@@ -1697,16 +1697,16 @@
         },
         {
           name: "公式表",
-          summary: "正式执行公式的唯一来源，写清每条线第1、2、3期下多少。",
-          look: ["每条线正式公式金额", "训练段和验证段结果", "配仓或未配仓状态"],
-          use: "核查窗口记录里的下注金额是不是按正式公式在走。",
+          summary: "写清每条线测试后建议在第1期、第2期还是第3期下注。",
+          look: ["每条线建议下注期", "训练段和验证段命中", "年度稳健或保底观察"],
+          use: "核查今日规划的窗口、建议期和建议号是否来自测试公式。",
           source: "真实历史窗口回测、训练段和验证段结果。",
-          note: "公式表目前是稳定版本，不会每天自动改；今年最优只作参考，不能冒充正式公式。"
+          note: "公式只决定下注期，不决定金额；金额和是否下注由用户决定。"
         },
         {
           name: "13线规律中心",
           summary: "13条线各自的数据规律与窗口性格：逐条列出每个窗口第1/2/3期的命中或全错，比较不同倍率的收益、风险和逐年表现，并给出窗口级性格与重投/倍投参考建议。",
-          look: ["当前有仓位的正式执行线路", "今年最优、年度稳健最优", "逐年收益、全错窗口和连续全错概率"],
+          look: ["系统本期建议线路", "今年最优、年度稳健最优", "逐年收益、全错窗口和连续全错概率"],
           use: "研究公式有没有优化空间，比较不同年份是否稳定。",
           source: "真实窗口、真实开奖结果、公式表正式线计划。",
           note: "正式执行仓位只认公式表；倍投测试里的其他倍率只用于研究和对比。"
@@ -1890,7 +1890,7 @@
     },
     {
       title: "公式验证",
-      desc: "正式公式从哪里来，以及公式和倍率到底有没有经过历史验证。",
+        desc: "下注期公式从哪里来，以及它有没有经过训练段和验证段检查。",
       names: ["公式表", "13线规律中心", "策略回测"]
     },
     {
@@ -1931,13 +1931,10 @@
     {
       title: "公式和资金",
       rows: [
-        ["阶段公式", "按第1期、第2期、第3期分别给下注金额。例如100/200/400，就是第1期100、第2期200、第3期400。"],
-        ["倍投公式", "同一窗口内按倍数放大。现在正式基础是100元，N倍就是100/100×N/100×N²。"],
-        ["正式执行公式", "公式表里的正式公式，是执行提示和资金调度实际金额的唯一依据。"],
-        ["正式执行仓位", "按正式公式算出来的本期真实执行金额。"],
-        ["今年测试仓位", "只按今年数据测试出来的参考仓位，不会直接替代正式公式。"],
-        ["100元起", "最低下注单位是100元，不出现低于100元的正式下注金额。"],
-        ["本期公式金额 / 本窗最大风险", "本期公式金额=各条线按公式表取当期金额直接相加；本窗最大风险=各条线公式三段相加的最大值。不锚定本金，也不设资金上限。"],
+        ["下注期公式", "只决定这条线在第1期、第2期还是第3期下注，不决定金额。"],
+        ["建议号", "该线当前窗口锁定的尾号；尾号线固定取本线尾号，概率线取当期快照尾号。"],
+        ["公式建议", "系统从13条线中选2至3条，给出窗口、建议期和建议号。"],
+        ["金额", "系统不生成下注金额；金额和是否下注完全由用户决定。"],
         ["本窗剩余风险", "如果后面几期继续按公式下，最坏情况下这个窗口还要投入多少钱。"]
       ]
     },
@@ -1957,7 +1954,7 @@
         ["今年最优", "只看今年已开奖数据，算出来的今年表现最好的公式，属于参考口径。"],
         ["年度稳健最优", "看多年是否稳定，优先看正收益年份和最近三年，不只看总收益。"],
         ["全周期收益最高", "从全部历史合起来看，总净收益最高，但不代表每年都稳定。"],
-        ["最优 X倍 / 不倍投 / 未通过", "最优X倍是测试里表现最好的倍率；不倍投表示基础金额不变；未通过表示训练和验证没有同时达标，不配仓。"]
+        ["年度稳健公式 / 保底观察公式", "年度稳健公式要求训练和验证两段同时为正；保底观察公式只选该线自身全周期表现最好的倍率，并明确保留亏损和回撤。"]
       ]
     }
   ];
@@ -2557,12 +2554,12 @@
   function dailyReportSignalSummary(row) {
     var audit = row.formulaAudit;
     var formulaText = "公式表暂无验证记录";
-    if (row.line.kind === "probability") {
-      formulaText = "概率线只做选号对照";
-    } else if (audit) {
+    if (audit) {
       var trainPositive = audit && Number(audit.trainNet) > 0;
       var validPositive = audit && Number(audit.validNet) > 0;
-      formulaText = trainPositive && validPositive ? "训练/验证同时为正" : ((trainPositive || validPositive) ? "训练/验证仅一段为正" : "训练/验证未通过");
+      formulaText = (audit.formula || "逐线公式") + " · " +
+        (trainPositive && validPositive ? "训练/验证同时为正" :
+          ((trainPositive || validPositive) ? "训练/验证仅一段为正" : "全周期保底观察"));
     }
     var windowText = "可开新窗";
     if (row.personality) {
@@ -2641,6 +2638,8 @@
       '<div><b>13 / 13</b><span>每期全部独立候选</span></div>' +
       '<div><b>' + rows.filter(function (row) { return row.personality && row.personality.current.edge > 0; }).length + '</b><span>预测高于自身基准</span></div>' +
       '</div>';
+    html += '<div data-personality-review style="margin:0 0 10px;padding:9px 11px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800;line-height:1.7">' +
+      personalityReviewText() + '</div>';
     html += dailyReportPersonalitySnapshotHTML();
 
     html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>下一独立三期窗口预测排名</h3><span>每条线按自身一期 / 两期 / 三期性格独立预测新窗口命中概率 · 不追号</span></div>';
@@ -2692,12 +2691,22 @@
           return item.year + "年 " + item.hits + "/" + item.windows + "（" + (item.rate * 100).toFixed(1) + "%）";
         }).join(" · ")
         : "逐线年度画像未加载";
-      var planText = (line.plan || []).join(" / ");
-      var auditText = row.formulaAudit
-        ? (row.formulaAudit.formula || "无公式") +
-          " · 训练" + (Number(row.formulaAudit.trainNet) >= 0 ? "+" : "") + Number(row.formulaAudit.trainNet || 0) +
-          " / 验证" + (Number(row.formulaAudit.validNet) >= 0 ? "+" : "") + Number(row.formulaAudit.validNet || 0)
+      var reportStageFormula = line.formulaMeta && line.formulaMeta.stageFormula || {};
+      var planText = reportStageFormula.stage ? "第" + reportStageFormula.stage + "期下注" : "下注期未计算";
+      var auditText = reportStageFormula.stage
+        ? planText + " · 该期命中 " + (Number(reportStageFormula.hitRate || 0) * 100).toFixed(1) +
+          "% · 训练/验证 " + (Number(reportStageFormula.trainRate || 0) * 100).toFixed(1) +
+          "% / " + (Number(reportStageFormula.validRate || 0) * 100).toFixed(1) + "%"
         : "公式表暂无这条线的审计记录";
+      var formulaMeta = line.formulaMeta || {};
+      var monthForecast = formulaMeta.monthForecast || {};
+      var halfForecast = formulaMeta.halfForecast || {};
+      var fluctuationText = monthForecast.current && halfForecast.current
+        ? "本月状态" + monthForecast.currentState + "，下月预计" +
+          wmActivityRateText(monthForecast.predictedRate) + "；当前" + halfForecast.current.label +
+          "状态" + halfForecast.currentState + "，下一半月预计" + wmActivityRateText(halfForecast.predictedRate) +
+          "。月度与半月作为当前活跃度和风险参考，不改变测试公式确定的下注期。"
+        : "月度或半月样本不足，暂不调整年度公式。";
       var sourceTags = ["逐线长期性格模型", "下注执行表", "公式表", "13线规律中心", "一期热图", "两期热图", "三期热图"];
       sourceTags.push(line.kind === "probability" ? "动态概率" : "尾号性格");
       html += '<details class="daily-report-line-card daily-report-line-card--accordion" data-daily-report-card data-line-id="' + line.id + '"' +
@@ -2733,7 +2742,8 @@
         ' / 第2期' + (row.personality ? row.personality.longTerm.stageCounts.second : 0) +
         ' / 第3期' + (row.personality ? row.personality.longTerm.stageCounts.third : 0) + '。</p><small>' +
         personalityYearText + '。历史窗口对照：' + yearText + '。</small></div>' +
-        '<div class="daily-report-section" data-report-section="formula"><b>公式验证</b><p>' + auditText + '。</p><small>正式公式 ' + planText + ' · 只验证训练/验证表现，仓位和金额不参与综合报告。</small></div>' +
+        '<div class="daily-report-section" data-report-section="formula"><b>下注期公式</b><p>' + auditText + '。</p><small>公式只决定第几期下注，不决定金额。</small></div>' +
+        '<div class="daily-report-section" data-report-section="fluctuation"><b>月度 / 半月起伏</b><p>' + fluctuationText + '</p><small>月度与半月只评估活跃度和风险，金额和下不下注由你决定。</small></div>' +
         '<div class="daily-report-section daily-report-section--risk" data-report-section="risk"><b>风险与解读</b><p>' + row.risk + '</p><small>' + row.interpretation + '</small></div>' +
         '</div></details>';
     });
@@ -2936,6 +2946,12 @@
           (hit ? "中" + w.hitIndex : "错") + '</span>';
       }).join("");
       var shownHit = Number(shownWindow.hitIndex) > 0;
+      var formulaStage = Number(row.line.stageFormula && row.line.stageFormula.stage || 0);
+      var currentStage = row.live.active ? Number(row.live.stage || 0) : 0;
+      var stageState = row.live.waiting ? "等待重开" :
+        (!row.live.active ? "等待新窗" :
+          (currentStage === formulaStage ? "本期到建议期" :
+            (currentStage < formulaStage ? "等待第" + formulaStage + "期" : "已过建议期")));
       var cardTone = row.live.waiting ? "is-waiting" :
         (row.live.active ? "is-live" : (shownWindow.hitIndex === 0 ? "is-miss" : (shownHit ? "is-hit" : "is-closed")));
       html += windowRecordCardHTML({
@@ -2943,9 +2959,15 @@
         state: row.live.waiting ? "等待尾" + row.live.waiting.tail + "重开" : (row.live.active ? "当前窗口" : "上一窗口"),
         history: recent || '<em>暂无</em>',
         historyLabel: "近期记录",
-        steps: betWindowRowsHTML(row.line, shownWindow, 3),
+        steps: betWindowStageRowsHTML(row.line, shownWindow, 3),
         tone: cardTone,
-        attrs: ' data-window-execution-card="' + row.line.id + '" data-window-record-card="1"'
+        foot: row.selected
+          ? '<b style="color:#1d4ed8">系统建议第' + formulaStage + '期 · ' + stageState + ' · 金额由你决定</b>'
+          : '<b style="color:#64748b">未入选 · 公式仍记录，不进入本期建议</b>',
+        attrs: ' data-window-execution-card="' + row.line.id + '" data-window-record-card="1"' +
+          ' data-execution-selected="' + (row.selected ? "true" : "false") + '"' +
+          ' data-execution-amount="0" data-formula-stage="' + formulaStage + '"' +
+          ' data-current-stage="' + currentStage + '"'
       });
     });
     return html + '</div>';
@@ -3068,17 +3090,21 @@
     return html;
   }
 
-  function windowReportCurrentExecutionHTML(planAllRows, planRows, totalAmount, totalRisk) {
+  function windowReportCurrentExecutionHTML(planAllRows, planRows) {
+    var actionable = planRows.filter(function (row) {
+      var stage = Number(row.line.stageFormula && row.line.stageFormula.stage || 0);
+      return !!row.live.active && Number(row.live.stage || 0) === stage;
+    }).length;
     var html = '<section class="today-section" data-window-execution-panel>' +
-      '<div class="today-section__head"><h2>执行与盈亏</h2><span>只按各线正式公式取当前窗口期数</span></div>' +
+      '<div class="today-section__head"><h2>系统下注期建议</h2><span>只给排名合格的前2至3条线建议，金额和是否下注由你决定</span></div>' +
       '<div class="today-summary">' +
-      '<div class="today-summary__item"><b>' + totalAmount + ' 元</b><span>本期下注</span></div>' +
-      '<div class="today-summary__item"><b>' + totalRisk + ' 元</b><span>本窗最大风险</span></div>' +
-      '<div class="today-summary__item"><b>' + planRows.length + ' / ' + planAllRows.length + '</b><span>有金额线路 / 全部线路</span></div>' +
+      '<div class="today-summary__item"><b>' + planRows.length + ' 条</b><span>系统建议线路</span></div>' +
+      '<div class="today-summary__item"><b>' + actionable + ' 条</b><span>本期已到建议期</span></div>' +
+      '<div class="today-summary__item"><b>' + planRows.length + ' / ' + planAllRows.length + '</b><span>系统建议 / 全部候选</span></div>' +
       '</div></section>';
 
     html += '<section class="today-section"><div class="today-section__head"><h2>三期窗口 · 当前 · 第' + (latest + 1) + '期</h2>' +
-      '<span>固定13线顺序 · 每线一张窗口卡</span></div>' +
+      '<span>固定13线顺序 · 系统只建议2至3条，其余只记录窗口</span></div>' +
       windowExecutionLineCardsHTML(planAllRows) +
       '<div class="window-report-actions"><button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
     return html;
@@ -3090,6 +3116,76 @@
       windowHistoryCardsHTML(planAllRows) + '</section>' +
       '<section class="today-section" data-window-daily-plan><div class="today-section__head"><h2>逐日计划对照</h2><span>每张卡=一个开奖日 · 新→旧 · 横向滑动</span></div>' +
       dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
+  }
+
+  function personalityExecutionSelection(reportRows) {
+    var qualified = reportRows.filter(function (row) {
+      var current = row.personality && row.personality.current || {};
+      var formulaMeta = row.line.formulaMeta || {};
+      return Number(current.edge || 0) > 0 &&
+        Number(current.predictedRate || 0) >= 0.88 &&
+        formulaMeta.adjustment !== "月度与半月同时偏弱·降到平投";
+    });
+    var robust = qualified.filter(function (row) {
+      return row.line.formulaMeta && row.line.formulaMeta.source === "robust";
+    });
+    var selected = robust.slice(0, 3);
+    if (selected.length < 2) {
+      qualified.forEach(function (row) {
+        if (selected.length >= 2) return;
+        if (selected.indexOf(row) < 0) selected.push(row);
+      });
+    }
+    if (selected.length < 2) selected = reportRows.slice(0, 2);
+    var order = {};
+    reportRows.forEach(function (row, index) { order[row.line.id] = index; });
+    return selected.sort(function (a, b) {
+      return order[a.line.id] - order[b.line.id];
+    });
+  }
+
+  function todaySinglePeriodHTML() {
+    var labels = ["A", "B", "C"];
+    var picks = labels.map(function (label, rank) {
+      var pick = probabilityPickAt(latest + 1, rank);
+      if (!pick) return null;
+      return {
+        label: label,
+        lineId: "prob" + (rank + 1),
+        tail: Number(pick.tail),
+        nextProb: Number(pick.score != null ? pick.score : (pick.nextProb || 0)),
+        window3Prob: Number(pick.window3Prob || 0),
+      };
+    }).filter(Boolean);
+    var seen = {};
+    picks = picks.filter(function (pick) {
+      if (seen[pick.tail]) return false;
+      seen[pick.tail] = true;
+      return true;
+    });
+    var html = '<div data-today-plan><div class="section"><div class="section__head"><h2 class="section__title">今日单期概率候选</h2>' +
+      '<span class="section__hint">第' + (latest + 1) + '期 · 从A、B、C三条单期概率线中取前2至3个参考尾号</span></div></div>';
+    html += '<div class="section"><div class="panel today-plan-guide"><b>单期候选尾号</b>' +
+      '<span>候选表示下一期出现概率相对靠前，不代表必出；金额与是否下注由你决定。</span></div></div>';
+    html += '<div class="today-plan-grid">';
+    picks.forEach(function (pick, index) {
+      var personality = PERSONALITY_BY_ID[pick.lineId];
+      var current = personality && personality.current || {};
+      html += '<article class="today-plan-card" data-today-plan-card data-line-id="' + pick.lineId + '"' +
+        ' data-tail="' + pick.tail + '">' +
+        '<div class="today-plan-card__top"><span>#' + (index + 1) + ' · 单期 ' + pick.label + '</span>' +
+          '<em>当前期</em></div>' +
+        '<h3>' + pick.label + pick.tail + '</h3>' +
+        '<div class="today-plan-card__main"><b>单期参考尾号</b><strong>尾' + pick.tail + '</strong></div>' +
+        '<div class="today-plan-card__meta">下一期出现概率 ' + (pick.nextProb * 100).toFixed(1) +
+          '% · 模型基准 ' + (Number(current.baseline || 0) * 100).toFixed(1) + '%</div>' +
+        '</article>';
+    });
+    html += '</div>';
+    html += '<div class="section"><div class="panel today-plan-note"><b>规则</b>' +
+      '<span>这里只给单期概率候选尾号，不显示三期窗口、金额或自动下单。候选不代表必出，系统建议不等于必须下注，最终由你决定。</span></div></div>';
+    html += '</div>';
+    return html;
   }
 
   function renderOverview() {
@@ -3105,7 +3201,9 @@
         Number(bCurrent.edge || 0) - Number(aCurrent.edge || 0) ||
         a.order - b.order;
     });
-    var topPicks = reportRows.slice(0, 3);
+    var topPicks = personalityExecutionSelection(reportRows);
+    var selectedIds = {};
+    topPicks.forEach(function (row) { selectedIds[row.line.id] = true; });
 
     var windowStates = EXEC_LINES.map(function (line) {
       var current = wmCurrentState(line);
@@ -3122,10 +3220,12 @@
 
     var planAllRows = EXEC_LINES.map(function (line) {
       var basePlan = betPlanFor(line, 3);
+      var selected = !!selectedIds[line.id];
       var verdict = state.betLineMode === "verdict" ? betVerdictFor(line, 3) : null;
-      var effectivePlan = verdict ? betPlanScale(basePlan, verdict.scale) : basePlan.slice();
-      var live = betLiveInfo(line, 3, effectivePlan);
-      var amount = line.hold ? 0 : live.stake;
+      var candidatePlan = verdict ? betPlanScale(basePlan, verdict.scale) : basePlan.slice();
+      var executionPlan = selected ? candidatePlan : [0, 0, 0];
+      var live = betLiveInfo(line, 3, executionPlan);
+      var amount = line.hold || !selected ? 0 : live.stake;
       var tail = null;
       if (live.active) {
         tail = line.kind === "tail"
@@ -3138,16 +3238,15 @@
       }
       return {
         line: line,
+        selected: selected,
         live: live,
         amount: amount,
-        risk: line.hold ? 0 : live.risk,
+        risk: line.hold || !selected ? 0 : live.risk,
         tail: tail,
-        formula: effectivePlan,
+        formula: candidatePlan,
       };
     });
-    var planRows = planAllRows.filter(function (row) { return row.amount > 0; });
-    var todayTotal = planRows.reduce(function (sum, row) { return sum + row.amount; }, 0);
-    var todayRisk = planAllRows.reduce(function (sum, row) { return sum + row.risk; }, 0);
+    var planRows = planAllRows.filter(function (row) { return row.selected; });
     var waitingCount = windowStates.filter(function (row) { return row.kind === "wait"; }).length;
     var liveCount = windowStates.filter(function (row) { return row.kind === "live"; }).length;
     var reportView = state.windowReportView;
@@ -3160,18 +3259,20 @@
     html += '<section class="today-hero">' +
       '<div class="today-hero__top"><span class="today-hero__eyebrow">下一独立三期窗口 · 第' + target + '期</span>' +
       '<span class="today-hero__status">数据截至第' + latest + '期</span></div>' +
-      '<div class="today-hero__value"><b>' + topPicks.length + ' 条</b><span>窗口优先观察 · 最新尾 ' +
-        latestTails.join(" ") + '</span></div>' +
+      '<div class="today-hero__value"><b>' + topPicks.length + ' 条</b><span>窗口观察 · 最新尾 ' +
+        latestTails.join(" ") + ' · 不是今日单期购买建议</span></div>' +
       '<div class="today-picks">';
     topPicks.forEach(function (row, index) {
       var current = row.personality && row.personality.current || {};
-      var tailText = current.tail != null ? "尾" + current.tail : "候选";
       html += '<div class="today-pick" data-dashboard-pick>' +
         '<span>#' + (index + 1) + ' · ' + row.advice.label + '</span>' +
         '<b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
-        '<small>' + (current.tail != null ? "" : tailText + " · ") + (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</small></div>';
+        '<small>建议第' + Number(row.line.stageFormula && row.line.stageFormula.stage || 0) + '期 · ' +
+          (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</small></div>';
     });
     html += '</div></section>';
+    html += '<div class="panel" data-window-observation-note style="margin:0 0 8px;padding:9px 11px;color:#475569;font-size:12px;font-weight:800;line-height:1.65">' +
+      '这里只做三期窗口观察，不是今日单期购买尾号。单期购买参考请看“今日规划”。</div>';
 
     html += '<div class="task-tabs" data-window-report-tabs role="tablist" aria-label="三期窗口任务">' +
       '<button class="task-tab ' + (reportView === "current" ? "is-active" : "") + '" type="button" data-window-report-task="current" role="tab">当前</button>' +
@@ -3180,7 +3281,7 @@
       '</div>';
     if (reportView === "current") {
       html += windowReportRankingHTML(reportRows, windowStates, liveCount, waitingCount);
-      html += windowReportCurrentExecutionHTML(planAllRows, planRows, todayTotal, todayRisk);
+      html += windowReportCurrentExecutionHTML(planAllRows, planRows);
     } else if (reportView === "history") {
       html += windowReportHistoryHTML(planAllRows, planRows);
     } else {
@@ -4345,12 +4446,12 @@
     { id: "tail7", label: "尾7", kind: "tail", tail: 7, plan: [0, 0, 300] },
     { id: "tail8", label: "尾8", kind: "tail", tail: 8, plan: [0, 300, 0] },
     { id: "tail9", label: "尾9", kind: "tail", tail: 9, plan: [300, 0, 0] },
-    { id: "prob1", label: "A", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
-    { id: "prob2", label: "B", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
-    { id: "prob3", label: "C", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0], hold: "5/7/15/21/30新方法正式选号；仓位公式未验证，暂不配仓" },
+    { id: "prob1", label: "A", kind: "probability", rank: 0, startPeriod: D.length - latest + 294, plan: [0, 0, 0] },
+    { id: "prob2", label: "B", kind: "probability", rank: 1, startPeriod: D.length - latest + 294, plan: [0, 0, 0] },
+    { id: "prob3", label: "C", kind: "probability", rank: 2, startPeriod: D.length - latest + 294, plan: [0, 0, 0] },
   ];
 
-  // 公式来源：2021-2023训练段 + 2024-2026验证段，两段均为正的阶段系数才配仓。
+  // 公式来源：每条线单独比较训练段、验证段、全周期收益和回撤；页面启动时统一写入。
   var EXEC_FORMULA_AUDIT = {
     tail0: { formula: "不配仓", train: [-0.1744, -0.1525, -0.0949], valid: [-0.1399, 0.0359, -0.0191], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 119 },
     tail1: { formula: "双倍倍投", train: [0.0344, 0.0213, -0.0041], valid: [-0.0576, -0.0119, 0.0407], fullNet: 5680, fullRoi: 0.0264186047, trainNet: 2400, validNet: 3280, maxDrawdown: 4220, miss: 62 },
@@ -4366,9 +4467,9 @@
     fixedD2: { formula: "阶段公式", train: [0.0594, 0.0198, -0.0078], valid: [-0.0599, 0.0035, 0.0079], fullNet: 2700, fullRoi: 0.0256410256, trainNet: 2280, validNet: 420, maxDrawdown: 4380, miss: 67 },
     recD1: { formula: "连追100", train: [0.0246, 0.0262, 0.0031], valid: [0.0378, 0.0158, 0.0014], fullNet: 4400, fullRoi: 0.0339244410, trainNet: 2100, validNet: 2300, maxDrawdown: 2980, miss: 63 },
     recD2: { formula: "阶段公式", train: [0.1122, 0.0333, -0.0084], valid: [-0.0618, 0.0060, 0.0015], fullNet: 4740, fullRoi: 0.0456647399, trainNet: 4020, validNet: 720, maxDrawdown: 3720, miss: 66 },
-    prob1: { formula: "正式选号·仓位待验证", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
-    prob2: { formula: "正式选号·仓位待验证", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
-    prob3: { formula: "正式选号·仓位待验证", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
+    prob1: { formula: "待逐线公式测试", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
+    prob2: { formula: "待逐线公式测试", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
+    prob3: { formula: "待逐线公式测试", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 },
   };
 
 
@@ -4840,9 +4941,9 @@
     return { waiting: null, active: st.active, stage: stage, stake: stake, risk: risk };
   }
 
-  function betWindowRowsHTML(line, w, maxStage) {
+  function betWindowRowsHTML(line, w, maxStage, planOverride) {
     var out = "";
-    var plan = betPlanFor(line, maxStage);
+    var plan = planOverride || betPlanFor(line, maxStage);
     // 只渲染本方案实际检查的期数：两期方案就是第1/2期，不再多列一行第3期（用户要求）
     for (var k = 0; k < maxStage; k++) {
       var g = Number(w.start) + k;
@@ -4867,6 +4968,34 @@
       out += '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + (k + 1) + '期</b><span>第' + period + '期</span><em>' + (tail != null ? "尾" + tail : "尾待定") + '</em></div>';
       out += '<div class="exec-bet-period__body window-record-step__body"><span>下注' + amount + '元</span><strong style="color:' + tone + '">' + stateText + '</strong><b style="color:' + pnlTone + '">盈亏' + pnlText + '</b></div>';
       out += "</div>";
+    }
+    return out;
+  }
+
+  function betWindowStageRowsHTML(line, w, maxStage) {
+    var out = "";
+    var formula = line.stageFormula || {};
+    var formulaStage = Number(formula.stage || 0);
+    var currentStage = Math.min(maxStage, (w.attempts || []).length + 1);
+    for (var k = 0; k < maxStage; k++) {
+      var g = Number(w.start) + k;
+      var period = betLocalPeriod(g);
+      var at = (w.attempts || [])[k] || null;
+      var tail = at && at.tail != null ? at.tail : wmLiveTailFor(line, w, g);
+      var isFormulaStage = formulaStage === k + 1;
+      var stateText = at
+        ? (at.hit ? "中" : "错")
+        : (isFormulaStage ? (currentStage === k + 1 ? "本期建议期" : "等待建议期") : "不选此期");
+      var tone = at ? (at.hit ? "#16a34a" : "#dc2626") :
+        (isFormulaStage ? "#1d4ed8" : "#64748b");
+      var stepTone = at ? (at.hit ? "is-hit" : "is-miss") :
+        (isFormulaStage && currentStage === k + 1 ? "is-current" : "is-future");
+      out += '<div class="exec-bet-period window-record-step ' + stepTone + '" data-bet-period-row data-bet-stage="' + (k + 1) + '">';
+      out += '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + (k + 1) + '期</b><span>第' + period + '期</span><em>' +
+        (tail != null ? "尾" + tail : "尾待定") + '</em></div>';
+      out += '<div class="exec-bet-period__body window-record-step__body"><span>' +
+        (isFormulaStage ? "系统建议第" + formulaStage + "期" : "公式不选此期") + '</span><strong style="color:' + tone + '">' +
+        stateText + '</strong><b>金额由你决定</b></div></div>';
     }
     return out;
   }
@@ -4900,7 +5029,13 @@
     [2021, 2022, 2023, 2024, 2025, 2026].forEach(function (y) { yearTop[y] = betYearTop5(maxStage, y); });
     var lastYearTopIds = (yearTop[2025] || { top: [] }).top.map(function (r) { return r.id; });
     var lines;
-    if (state.betLineMode === "verdict") lines = EXEC_LINES.slice();
+    if (state.betLineMode === "select3") {
+      var selectedExecutionIds = personalityExecutionSelection(EXEC_LINES.map(function (line, index) {
+        return dailyReportLineStats(line, index);
+      })).map(function (row) { return row.line.id; });
+      lines = EXEC_LINES.filter(function (line) { return selectedExecutionIds.indexOf(line.id) >= 0; });
+    }
+    else if (state.betLineMode === "verdict") lines = EXEC_LINES.slice();
     else if (state.betLineMode === "all") lines = EXEC_LINES.slice();
     else if (state.betLineMode === "positive") lines = EXEC_LINES.filter(function (l) { return positiveLines.indexOf(l.id) >= 0; });
     else if (state.betLineMode === "rotate5") lines = EXEC_LINES.filter(function (l) { return topFiveIds.indexOf(l.id) >= 0; });
@@ -5382,41 +5517,87 @@
 
     html += "</div>";
     }
-    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。下单主口径=三期窗口（三期命中或三期全错才关窗）。10条尾号线窗口由真实开奖算出；3条概率线使用5/7/15/21/30新方法正式选号并继续按三期窗口记录，仓位公式尚未验证，暂不配仓。第294-296期保留切换前真实快照。</p>';
+    html += '<p class="disclaimer">本页只按方案提示金额，不预测、不自动下单。下单主口径=三期窗口（三期命中或三期全错才关窗）。13条线都按各自真实窗口选出的性格公式执行；训练/验证不稳定的线明确标为保底观察，不冒充稳健公式。第294-296期保留切换前真实快照。</p>';
     view.innerHTML = html;
   }
 
   function renderFormulaTable() {
-    var enabled = EXEC_LINES.filter(function (line) { return planRisk(line.plan) > 0; }).length;
-    var disabled = EXEC_LINES.length - enabled;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">公式表 · 13条线路</h2><span class="section__hint">2021-2023训练 / 2024-2026验证 · 两段同为正才配仓 · 100元步进</span></div></div>';
+    var reportRows = EXEC_LINES.map(function (line, index) {
+      return dailyReportLineStats(line, index);
+    });
+    var selectedRows = personalityExecutionSelection(reportRows);
+    var selectedIds = {};
+    selectedRows.forEach(function (row) { selectedIds[row.line.id] = true; });
+    var selectedText = selectedRows.map(function (row) {
+      var live = betLiveInfo(row.line, 3, row.line.plan);
+      var stage = Number(row.line.stageFormula && row.line.stageFormula.stage || 0);
+      var currentStage = live.active ? Number(live.stage || 0) : 0;
+      var stateText = live.waiting ? "等待重开" :
+        (!live.active ? "等待新窗" :
+          (currentStage === stage ? "本期符合建议期" :
+            (currentStage < stage ? "等第" + stage + "期" : "已过建议期")));
+      return lineDisplayLabel(row.line, live.active && live.active.lockedTail != null ? live.active.lockedTail : null) +
+        "（建议第" + stage + "期 · " + stateText + "）";
+    }).join(" · ");
+    var robustCount = EXEC_LINES.filter(function (line) {
+      return line.formulaMeta && line.formulaMeta.source === "robust";
+    }).length;
+    var fallbackCount = EXEC_LINES.filter(function (line) {
+      return line.formulaMeta && line.formulaMeta.source === "fallback-test-best";
+    }).length;
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">下注期公式表 · 13条线路</h2><span class="section__hint">只回答第1期、第2期还是第3期下注 · 30期/30天复测</span></div></div>';
     html += '<div class="section"><div class="grid-3">';
     html += '<div class="stat"><div class="stat__value">' + EXEC_LINES.length + '</div><div class="stat__label">独立线路</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + enabled + '</div><div class="stat__label">通过验证并配仓</div></div>';
-    html += '<div class="stat"><div class="stat__value" style="color:#dc2626">' + disabled + '</div><div class="stat__label">未通过验证，不配仓</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + robustCount + '</div><div class="stat__label">年度稳健公式</div></div>';
+    html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + fallbackCount + '</div><div class="stat__label">该线保底观察公式</div></div>';
     html += '</div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.7">公式按真实三期窗口逐期测试，选择训练段和验证段都盈利的方案。命中只按实际开奖记录结算；全错窗口会结束当前窗口，等锁定号重新开出后再开新窗。</div></div></div>';
+    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.7">13条线分别用自己的真实三期窗口测试，决定这条线最适合在第1期、第2期还是第3期下注。公式不决定金额；系统每期只从排名合格线路中建议2至3条，最终金额和下不下注由你决定。</div>';
+    html += '<div data-formula-execution-summary style="margin-top:7px;padding:8px;border-radius:7px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:900;line-height:1.65">本期系统建议：' + (selectedText || "暂无合格线路，建议空仓") + ' · 是否下注由你决定</div>';
+    html += '<div data-personality-review style="font-size:12px;font-weight:800;color:#1d4ed8;line-height:1.7;margin-top:7px">' + personalityReviewText() + '</div></div></div>';
     html += '<div class="section"><div class="formula-card-list">';
     EXEC_LINES.forEach(function (line) {
-      var audit = EXEC_FORMULA_AUDIT[line.id] || { formula: "阶段公式", train: [0, 0, 0], valid: [0, 0, 0], fullNet: 0, fullRoi: 0, trainNet: 0, validNet: 0, maxDrawdown: 0, miss: 0 };
       var enabledLine = planRisk(line.plan) > 0;
-      var fullColor = audit.fullNet > 0 ? "#16a34a" : audit.fullNet < 0 ? "#dc2626" : "#475569";
-      var statusText = line.hold ? "暂停建仓·观察" : (enabledLine ? "配仓" : "不配仓");
-      var statusColor = line.hold ? "#b45309" : (enabledLine ? "#15803d" : "#b91c1c");
-      html += '<details class="formula-card" data-formula-card="' + line.id + '">' +
-        '<summary><span><b>' + lineDisplayLabel(line) + '</b><small>' + audit.formula + ' · ' + line.plan.join(" / ") + ' 元</small></span>' +
+      var formulaMeta = line.formulaMeta || { source: "missing" };
+      var robustLine = formulaMeta.source === "robust";
+      var executeNow = !!selectedIds[line.id];
+      var stageFormula = formulaMeta.stageFormula || {};
+      var stage = Number(stageFormula.stage || 0);
+      var monthRate = wmActivityCurrentRate(formulaMeta.monthForecast);
+      var nextMonthRate = Number(formulaMeta.monthForecast && formulaMeta.monthForecast.predictedRate || 0);
+      var halfRate = wmActivityCurrentRate(formulaMeta.halfForecast);
+      var previousHalfRate = wmActivityPreviousRate(formulaMeta.halfForecast);
+      var nextHalfRate = Number(formulaMeta.halfForecast && formulaMeta.halfForecast.predictedRate || 0);
+      var statusText = !enabledLine ? "无可用公式" :
+        (executeNow ? "系统建议" : (robustLine ? "候选·年度稳健" : "候选·保底观察"));
+      var statusColor = !enabledLine ? "#b91c1c" :
+        (executeNow ? "#1d4ed8" : (robustLine ? "#15803d" : "#b45309"));
+      html += '<details class="formula-card" data-formula-card="' + line.id + '" data-formula-source="' + formulaMeta.source + '"' +
+        ' data-formula-execution="' + (executeNow ? "true" : "false") + '"' +
+        ' data-formula-stage="' + stage + '"' +
+        ' data-formula-month-rate="' + monthRate.toFixed(6) + '"' +
+        ' data-formula-next-month-rate="' + nextMonthRate.toFixed(6) + '"' +
+        ' data-formula-half-rate="' + halfRate.toFixed(6) + '"' +
+        ' data-formula-previous-half-rate="' + previousHalfRate.toFixed(6) + '"' +
+        ' data-formula-next-half-rate="' + nextHalfRate.toFixed(6) + '">' +
+        '<summary><span><b>' + lineDisplayLabel(line) + '</b><small>测试公式 · 第' + stage + '期下注 · ' +
+          (robustLine ? "年度稳健" : "本线保底观察") + '</small></span>' +
         '<strong style="color:' + statusColor + '">' + statusText + '</strong></summary>' +
         '<div class="formula-card__body"><div class="formula-card__metrics">' +
-        '<div><span>全周期净收益</span><b style="color:' + fullColor + '">' + (audit.fullNet >= 0 ? "+" : "") + audit.fullNet + '</b><small>ROI ' + (audit.fullRoi * 100).toFixed(2) + '%</small></div>' +
-        '<div><span>训练 / 验证</span><b>' + (audit.trainNet >= 0 ? "+" : "") + audit.trainNet + ' / ' + (audit.validNet >= 0 ? "+" : "") + audit.validNet + '</b><small>两段同为正才配仓</small></div>' +
-        '<div><span>最大回撤</span><b>' + audit.maxDrawdown + '</b><small>历史窗口模拟</small></div>' +
-        '<div><span>全错窗口</span><b>' + audit.miss + '</b><small>真实开奖结算</small></div>' +
+        '<div><span>建议下注期</span><b>第' + stage + '期</b><small>训练与验证综合选期</small></div>' +
+        '<div><span>该期命中</span><b>' + (Number(stageFormula.hitRate || 0) * 100).toFixed(1) + '%</b><small>' +
+          Number(stageFormula.hits || 0) + ' / ' + Number(stageFormula.reachable || 0) + ' 个到期窗口</small></div>' +
+        '<div><span>训练 / 验证</span><b>' + (Number(stageFormula.trainRate || 0) * 100).toFixed(1) + '% / ' +
+          (Number(stageFormula.validRate || 0) * 100).toFixed(1) + '%</b><small>同一期在两段数据中的命中率</small></div>' +
+        '<div><span>第1 / 2 / 3期</span><b>' + (stageFormula.stageRates || [0, 0, 0]).map(function (rate) {
+          return (Number(rate) * 100).toFixed(1) + "%";
+        }).join(" / ") + '</b><small>用来比较哪一期最合适</small></div>' +
         '</div>';
+      html += wmActivityHTML(formulaMeta);
       if (line.hold) html += '<div class="formula-card__hold">' + line.hold + '</div>';
       html += '</div></details>';
     });
     html += '</div></div>';
-    html += '<p class="disclaimer">公式表只展示历史验证结果，不预测下一期，不自动下单。训练或验证任一段不能稳定盈利时整条线不配仓；金额只表示历史测试中该线路在第1、2、3期应重或应轻。</p>';
+    html += '<p class="disclaimer">公式只决定该线建议在第几期下，不决定金额，也不自动下单。候选13条，系统每期只建议排名前2至3条；最终金额和是否下注由你决定。性格参数每30期或30天先到先复测。</p>';
     view.innerHTML = html;
   }
 
@@ -6024,6 +6205,361 @@
     return wmLineBestCache;
   }
 
+  function wmStageRatesForSimulation(sim, trainOnly) {
+    var counts = [0, 0, 0];
+    var total = 0;
+    (sim && sim.records || []).forEach(function (record) {
+      var year = wmYearOf(record.window.start);
+      var inTrain = year <= 2023;
+      if (inTrain !== !!trainOnly) return;
+      total++;
+      var hitIndex = Number(record.window.hitIndex);
+      if (hitIndex >= 1 && hitIndex <= 3) counts[hitIndex - 1]++;
+    });
+    return counts.map(function (count) { return total ? count / total : 0; });
+  }
+
+  function wmDateForGlobalPeriod(globalPeriod) {
+    var row = D[Number(globalPeriod) - 1];
+    if (!row) return null;
+    return new Date(Date.UTC(Number(row.y), 0, Number(row.p)));
+  }
+
+  function wmWindowEndGlobal(record) {
+    var start = Number(record && record.window && record.window.start);
+    var attempts = record && record.window && Array.isArray(record.window.attempts)
+      ? record.window.attempts.length
+      : 1;
+    return start + Math.max(1, attempts) - 1;
+  }
+
+  function wmPad2(value) {
+    return String(value).padStart(2, "0");
+  }
+
+  function wmFluctuationBuckets(records, unit) {
+    var grouped = {};
+    (records || []).forEach(function (record) {
+      var date = wmDateForGlobalPeriod(wmWindowEndGlobal(record));
+      if (!date) return;
+      var year = date.getUTCFullYear();
+      var month = date.getUTCMonth() + 1;
+      var day = date.getUTCDate();
+      var half = day <= 15 ? 1 : 2;
+      var key = unit === "month"
+        ? year + "-" + wmPad2(month)
+        : year + "-" + wmPad2(month) + "-H" + half;
+      if (!grouped[key]) {
+        grouped[key] = {
+          key: key,
+          label: unit === "month"
+            ? year + "年" + month + "月"
+            : year + "年" + month + "月" + (half === 1 ? "上半月" : "下半月"),
+          year: year,
+          month: month,
+          half: unit === "month" ? null : half,
+          windows: 0,
+          hits: 0,
+          net: 0,
+          turnover: 0,
+        };
+      }
+      var bucket = grouped[key];
+      bucket.windows++;
+      if (Number(record.window.hitIndex) > 0) bucket.hits++;
+      bucket.net += Number(record.profit) || 0;
+      bucket.turnover += Number(record.staked) || 0;
+    });
+    return Object.keys(grouped).sort().map(function (key) {
+      var bucket = grouped[key];
+      bucket.rate = bucket.windows ? bucket.hits / bucket.windows : 0;
+      bucket.roi = bucket.turnover ? bucket.net / bucket.turnover : 0;
+      return bucket;
+    });
+  }
+
+  function wmMean(values) {
+    return values.length
+      ? values.reduce(function (sum, value) { return sum + Number(value || 0); }, 0) / values.length
+      : 0;
+  }
+
+  function wmStandardDeviation(values) {
+    if (!values.length) return 0;
+    var mean = wmMean(values);
+    return Math.sqrt(wmMean(values.map(function (value) {
+      var diff = Number(value || 0) - mean;
+      return diff * diff;
+    })));
+  }
+
+  function wmActivityState(rate, mean, spread) {
+    var threshold = Math.max(0.03, spread * 0.5);
+    if (Number(rate) >= mean + threshold) return "高位";
+    if (Number(rate) <= mean - threshold) return "低位";
+    return "中位";
+  }
+
+  function wmFluctuationForecast(records, unit) {
+    var buckets = wmFluctuationBuckets(records, unit);
+    var rates = buckets.map(function (bucket) { return bucket.rate; });
+    var mean = wmMean(rates);
+    var spread = wmStandardDeviation(rates);
+    var current = buckets[buckets.length - 1] || null;
+    var previous = buckets[buckets.length - 2] || null;
+    var currentState = current ? wmActivityState(current.rate, mean, spread) : "样本不足";
+    var futureRates = [];
+    for (var i = 0; i < buckets.length - 1; i++) {
+      if (wmActivityState(buckets[i].rate, mean, spread) === currentState) {
+        futureRates.push(buckets[i + 1].rate);
+      }
+    }
+    var predictedRate = futureRates.length >= 3 ? wmMean(futureRates) : mean;
+    var trendDelta = current && previous ? current.rate - previous.rate : 0;
+    var forecastDelta = current ? predictedRate - current.rate : 0;
+    var trendText = forecastDelta >= 0.02 ? "预计升温" :
+      (forecastDelta <= -0.02 ? "预计降温" : "预计持平");
+    return {
+      unit: unit,
+      buckets: buckets,
+      current: current,
+      previous: previous,
+      mean: mean,
+      spread: spread,
+      currentState: currentState,
+      changeFromPrevious: trendDelta,
+      predictedRate: predictedRate,
+      forecastSamples: futureRates.length,
+      forecastDelta: forecastDelta,
+      trendText: trendText,
+    };
+  }
+
+  function wmLowerFormulaN(n) {
+    var steps = [1, 1.5, 2, 2.5, 3];
+    var value = Number(n);
+    var index = steps.indexOf(value);
+    if (index <= 0) return 1;
+    return steps[index - 1];
+  }
+
+  function wmActivityAdjustedN(baseN, monthForecast, halfForecast, annualRate) {
+    var threshold = Number(annualRate) - 0.05;
+    var monthSampleReady = monthForecast.current && monthForecast.current.windows >= 3 &&
+      monthForecast.forecastSamples >= 3;
+    var halfSampleReady = halfForecast.current && halfForecast.current.windows >= 2 &&
+      halfForecast.forecastSamples >= 3;
+    var monthWeak = monthSampleReady && monthForecast.predictedRate < threshold;
+    var halfWeak = halfSampleReady && halfForecast.predictedRate < threshold;
+    if (monthWeak && halfWeak) {
+      return { n: 1, adjustment: "月度与半月同时偏弱·降到平投" };
+    }
+    if (monthWeak || halfWeak) {
+      return {
+        n: wmLowerFormulaN(baseN),
+        adjustment: monthWeak ? "月度预判偏弱·降一档" : "半月预判偏弱·降一档",
+      };
+    }
+    return { n: Number(baseN), adjustment: "月度与半月未同时转弱·保持年度档" };
+  }
+
+  function wmStageFormulaForSimulation(sim) {
+    var stats = {
+      windows: 0,
+      hits: [0, 0, 0],
+      trainWindows: 0,
+      trainHits: [0, 0, 0],
+      validWindows: 0,
+      validHits: [0, 0, 0],
+    };
+    (sim && sim.records || []).forEach(function (record) {
+      var hitIndex = Number(record.window.hitIndex);
+      var isTrain = wmYearOf(record.window.start) <= 2023;
+      stats.windows++;
+      if (isTrain) stats.trainWindows++;
+      else stats.validWindows++;
+      if (hitIndex >= 1 && hitIndex <= 3) {
+        stats.hits[hitIndex - 1]++;
+        if (isTrain) stats.trainHits[hitIndex - 1]++;
+        else stats.validHits[hitIndex - 1]++;
+      }
+    });
+    var candidates = [1, 2, 3].map(function (stage, index) {
+      var previousHits = stats.hits.slice(0, index).reduce(function (sum, value) { return sum + value; }, 0);
+      var previousTrainHits = stats.trainHits.slice(0, index).reduce(function (sum, value) { return sum + value; }, 0);
+      var previousValidHits = stats.validHits.slice(0, index).reduce(function (sum, value) { return sum + value; }, 0);
+      var reachable = Math.max(0, stats.windows - previousHits);
+      var trainReachable = Math.max(0, stats.trainWindows - previousTrainHits);
+      var validReachable = Math.max(0, stats.validWindows - previousValidHits);
+      var overallRate = reachable ? stats.hits[index] / reachable : 0;
+      var trainRate = trainReachable ? stats.trainHits[index] / trainReachable : 0;
+      var validRate = validReachable ? stats.validHits[index] / validReachable : 0;
+      return {
+        stage: stage,
+        hits: stats.hits[index],
+        reachable: reachable,
+        hitRate: overallRate,
+        trainRate: trainRate,
+        validRate: validRate,
+        stableScore: Math.min(trainRate, validRate) * 1000 + overallRate,
+      };
+    });
+    candidates.sort(function (a, b) {
+      return b.stableScore - a.stableScore || b.hitRate - a.hitRate || a.stage - b.stage;
+    });
+    var best = candidates[0];
+    return {
+      stage: best.stage,
+      hitRate: best.hitRate,
+      trainRate: best.trainRate,
+      validRate: best.validRate,
+      hits: best.hits,
+      windows: stats.windows,
+      reachable: best.reachable,
+      stageRates: [candidates[0], candidates[1], candidates[2]]
+        .sort(function (a, b) { return a.stage - b.stage; })
+        .map(function (item) { return item.hitRate; }),
+    };
+  }
+
+  // 每条线只使用自己的年度稳健测试结果；没有两段同时为正时，
+  // 退回到该线自身全周期表现最好的倍率，不套用全站固定金额。
+  function wmPersonalityFormulaChoice(lineData) {
+    var simulations = (lineData && lineData.simulations || []).slice();
+    if (lineData && lineData.best) {
+      return { sim: lineData.best, source: "robust" };
+    }
+    if (lineData && lineData.netBest) {
+      return { sim: lineData.netBest, source: "robust" };
+    }
+    simulations.sort(function (a, b) {
+      return (b.trainNet + b.validNet) - (a.trainNet + a.validNet) ||
+        b.net - a.net ||
+        a.maxDD - b.maxDD;
+    });
+    return simulations[0] ? { sim: simulations[0], source: "fallback-test-best" } : null;
+  }
+
+  function applyPersonalityFormulaPlans() {
+    var lineData = wmLineBestData().lineBest || {};
+    EXEC_LINES.forEach(function (line) {
+      var choice = wmPersonalityFormulaChoice(lineData[line.id]);
+      if (!choice || !choice.sim) {
+        line.plan = [0, 0, 0];
+        line.formulaMeta = { source: "missing", n: 0 };
+        delete line.hold;
+        return;
+      }
+      var baseSim = choice.sim;
+      var baseRecords = baseSim.records || [];
+      var annualRate = baseRecords.length
+        ? (baseRecords.length - Number(baseSim.missWindows || 0)) / baseRecords.length
+        : 0;
+      var baseMonthForecast = wmFluctuationForecast(baseRecords, "month");
+      var baseHalfForecast = wmFluctuationForecast(baseRecords, "half");
+      var adjusted = wmActivityAdjustedN(baseSim.n, baseMonthForecast, baseHalfForecast, annualRate);
+      var sim = (lineData[line.id].simulations || []).filter(function (candidate) {
+        return Number(candidate.n) === Number(adjusted.n);
+      })[0] || baseSim;
+      var monthForecast = wmFluctuationForecast(sim.records || [], "month");
+      var halfForecast = wmFluctuationForecast(sim.records || [], "half");
+      var stageFormula = wmStageFormulaForSimulation(sim);
+      line.plan = wmPlanFor(sim.n);
+      line.stageFormula = stageFormula;
+      line.formulaMeta = {
+        source: choice.source,
+        n: Number(sim.n),
+        baseN: Number(baseSim.n),
+        finalN: Number(sim.n),
+        robust: choice.source === "robust",
+        annualRate: annualRate,
+        adjustment: adjusted.adjustment,
+        stageFormula: stageFormula,
+        monthForecast: monthForecast,
+        halfForecast: halfForecast,
+        reviewNumber: PERSONALITY_MODEL && PERSONALITY_MODEL.review
+          ? PERSONALITY_MODEL.review.reviewNumber
+          : null,
+      };
+      delete line.hold;
+      EXEC_FORMULA_AUDIT[line.id] = {
+        formula: (choice.source === "robust" ? "逐线年度稳健公式 · " : "逐线全周期保底公式 · ") +
+          "第" + stageFormula.stage + "期下注 · " + adjusted.adjustment,
+        source: choice.source,
+        n: Number(sim.n),
+        train: wmStageRatesForSimulation(sim, true),
+        valid: wmStageRatesForSimulation(sim, false),
+        fullNet: Number(sim.net) || 0,
+        fullRoi: (Number(sim.roi) || 0) / 100,
+        trainNet: Number(sim.trainNet) || 0,
+        validNet: Number(sim.validNet) || 0,
+        maxDrawdown: Number(sim.maxDD) || 0,
+        miss: Number(sim.missWindows) || 0,
+        records: Number(sim.records && sim.records.length) || 0,
+        reviewNumber: line.formulaMeta.reviewNumber,
+        stageFormula: stageFormula,
+      };
+    });
+  }
+
+  function personalityReviewText() {
+    var review = PERSONALITY_MODEL && PERSONALITY_MODEL.review;
+    if (!review) return "性格复测：模型未加载";
+    var currentGlobal = Number(PERSONALITY_MODEL.asOfPeriod) || D.length;
+    var lastLocal = latest - Math.max(0, currentGlobal - Number(review.lastReviewedPeriod || currentGlobal));
+    var nextLocal = latest + Math.max(0, Number(review.periodsUntilReview) || 0);
+    var nextDate = new Date(review.nextReviewAt);
+    var dateText = Number.isFinite(nextDate.getTime())
+      ? nextDate.toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" })
+      : "日期待定";
+    return "性格复测：每30期或30天先到先测 · 上次第" + lastLocal + "期 · 下次第" +
+      nextLocal + "期或" + dateText + " · 已复测" + review.reviewNumber + "次";
+  }
+
+  function wmActivityRateText(value) {
+    return (Number(value || 0) * 100).toFixed(1) + "%";
+  }
+
+  function wmActivityMoneyText(value) {
+    var number = Math.round(Number(value) || 0);
+    return (number >= 0 ? "+" : "") + number;
+  }
+
+  function wmActivityCurrentRate(forecast) {
+    return forecast && forecast.current ? Number(forecast.current.rate) : 0;
+  }
+
+  function wmActivityPreviousRate(forecast) {
+    return forecast && forecast.previous ? Number(forecast.previous.rate) : 0;
+  }
+
+  function wmActivityHTML(formulaMeta) {
+    var month = formulaMeta && formulaMeta.monthForecast;
+    var half = formulaMeta && formulaMeta.halfForecast;
+    if (!month || !half || !month.current || !half.current) {
+      return '<div class="formula-card__activity"><div data-formula-monthly>本月：样本不足</div>' +
+        '<div data-formula-half-month>半月：样本不足</div></div>';
+    }
+    var monthChange = month.forecastDelta;
+    var halfChange = half.changeFromPrevious;
+    var monthTone = monthChange < -0.02 ? "#b45309" : (monthChange > 0.02 ? "#15803d" : "#475569");
+    var halfTone = halfChange < -0.02 ? "#b45309" : (halfChange > 0.02 ? "#15803d" : "#475569");
+    var html = '<div class="formula-card__activity">';
+    html += '<div data-formula-monthly><b>本月 ' + month.current.label + '</b>' +
+      ' <span>' + month.current.hits + '/' + month.current.windows + '窗 · ' +
+      wmActivityRateText(month.current.rate) + ' · 收益 ' + wmActivityMoneyText(month.current.net) +
+      ' · 状态 ' + month.currentState + '</span><em style="color:' + monthTone + '">下月预计 ' +
+      wmActivityRateText(month.predictedRate) + '（同态 ' + month.forecastSamples + ' 段）</em></div>';
+    html += '<div data-formula-half-month><b>半月 ' + half.current.label + '</b>' +
+      ' <span>' + half.current.hits + '/' + half.current.windows + '窗 · ' +
+      wmActivityRateText(half.current.rate) + ' · ' +
+      (half.previous ? half.previous.label : "上段") + ' ' + wmActivityRateText(wmActivityPreviousRate(half)) +
+      ' · 变化 ' + (halfChange >= 0 ? "+" : "") + (halfChange * 100).toFixed(1) + 'pp' +
+      ' · 状态 ' + half.currentState + '</span><em style="color:' + halfTone + '">下一半月预计 ' +
+      wmActivityRateText(half.predictedRate) + '（同态 ' + half.forecastSamples + ' 段）</em></div>';
+    return html + '</div>';
+  }
+
 
 
   function renderWindowMultiplierTest() {
@@ -6096,42 +6632,32 @@
     html += '</div></div>';
     html += '<div class="wm-view-group" data-wm-group="formula">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">每个号码的最优下注公式</b><span class="wm-card__hint">100元起 · 只用训练段和验证段同时为正的倍率 · 尾0-尾9只按真实开奖结算；4条推荐线的回测只作参考，正式口径看真实快照 · 左右滑动</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">13线下注期公式</b><span class="wm-card__hint">每条线只回答建议在第1期、第2期还是第3期下注，不决定金额 · 左右滑动</span></div>';
     html += '<div class="wm-formula-panel wm-hscroll">';
     orderedLines.forEach(function (item) {
-      var itemData = lineBest[item.id] || { best: null };
-      var itemBest = itemData.best;
-      var planText = itemBest ? wmPlanText(itemBest.n) : "0 / 0 / 0";
-      var bestText = itemBest ? (itemBest.n === 1 ? "不倍投" : itemBest.n + "倍") : "未通过";
-      var itemAnnualStats = itemData.annual ? itemData.annual[itemBest ? itemBest.n : activeN] : null;
-      var itemYtdBest = ytdBestByLine[item.id] || null;
-      var itemYtdPosition = wmCurrentPosition(item, itemYtdBest ? itemYtdBest.n : activeN);
-      var itemPosition = wmPositionForPlan(item, item.plan);
+      var formulaMeta = item.formulaMeta || {};
+      var stageFormula = formulaMeta.stageFormula || {};
+      var stage = Number(stageFormula.stage || 0);
+      var robustFormula = formulaMeta.source === "robust";
+      var bestText = stage ? (robustFormula ? "年度稳健" : "保底观察") : "无可用公式";
+      var live = wmCurrentState(item);
+      var currentStage = live.active ? Math.min(3, (live.active.attempts || []).length + 1) : 0;
+      var actionText = live.waiting ? "当前等待重开" :
+        (!live.active ? "当前等待新窗" :
+          (currentStage === stage ? "当前已到建议期" :
+            (currentStage < stage ? "等待第" + stage + "期" : "建议期已过")));
       var itemCurrentTail = execCurrentTail(item, wmCurrentState(item), latest + 1);
       var itemTailText = item.kind === "tail" ? "" : (itemCurrentTail != null ? ' · 尾' + itemCurrentTail : '');
-      var itemPositionPeriod = itemPosition.period ? wmPeriodLabel(itemPosition.period) : "-";
-      html += '<div class="wm-formula-row" style="border-left:4px solid ' + (itemBest ? "#16a34a" : "#dc2626") + ';background:' + (itemBest ? "#f0fdf4" : "#fef2f2") + '">';
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + lineDisplayLabel(item) + '</b><span style="font-size:13px;font-weight:900;color:' + (itemBest ? "#16a34a" : "#dc2626") + '">' + bestText + '</span></div>';
-      html += '<div style="font-size:15px;font-weight:900;color:#1d4ed8;margin-top:6px">' + planText + '</div>';
-      html += '<div style="font-size:12px;font-weight:900;color:' + itemPosition.color + ';margin-top:5px">正式执行仓位 ' + itemPosition.label + itemTailText + ' · ' + (itemPosition.amount > 0 ? itemPosition.amount + "元" : itemPosition.status) + ' · 检查 ' + itemPositionPeriod + '</div>';
-      if (itemYtdBest) {
-        html += '<div style="font-size:11px;font-weight:900;color:#1d4ed8;margin-top:4px">今年最优 ' + (itemYtdBest.n === 1 ? "不倍投" : itemYtdBest.n + "倍") + ' · ' + wmPlanText(itemYtdBest.n) + '</div>';
-        html += '<div style="font-size:11px;color:' + itemYtdPosition.color + ';margin-top:2px">今年测试仓位 ' + itemYtdPosition.label + ' · ' + (itemYtdPosition.amount > 0 ? itemYtdPosition.amount + "元" : itemYtdPosition.status) + '</div>';
-      } else {
-        html += '<div style="font-size:11px;color:#d97706;margin-top:4px">今年无可用数据</div>';
-      }
-      if (itemAnnualStats) {
-        html += '<div style="font-size:11px;color:#475569;margin-top:4px">年度正收益 ' + itemAnnualStats.positiveYears + '/' + itemAnnualStats.years.length + ' 年 · 最近3年 ' + itemAnnualStats.recent3Positive + '/3</div>';
-      }
-      if (itemBest) {
-        html += '<div style="font-size:11px;color:#475569;margin-top:5px">全周期 ' + (itemBest.net >= 0 ? "+" : "") + itemBest.net + ' · ROI ' + itemBest.roi.toFixed(2) + '%</div>';
-        html += '<div style="font-size:11px;color:#475569">训练 ' + (itemBest.trainNet >= 0 ? "+" : "") + itemBest.trainNet + ' / 验证 ' + (itemBest.validNet >= 0 ? "+" : "") + itemBest.validNet + '</div>';
-        html += '<div style="font-size:11px;color:#dc2626">最大回撤 ' + itemBest.maxDD + ' · 最大连错 ' + itemBest.maxLossStreak + '窗</div>';
-      } else {
-        html += '<div style="font-size:11px;color:#dc2626;margin-top:5px">训练段或验证段未同时通过，不配仓</div>';
-      }
+      html += '<div class="wm-formula-row" style="border-left:4px solid ' + (stage ? (robustFormula ? "#16a34a" : "#b45309") : "#dc2626") + ';background:' + (stage ? (robustFormula ? "#f0fdf4" : "#fffbeb") : "#fef2f2") + '">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b style="font-size:16px">' + lineDisplayLabel(item) + '</b><span style="font-size:13px;font-weight:900;color:' + (stage ? (robustFormula ? "#16a34a" : "#b45309") : "#dc2626") + '">' + bestText + '</span></div>';
+      html += '<div style="font-size:18px;font-weight:900;color:#1d4ed8;margin-top:6px">建议第' + stage + '期下注' + itemTailText + '</div>';
+      html += '<div style="font-size:12px;font-weight:900;color:#475569;margin-top:5px">' + actionText + ' · 该期命中 ' + (Number(stageFormula.hitRate || 0) * 100).toFixed(1) + '%</div>';
+      html += '<div style="font-size:11px;color:#475569;margin-top:5px">训练 ' + (Number(stageFormula.trainRate || 0) * 100).toFixed(1) + '% / 验证 ' + (Number(stageFormula.validRate || 0) * 100).toFixed(1) + '% · 到期 ' + Number(stageFormula.reachable || 0) + ' 窗</div>';
+      html += '<div style="font-size:11px;color:#475569">第1 / 2 / 3期命中率 ' + (stageFormula.stageRates || [0, 0, 0]).map(function (rate) {
+        return (Number(rate) * 100).toFixed(1) + "%";
+      }).join(" / ") + '</div>';
       if (item.kind !== "tail") {
-        html += '<div style="font-size:11px;color:#b45309;margin-top:4px">口径：回测窗口 ' + (itemBest ? itemBest.records.length : 0) + ' 个 · ' + snapSampleText + '（样本不足，暂不作正式结论）</div>';
+        html += '<div style="font-size:11px;color:#b45309;margin-top:4px">口径：真实窗口回测 ' + snapSampleText + '（样本不足，暂不作正式结论）</div>';
       }
       html += '</div>';
     });
@@ -7446,47 +7972,6 @@
     });
   }
 
-  function probabilityWindowStepsHTML(attempts, startPeriod, currentStage) {
-    var html = '<div class="prob-window-steps">';
-    for (var stage = 1; stage <= 3; stage++) {
-      var attempt = attempts && attempts[stage - 1] ? attempts[stage - 1] : null;
-      var tone = "is-closed";
-      var detail = "未进入";
-      var result = "已关窗";
-      if (attempt) {
-        if (attempt.pending) {
-          var isCurrent = Number(currentStage) === stage;
-          tone = isCurrent ? "is-current" : "is-future";
-          result = isCurrent ? "待开奖" : "待定";
-        } else if (attempt.hit) {
-          tone = "is-hit";
-          result = "中";
-        } else {
-          tone = "is-miss";
-          result = "错";
-        }
-        detail = "第" + attempt.period + "期 · 尾" + attempt.tail;
-      }
-      html += '<div class="prob-window-step ' + tone + '" data-window-stage="' + stage + '">' +
-        '<b>第' + stage + '期</b><span>' + detail + '</span><em>' + result + '</em></div>';
-    }
-    return html + '</div>';
-  }
-
-  function probabilityWindowCardHTML(options) {
-    var cardClass = "prob-test-card" + (options.tone ? " " + options.tone : "");
-    var liveAttr = options.live ? ' data-prob-live-window="1"' : "";
-    var startAttr = options.startPeriod == null ? "" : ' data-prob-window-start="' + options.startPeriod + '"';
-    var meta = options.startPeriod == null
-      ? "等待重开 · 等尾" + options.tail + "开出"
-      : "起始第" + options.startPeriod + "期 · 锁定尾" + options.tail;
-    return '<div class="' + cardClass + '" data-prob-window-card="1"' + liveAttr + startAttr + '>' +
-      '<div class="prob-window-card__head"><b>' + options.label + '</b><span>' + options.state + '</span></div>' +
-      '<div class="prob-window-card__meta">' + meta + '</div>' +
-      probabilityWindowStepsHTML(options.attempts, options.startPeriod, options.currentStage) +
-      "</div>";
-  }
-
   function probabilityTestWindowHTML(selectedYear, pendingResult) {
     var year = Number(selectedYear);
     var trainingYear = year >= 2021 && year <= 2024;
@@ -7606,14 +8091,15 @@
       var tag = year <= 2024 ? "训练" : year === 2025 ? "验证" : "正式";
       return '<button class="chip wm-view-tab ' + (year === selectedYear ? "is-active" : "") + '" type="button" data-prob-year="' + year + '">' + year + ' ' + tag + '</button>';
     }).join("");
-    var heading = "单期 · 第" + result.target + "期";
+    var heading = "今日规划 · 单期 · 第" + result.target + "期";
     var methodHint = result.legacyLocked
       ? "旧10期权重已于开奖前锁定，保留原预测不改写；新方法从第297期开始"
       : "生产方法 " + PROB_MODEL.META.productionMethod.windows.join(" / ") + " 期 · 三期概率排序 · 下一期概率作诊断";
     var activeView = ["overview", "history", "snapshot"].indexOf(state.probView) >= 0 ? state.probView : "overview";
     state.probView = activeView;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
-    html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
+    var productionSummaryHTML = '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
+    var html = todaySinglePeriodHTML();
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
     html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="单期任务">' +
       '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前</button>' +
       '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">历史记录</button>' +
@@ -7634,6 +8120,7 @@
       html += '</div>';
     }
     html += '<p class="disclaimer">生产权重改为5/7/15/21/30期，各自使用训练段学出的系数并按完整三期内概率排序。第294-296期真实快照保持原样；第296期开奖前已锁定的旧模型前三名不得事后改写，新方法从第297期开始生成生产快照。</p>';
+    html += productionSummaryHTML;
     view.innerHTML = modelPairStrip(latest + 1) + html;
     if (activeView === "snapshot") mountProbabilitySnapshots(result);
     if (activeView === "history") hydrateProbabilitySinglePeriods(selectedYear, result);
@@ -8971,6 +9458,7 @@
   }
   lsSet(NAV_GROUP_KEY, state.group);
   lsSet("v2_current_tab", state.tab);
+  applyPersonalityFormulaPlans();
   autoSettleUltimateOrders();
   initNavDrawer();
   renderHeader();

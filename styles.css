@@ -5410,6 +5410,43 @@ body[data-page="windowmiss2"] .task-tabs {
   line-height: 1.4;
 }
 
+.formula-card__activity {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.formula-card__activity > div {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #dbe5f1;
+  border-radius: 7px;
+  background: #f8fbff;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.formula-card__activity b,
+.formula-card__activity span,
+.formula-card__activity em {
+  display: block;
+}
+
+.formula-card__activity b {
+  color: #172334;
+  font-size: 12px;
+}
+
+.formula-card__activity span {
+  color: #526174;
+}
+
+.formula-card__activity em {
+  margin-top: 2px;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .formula-card__hold {
   margin-top: 8px;
   padding: 8px;
@@ -5418,6 +5455,91 @@ body[data-page="windowmiss2"] .task-tabs {
   color: #a86115;
   font-size: 12px;
   line-height: 1.55;
+}
+
+.today-plan-guide,
+.today-plan-note {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.today-plan-guide b,
+.today-plan-note b {
+  color: #172334;
+  font-size: 13px;
+}
+
+.today-plan-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.today-plan-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #dbe5f1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.today-plan-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.today-plan-card__top em {
+  flex: 0 0 auto;
+  font-style: normal;
+}
+
+.today-plan-card h3 {
+  margin: 6px 0;
+  color: #172334;
+  font-size: 18px;
+}
+
+.today-plan-card__main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 7px;
+  background: #eff6ff;
+}
+
+.today-plan-card__main b {
+  color: #1d4ed8;
+  font-size: 16px;
+}
+
+.today-plan-card__main strong {
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.today-plan-card__window {
+  margin-top: 7px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.today-plan-card__meta {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 /* ===== 左侧拇指抽屉导航 ===== */

@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "eslint app.js build_personality_model.js model_core.js model_selector.js model_probability.js next_window_model.js probability_weight_research.js ultimate_model.js snapshots.js --max-warnings=0",
     "test:data": "python check_app.py && node page_audit.js",
-    "test:report": "node tests/probability_weight_research_check.js && node tests/probability_model_switch_check.js && node tests/personality_model_check.js",
+    "test:training": "python tests/training_database_check.py",
+    "test:report": "node tests/probability_weight_research_check.js && node tests/probability_model_switch_check.js && node tests/personality_model_check.js && npm run test:training",
     "test:ui": "playwright test",
     "test": "npm run lint && npm run test:data && npm run test:report && npm run test:ui"
   },

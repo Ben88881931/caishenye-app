@@ -13,6 +13,9 @@
   var STATE_PRIOR = 20;
   var PATTERN_PRIOR = 20;
   var VALIDATION_YEARS = [2025, 2026];
+  var REVIEW_MAX_PERIODS = 30;
+  var REVIEW_MAX_DAYS = 30;
+  var DAY_MS = 24 * 60 * 60 * 1000;
   var LINES = [
     { id: "tail0", label: "尾0", kind: "tail", tail: 0 },
     { id: "tail1", label: "尾1", kind: "tail", tail: 1 },
@@ -461,6 +464,91 @@
     return { lower: clamp(center - spread, 0, 1), upper: clamp(center + spread, 0, 1) };
   }
 
+  function mean(values) {
+    var finite = values.filter(function (value) { return Number.isFinite(Number(value)); });
+    return finite.length
+      ? finite.reduce(function (sum, value) { return sum + Number(value); }, 0) / finite.length
+      : 0;
+  }
+
+  function reviewMetrics(lines, selection) {
+    return {
+      meanLongTermRate: mean(lines.map(function (line) { return line.longTerm.rate; })),
+      meanCurrentPrediction: mean(lines.map(function (line) { return line.current.predictedRate; })),
+      meanBrierSkill: mean(lines.flatMap(function (line) {
+        return (line.validation || []).map(function (item) { return item.brierSkill; });
+      })),
+      selectionTop2: mean((selection || []).map(function (item) { return item.top2.rate; })),
+      selectionTop3: mean((selection || []).map(function (item) { return item.top3.rate; })),
+      selectionAll: mean((selection || []).map(function (item) { return item.all.rate; })),
+    };
+  }
+
+  function reviewSchedule(options, asOfPeriod, lines, selection) {
+    var reviewedAt = new Date(options && options.reviewedAt ? options.reviewedAt : Date.now());
+    if (!Number.isFinite(reviewedAt.getTime())) reviewedAt = new Date();
+    var previous = options && options.previousReview && typeof options.previousReview === "object"
+      ? options.previousReview
+      : null;
+    var observed = reviewMetrics(lines, selection);
+    var policy = {
+      maxPeriods: REVIEW_MAX_PERIODS,
+      maxDays: REVIEW_MAX_DAYS,
+      trigger: "whichever-first",
+    };
+    var lastReviewedPeriod = Number(previous && previous.lastReviewedPeriod);
+    var lastReviewedAt = previous && previous.lastReviewedAt
+      ? new Date(previous.lastReviewedAt)
+      : null;
+    var nextReviewPeriod = Number(previous && previous.nextReviewPeriod);
+    var nextReviewAt = previous && previous.nextReviewAt
+      ? new Date(previous.nextReviewAt)
+      : null;
+    var dueNow = !!(previous &&
+      (
+        (Number.isFinite(nextReviewPeriod) && asOfPeriod >= nextReviewPeriod) ||
+        (nextReviewAt && Number.isFinite(nextReviewAt.getTime()) && reviewedAt >= nextReviewAt)
+      ));
+    var reviewNumber = Math.max(1, Number(previous && previous.reviewNumber) || 1);
+    var status = "baseline";
+
+    if (!previous || !Number.isFinite(lastReviewedPeriod) || !lastReviewedAt ||
+        !Number.isFinite(lastReviewedAt.getTime())) {
+      lastReviewedPeriod = asOfPeriod;
+      lastReviewedAt = reviewedAt;
+      nextReviewPeriod = lastReviewedPeriod + REVIEW_MAX_PERIODS;
+      nextReviewAt = new Date(lastReviewedAt.getTime() + REVIEW_MAX_DAYS * DAY_MS);
+    } else if (dueNow) {
+      reviewNumber++;
+      lastReviewedPeriod = asOfPeriod;
+      lastReviewedAt = reviewedAt;
+      nextReviewPeriod = lastReviewedPeriod + REVIEW_MAX_PERIODS;
+      nextReviewAt = new Date(lastReviewedAt.getTime() + REVIEW_MAX_DAYS * DAY_MS);
+      status = "completed";
+    } else {
+      status = "waiting";
+    }
+
+    var metrics = (!previous || dueNow) ? observed : (previous.metrics || observed);
+    return {
+      policy: policy,
+      status: status,
+      dueNow: dueNow,
+      reviewNumber: reviewNumber,
+      lastReviewedPeriod: lastReviewedPeriod,
+      lastReviewedAt: lastReviewedAt.toISOString(),
+      nextReviewPeriod: nextReviewPeriod,
+      nextReviewAt: nextReviewAt.toISOString(),
+      periodsUntilReview: Math.max(0, nextReviewPeriod - asOfPeriod),
+      daysUntilReview: Math.max(0, Math.ceil((nextReviewAt.getTime() - reviewedAt.getTime()) / DAY_MS)),
+      metrics: metrics,
+      previousMetrics: dueNow && previous ? (previous.metrics || null) : null,
+      observedMetrics: observed,
+      candidateOnly: dueNow,
+      ruleReplacement: dueNow ? "pending-shadow-review" : "hold-current",
+    };
+  }
+
   function build(options) {
     var d = options && options.d;
     var probabilityModel = options && options.probabilityModel;
@@ -579,6 +667,9 @@
     }).map(function (line, index) {
       return Object.assign({ rank: index + 1 }, line);
     });
+    var selection = selectionValidation(details.map(function (item) {
+      return { id: item.line.id, predictions: item.cascade };
+    }));
     return {
       version: VERSION,
       method: METHOD,
@@ -597,9 +688,8 @@
       overlappingWindows: true,
       lines: lines,
       ranking: ranking,
-      selectionValidation: selectionValidation(details.map(function (item) {
-        return { id: item.line.id, predictions: item.cascade };
-      }))
+      selectionValidation: selection,
+      review: reviewSchedule(options, asOfPeriod, lines, selection),
     };
   }
 

@@ -9,11 +9,13 @@ const probabilityModel = require("../model_probability.js");
 const dataSandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync("data.js", "utf8"), dataSandbox, { filename: "data.js" });
 const appData = dataSandbox.window.APP_DATA;
+const reviewedAt = "2026-10-29T12:00:00.000Z";
 const model = personality.build({
   raw: appData.raw,
   d: appData.d,
   probabilityModel,
   asOfPeriod: appData.d.length,
+  reviewedAt,
 });
 
 const expectedLines = [
@@ -87,6 +89,15 @@ assert.equal(model.uniformWeightsUsed, false);
 assert.equal(model.oneTwoThreeWeightMix, false);
 assert.equal(model.lookAheadUsed, false);
 assert.ok(model.asOfPeriod > 0);
+assert.equal(model.review.policy.maxPeriods, 30);
+assert.equal(model.review.policy.maxDays, 30);
+assert.equal(model.review.policy.trigger, "whichever-first");
+assert.equal(model.review.lastReviewedPeriod, model.asOfPeriod);
+assert.equal(model.review.lastReviewedAt, reviewedAt);
+assert.equal(model.review.nextReviewPeriod, model.asOfPeriod + 30);
+assert.equal(model.review.nextReviewAt, "2026-11-28T12:00:00.000Z");
+assert.ok(Number.isInteger(model.review.reviewNumber));
+assert.ok(model.review.reviewNumber >= 1);
 assert.ok(model.lines.some((line) => line.current.state !== "year_start"), "current personality state must use completed current-year windows");
 assert.equal(model.selectionValidation.length, 2);
 for (const item of model.selectionValidation) {
@@ -96,4 +107,33 @@ for (const item of model.selectionValidation) {
   assert.ok(Number.isFinite(item.top3.rate));
 }
 
-console.log("PASS: per-line long-term personality model contract");
+const beforeDue = personality.build({
+  raw: appData.raw,
+  d: appData.d,
+  probabilityModel,
+  asOfPeriod: appData.d.length,
+  reviewedAt: "2026-11-01T12:00:00.000Z",
+  previousReview: model.review,
+});
+assert.equal(beforeDue.review.reviewNumber, model.review.reviewNumber);
+assert.equal(beforeDue.review.lastReviewedAt, reviewedAt);
+assert.equal(beforeDue.review.nextReviewAt, model.review.nextReviewAt);
+
+const duePrevious = JSON.parse(JSON.stringify(model.review));
+duePrevious.nextReviewPeriod = model.asOfPeriod;
+duePrevious.nextReviewAt = "2026-10-20T12:00:00.000Z";
+const afterDue = personality.build({
+  raw: appData.raw,
+  d: appData.d,
+  probabilityModel,
+  asOfPeriod: appData.d.length,
+  reviewedAt: "2026-10-29T13:00:00.000Z",
+  previousReview: duePrevious,
+});
+assert.equal(afterDue.review.reviewNumber, duePrevious.reviewNumber + 1);
+assert.equal(afterDue.review.lastReviewedPeriod, afterDue.asOfPeriod);
+assert.equal(afterDue.review.lastReviewedAt, "2026-10-29T13:00:00.000Z");
+assert.equal(afterDue.review.nextReviewPeriod, afterDue.asOfPeriod + 30);
+assert.equal(afterDue.review.nextReviewAt, "2026-11-28T13:00:00.000Z");
+
+console.log("PASS: per-line long-term personality model contract and review cadence");

@@ -212,7 +212,7 @@ def main():
             pass_("app.js 含动态概率模型、追三期下单和旧模型归档入口提示")
         else:
             fail("app.js 缺少调度/追号/追推荐/追三期下单导航")
-        if "三期内追号码" in app_text and "三期内追推荐" in app_text and "执行提示" in app_text and "追三期下单" in app_text and "下单记录表" in app_text and "执行规则" in app_text and "双流三期内命中结构" in app_text:
+        if "三期内追号码" in app_text and "三期内追推荐" in app_text and "追三期下单" in app_text and "下单记录表" in app_text and "执行规则" in app_text and "双流三期内命中结构" in app_text:
             pass_("追号/追推荐/追三期下单及下单记录表区块完整")
         else:
             fail("追号/追推荐/追三期下单页面区块不完整")
@@ -278,7 +278,7 @@ def main():
             pass_("下单记录表含号码轨迹、金额、固定赔率、自动结果、收益、三期锁定窗口和13条独立执行线路")
         else:
             fail("下单记录表缺少本地存储、倍率或收益计算")
-        if "function renderFunds" not in app_text and "function renderOrderHint" not in app_text and "buildExecWindows" not in app_text and "FUND_CAPITAL" not in app_text and "本金锚定" not in app_text and "本金占用率" not in app_text and "本窗最大风险" in app_text and "有金额线路 / 全部线路" in app_text:
+        if "function renderFunds" not in app_text and "function renderOrderHint" not in app_text and "buildExecWindows" not in app_text and "FUND_CAPITAL" not in app_text and "本金锚定" not in app_text and "本金占用率" not in app_text and "系统下注期建议" in app_text and "系统建议 / 全部候选" in app_text:
             pass_("执行提示/资金调度已删除，金额与风险统一收口到窗口报告")
         else:
             fail("执行提示/资金调度仍有残留代码或主页面缺少金额与风险")
@@ -301,22 +301,22 @@ def main():
             pass_("除今日外的每个页面都显示最近访问和六个常用入口")
         else:
             fail("页面底部缺少统一的最近访问和常用入口快捷区")
-        if "WM_BASE = 100" in app_text and "wmPlanText" in app_text and "每个号码的最优下注公式" in app_text and "lineBest" in app_text and "最优 " in app_text and "未通过" in app_text:
-            pass_("窗口倍投测试100元起并逐线标注最优下注公式")
+        if "function wmStageFormulaForSimulation" in app_text and "13线下注期公式" in app_text and "建议第" in app_text and "期下注" in app_text and "stageRates" in app_text:
+            pass_("13线分别按测试数据给出第1/2/3期下注公式")
         else:
-            fail("窗口倍投测试未按100元起或未逐线标注最优下注公式")
-        if "function wmPositionForPlan" in app_text and "正式执行仓位 " in app_text and "今年测试仓位 " in app_text and "等待重开" in app_text and "空仓等待" in app_text:
-            pass_("窗口倍投测试按每条线路窗口规律标注正式执行仓位和今年测试仓位")
+            fail("13线下注期公式未按各线测试数据生成")
+        if "function personalityExecutionSelection" in app_text and "系统下注期建议" in app_text and "系统建议第" in app_text and "金额由你决定" in app_text:
+            pass_("系统每期只建议2至3条线路、下注期和建议号，金额由用户决定")
         else:
-            fail("窗口倍投测试未按每条线路窗口规律标注正式执行仓位和今年测试仓位")
+            fail("系统建议未按线路、窗口、下注期和建议号收口")
         if "function wmYearStats" in app_text and "13线逐年测试对比" in app_text and "年度稳健最优" in app_text and "全周期收益最高" in app_text and "正收益年" in app_text and "最近3年" in app_text:
             pass_("窗口倍投测试逐年对比13线并区分年度稳健与全周期最优")
         else:
             fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
-        if "var orderedLines = EXEC_LINES.slice();" in app_text and "wm-formula-panel" in app_text and "wm-formula-row" in app_text and "orderedLines.forEach" in app_text and "正式执行仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text:
-            pass_("窗口倍投测试按固定线路顺序合并显示公式和正式仓位")
+        if "var orderedLines = EXEC_LINES.slice();" in app_text and "wm-formula-panel" in app_text and "wm-formula-row" in app_text and "orderedLines.forEach" in app_text and "stageFormula" in app_text and "建议第" in app_text:
+            pass_("13线下注期公式按固定线路顺序统一显示")
         else:
-            fail("窗口倍投测试公式和仓位仍被拆成过多卡片或未按固定线路顺序显示")
+            fail("13线下注期公式未按固定线路顺序统一显示")
         if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "13线规律中心" in app_text:
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
@@ -333,17 +333,17 @@ def main():
             and 'data-bet-task-panel="profit"' in app_text
             and 'data-bet-task-panel="research"' in app_text
             and "今日规划 · 第" in app_text
-            and "自己的最优公式 line.plan" in app_text
-            and "本期计划金额" in app_text
-            and "本窗最大风险" in app_text
+            and "系统下注期建议" in app_text
+            and "系统建议线路" in app_text
+            and "金额和是否下注由你决定" in app_text
         ):
             pass_("下注执行表默认只显示今日规划，其余任务拆成当前窗口、逐期盈亏和研究明细")
         else:
             fail("下注执行表未按今日规划、当前窗口、逐期盈亏和研究明细拆成任务页签")
-        if "function wmPositionForPlan" in app_text and "正式执行公式" in app_text and "正式执行仓位" in app_text and "今年测试仓位" in app_text and "wmPositionForPlan(item, item.plan)" in app_text and "wmPositionForPlan(line, line.plan)" in app_text:
-            pass_("正式执行仓位统一以公式表line.plan为准")
+        if "function wmStageFormulaForSimulation" in app_text and "line.stageFormula = stageFormula" in app_text and "系统建议第" in app_text and "金额由你决定" in app_text:
+            pass_("系统建议统一以下注期公式和用户自定义金额为准")
         else:
-            fail("页面正式执行仓位口径不一致")
+            fail("页面下注期公式建议口径不一致")
         if not 'id: "fixedD1"' in app_text and not 'id: "fixedD2"' in app_text and not 'id: "recD1"' in app_text and not 'id: "recD2"' in app_text:
             pass_("旧D1/D2四条推荐线已从正式执行线路移除")
         else:

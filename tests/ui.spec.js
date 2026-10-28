@@ -201,6 +201,32 @@ test("dynamic probability shows every saved ten-tail snapshot newest first", asy
   }
 });
 
+test("model probability production status card sits below the single-period content", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+    localStorage.setItem("v2_prob_view", JSON.stringify("overview"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.body.dataset.page === "pick3");
+
+  const order = await page.evaluate(() => {
+    const tabs = document.querySelector("[data-model-detail-tabs]");
+    const panel = document.querySelector('[data-model-detail-panel="overview"]');
+    const summary = document.querySelector(".prob-page-summary");
+    if (!tabs || !panel || !summary) return null;
+    const all = Array.from(document.querySelectorAll("*"));
+    return {
+      tabsBeforeSummary: all.indexOf(tabs) < all.indexOf(summary),
+      panelBeforeSummary: all.indexOf(panel) < all.indexOf(summary),
+    };
+  });
+  expect(order).toEqual({
+    tabsBeforeSummary: true,
+    panelBeforeSummary: true,
+  });
+});
+
 test("dynamic probability cards move with their horizontal strips", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
@@ -1297,7 +1323,9 @@ test("today dashboard is compact and exposes the daily decision surface", async 
   await page.waitForFunction(() => document.body.dataset.page === "overview");
 
   await expect(page.locator("[data-today-dashboard]")).toBeVisible();
-  await expect(page.locator("[data-dashboard-pick]")).toHaveCount(3);
+  const dashboardPickCount = await page.locator("[data-dashboard-pick]").count();
+  expect(dashboardPickCount).toBeGreaterThanOrEqual(2);
+  expect(dashboardPickCount).toBeLessThanOrEqual(3);
   await expect(page.locator("[data-dashboard-window-state]")).toHaveCount(13);
   await expect(page.locator("[data-dashboard-shortcut]")).toHaveCount(6);
   await expect(page.locator("[data-plan-history-strip]")).toHaveCount(1);
@@ -1311,6 +1339,55 @@ test("today dashboard is compact and exposes the daily decision surface", async 
 
   const height = await page.evaluate(() => document.documentElement.scrollHeight);
   expect(height).toBeLessThan(5000);
+});
+
+test("today execution selects only two or three qualified lines and leaves the rest at zero", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+  await page.waitForFunction(() => document.body.dataset.page === "overview");
+
+  const picks = page.locator("[data-dashboard-pick]");
+  const pickCount = await picks.count();
+  expect(pickCount).toBeGreaterThanOrEqual(2);
+  expect(pickCount).toBeLessThanOrEqual(3);
+
+  const execution = await page.locator("[data-window-execution-card]").evaluateAll((cards) => (
+    cards.map((card) => ({
+      selected: card.dataset.executionSelected,
+      amount: Number(card.dataset.executionAmount),
+    }))
+  ));
+  expect(execution).toHaveLength(13);
+  expect(execution.filter((row) => row.selected === "true")).toHaveLength(pickCount);
+  expect(execution.filter((row) => row.selected === "true").every((row) => row.amount >= 0)).toBe(true);
+  expect(execution.filter((row) => row.selected !== "true").every((row) => row.amount === 0)).toBe(true);
+  await expect(page.locator("[data-window-execution-panel]")).toContainText(`${pickCount} / 13`);
+  await expect(page.locator("[data-window-execution-panel]")).toContainText("是否下注由你决定");
+});
+
+test("single-period page merges today plan and shows two or three purchase tails without window stages or amounts", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.body.dataset.page === "pick3");
+
+  await expect(page.getByRole("heading", { name: "今日单期概率候选", exact: true })).toBeVisible();
+  const cards = page.locator("[data-today-plan-card]");
+  const cardCount = await cards.count();
+  expect(cardCount).toBeGreaterThanOrEqual(2);
+  expect(cardCount).toBeLessThanOrEqual(3);
+  for (let index = 0; index < cardCount; index++) {
+    const card = cards.nth(index);
+    await expect(card).toContainText(/[ABC]\d/);
+    await expect(card).toContainText(/单期参考尾号\s*尾\d/);
+    await expect(card).not.toContainText("窗口");
+    await expect(card).not.toContainText("元");
+  }
+  await expect(page.locator("[data-today-plan]")).toContainText("是否下注由你决定");
+  await expect(page.locator("[data-today-plan]")).toContainText("候选不代表必出");
 });
 
 test("shared quick access appears on non-home pages and links directly", async ({ page }) => {
@@ -1360,6 +1437,98 @@ test("bet execution page defaults to today planning and separates the other task
 
   await page.locator('[data-bet-exec-task="research"]').click();
   await expect(page.locator('[data-bet-task-panel="research"]')).toBeVisible();
+});
+
+test("formula table assigns a tested personality formula to all 13 lines", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("formulas"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-formula-card]").length === 13);
+
+  const review = await page.evaluate(async () => {
+    const response = await fetch("personality_model.json");
+    return (await response.json()).review;
+  });
+  expect(review).toBeTruthy();
+  expect(review.policy).toMatchObject({
+    maxPeriods: 30,
+    maxDays: 30,
+    trigger: "whichever-first",
+  });
+  expect(Date.parse(review.nextReviewAt)).toBeGreaterThan(Date.parse(review.lastReviewedAt));
+  await expect(page.locator("[data-personality-review]")).toContainText("30期");
+  await expect(page.locator("[data-personality-review]")).toContainText("30天");
+
+  const plans = await page.locator("[data-formula-card]").evaluateAll((cards) => cards.map((card) => {
+    const text = card.querySelector("summary small")?.textContent || "";
+    const match = text.match(/第\s*([123])\s*期/);
+    return {
+      id: card.dataset.formulaCard,
+      source: card.dataset.formulaSource || "",
+      stage: match ? Number(match[1]) : null,
+      text,
+    };
+  }));
+
+  expect(plans).toHaveLength(13);
+  expect(plans.every((plan) => [1, 2, 3].includes(plan.stage))).toBe(true);
+  expect(plans.every((plan) => ["robust", "fallback-test-best"].includes(plan.source))).toBe(true);
+  expect(plans.some((plan) => plan.source === "robust")).toBe(true);
+  expect(plans.some((plan) => plan.source === "fallback-test-best")).toBe(true);
+  expect(new Set(plans.map((plan) => plan.stage)).size).toBeGreaterThan(1);
+
+  const probabilityPlans = plans.filter((plan) => ["prob1", "prob2", "prob3"].includes(plan.id));
+  expect(probabilityPlans.every((plan) => [1, 2, 3].includes(plan.stage))).toBe(true);
+  expect(plans.every((plan) => !plan.text.includes("用户指定正式建仓"))).toBe(true);
+
+  const formulaExecution = await page.locator("[data-formula-card]").evaluateAll((cards) => (
+    cards.map((card) => card.dataset.formulaExecution)
+  ));
+  const formulaExecutionCount = formulaExecution.filter((value) => value === "true").length;
+  expect(formulaExecutionCount).toBeGreaterThanOrEqual(2);
+  expect(formulaExecutionCount).toBeLessThanOrEqual(3);
+  expect(formulaExecution.every((value) => value === "true" || value === "false")).toBe(true);
+});
+
+test("formula cards compare monthly and half-month activity and expose one drawing stage", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("formulas"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-formula-card]").length === 13);
+
+  const cards = await page.locator("[data-formula-card]").evaluateAll((nodes) => nodes.map((card) => {
+    const monthly = card.querySelector("[data-formula-monthly]");
+    const halfMonth = card.querySelector("[data-formula-half-month]");
+    return {
+      id: card.dataset.formulaCard,
+      stage: Number(card.dataset.formulaStage),
+      monthRate: Number(card.dataset.formulaMonthRate),
+      nextMonthRate: Number(card.dataset.formulaNextMonthRate),
+      currentHalfRate: Number(card.dataset.formulaHalfRate),
+      previousHalfRate: Number(card.dataset.formulaPreviousHalfRate),
+      nextHalfRate: Number(card.dataset.formulaNextHalfRate),
+      monthlyText: monthly?.textContent || "",
+      halfMonthText: halfMonth?.textContent || "",
+    };
+  }));
+
+  expect(cards).toHaveLength(13);
+  for (const card of cards) {
+    expect([1, 2, 3]).toContain(card.stage);
+    expect(Number.isFinite(card.monthRate), `${card.id} monthly rate missing`).toBe(true);
+    expect(Number.isFinite(card.nextMonthRate), `${card.id} next-month forecast missing`).toBe(true);
+    expect(Number.isFinite(card.currentHalfRate), `${card.id} current half-month rate missing`).toBe(true);
+    expect(Number.isFinite(card.previousHalfRate), `${card.id} previous half-month rate missing`).toBe(true);
+    expect(Number.isFinite(card.nextHalfRate), `${card.id} next-half forecast missing`).toBe(true);
+    expect(card.monthlyText).toContain("本月");
+    expect(card.monthlyText).toContain("下月预计");
+    expect(card.halfMonthText).toContain("半月");
+    expect(card.halfMonthText).toContain("下一半月预计");
+  }
 });
 
 test("two and three period heatmaps separate heat view from chain history", async ({ page }) => {

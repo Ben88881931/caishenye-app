@@ -93,7 +93,7 @@ node build_personality_model.js
 python sync.py
 ```
 
-该命令生成 `data.js`，并自动重建 `personality_model.json`、`personality_model_data.js`、`personality_snapshots.json`、`personality_snapshots.js`。生成后必须确认最新期等于本次期号。
+该命令生成 `data.js`，自动重建 `personality_model.json`、`personality_model_data.js`、`personality_snapshots.json`、`personality_snapshots.js`，并重建本地训练数据库与 `training/manifest.json`。生成后必须确认最新期等于本次期号。
 
 ### 第 4 步：结算旧快照并生成下一期快照
 
@@ -156,6 +156,7 @@ git diff
 - `personality_model_data.js`
 - `personality_snapshots.json`
 - `personality_snapshots.js`
+- `training/manifest.json`
 - `index.html`
 
 出现任何其他文件改动时立即停止并报告，不得为了“顺手”提交。
@@ -165,7 +166,7 @@ git diff
 只能逐个文件加入：
 
 ```powershell
-git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json probability_snapshots.js prediction_snapshots.json snapshots.js personality_model.json personality_model_data.js personality_snapshots.json personality_snapshots.js index.html
+git add -- lottery_data.json 号码走势图.html data.js probability_snapshots.json probability_snapshots.js prediction_snapshots.json snapshots.js personality_model.json personality_model_data.js personality_snapshots.json personality_snapshots.js training/manifest.json index.html
 git commit -m "更新第<期号>期数据并结算快照"
 git push origin main
 ```

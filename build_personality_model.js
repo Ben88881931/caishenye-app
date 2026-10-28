@@ -12,6 +12,11 @@ function readSnapshots() {
   return JSON.parse(fs.readFileSync("personality_snapshots.json", "utf8"));
 }
 
+function readPreviousModel() {
+  if (!fs.existsSync("personality_model.json")) return null;
+  return JSON.parse(fs.readFileSync("personality_model.json", "utf8"));
+}
+
 function settleSnapshots(snapshots, d) {
   let changed = false;
   snapshots.records.forEach((record) => {
@@ -106,13 +111,17 @@ function appendCurrentSnapshot(snapshots, model, appData) {
 const dataSandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync("data.js", "utf8"), dataSandbox, { filename: "data.js" });
 const appData = dataSandbox.window.APP_DATA;
+const previousModel = readPreviousModel();
+const reviewedAt = new Date().toISOString();
 const model = personality.build({
   raw: appData.raw,
   d: appData.d,
   probabilityModel,
   asOfPeriod: appData.d.length,
+  reviewedAt,
+  previousReview: previousModel && previousModel.review,
 });
-model.generatedAt = new Date().toISOString();
+model.generatedAt = reviewedAt;
 
 const settled = settleSnapshots(readSnapshots(), appData.d);
 const snapshots = settled.snapshots;
