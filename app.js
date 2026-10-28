@@ -278,6 +278,7 @@
     betResearchOpen: false,
     betExecView: lsGet("v2_bet_exec_view", "today"),
     windowReportView: lsGet("v2_window_report_view", "current"),
+    windowHistoryLine: "tail0",
     windowHistoryYear: null,
     windowHistoryRenderLimit: 80,
     windowMissView: lsGet("v2_window_miss_view", "heat"),
@@ -2986,6 +2987,12 @@
       });
     });
     entries.sort(function (a, b) { return b.start - a.start; });
+    var selectedLineId = state.windowHistoryLine;
+    if (!planAllRows.some(function (row) { return row.line.id === selectedLineId; })) {
+      selectedLineId = planAllRows[0] ? planAllRows[0].line.id : "";
+    }
+    state.windowHistoryLine = selectedLineId;
+    entries = entries.filter(function (entry) { return entry.row.line.id === selectedLineId; });
     var historyYears = [];
     entries.forEach(function (entry) {
       var year = entry.kind === "waiting" ? Number((D[D.length - 1] || {}).y) : wmYearOf(entry.start);
@@ -3003,7 +3010,12 @@
     var renderLimit = Math.max(80, Number(state.windowHistoryRenderLimit || 80));
     entries = entries.slice(0, renderLimit);
 
-    var html = '<div class="wm-view-tabs" data-window-history-years>' +
+    var html = '<div class="wm-view-tabs" data-window-history-lines>' +
+      planAllRows.map(function (row) {
+        return '<button class="chip wm-view-tab' + (row.line.id === selectedLineId ? " is-active" : "") +
+          '" type="button" data-window-history-line="' + row.line.id + '">' + lineDisplayLabel(row.line, row.tail) + '</button>';
+      }).join("") + '</div>';
+    html += '<div class="wm-view-tabs" data-window-history-years>' +
       historyYears.map(function (year) {
         return '<button class="chip wm-view-tab' + (year === selectedYear ? " is-active" : "") +
           '" type="button" data-window-history-year="' + year + '">' + year + '年</button>';
@@ -3026,7 +3038,8 @@
           historyLabel: "近期记录",
           steps: waitSteps,
           tone: "is-waiting",
-          attrs: ' data-window-history-card="waiting" data-window-year="' + ((D[D.length - 1] || {}).y || "") + '"'
+          attrs: ' data-window-history-card="waiting" data-window-history-line="' + row.line.id +
+            '" data-window-year="' + ((D[D.length - 1] || {}).y || "") + '"'
         });
         return;
       }
@@ -3041,7 +3054,8 @@
         historyLabel: "近期记录",
         steps: betWindowRowsHTML(row.line, w, 3),
         tone: entry.kind === "live" ? "is-live" : (hit ? "is-hit" : "is-miss"),
-        attrs: ' data-window-history-card="' + w.start + '" data-window-year="' + (wmYearOf(w.start) || "") + '"'
+        attrs: ' data-window-history-card="' + w.start + '" data-window-history-line="' + row.line.id +
+          '" data-window-year="' + (wmYearOf(w.start) || "") + '"'
       });
     });
     html += '</div>';
@@ -8540,6 +8554,14 @@
       lsSet("v2_window_report_view", state.windowReportView);
       renderOverview();
       requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
+      return;
+    }
+    var windowHistoryLine = e.target.closest("[data-window-history-line]");
+    if (windowHistoryLine) {
+      state.windowHistoryLine = windowHistoryLine.dataset.windowHistoryLine;
+      state.windowHistoryYear = null;
+      state.windowHistoryRenderLimit = 80;
+      renderOverview();
       return;
     }
     var windowHistoryYear = e.target.closest("[data-window-history-year]");
