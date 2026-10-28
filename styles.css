@@ -4815,6 +4815,44 @@ body[data-page="overview"] .window-execution-history__item.is-miss {
   font-size: 10px;
 }
 
+.window-record-card .window-record-step.is-hit {
+  border: 2px solid #16a34a;
+  background: #dcfce7;
+  box-shadow: inset 4px 0 0 #16a34a;
+}
+
+.window-record-card .window-record-step.is-hit strong,
+.window-record-card .window-record-step.is-hit b,
+.window-record-card .window-record-step.is-hit em {
+  color: #15803d;
+}
+
+.window-record-card .window-record-step.is-miss {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.window-record-card .window-record-step.is-miss strong,
+.window-record-card .window-record-step.is-miss em {
+  color: #b91c1c;
+}
+
+.window-record-card .window-record-step.is-current {
+  border: 2px solid #3b82f6;
+  background: #dbeafe;
+  box-shadow: inset 4px 0 0 #3b82f6;
+}
+
+.window-record-card .window-record-step.is-current strong,
+.window-record-card .window-record-step.is-current em {
+  color: #1d4ed8;
+}
+
+.window-record-card .window-record-step.is-future,
+.window-record-card .window-record-step.is-closed {
+  background: #f8fafc;
+}
+
 body[data-page="dailyreport"] .daily-report-ranking-note {
   display: block;
   margin-top: 4px;

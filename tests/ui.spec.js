@@ -1559,3 +1559,22 @@ test("current window records use the line-by-line window card while test records
   await expect(page.locator(".window-record-card")).toHaveCount(0);
 });
 
+test("a hit window marks the exact hit period in green", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
+  });
+  await page.reload();
+  await page.locator('[data-wm-view="windows"]').click();
+  await page.waitForFunction(() => document.querySelectorAll(".window-record-step.is-hit").length > 0);
+
+  const style = await page.locator(".window-record-step.is-hit").first().evaluate((step) => ({
+    background: getComputedStyle(step).backgroundColor,
+    border: getComputedStyle(step).borderColor,
+    color: getComputedStyle(step.querySelector("strong")).color,
+  }));
+  expect(style.background).not.toBe("rgba(0, 0, 0, 0)");
+  expect(style.border).toBe("rgb(22, 163, 74)");
+  expect(style.color).toBe("rgb(21, 128, 61)");
+});
+

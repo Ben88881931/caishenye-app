@@ -4728,6 +4728,8 @@
       var amount = Number(plan[k] || 0);
       var stateText = at ? (at.hit ? "中" : "错") : (period <= latest ? "未记录" : "待开奖");
       var tone = at ? (at.hit ? "#16a34a" : "#dc2626") : "#2563eb";
+      var stepTone = at ? (at.hit ? "is-hit" : "is-miss") :
+        (period <= latest ? "is-closed" : (k === (w.attempts || []).length ? "is-current" : "is-future"));
       if (amount <= 0) {
         stateText = "未下";
         tone = "#64748b";
@@ -4736,7 +4738,7 @@
       if (at && amount > 0) pnl = at.hit ? amount * (BET_ODDS - 1) : -amount;
       var pnlText = pnl == null ? (period > latest && amount > 0 ? "待结算" : "—") : ((pnl >= 0 ? "+" : "") + Math.round(pnl));
       var pnlTone = pnl == null ? "#64748b" : (pnl > 0 ? "#16a34a" : (pnl < 0 ? "#dc2626" : "#475569"));
-      out += '<div class="exec-bet-period window-record-step" data-bet-period-row data-bet-stage="' + (k + 1) +
+      out += '<div class="exec-bet-period window-record-step ' + stepTone + '" data-bet-period-row data-bet-stage="' + (k + 1) +
         '" data-bet-amount="' + amount + '" data-bet-pnl="' + (pnl == null ? "" : Math.round(pnl)) + '">';
       out += '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + (k + 1) + '期</b><span>第' + period + '期</span><em>' + (tail != null ? "尾" + tail : "尾待定") + '</em></div>';
       out += '<div class="exec-bet-period__body window-record-step__body"><span>下注' + amount + '元</span><strong style="color:' + tone + '">' + stateText + '</strong><b style="color:' + pnlTone + '">盈亏' + pnlText + '</b></div>';
@@ -6299,7 +6301,9 @@
           stateText = cardPeriod <= latest ? "未记录" : (k === (w.attempts || []).length ? "待开奖" : "待定");
           result = stateText;
         }
-        steps += '<div class="exec-bet-period window-record-step">' +
+        var stepTone = att ? (att.hit ? "is-hit" : "is-miss") :
+          (cardPeriod <= latest ? "is-closed" : (k === (w.attempts || []).length ? "is-current" : "is-future"));
+        steps += '<div class="exec-bet-period window-record-step ' + stepTone + '">' +
           '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + (k + 1) + '期</b>' +
           '<span>' + wmPeriodLabel(cardPeriod) + '</span><em>' + (tail != null ? "尾" + tail : "尾待定") + '</em></div>' +
           '<div class="exec-bet-period__body window-record-step__body"><span>窗口记录</span>' +
