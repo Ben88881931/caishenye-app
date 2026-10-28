@@ -2932,13 +2932,16 @@
         return '<span class="window-execution-history__item ' + (hit ? "is-hit" : "is-miss") + '">' +
           (hit ? "中" + w.hitIndex : "错") + '</span>';
       }).join("");
+      var shownHit = Number(shownWindow.hitIndex) > 0;
+      var cardTone = row.live.waiting ? "is-waiting" :
+        (row.live.active ? "is-live" : (shownWindow.hitIndex === 0 ? "is-miss" : (shownHit ? "is-hit" : "is-closed")));
       html += windowRecordCardHTML({
         label: lineDisplayLabel(row.line, shownWindow.lockedTail || row.tail),
         state: row.live.waiting ? "等待尾" + row.live.waiting.tail + "重开" : (row.live.active ? "当前窗口" : "上一窗口"),
         history: recent || '<em>暂无</em>',
         historyLabel: "近期记录",
         steps: betWindowRowsHTML(row.line, shownWindow, 3),
-        tone: row.live.waiting ? "is-waiting" : "is-live",
+        tone: cardTone,
         attrs: ' data-window-execution-card="' + row.line.id + '" data-window-record-card="1"'
       });
     });

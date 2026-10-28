@@ -4732,6 +4732,19 @@ body[data-page="overview"] .window-execution-history__item.is-miss {
   color: #b91c1c;
 }
 
+.window-record-card.is-waiting .window-record-card__head b {
+  color: #b45309;
+}
+
+.window-record-card.is-waiting {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.window-record-card.is-closed .window-record-card__head b {
+  color: #64748b;
+}
+
 .window-record-card__history {
   display: flex;
   align-items: center;
