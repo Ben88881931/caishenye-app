@@ -278,6 +278,7 @@
     betResearchOpen: false,
     betExecView: lsGet("v2_bet_exec_view", "today"),
     windowReportView: lsGet("v2_window_report_view", "current"),
+    windowHistoryYear: null,
     windowHistoryRenderLimit: 80,
     windowMissView: lsGet("v2_window_miss_view", "heat"),
     windowMiss2View: lsGet("v2_window_miss2_view", "heat"),
@@ -2985,11 +2986,29 @@
       });
     });
     entries.sort(function (a, b) { return b.start - a.start; });
+    var historyYears = [];
+    entries.forEach(function (entry) {
+      var year = entry.kind === "waiting" ? Number((D[D.length - 1] || {}).y) : wmYearOf(entry.start);
+      if (year && historyYears.indexOf(year) < 0) historyYears.push(year);
+    });
+    historyYears.sort(function (a, b) { return b - a; });
+    var selectedYear = Number(state.windowHistoryYear || historyYears[0]);
+    if (historyYears.indexOf(selectedYear) < 0) selectedYear = historyYears[0];
+    state.windowHistoryYear = selectedYear;
+    entries = entries.filter(function (entry) {
+      var year = entry.kind === "waiting" ? Number((D[D.length - 1] || {}).y) : wmYearOf(entry.start);
+      return Number(year) === Number(selectedYear);
+    });
     var totalEntries = entries.length;
     var renderLimit = Math.max(80, Number(state.windowHistoryRenderLimit || 80));
     entries = entries.slice(0, renderLimit);
 
-    var html = '<div class="window-execution-line-strip record-scroll" data-window-history-strip>';
+    var html = '<div class="wm-view-tabs" data-window-history-years>' +
+      historyYears.map(function (year) {
+        return '<button class="chip wm-view-tab' + (year === selectedYear ? " is-active" : "") +
+          '" type="button" data-window-history-year="' + year + '">' + year + '年</button>';
+      }).join("") + '</div>';
+    html += '<div class="window-execution-line-strip record-scroll" data-window-history-strip>';
     entries.forEach(function (entry) {
       var row = entry.row;
       if (entry.kind === "waiting") {
@@ -8521,6 +8540,13 @@
       lsSet("v2_window_report_view", state.windowReportView);
       renderOverview();
       requestAnimationFrame(function () { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); });
+      return;
+    }
+    var windowHistoryYear = e.target.closest("[data-window-history-year]");
+    if (windowHistoryYear) {
+      state.windowHistoryYear = Number(windowHistoryYear.dataset.windowHistoryYear);
+      state.windowHistoryRenderLimit = 80;
+      renderOverview();
       return;
     }
     var windowHistoryMore = e.target.closest("[data-window-history-more]");

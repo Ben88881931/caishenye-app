@@ -1592,5 +1592,12 @@ test("three-period history loads in bounded batches", async ({ page }) => {
   const count = await page.locator("[data-window-history-card]").count();
   expect(count).toBeLessThanOrEqual(80);
   await expect(page.locator("[data-window-history-more]")).toBeVisible();
+  const yearButtons = page.locator("[data-window-history-year]");
+  expect(await yearButtons.count()).toBeGreaterThanOrEqual(6);
+  await page.locator('[data-window-history-year="2025"]').click();
+  await page.waitForFunction(() => {
+    const cards = [...document.querySelectorAll("[data-window-history-card]")];
+    return cards.length > 0 && cards.every((card) => card.dataset.windowYear === "2025");
+  });
 });
 
