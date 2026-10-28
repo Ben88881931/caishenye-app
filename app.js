@@ -288,8 +288,8 @@
   };
 
   var TABS = [
-    { id: "overview", label: "窗口报告" },
-    { id: "pick3", label: "单期报告" },
+    { id: "overview", label: "窗口" },
+    { id: "pick3", label: "单期" },
     { id: "formulas", label: "公式表" },
     { id: "windowmult", label: "13线规律中心" },
     { id: "orderlog", label: "追三期下单" },
@@ -318,8 +318,8 @@
   ];
 
   var COMMON_SHORTCUTS = [
-    { tab: "overview", label: "窗口报告", note: "看排名、窗口和下注" },
-    { tab: "pick3", label: "单期报告", note: "看A/B/C和当期尾号" },
+    { tab: "overview", label: "窗口", note: "看三期窗口和下注" },
+    { tab: "pick3", label: "单期", note: "看A/B/C和当期尾号" },
     { tab: "formulas", label: "公式表", note: "核对每条线下注金额" },
     { tab: "windowmiss", label: "三期热图", note: "看窗口与等待状态" },
     { tab: "personality", label: "尾号性格", note: "看长期画像与风险" },
@@ -1592,7 +1592,7 @@
       state.tab = "overview";
       lsSet("v2_current_tab", state.tab);
     }
-    // 旧报告页与旧执行入口统一收口到窗口报告
+    // 旧报告页与旧执行入口统一收口到三期报告
     if (state.tab === "orderhint" || state.tab === "funds" || state.tab === "dailyreport" || state.tab === "betexec") {
       state.tab = "overview";
       lsSet("v2_current_tab", state.tab);
@@ -1677,18 +1677,18 @@
       desc: "这一组是每天真正用来选号、排仓、跟窗口和记录下单的页面。",
       items: [
         {
-          name: "窗口报告",
+          name: "窗口",
           summary: "一份报告统一回答13线下一窗口排名、哪2-3条值得观察、当前窗口走到第几期，以及今天下注和盈亏。",
           look: ["13线窗口预测排名与每期冻结快照", "排名快照命中标记：中1/中2/中3/错/待", "当前窗口、下注金额、最新盈亏"],
-          use: "每天只看这一份窗口报告完成选线和执行核对。",
+          use: "每天只看这一份窗口记录完成三期选线和执行核对。",
           source: "真实开奖窗口、真实快照、逐线长期性格模型和公式表。",
           note: "排名顺序固定按下一独立三期窗口命中概率；排名依据和高级执行明细保留为内部详情页。"
         },
         {
-          name: "单期报告",
-          summary: "只看当前一期：A/B/C候选、10尾完整概率排序和单期对错；不承担窗口选线或下注金额。",
+          name: "单期",
+          summary: "只看当前一期：A/B/C候选、10尾完整概率排序和单期记录；不承担三期选线或下注金额。",
           look: ["A/B/C当期候选", "每期10尾完整排序快照", "单期命中、遗漏和诊断概率"],
-          use: "作为下一期的单期诊断参考，不替代窗口报告。",
+          use: "作为下一期的单期记录，不替代窗口记录。",
           source: "2021-2024训练、2025验证、2026影子记录；只使用目标期之前的数据。",
           note: "2025验证段仍弱于旧方法，页面继续保留风险提示，已锁定的296期快照不改写。"
         },
@@ -1696,7 +1696,7 @@
           name: "公式表",
           summary: "正式执行公式的唯一来源，写清每条线第1、2、3期下多少。",
           look: ["每条线正式公式金额", "训练段和验证段结果", "配仓或未配仓状态"],
-          use: "核查窗口报告里的下注金额是不是按正式公式在走。",
+          use: "核查窗口记录里的下注金额是不是按正式公式在走。",
           source: "真实历史窗口回测、训练段和验证段结果。",
           note: "公式表目前是稳定版本，不会每天自动改；今年最优只作参考，不能冒充正式公式。"
         },
@@ -1883,7 +1883,7 @@
     {
       title: "每日操作",
       desc: "每天按这个顺序走：先选号，再看窗口和执行，最后记录下单。",
-      names: ["窗口报告", "单期报告", "公式表", "13线规律中心", "追三期下单"]
+      names: ["窗口", "单期", "公式表", "13线规律中心", "追三期下单"]
     },
     {
       title: "公式验证",
@@ -1960,8 +1960,8 @@
   ];
 
   var PAGE_GUIDE_TAB_MAP = {
-    "窗口报告": "overview",
-    "单期报告": "pick3",
+    "窗口": "overview",
+    "单期": "pick3",
     "公式表": "formulas",
     "13线规律中心": "windowmult",
     "追三期下单": "orderlog",
@@ -2953,7 +2953,7 @@
       '<div class="today-summary__item"><b>' + planRows.length + ' / ' + planAllRows.length + '</b><span>有金额线路 / 全部线路</span></div>' +
       '</div></section>';
 
-    html += '<section class="today-section"><div class="today-section__head"><h2>当前执行明细 · 第' + (latest + 1) + '期</h2>' +
+    html += '<section class="today-section"><div class="today-section__head"><h2>窗口 · 当前 · 第' + (latest + 1) + '期</h2>' +
       '<span>固定13线顺序 · 每线一张窗口卡</span></div>' +
       windowExecutionLineCardsHTML(planAllRows) +
       '<div class="window-report-actions"><button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
@@ -2961,7 +2961,7 @@
   }
 
   function windowReportHistoryHTML(planAllRows, planRows) {
-    return '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>逐线窗口记录 · 第1/2/3期</h2>' +
+    return '<section class="today-section" data-window-execution-detail><div class="today-section__head"><h2>窗口 · 历史</h2>' +
       '<span>当前窗口或最近完成窗口 · 横向滑动 · 金额与对错来自同一公式和真实开奖</span></div>' +
       windowExecutionLineCardsHTML(planAllRows) + '</section>' +
       '<section class="today-section" data-window-daily-plan><div class="today-section__head"><h2>逐日计划对照</h2><span>每张卡=一个开奖日 · 新→旧 · 横向滑动</span></div>' +
@@ -3049,9 +3049,9 @@
     });
     html += '</div></section>';
 
-    html += '<div class="task-tabs" data-window-report-tabs role="tablist" aria-label="窗口报告任务">' +
-      '<button class="task-tab ' + (reportView === "current" ? "is-active" : "") + '" type="button" data-window-report-task="current" role="tab">当前候选</button>' +
-      '<button class="task-tab ' + (reportView === "history" ? "is-active" : "") + '" type="button" data-window-report-task="history" role="tab">测试记录</button>' +
+    html += '<div class="task-tabs" data-window-report-tabs role="tablist" aria-label="三期报告任务">' +
+      '<button class="task-tab ' + (reportView === "current" ? "is-active" : "") + '" type="button" data-window-report-task="current" role="tab">当前</button>' +
+      '<button class="task-tab ' + (reportView === "history" ? "is-active" : "") + '" type="button" data-window-report-task="history" role="tab">历史</button>' +
       '<button class="task-tab ' + (reportView === "snapshot" ? "is-active" : "") + '" type="button" data-window-report-task="snapshot" role="tab">快照</button>' +
       '</div>';
     if (reportView === "current") {
@@ -5943,7 +5943,7 @@
     var wmView = state.windowMultView || "overview";
     var wmViewTabs = [
       ["overview", "总览"],
-      ["windows", "窗口明细"],
+      ["windows", "窗口"],
       ["personality", "13线性格"],
       ["formula", "公式与仓位"],
       ["years", "年度测试"]
@@ -6161,7 +6161,7 @@
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="windows">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">窗口明细 · ' + lineDisplayLabel(line) + '</b><span class="wm-card__hint">' + WINDOW_RECORD_FORMAT + '</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">窗口 · ' + lineDisplayLabel(line) + '</b><span class="wm-card__hint">' + WINDOW_RECORD_FORMAT + '</span></div>';
     var missRuns = [];
     var currentRun = null;
     selected.records.forEach(function (item) {
@@ -6324,7 +6324,7 @@
         attrs: ' data-wm-window-card="' + (isLive ? "live" : w.start) + '"'
       });
     }
-    html += '<div class="wm-subhead">窗口明细 · ' + WINDOW_RECORD_FORMAT + ' · 每年从第1期重新开窗 · <span style="font-weight:400;color:#64748b">中=绿 错=红 进行中=蓝</span></div>';
+    html += '<div class="wm-subhead">窗口 · ' + WINDOW_RECORD_FORMAT + ' · 每年从第1期重新开窗 · <span style="font-weight:400;color:#64748b">中=绿 错=红 进行中=蓝</span></div>';
     html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口</div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     var detailYears = Number(state.windowMultDetailYears) || 1;
@@ -6523,7 +6523,7 @@
     var allWindows = simpleWindowsLoad();
     var visibleWindows = activeTail === "all" ? allWindows : allWindows.filter(function (w) { return Number(w.tail) === activeTail; });
     visibleWindows = visibleWindows.slice().sort(function (a, b) { return Number(b.startPeriod) - Number(a.startPeriod); });
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">三期内锁定窗口</h2><span class="section__hint">每个号码第一次下单自动锁定3期，期间号码不变；中出或三期全错后关闭</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">窗口 · 本机下单</h2><span class="section__hint">每个号码第一次下单自动锁定3期，期间号码不变；中出或三期全错后关闭</span></div></div>';
     html += '<div class="section"><div class="panel" style="padding:10px"><div class="wm-hscroll" style="display:flex;gap:7px;min-width:max-content">';
     if (!visibleWindows.length) {
       html += '<span style="font-size:12px;color:#9ca3af">暂无锁定窗口</span>';
@@ -6610,7 +6610,7 @@
       color: config.color || "#111827"
     }];
     var html = '';
-    html += '<div class="section"><div class="section__head"><h2 class="section__title">单期快照诊断 · 只观察不下注</h2><span class="section__hint">' + (config.hint || "单期只用于检查快照是否实时更新；正式战略成绩只看三期窗口命中，未开奖不计入") + '</span></div></div>';
+    html += '<div class="section"><div class="section__head"><h2 class="section__title">单期记录 · 快照</h2><span class="section__hint">' + (config.hint || "单期只用于检查快照是否实时更新；正式战略成绩只看三期记录，未开奖不计入") + '</span></div></div>';
     groups.forEach(function (group) {
       var rows = (group.rows || []).slice().sort(function (a, b) {
         return Number(b.period) - Number(a.period);
@@ -6626,7 +6626,7 @@
       html += '<div class="stat"><div class="stat__value">' + (rows.length ? rows[0].period : "-") + '</div><div class="stat__label">最新已结算快照期</div></div>';
       html += '<div class="stat"><div class="stat__value" style="color:#2563eb">' + (group.pendingText || "-") + '</div><div class="stat__label">待开奖 / 进行中</div></div>';
       html += '</div>';
-      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">最新单期快照 · 新→旧</div>';
+      html += '<div style="font-size:11px;font-weight:900;color:#6b7280;margin:10px 0 6px">单期记录 · 历史</div>';
       html += '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px">';
       if (!rows.length) {
         html += '<span style="font-size:12px;color:#9ca3af">暂无已结算真实快照</span>';
@@ -7237,7 +7237,7 @@
     var result = row.pending ? "待开奖" : (row.hit ? "中" : "错");
     var title = Number(year) + "年第" + row.period + "期 · 尾" + row.tail + " · " + result +
       (row.actualTails && row.actualTails.length ? " · 实开尾" + row.actualTails.join("/") : "");
-    return '<span class="prob-single-period-chip ' + tone + '" data-period="' + row.period +
+    return '<span class="single-record-card prob-single-period-chip ' + tone + '" data-period="' + row.period +
       '" data-source="' + row.source + '" title="' + title + '"><b>' + result +
       '</b><span>第' + row.period + '期 · 尾' + row.tail + '</span></span>';
   }
@@ -7253,7 +7253,7 @@
     var chips = pendingRows.map(function (row) {
       return probabilitySinglePeriodChipHTML(year, row);
     }).join("");
-    return '<div class="prob-single-period"><div class="prob-single-period__head"><b>单期对错</b>' +
+    return '<div class="prob-single-period"><div class="prob-single-period__head"><b>单期记录</b>' +
       '<span>' + probabilitySinglePeriodSourceNote(year) + ' · 单期统计生成中</span></div>' +
       '<div class="prob-single-period-strip record-scroll" data-prob-single-rank="' + rank +
       '" data-prob-single-year="' + year + '" data-prob-single-total="0" data-prob-single-rendered="' +
@@ -7304,7 +7304,7 @@
   }
 
   function probabilityWindowStepsHTML(attempts, startPeriod, currentStage) {
-    var html = "";
+    var html = '<div class="prob-window-steps">';
     for (var stage = 1; stage <= 3; stage++) {
       var attempt = attempts && attempts[stage - 1] ? attempts[stage - 1] : null;
       var tone = "is-closed";
@@ -7324,136 +7324,41 @@
         }
         detail = "第" + attempt.period + "期 · 尾" + attempt.tail;
       }
-      html += '<div class="exec-bet-period window-record-step prob-window-step ' + tone + '" data-window-stage="' + stage + '">' +
-        '<div class="exec-bet-period__head window-record-step__head"><b>窗口第' + stage + '期</b>' +
-        '<span>' + detail + '</span><em>' + result + '</em></div>' +
-        '<div class="exec-bet-period__body window-record-step__body"><span>窗口记录</span>' +
-        '<strong>' + result + '</strong><b>' + (attempt && attempt.tail != null ? "尾" + attempt.tail : "尾待定") + '</b></div></div>';
+      html += '<div class="prob-window-step ' + tone + '" data-window-stage="' + stage + '">' +
+        '<b>第' + stage + '期</b><span>' + detail + '</span><em>' + result + '</em></div>';
     }
-    return html;
+    return html + '</div>';
   }
 
   function probabilityWindowCardHTML(options) {
+    var cardClass = "prob-test-card" + (options.tone ? " " + options.tone : "");
     var liveAttr = options.live ? ' data-prob-live-window="1"' : "";
     var startAttr = options.startPeriod == null ? "" : ' data-prob-window-start="' + options.startPeriod + '"';
     var meta = options.startPeriod == null
       ? "等待重开 · 等尾" + options.tail + "开出"
       : "起始第" + options.startPeriod + "期 · 锁定尾" + options.tail;
-    return windowRecordCardHTML({
-      label: options.label,
-      state: options.state,
-      history: '<em>' + escapeHTML(meta) + '</em>',
-      historyLabel: "窗口说明",
-      steps: probabilityWindowStepsHTML(options.attempts, options.startPeriod, options.currentStage),
-      tone: options.tone,
-      className: "prob-test-card",
-      attrs: ' data-prob-window-card="1"' + liveAttr + startAttr + ' data-window-record-card="1"'
-    });
+    return '<div class="' + cardClass + '" data-prob-window-card="1"' + liveAttr + startAttr + '>' +
+      '<div class="prob-window-card__head"><b>' + options.label + '</b><span>' + options.state + '</span></div>' +
+      '<div class="prob-window-card__meta">' + meta + '</div>' +
+      probabilityWindowStepsHTML(options.attempts, options.startPeriod, options.currentStage) +
+      "</div>";
   }
 
   function probabilityTestWindowHTML(selectedYear, pendingResult) {
     var year = Number(selectedYear);
-    var rawYear = probabilityYearRaw(year);
     var trainingYear = year >= 2021 && year <= 2024;
     var segment = trainingYear ? "训练" : (year === 2025 ? "验证" : "正式");
     var segmentNote = trainingYear ? "训练段 · 样本内追溯" : (year === 2025 ? "验证段" : "2026正式记录 · 294-296保留切换前快照");
     var labels = ["A", "B", "C"];
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">测试窗口记录 · 全历史三期窗口</h2><span class="section__hint">' + year + segment + '窗口 · 切换年份查看全部历史 · ' + WINDOW_RECORD_FORMAT + '</span></div></div>';
-    html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '窗口</b><span>' + segmentNote + '</span></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">单期 · 历史</h2><span class="section__hint">' + year + segment + ' · 切换年份查看全部单期记录</span></div></div>';
+    html += '<div class="section"><div class="panel trend-run-card"><div class="trend-run-card__title"><b>' + year + segment + '单期</b><span>' + segmentNote + '</span></div>';
     labels.forEach(function (label, rank) {
-        var records = PROB_MODEL.windowBacktest(rawYear, rank, 3);
-        var first = records.filter(function (r) { return r.hitIndex === 1; }).length;
-        var second = records.filter(function (r) { return r.hitIndex === 2; }).length;
-        var third = records.filter(function (r) { return r.hitIndex === 3; }).length;
-        var miss = records.filter(function (r) { return r.status === "miss"; }).length;
-        var liveLine = EXEC_LINES.filter(function (item) {
-          return item.kind === "probability" && Number(item.rank) === rank;
-        })[0];
-        var liveState = liveLine ? wmStageNow(liveLine, 3) : null;
-        var liveRecord = null;
-        var latestYear = Number((D[D.length - 1] || {}).y);
-        if (liveState && year === latestYear) {
-          if (liveState.active) {
-            var activeStart = betLocalPeriod(liveState.active.start);
-            var activeYear = wmYearOf(liveState.active.start) || latestYear;
-            if (activeYear === year) {
-              var liveAttempts = [];
-              for (var liveStage = 0; liveStage < 3; liveStage++) {
-                var recorded = liveState.active.attempts[liveStage] || null;
-                liveAttempts.push({
-                  period: activeStart + liveStage,
-                  tail: liveState.active.lockedTail,
-                  hit: recorded ? recorded.hit : null,
-                  pending: !recorded
-                });
-              }
-              liveRecord = {
-                startPeriod: activeStart,
-                tail: liveState.active.lockedTail,
-                status: "pending",
-                hitIndex: null,
-                attempts: liveAttempts,
-                currentStage: liveState.active.attempts.length + 1
-              };
-            }
-          } else if (liveState.waiting) {
-            liveRecord = {
-              startPeriod: null,
-              tail: liveState.waiting.tail,
-              status: "waiting",
-              hitIndex: null,
-              attempts: []
-            };
-          }
-        }
-        var displayLabel = year === latestYear && liveLine
-          ? lineDisplayLabel(liveLine, liveRecord && liveRecord.tail)
-          : label;
-        html += '<div class="prob-test-row"><div class="prob-test-head"><b>' + displayLabel + '</b><span>共' + records.length + '窗 · 第1期中' + first + ' · 第2期中' + second + ' · 第3期中' + third + ' · 全错' + miss + '</span></div>';
-        html += '<div class="prob-test-strip">';
-        if (liveRecord && liveRecord.status === "pending") {
-          html += probabilityWindowCardHTML({
-            label: displayLabel + " · 当前窗口",
-            state: "进行中 · 第" + liveRecord.currentStage + "/3期",
-            tone: "is-live",
-            live: true,
-            startPeriod: liveRecord.startPeriod,
-            tail: liveRecord.tail,
-            attempts: liveRecord.attempts,
-            currentStage: liveRecord.currentStage
-          });
-        } else if (liveRecord && liveRecord.status === "waiting") {
-          html += probabilityWindowCardHTML({
-            label: displayLabel + " · 当前窗口",
-            state: "等待重开",
-            tone: "is-live is-waiting",
-            live: true,
-            startPeriod: null,
-            tail: liveRecord.tail,
-            attempts: [],
-            currentStage: 0
-          });
-        }
-        if (!records.length) html += '<span class="trend-run-empty">暂无已结算窗口</span>';
-        records.slice().reverse().forEach(function (record) {
-          var result = record.status === "miss" ? "错窗" : "中" + record.hitIndex;
-          html += probabilityWindowCardHTML({
-            label: label + record.tail + " · " + result,
-            state: "已结束",
-            tone: record.status === "miss" ? "is-miss" : "is-hit",
-            live: false,
-            startPeriod: record.startPeriod,
-            tail: record.tail,
-            attempts: record.attempts,
-            currentStage: 0
-          });
-        });
-        html += '</div>';
+        html += '<div class="prob-test-row"><div class="prob-test-head"><b>' + label + '</b><span>' + year + segment + '单期记录</span></div>';
         html += probabilitySinglePeriodHTML(year, rank, pendingResult);
         html += '</div>';
       });
     html += '</div></div>';
-    html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026记录最终结果。当前生产切换为5/7/15/21/30新方法；切换年份只做历史研究，所有窗口按每年第1期重新起算，不引用未来开奖。</p>';
+    html += '<p class="disclaimer">2021-2024为训练段样本内追溯，2025为验证段，2026记录最终结果。本页只显示单期记录，不混入三期窗口。</p>';
     return html;
   }
 
@@ -7567,13 +7472,13 @@
     var html = '<div class="section"><div class="section__head"><h2 class="section__title">单期报告 · ' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
     html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
     html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="单期报告任务">' +
-      '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前候选</button>' +
-      '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">测试记录</button>' +
+      '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前</button>' +
+      '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">历史</button>' +
       '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">快照</button>' +
       '</div>';
     if (activeView === "overview") {
-      html += '<div data-model-detail-panel="overview"><div class="section"><div class="section__head"><h2 class="section__title">当前候选</h2><span class="section__hint">A / B / C + 当期尾号已在上方展示；本页只保留概率证据，不重复执行金额</span></div></div>' +
-        '<div class="task-empty">需要核对历史时，切换到“测试记录”；需要核对每期10尾排序时，切换到“快照”。</div></div>';
+      html += '<div data-model-detail-panel="overview"><div class="section"><div class="section__head"><h2 class="section__title">单期记录 · 当前</h2><span class="section__hint">A / B / C + 当期尾号已在上方展示；本页只保留概率证据，不重复执行金额</span></div></div>' +
+        '<div class="task-empty">已统一为“当前 / 历史 / 快照”三项。</div></div>';
     } else if (activeView === "history") {
       html += '<div data-model-detail-panel="history">';
     html += '<div class="section"><div class="panel"><div class="wm-subhead">测试历史年份 · 2021-2026各年独立</div><div class="wm-view-tabs">' + yearTabs + '</div></div></div>';

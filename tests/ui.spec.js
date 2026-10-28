@@ -150,49 +150,7 @@ test("all pages render on a phone viewport without page-level overflow", async (
   expect(runtimeErrors, `browser runtime errors:\n${runtimeErrors.join("\n")}`).toEqual([]);
 });
 
-test("dynamic probability page shows the current live window for all three ranks", async ({ page }) => {
-  await page.goto("/");
-
-  const latestPeriod = await page.evaluate(() => {
-    const periods = Object.keys(window.APP_DATA.raw).map(Number);
-    return Math.max(...periods);
-  });
-  const targetPeriod = latestPeriod + 1;
-
-  await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
-  });
-  await page.reload();
-  await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
-
-  const snapshots = await page.evaluate(async () => {
-    const response = await fetch("probability_snapshots.json");
-    return response.json();
-  });
-
-  const liveWindows = page.locator("[data-prob-live-window]");
-  await expect(liveWindows).toHaveCount(3);
-  for (let index = 0; index < 3; index++) {
-    const card = liveWindows.nth(index);
-    const text = await card.innerText();
-    const startMatch = text.match(/第(\d+)期起/);
-    expect(startMatch, `window ${index + 1} should expose its start period`).not.toBeNull();
-    const startPeriod = Number(startMatch[1]);
-    const sourceSnapshot = snapshots.records.find((record) => Number(record.target) === startPeriod);
-    expect(sourceSnapshot, `missing source snapshot for period ${startPeriod}`).toBeTruthy();
-    const lockedTail = sourceSnapshot.top3[index].tail;
-
-    await expect(card).toContainText(`第${startPeriod}期`);
-    await expect(card).toContainText("当前窗口");
-    await expect(card).toContainText(`锁尾${lockedTail}`);
-    await expect(card).toContainText("待开奖");
-  }
-});
-test("dynamic probability window cards expose three separate step cells", async ({ page }) => {
+test("single report history contains only unified single-period records", async ({ page }) => {
   await page.goto("/");
 
   await page.evaluate(() => {
@@ -202,18 +160,15 @@ test("dynamic probability window cards expose three separate step cells", async 
   await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+    return view instanceof HTMLElement && view.innerText.includes("单期 · 历史");
   });
 
   const rows = page.locator(".prob-test-row");
   await expect(rows).toHaveCount(3);
   for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
-    const cards = rows.nth(rowIndex).locator(".prob-test-card");
-    const cardCount = await cards.count();
-    expect(cardCount).toBeGreaterThan(3);
-    for (let cardIndex = 0; cardIndex < Math.min(cardCount, 6); cardIndex++) {
-      await expect(cards.nth(cardIndex).locator(".prob-window-step")).toHaveCount(3);
-    }
+    await expect(rows.nth(rowIndex).locator(".prob-single-period-strip")).toHaveCount(1);
+    expect(await rows.nth(rowIndex).locator(".single-record-card").count()).toBeGreaterThan(0);
+    await expect(rows.nth(rowIndex).locator(".window-record-card")).toHaveCount(0);
   }
 });
 
@@ -255,7 +210,7 @@ test("dynamic probability cards move with their horizontal strips", async ({ pag
   await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.querySelectorAll(".prob-test-strip").length === 3;
+    return view instanceof HTMLElement && view.querySelectorAll(".prob-single-period-strip").length === 3;
   });
 
   const checkStrip = async (strip) => {
@@ -274,7 +229,7 @@ test("dynamic probability cards move with their horizontal strips", async ({ pag
     expect(geometry.scrollLeft).toBeGreaterThan(0);
     expect(geometry.cardLeft).toBeLessThan(geometry.stripLeft - 100);
   };
-  await checkStrip(page.locator(".prob-test-strip").first());
+  await checkStrip(page.locator(".prob-single-period-strip").first());
 
   await openProbabilityView(page, "snapshot");
   await page.waitForFunction(() => document.querySelectorAll(".prob-snapshot-card").length > 0);
@@ -293,7 +248,7 @@ async function swipeHorizontalScrollbar(page, side) {
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
   });
 
-  const strip = page.locator(".prob-test-strip").first();
+  const strip = page.locator(".prob-single-period-strip").first();
   await strip.evaluate((element) => {
     element.scrollLeft = element.scrollWidth;
   });
@@ -351,7 +306,7 @@ test("left-bottom one-hand scrollbar-edge swipe flips pages", async ({ page }) =
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
   });
 
-  const result = await page.locator(".prob-test-strip").first().evaluate((element) => {
+  const result = await page.locator(".prob-single-period-strip").first().evaluate((element) => {
     const before = document.body.dataset.page;
     const startX = 30;
     const y = window.innerHeight * 0.76;
@@ -386,7 +341,7 @@ test("bottom-center swipes inside a horizontal scroll region never flip pages", 
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
   });
 
-  const result = await page.locator(".prob-test-strip").first().evaluate((element) => {
+  const result = await page.locator(".prob-single-period-strip").first().evaluate((element) => {
     const before = document.body.dataset.page;
     const startX = window.innerWidth * 0.5;
     const y = window.innerHeight * 0.76;
@@ -421,7 +376,7 @@ test("horizontal scroll region swipes in the center keep the same page", async (
     return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
   });
 
-  const strip = page.locator(".prob-test-strip").first();
+  const strip = page.locator(".prob-single-period-strip").first();
   const result = await strip.evaluate((element) => {
     element.scrollLeft = 0;
     const card = element.firstElementChild;
@@ -1129,7 +1084,7 @@ test("horizontal record strips preserve vertical page panning", async ({ page })
   });
 
   for (const selector of [
-    ".prob-test-strip",
+    ".prob-single-period-strip",
     ".prob-single-period-strip",
   ]) {
     const touchAction = await page.locator(selector).first().evaluate((element) => (
@@ -1547,7 +1502,7 @@ test("task tabs and primary controls meet mobile touch and type minimums", async
   expect(controls.every((item) => item.fontSize >= 12)).toBe(true);
 });
 
-test("all window records use the line-by-line window card as the only card style", async ({ page }) => {
+test("current window records use the line-by-line window card while test records stay unchanged", async ({ page }) => {
   await page.goto("/");
   const widths = [];
 
@@ -1585,8 +1540,7 @@ test("all window records use the line-by-line window card as the only card style
   await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
   widths.push(await page.locator(".window-record-card").first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
 
-  const cards = page.locator(".window-record-card");
-  const structures = await cards.evaluateAll((nodes) => nodes.map((card) => ({
+  const structures = await page.locator(".window-record-card").evaluateAll((nodes) => nodes.map((card) => ({
     head: !!card.querySelector(".window-record-card__head"),
     steps: card.querySelectorAll(".window-record-step").length,
     rows: Array.from(card.querySelectorAll(".window-record-step")).every((step) => (
@@ -1595,5 +1549,13 @@ test("all window records use the line-by-line window card as the only card style
   })));
   expect([...new Set(widths)]).toEqual([252]);
   expect(structures.every((item) => item.head && item.steps === 3 && item.rows)).toBe(true);
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
+    localStorage.setItem("v2_prob_view", JSON.stringify("history"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll(".single-record-card").length > 0);
+  await expect(page.locator(".window-record-card")).toHaveCount(0);
 });
 
