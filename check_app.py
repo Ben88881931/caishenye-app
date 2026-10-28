@@ -206,7 +206,7 @@ def main():
         if (
             'id: "pick3"' in app_text
             and "PROB_MODEL.analyze" in app_text
-            and "单期报告" in app_text
+            and "单期" in app_text
             and "window.CAISHEN_ULTIMATE" in app_text
         ):
             pass_("app.js 含动态概率模型、追三期下单和旧模型归档入口提示")

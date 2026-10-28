@@ -7463,15 +7463,15 @@
       var tag = year <= 2024 ? "训练" : year === 2025 ? "验证" : "正式";
       return '<button class="chip wm-view-tab ' + (year === selectedYear ? "is-active" : "") + '" type="button" data-prob-year="' + year + '">' + year + ' ' + tag + '</button>';
     }).join("");
-    var heading = result.legacyLocked ? "第" + result.target + "期锁定快照" : "第" + result.target + "期三期优先预测";
+    var heading = "单期 · 第" + result.target + "期";
     var methodHint = result.legacyLocked
       ? "旧10期权重已于开奖前锁定，保留原预测不改写；新方法从第297期开始"
       : "生产方法 " + PROB_MODEL.META.productionMethod.windows.join(" / ") + " 期 · 三期概率排序 · 下一期概率作诊断";
     var activeView = ["overview", "history", "snapshot"].indexOf(state.probView) >= 0 ? state.probView : "overview";
     state.probView = activeView;
-    var html = '<div class="section"><div class="section__head"><h2 class="section__title">单期报告 · ' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
+    var html = '<div class="section"><div class="section__head"><h2 class="section__title">' + heading + '</h2><span class="section__hint">模型 ' + result.version + ' · ' + methodHint + '</span></div></div>';
     html += '<div class="section"><div class="panel prob-page-summary"><div class="prob-summary-state"><b>生产状态 · 用户已切换新方法</b><span>2025验证段 下一期Top1 ' + pct(vm.nextTop1) + ' / 随机 ' + pct(vb.next) + ' · 三期Top1 ' + pct(vm.window3Top1) + ' / 随机 ' + pct(vb.window3) + '</span><span>2026影子段 下一期Top1 ' + pct(sm.nextTop1) + ' / 随机 ' + pct(sb.next) + ' · 三期Top1 ' + pct(sm.window3Top1) + ' / 随机 ' + pct(sb.window3) + '</span><strong>研究提示：2025验证段仍弱于旧方法</strong></div><div class="prob-summary-note">新方法相对旧方法：2025 ' + delta(vm.window3Top1, 0.9090909090909091) + '，2026 ' + delta(sm.window3Top1, 0.8771331058020477) + '；按用户决定已切换生产，继续跟踪风险。</div></div></div>';
-    html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="单期报告任务">' +
+    html += '<div class="task-tabs" data-model-detail-tabs role="tablist" aria-label="单期任务">' +
       '<button class="task-tab ' + (activeView === "overview" ? "is-active" : "") + '" type="button" data-model-detail-task="overview" role="tab">当前</button>' +
       '<button class="task-tab ' + (activeView === "history" ? "is-active" : "") + '" type="button" data-model-detail-task="history" role="tab">历史</button>' +
       '<button class="task-tab ' + (activeView === "snapshot" ? "is-active" : "") + '" type="button" data-model-detail-task="snapshot" role="tab">快照</button>' +
