@@ -317,7 +317,7 @@ def main():
             pass_("13线下注期公式按固定线路顺序统一显示")
         else:
             fail("13线下注期公式未按固定线路顺序统一显示")
-        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "13线规律中心" in app_text:
+        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "13线三期监控" in app_text:
             pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
         else:
             fail("窗口倍投测试缺少今年最优规律或正式版候选标注")

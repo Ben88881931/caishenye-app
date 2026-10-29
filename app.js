@@ -294,7 +294,7 @@
     { id: "overview", label: "三期窗口" },
     { id: "pick3", label: "模型概率" },
     { id: "formulas", label: "公式表" },
-    { id: "windowmult", label: "13线规律中心" },
+    { id: "windowmult", label: "13线三期监控" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -1708,7 +1708,7 @@
           note: "公式只决定下注期，不决定金额；金额和是否下注由用户决定。"
         },
         {
-          name: "13线规律中心",
+          name: "13线三期监控",
           summary: "逐条监控13条线的窗口状态、长期性格、年度变化，以及遗漏重开后的连续三窗表现。",
           look: ["逐线实时状态", "重开后连续三窗成功率", "本年转强、转弱和断窗位置"],
           use: "观察哪条线当前值得继续跟踪，哪条线需要降级。",
@@ -1890,12 +1890,12 @@
     {
       title: "每日操作",
       desc: "每天按这个顺序走：先选号，再看窗口和执行，最后记录下单。",
-      names: ["三期窗口", "单期", "公式表", "13线规律中心", "追三期下单"]
+      names: ["三期窗口", "单期", "公式表", "13线三期监控", "追三期下单"]
     },
     {
       title: "公式验证",
         desc: "下注期公式从哪里来，以及它有没有经过训练段和验证段检查。",
-      names: ["公式表", "13线规律中心", "策略回测"]
+      names: ["公式表", "13线三期监控", "策略回测"]
     },
     {
       title: "数据参考",
@@ -1967,7 +1967,7 @@
     "三期窗口": "overview",
     "单期": "pick3",
     "公式表": "formulas",
-    "13线规律中心": "windowmult",
+    "13线三期监控": "windowmult",
     "追三期下单": "orderlog",
     "总览": "overview",
     "分段对比": "segments",
@@ -2711,7 +2711,7 @@
           "状态" + halfForecast.currentState + "，下一半月预计" + wmActivityRateText(halfForecast.predictedRate) +
           "。月度与半月作为当前活跃度和风险参考，不改变测试公式确定的下注期。"
         : "月度或半月样本不足，暂不调整年度公式。";
-      var sourceTags = ["逐线长期性格模型", "下注执行表", "公式表", "13线规律中心", "一期热图", "两期热图", "三期热图"];
+      var sourceTags = ["逐线长期性格模型", "下注执行表", "公式表", "13线三期监控", "一期热图", "两期热图", "三期热图"];
       sourceTags.push(line.kind === "probability" ? "动态概率" : "尾号性格");
       html += '<details class="daily-report-line-card daily-report-line-card--accordion" data-daily-report-card data-line-id="' + line.id + '"' +
         (row.probabilitySignal
@@ -6701,7 +6701,7 @@
       };
     }
     var html = '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><div><b class="wm-card__title">13线规律中心</b><span class="wm-card__hint">逐线实时监控 · 真实窗口账本 · 记录第1/2/3期尾号、命中或错误、三期全错、等待重开和重开后的连续三窗表现；不预测、不补造、不改历史。</span></div></div>';
+    html += '<div class="wm-card__head"><div><b class="wm-card__title">13线三期窗口实时监控</b><span class="wm-card__hint">一期、两期作诊断，三期窗口为最终目标 · 真实窗口账本 · 记录尾号、命中或错误、等待重开和重开后的连续三窗表现；不预测未来开奖号码、不补造、不改历史。</span></div></div>';
     html += '<div class="wm-view-tabs">' + wmViewTabs + '</div>';
     html += '<div class="wm-line-selector">';
     orderedLines.forEach(function (item) {
@@ -6714,7 +6714,7 @@
     html += '</div></div>';
     html += '<div class="wm-view-group" data-wm-group="monitor">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">13线逐线实时性格监控</b><span class="wm-card__hint">一期、两期、三期窗口分别按各自性格规律判断，再做正向1→2→3与反向3→2→1对撞</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">13线三期窗口实时监控</b><span class="wm-card__hint">一期、两期作诊断，三期窗口为最终目标；再做正向1→2→3与反向3→2→1性格对撞</span></div>';
     html += '<div class="wm-monitor-grid">';
     orderedLines.forEach(function (item) {
       var stats = wmMonitorStats(item);
@@ -7255,7 +7255,7 @@
     html += '<p class="disclaimer" style="margin-top:8px">性格规律按窗口统计：先看该线在不同“上一窗状态”（上窗命中 / 上窗全错1次 / 连错2次 / 连错3次以上）之后下一窗的命中率，再按当前状态给出关注等级。</p>';
     html += '</div></div>';
     html += '</div>';
-    html += '<p class="disclaimer">本页是13线规律中心，只做逐线实时监控和历史窗口规律测试，不自动下单。三期全错后等待最后尾号重新开出，再从下一期开始新窗口。</p>';
+    html += '<p class="disclaimer">本页是13线三期监控，只做逐线实时监控和历史窗口规律测试，不自动下单。三期全错后等待最后尾号重新开出，再从下一期开始新窗口。</p>';
     view.innerHTML = html;
     Array.prototype.forEach.call(view.querySelectorAll('[data-wm-group="overview"], [data-wm-group="years"]'), function (group) {
       group.remove();

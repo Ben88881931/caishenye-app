@@ -543,7 +543,7 @@ test("13-line center content swipes flip main navigation pages", async ({ page }
   await page.reload();
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("13线规律中心");
+    return view instanceof HTMLElement && view.innerText.includes("13线三期窗口实时监控");
   });
 
   const result = await page.locator("#view .wm-card").first().evaluate((element) => {
@@ -634,7 +634,7 @@ test("13-line selector swipes flip main pages without changing the selected line
   await page.reload();
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("13线规律中心");
+    return view instanceof HTMLElement && view.innerText.includes("13线三期窗口实时监控");
   });
 
   const result = await page.evaluate(() => {
@@ -687,7 +687,7 @@ test("13-line center subtabs are fixed and clickable", async ({ page }) => {
   await page.reload();
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("13线规律中心");
+    return view instanceof HTMLElement && view.innerText.includes("13线三期窗口实时监控");
   });
 
   const layout = await page.locator("#view .wm-view-tabs").evaluate((strip) => {
