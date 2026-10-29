@@ -605,27 +605,24 @@ test("13-line center provides per-line monitoring without multiplier or amount i
   await page.locator('[data-wm-view="monitor"]').click();
   const forecasts = await page.locator("[data-wm-monitor-card]").evaluateAll((cards) => (
     cards.map((card) => ({
-      rate: Number(card.dataset.nextWindowRate),
-      samples: Number(card.dataset.nextWindowSamples),
-      horizonWindows: Number(card.dataset.horizonWindows),
+      thirdWindowRate: Number(card.dataset.thirdWindowRate),
       text: card.innerText,
     }))
   ));
   expect(forecasts).toHaveLength(13);
   for (const item of forecasts) {
-    expect(Number.isFinite(item.rate)).toBe(true);
-    expect(item.rate).toBeGreaterThanOrEqual(0);
-    expect(item.rate).toBeLessThanOrEqual(1);
-    expect(Number.isFinite(item.samples)).toBe(true);
-    expect([0, 1, 2, 3]).toContain(item.horizonWindows);
-    expect(item.text).toContain("预测命中率");
+    expect(Number.isFinite(item.thirdWindowRate)).toBe(true);
+    expect(item.thirdWindowRate).toBeGreaterThanOrEqual(0);
+    expect(item.thirdWindowRate).toBeLessThanOrEqual(1);
+    expect(item.text).toContain("三期窗口预测命中率");
     expect(item.text).toMatch(/双向全风险·低分|双向全安全·高分|方向分歧·中性|双方向混合·观察/);
-    expect(item.text).toContain("未来1期窗口命中");
-    expect(item.text).toContain("未来2期窗口命中");
-    expect(item.text).toContain("未来3期窗口命中");
+    expect(item.text).toContain("一期诊断");
+    expect(item.text).toContain("两期诊断");
+    expect(item.text).toContain("三期目标");
     expect(item.text).toContain("正向 ");
     expect(item.text).toContain("反向 ");
-    expect(item.text).toMatch(/建议观察未来[123]期窗口|暂不扩展观察/);
+    expect(item.text).not.toContain("观察未来1期窗口");
+    expect(item.text).not.toContain("观察未来2期窗口");
   }
 });
 

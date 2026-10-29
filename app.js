@@ -6643,80 +6643,6 @@
       var ytd = yearly[currentYear] || { samples: 0, success: 0 };
       var recent = rows.slice(-6);
       var recentHits = recent.filter(function (window) { return Number(window.hitIndex) > 0; }).length;
-      var stateBuckets = {
-        after_hit: { h1: { samples: 0, hits: 0 }, h2: { samples: 0, hits: 0 }, h3: { samples: 0, hits: 0 } },
-        after_one_miss: { h1: { samples: 0, hits: 0 }, h2: { samples: 0, hits: 0 }, h3: { samples: 0, hits: 0 } },
-        after_two_misses: { h1: { samples: 0, hits: 0 }, h2: { samples: 0, hits: 0 }, h3: { samples: 0, hits: 0 } },
-        after_three_plus_misses: { h1: { samples: 0, hits: 0 }, h2: { samples: 0, hits: 0 }, h3: { samples: 0, hits: 0 } },
-      };
-      function previousState(index) {
-        if (!rows[index]) return "after_hit";
-        if (Number(rows[index].hitIndex) > 0) return "after_hit";
-        var streak = 0;
-        for (var cursor = index; cursor >= 0 && Number(rows[cursor].hitIndex) === 0 && streak < 3; cursor--) {
-          streak++;
-        }
-        return streak >= 3 ? "after_three_plus_misses" :
-          (streak === 2 ? "after_two_misses" : "after_one_miss");
-      }
-      for (var transition = 1; transition < rows.length; transition++) {
-        if (wmYearOf(rows[transition - 1].start) !== wmYearOf(rows[transition].start)) continue;
-        var stateKey = previousState(transition - 1);
-        for (var horizon = 1; horizon <= 3; horizon++) {
-          var endIndex = transition + horizon - 1;
-          if (endIndex >= rows.length) break;
-          if (wmYearOf(rows[endIndex].start) !== wmYearOf(rows[transition].start)) break;
-          var bucket = stateBuckets[stateKey]["h" + horizon];
-          bucket.samples++;
-          var allHit = true;
-          for (var hop = 0; hop < horizon; hop++) {
-            if (Number(rows[transition + hop].hitIndex) === 0) {
-              allHit = false;
-              break;
-            }
-          }
-          if (allHit) bucket.hits++;
-        }
-      }
-      var currentStateKey = previousState(rows.length - 1);
-      var currentBucket = stateBuckets[currentStateKey];
-      var baselineRate = total ? hits / total : 0;
-      var nextBucket = currentBucket.h1;
-      var shrunkRate = nextBucket.samples
-        ? (nextBucket.hits + baselineRate * 20) / (nextBucket.samples + 20)
-        : baselineRate;
-      var edge = shrunkRate - baselineRate;
-      var suggestion = nextBucket.samples < 10 ? "样本不足" :
-        (edge >= 0.03 ? "优先观察" : (edge <= -0.03 ? "降级观察" : "正常观察"));
-      var horizonRows = [1, 2, 3].map(function (count) {
-        var bucket = currentBucket["h" + count];
-        var base = Math.pow(baselineRate, count);
-        var predicted = bucket.samples
-          ? (bucket.hits + base * 20) / (bucket.samples + 20)
-          : base;
-        return {
-          windows: count,
-          samples: bucket.samples,
-          hits: bucket.hits,
-          rawRate: bucket.samples ? bucket.hits / bucket.samples : base,
-          baseline: base,
-          predictedRate: predicted,
-          edge: predicted - base,
-        };
-      });
-      var recommendedWindows = 0;
-      var canExtend = true;
-      for (var horizonIndex = 0; horizonIndex < horizonRows.length; horizonIndex++) {
-        var horizonRow = horizonRows[horizonIndex];
-        if (horizonRow.edge <= 0) canExtend = false;
-        if (canExtend && horizonRow.samples >= 10) recommendedWindows = horizonRow.windows;
-      }
-      var stateLabels = {
-        after_hit: "上一窗命中",
-        after_one_miss: "上一窗遗漏1次",
-        after_two_misses: "连续遗漏2窗",
-        after_three_plus_misses: "连续遗漏3窗以上",
-      };
       return {
         rows: rows,
         total: total,
@@ -6727,18 +6653,6 @@
         ytd: ytd,
         ytdRate: ytd.samples ? ytd.success / ytd.samples : 0,
         recentRate: recent.length ? recentHits / recent.length : 0,
-        nextWindow: {
-          state: currentStateKey,
-          stateLabel: stateLabels[currentStateKey],
-          predictedRate: shrunkRate,
-          rawRate: nextBucket.samples ? nextBucket.hits / nextBucket.samples : baselineRate,
-          samples: nextBucket.samples,
-          hits: nextBucket.hits,
-          edge: edge,
-          suggestion: suggestion,
-          horizons: horizonRows,
-          recommendedWindows: recommendedWindows,
-        },
       };
     }
     function wmRiskText(levels) {
@@ -6766,20 +6680,18 @@
           edge: Number(model.edge || 0),
         };
       });
-      var recommendedWindows = 0;
-      for (var count = 1; count <= 3; count++) {
-        var forwardSafe = forward.riskLevels.slice(0, count).every(function (level) { return level === "safe"; });
-        var reverseSafe = reverse.riskLevels.slice(3 - count).every(function (level) { return level === "safe"; });
-        if (forwardSafe && reverseSafe) recommendedWindows = count;
-      }
+      var allRisk = current.cascadeDecision.indexOf("全风险") >= 0;
+      var anySafe = forward.riskLevels.indexOf("safe") >= 0 || reverse.riskLevels.indexOf("safe") >= 0;
+      var recommendation = allRisk || current.edge <= -0.03 ? "暂不关注三期窗口" :
+        (current.edge >= 0.03 && anySafe ? "优先关注三期窗口" : "正常关注三期窗口");
       return {
         stateLabel: current.stateLabel,
         predictedRate: Number(current.predictedRate || 0),
         baseline: Number(current.baseline || 0),
         edge: Number(current.edge || 0),
         suggestion: current.cascadeDecision,
+        recommendation: recommendation,
         horizons: horizons,
-        recommendedWindows: recommendedWindows,
         forwardText: wmRiskText(forward.riskLevels),
         reverseText: wmRiskText(reverse.riskLevels),
         forwardHits: Number(forward.patternHits || 0),
@@ -6827,21 +6739,20 @@
         (forecast.suggestion.indexOf("全安全") >= 0 ? "#15803d" : "#1d4ed8");
       var forecastLabel = "一期 / 两期 / 三期性格对撞";
       html += '<article class="wm-monitor-card" data-wm-monitor-card="' + item.id + '" data-monitor-triple-rate="' + stats.tripleRate.toFixed(6) + '"' +
-        ' data-next-window-rate="' + forecast.predictedRate.toFixed(6) + '" data-next-window-samples="' + forecast.horizons[2].samples + '"' +
-        ' data-horizon-windows="' + forecast.recommendedWindows + '">';
+        ' data-third-window-rate="' + forecast.predictedRate.toFixed(6) + '" data-third-window-samples="' + forecast.horizons[2].samples + '">';
       html += '<div class="wm-monitor-card__head"><b>' + lineDisplayLabel(item) + '</b><span style="color:' + tone + '">' + conclusion + '</span></div>';
       html += '<div class="wm-monitor-card__state">' + stateText + '</div>';
-      html += '<div class="wm-monitor-card__forecast"><div><b>预测命中率 ' + (forecast.predictedRate * 100).toFixed(1) +
+      html += '<div class="wm-monitor-card__forecast"><div><b>三期窗口预测命中率 ' + (forecast.predictedRate * 100).toFixed(1) +
         '%</b><span style="color:' + forecastTone + '">' + forecast.suggestion + '</span></div>' +
         '<small>' + forecastLabel + ' · 当前状态 ' + forecast.stateLabel +
         ' · 正向 ' + forecast.forwardText + '（' + forecast.forwardHits + '/' + forecast.forwardSamples +
         '） · 反向 ' + forecast.reverseText + '（' + forecast.reverseHits + '/' + forecast.reverseSamples +
         '） · 自身基准 ' + (stats.hitRate * 100).toFixed(1) + '%</small>' +
         '<div class="wm-monitor-card__horizons">' + forecast.horizons.map(function (horizon) {
-          return '<span>未来' + horizon.windows + '期窗口命中 ' +
+          return '<span>' + (horizon.windows === 1 ? "一期诊断" : horizon.windows === 2 ? "两期诊断" : "三期目标") + ' ' +
             (horizon.predictedRate * 100).toFixed(1) + '%<small>' + horizon.samples + '个样本</small></span>';
         }).join("") + '</div>' +
-        '<strong>建议' + (forecast.recommendedWindows ? "观察未来" + forecast.recommendedWindows + "期窗口" : "暂不扩展观察") + '</strong></div>';
+        '<strong>' + forecast.recommendation + '</strong></div>';
       html += '<div class="wm-monitor-card__grid">';
       html += '<div><span>普通窗口命中</span><b>' + (stats.hitRate * 100).toFixed(1) + '%</b></div>';
       html += '<div><span>重开后连续3窗</span><b>' + (stats.tripleRate * 100).toFixed(1) + '%</b></div>';
