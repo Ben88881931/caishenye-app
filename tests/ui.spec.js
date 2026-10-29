@@ -630,6 +630,23 @@ test("13-line center provides per-line monitoring without multiplier or amount i
   ));
   expect(ranking).toHaveLength(13);
   expect(ranking).toEqual(ranking.slice().sort((a, b) => b - a));
+  const rankingCards = await page.locator("[data-monitor-ranking-item]").evaluateAll((items) => items.map((item) => ({
+    className: item.className,
+    text: item.innerText.replace(/\s+/g, " ").trim(),
+    left: item.getBoundingClientRect().left,
+    right: item.getBoundingClientRect().right,
+  })));
+  expect(rankingCards.every((card) => card.className.includes("today-pick"))).toBe(true);
+  expect(rankingCards.slice(0, 3).map((card) => card.text)).toEqual([
+    expect.stringContaining("排名#1"),
+    expect.stringContaining("排名#2"),
+    expect.stringContaining("排名#3"),
+  ]);
+  const rankingStripLayout = await page.locator(".wm-monitor-ranking-strip").evaluate((strip) => {
+    const rect = strip.getBoundingClientRect();
+    return { left: rect.left, right: rect.right };
+  });
+  expect(rankingCards[2].right).toBeLessThanOrEqual(rankingStripLayout.right + 1);
   const rankingPosition = await page.evaluate(() => {
     const rankingTable = document.querySelector("[data-monitor-ranking-table]");
     const lineSelector = document.querySelector(".wm-line-selector");
@@ -1550,7 +1567,7 @@ test("today dashboard is compact and exposes the daily decision surface", async 
   expect(height).toBeLessThan(5000);
 });
 
-test("today execution selects only two or three qualified lines and leaves the rest at zero", async ({ page }) => {
+test("today execution shows robust candidates with their true ranking positions", async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
   await page.waitForFunction(() => document.body.dataset.page === "overview");
@@ -1559,6 +1576,20 @@ test("today execution selects only two or three qualified lines and leaves the r
   const pickCount = await picks.count();
   expect(pickCount).toBeGreaterThanOrEqual(2);
   expect(pickCount).toBeLessThanOrEqual(3);
+  const rankLabels = await page.locator("[data-window-rank-item] b").allTextContents();
+  const candidateRows = await picks.evaluateAll((cards) => cards.map((card) => ({
+    basis: card.dataset.executionBasis,
+    position: Number(card.dataset.rankingPosition),
+    label: card.querySelector("b")?.textContent.trim() || "",
+    text: card.innerText.replace(/\s+/g, " ").trim(),
+  })));
+  expect(candidateRows.every((row) => row.basis === "robust")).toBe(true);
+  expect(candidateRows.every((row) => row.position >= 1 && row.position <= 13)).toBe(true);
+  expect(candidateRows.map((row) => row.position)).toEqual(
+    candidateRows.map((row) => row.position).slice().sort((a, b) => a - b),
+  );
+  expect(candidateRows.every((row) => rankLabels[row.position - 1] === row.label)).toBe(true);
+  expect(candidateRows.every((row) => row.text.includes("稳健候选") && row.text.includes(`综合排名#${row.position}`))).toBe(true);
 
   const execution = await page.locator("[data-window-execution-card]").evaluateAll((cards) => (
     cards.map((card) => ({

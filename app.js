@@ -1685,7 +1685,7 @@
       items: [
         {
           name: "三期窗口",
-          summary: "一份报告统一回答13线下一窗口排名、哪2-3条值得观察、当前窗口走到第几期，以及今天下注和盈亏。",
+          summary: "一份报告统一回答13线下一窗口完整排名、公式稳健执行候选、当前窗口走到第几期，以及今天下注和盈亏。",
           look: ["13线窗口预测排名与每期冻结快照", "排名快照命中标记：中1/中2/中3/错/待", "当前窗口、下注金额、最新盈亏"],
           use: "每天只看这一份窗口记录完成三期选线和执行核对。",
           source: "真实开奖窗口、真实快照、逐线长期性格模型和公式表。",
@@ -1937,7 +1937,7 @@
       rows: [
         ["下注期公式", "只决定这条线在第1期、第2期还是第3期下注，不决定金额。"],
         ["建议号", "该线当前窗口锁定的尾号；尾号线固定取本线尾号，概率线取当期快照尾号。"],
-        ["公式建议", "系统从13条线中选2至3条，给出窗口、建议期和建议号。"],
+        ["公式建议", "系统先按公式稳健性筛出2至3条，再按13线综合排名顺序展示，并标明真实排名位置。"],
         ["金额", "系统不生成下注金额；金额和是否下注完全由用户决定。"],
         ["本窗剩余风险", "如果后面几期继续按公式下，最坏情况下这个窗口还要投入多少钱。"]
       ]
@@ -3172,7 +3172,7 @@
       return !!row.live.active && Number(row.live.stage || 0) === stage;
     }).length;
     var html = '<section class="today-section" data-window-execution-panel>' +
-      '<div class="today-section__head"><h2>系统下注期建议</h2><span>只给排名合格的前2至3条线建议，金额和是否下注由你决定</span></div>' +
+      '<div class="today-section__head"><h2>系统下注期建议</h2><span>先筛公式稳健线，再按综合排名顺序展示，金额和是否下注由你决定</span></div>' +
       '<div class="today-summary">' +
       '<div class="today-summary__item"><b>' + planRows.length + ' 条</b><span>系统建议线路</span></div>' +
       '<div class="today-summary__item"><b>' + actionable + ' 条</b><span>本期已到建议期</span></div>' +
@@ -3180,7 +3180,7 @@
       '</div></section>';
 
     html += '<section class="today-section"><div class="today-section__head"><h2>三期窗口 · 当前 · 第' + (latest + 1) + '期</h2>' +
-      '<span>固定13线顺序 · 系统只建议2至3条，其余只记录窗口</span></div>' +
+      '<span>固定13线顺序 · 综合排名保留全部13条，执行候选另按公式稳健筛选</span></div>' +
       windowExecutionLineCardsHTML(planAllRows) +
       '<div class="window-report-actions"><button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
     return html;
@@ -3194,8 +3194,20 @@
       dailyPlanHistoryCardsHTML(3, planRows) + '</section>';
   }
 
-  function personalityExecutionSelection(reportRows) {
-    var qualified = reportRows.filter(function (row) {
+  function rankingRows(rows) {
+    return rows.slice().sort(function (a, b) {
+      if (a.entryEligible !== b.entryEligible) return a.entryEligible ? -1 : 1;
+      var aCurrent = a.personality && a.personality.current || {};
+      var bCurrent = b.personality && b.personality.current || {};
+      return Number(bCurrent.predictedRate || 0) - Number(aCurrent.predictedRate || 0) ||
+        Number(bCurrent.edge || 0) - Number(aCurrent.edge || 0) ||
+        a.order - b.order;
+    });
+  }
+
+  function robustExecutionSelection(reportRows) {
+    var ranked = rankingRows(reportRows);
+    var qualified = ranked.filter(function (row) {
       var current = row.personality && row.personality.current || {};
       var formulaMeta = row.line.formulaMeta || {};
       return Number(current.edge || 0) > 0 &&
@@ -3212,30 +3224,29 @@
         if (selected.indexOf(row) < 0) selected.push(row);
       });
     }
-    if (selected.length < 2) selected = reportRows.slice(0, 2);
+    if (selected.length < 2) selected = ranked.slice(0, 2);
     var order = {};
-    reportRows.forEach(function (row, index) { order[row.line.id] = index; });
+    ranked.forEach(function (row, index) { order[row.line.id] = index; });
     return selected.sort(function (a, b) {
       return order[a.line.id] - order[b.line.id];
     });
   }
 
+  function personalityExecutionSelection(reportRows) {
+    return robustExecutionSelection(reportRows);
+  }
+
   function renderOverview() {
     var latestTails = tailsOf(latest);
     var target = latest + 1;
-    var reportRows = EXEC_LINES.map(function (line, index) {
+    var reportRows = rankingRows(EXEC_LINES.map(function (line, index) {
       return dailyReportLineStats(line, index);
-    }).sort(function (a, b) {
-      if (a.entryEligible !== b.entryEligible) return a.entryEligible ? -1 : 1;
-      var aCurrent = a.personality && a.personality.current || {};
-      var bCurrent = b.personality && b.personality.current || {};
-      return Number(bCurrent.predictedRate || 0) - Number(aCurrent.predictedRate || 0) ||
-        Number(bCurrent.edge || 0) - Number(aCurrent.edge || 0) ||
-        a.order - b.order;
-    });
+    }));
     var topPicks = personalityExecutionSelection(reportRows);
     var selectedIds = {};
     topPicks.forEach(function (row) { selectedIds[row.line.id] = true; });
+    var rankingPositions = {};
+    reportRows.forEach(function (row, index) { rankingPositions[row.line.id] = index + 1; });
 
     var windowStates = EXEC_LINES.map(function (line) {
       var current = wmCurrentState(line);
@@ -3291,15 +3302,16 @@
     html += '<section class="today-hero">' +
       '<div class="today-hero__top"><span class="today-hero__eyebrow">下一独立三期窗口 · 第' + target + '期</span>' +
       '<span class="today-hero__status">数据截至第' + latest + '期</span></div>' +
-      '<div class="today-hero__value"><b>' + topPicks.length + ' 条</b><span>窗口观察 · 最新尾 ' +
+      '<div class="today-hero__value"><b>' + topPicks.length + ' 条</b><span>稳健执行候选 · 按公式稳健性筛选 · 最新尾 ' +
         latestTails.join(" ") + ' · 不是今日单期购买建议</span></div>' +
       '<div class="today-picks">';
     topPicks.forEach(function (row, index) {
       var current = row.personality && row.personality.current || {};
-      html += '<div class="today-pick" data-dashboard-pick>' +
-        '<span>#' + (index + 1) + ' · ' + row.advice.label + '</span>' +
+      html += '<div class="today-pick" data-dashboard-pick data-execution-basis="robust" data-line-id="' + row.line.id +
+        '" data-ranking-position="' + rankingPositions[row.line.id] + '">' +
+        '<span>稳健候选' + (index + 1) + ' · 综合排名#' + rankingPositions[row.line.id] + '</span>' +
         '<b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
-        '<small>建议第' + Number(row.line.stageFormula && row.line.stageFormula.stage || 0) + '期 · ' +
+        '<small>' + row.advice.label + ' · 建议第' + Number(row.line.stageFormula && row.line.stageFormula.stage || 0) + '期 · ' +
           (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</small></div>';
     });
     html += '</div></section>';
@@ -5583,7 +5595,7 @@
     html += '<div class="stat"><div class="stat__value" style="color:#16a34a">' + robustCount + '</div><div class="stat__label">年度稳健公式</div></div>';
     html += '<div class="stat"><div class="stat__value" style="color:#b45309">' + fallbackCount + '</div><div class="stat__label">该线保底观察公式</div></div>';
     html += '</div></div>';
-    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.7">13条线分别用自己的真实三期窗口测试，决定这条线最适合在第1期、第2期还是第3期下注。公式不决定金额；系统每期只从排名合格线路中建议2至3条，最终金额和下不下注由你决定。</div>';
+    html += '<div class="section"><div class="panel" style="padding:12px"><div style="font-size:13px;color:#475569;line-height:1.7">13条线分别用自己的真实三期窗口测试，决定这条线最适合在第1期、第2期还是第3期下注。公式不决定金额；系统先筛公式稳健线，再按综合排名顺序给出2至3条执行候选，最终金额和下不下注由你决定。</div>';
     html += '<div data-formula-execution-summary style="margin-top:7px;padding:8px;border-radius:7px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:900;line-height:1.65">本期系统建议：' + (selectedText || "暂无合格线路，建议空仓") + ' · 是否下注由你决定</div>';
     html += '<div data-personality-review style="font-size:12px;font-weight:800;color:#1d4ed8;line-height:1.7;margin-top:7px">' + personalityReviewText() + '</div></div></div>';
     html += '<div class="section"><div class="formula-card-list">';
@@ -5629,7 +5641,7 @@
       html += '</div></details>';
     });
     html += '</div></div>';
-    html += '<p class="disclaimer">公式只决定该线建议在第几期下，不决定金额，也不自动下单。候选13条，系统每期只建议排名前2至3条；最终金额和是否下注由你决定。性格参数每30期或30天先到先复测。</p>';
+    html += '<p class="disclaimer">公式只决定该线建议在第几期下，不决定金额，也不自动下单。候选13条中，系统先按公式稳健性筛出2至3条，再按综合排名展示；最终金额和是否下注由你决定。性格参数每30期或30天先到先复测。</p>';
     view.innerHTML = html;
   }
 
@@ -6788,11 +6800,12 @@
       html += '<div class="wm-monitor-ranking-head"><div><b>13线三期窗口当前排名</b><span>只按双方向对撞后的三期窗口预测概率排序 · 第1名在最左</span></div><em>下一期新开三期窗口</em></div>';
       html += '<div class="wm-hscroll wm-monitor-ranking-strip">';
       rows.forEach(function (row, index) {
-        html += '<div class="wm-monitor-rank-card" data-monitor-ranking-item data-line-id="' + row.item.id +
+        var stage = Number(row.item.stageFormula && row.item.stageFormula.stage || 0);
+        html += '<div class="today-pick wm-monitor-rank-card" data-monitor-ranking-item data-line-id="' + row.item.id +
           '" data-third-window-rate="' + row.forecast.predictedRate.toFixed(6) + '">' +
-          '<span>#' + (index + 1) + '</span><b>' + lineDisplayLabel(row.item, row.tail) + '</b>' +
-          '<strong>' + (row.forecast.predictedRate * 100).toFixed(1) + '%</strong>' +
-          '<small>' + row.forecast.recommendation + '</small></div>';
+          '<span>排名#' + (index + 1) + '</span><b>' + lineDisplayLabel(row.item, row.tail) + '</b>' +
+          '<small>' + row.forecast.recommendation + (stage ? ' · 建议第' + stage + '期' : '') +
+          ' · ' + (row.forecast.predictedRate * 100).toFixed(1) + '%</small></div>';
       });
       html += '</div></div>';
       return html;

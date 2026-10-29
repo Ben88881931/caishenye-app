@@ -5617,45 +5617,11 @@ body[data-page="windowmiss2"] .task-tabs {
   font-weight: 800;
 }
 
-.wm-monitor-rank-card {
-  flex: 0 0 150px;
-  min-width: 150px;
-  padding: 8px;
-  border: 1px solid #dbeafe;
-  border-radius: 7px;
-  background: #f8fbff;
-}
-
-.wm-monitor-rank-card span,
-.wm-monitor-rank-card b,
-.wm-monitor-rank-card strong,
-.wm-monitor-rank-card small {
-  display: block;
-}
-
-.wm-monitor-rank-card span {
-  color: #64748b;
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.wm-monitor-rank-card b {
-  margin-top: 2px;
-  color: #172334;
-  font-size: 15px;
-}
-
-.wm-monitor-rank-card strong {
-  margin-top: 2px;
-  color: #1d4ed8;
-  font-size: 17px;
-}
-
-.wm-monitor-rank-card small {
-  margin-top: 2px;
-  color: #64748b;
-  font-size: 9px;
-  line-height: 1.4;
+.wm-monitor-ranking-strip .today-pick {
+  flex: 0 0 calc((100% - 12px) / 3);
+  width: calc((100% - 12px) / 3);
+  min-width: 0;
+  max-width: 118px;
 }
 
 .wm-monitor-card {
