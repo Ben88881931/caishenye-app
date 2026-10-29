@@ -2238,29 +2238,101 @@
     });
   }
 
+  function rankingLineOutcome(line) {
+    if (line && (line.status === "hit" || Number(line.hitIndex) > 0)) return "hit";
+    if (line && line.status === "miss") return "miss";
+    return "pending";
+  }
+
+  function rankingCoverageOutcome(lines, count) {
+    var seenTails = {};
+    var outcomes = (lines || []).slice(0, count).filter(function (line) {
+      var tail = Number(line.tail);
+      if (seenTails[tail]) return false;
+      seenTails[tail] = true;
+      return true;
+    }).map(rankingLineOutcome);
+    if (outcomes.indexOf("hit") >= 0) return "hit";
+    if (outcomes.indexOf("pending") >= 0) return "pending";
+    return "miss";
+  }
+
+  function rankingOutcomeLabel(outcome, hitIndex, coverage) {
+    if (outcome === "hit") return coverage ? "覆盖" : (hitIndex ? "中" + hitIndex : "中");
+    if (outcome === "miss") return coverage ? "未覆盖" : "错";
+    return "待";
+  }
+
+  function rankingAccuracySummaryHTML(records) {
+    var metrics = {
+      top1: { hits: 0, samples: 0, pending: 0, label: "第1名三期命中" },
+      top2: { hits: 0, samples: 0, pending: 0, label: "前2覆盖" },
+      top3: { hits: 0, samples: 0, pending: 0, label: "前3覆盖" },
+    };
+    records.forEach(function (record) {
+      var outcomes = {
+        top1: rankingLineOutcome(record.lines[0]),
+        top2: rankingCoverageOutcome(record.lines, 2),
+        top3: rankingCoverageOutcome(record.lines, 3),
+      };
+      Object.keys(metrics).forEach(function (key) {
+        if (outcomes[key] === "pending") {
+          metrics[key].pending++;
+          return;
+        }
+        metrics[key].samples++;
+        if (outcomes[key] === "hit") metrics[key].hits++;
+      });
+    });
+    var html = '<div class="daily-report-ranking-accuracy" data-ranking-accuracy-summary>' +
+      '<div class="daily-report-ranking-accuracy__head"><b>排名准确率</b>' +
+      '<span>只计对应三期窗口已结束的期次 · 同尾去重</span></div>' +
+      '<div class="daily-report-ranking-accuracy__grid">';
+    Object.keys(metrics).forEach(function (key) {
+      var metric = metrics[key];
+      var rate = metric.samples ? (metric.hits / metric.samples * 100).toFixed(1) + "%" : "-";
+      html += '<div data-ranking-accuracy-metric="' + key + '" data-hits="' + metric.hits +
+        '" data-samples="' + metric.samples + '" data-pending="' + metric.pending + '">' +
+        '<span>' + metric.label + '</span><b>' + rate + '</b>' +
+        '<small>' + metric.hits + ' / ' + metric.samples + ' · 待' + metric.pending + '期</small></div>';
+    });
+    return html + '</div></div>';
+  }
+
   function dailyReportRankingHistoryHTML() {
     var records = dailyReportRankingSnapshots();
-    var html = '<div class="daily-report-block"><div class="daily-report-block__head"><h3>每期排名快照卡</h3>' +
+    var html = '<div class="daily-report-block daily-report-ranking-history"><div class="daily-report-block__head"><h3>每期排名快照卡</h3>' +
       '<span>开奖前冻结 · 新→旧 · 每期完整13线排名 · 左右滑动对比</span></div>';
+    html += rankingAccuracySummaryHTML(records);
     html += '<div class="daily-report-ranking-strip record-scroll" data-ranking-history-strip data-window-ranking-strip>';
     records.forEach(function (record) {
+      var top1Outcome = rankingLineOutcome(record.lines[0]);
+      var top2Outcome = rankingCoverageOutcome(record.lines, 2);
+      var top3Outcome = rankingCoverageOutcome(record.lines, 3);
       html += '<article class="daily-report-ranking-card" data-report-ranking-card data-ranking-target="' + record.target + '">' +
         '<div class="daily-report-ranking-card__head"><b>第' + record.target + '期 · 13线排名</b>' +
-        '<span>基于第' + record.basedOn + '期</span></div><div class="daily-report-ranking-card__list">';
+        '<span>基于第' + record.basedOn + '期</span></div>' +
+        '<div class="daily-report-ranking-window-summary" data-ranking-window-summary data-ranking-top1-state="' + top1Outcome +
+        '" data-ranking-top2-state="' + top2Outcome + '" data-ranking-top3-state="' + top3Outcome + '">' +
+        '<span class="is-' + top1Outcome + '">第1名 ' + rankingOutcomeLabel(top1Outcome, record.lines[0] && record.lines[0].hitIndex, false) + '</span>' +
+        '<span class="is-' + top2Outcome + '">前2 ' + rankingOutcomeLabel(top2Outcome, null, true) + '</span>' +
+        '<span class="is-' + top3Outcome + '">前3 ' + rankingOutcomeLabel(top3Outcome, null, true) + '</span></div>' +
+        '<div class="daily-report-ranking-card__list">';
       record.lines.forEach(function (line, index) {
         var attemptCount = Array.isArray(line.attempts) ? line.attempts.length : 0;
-        var hitClass = line.status === "hit" ? "is-hit" : (line.status === "miss" ? "is-miss" : "is-pending");
-        var hitText = line.status === "hit" ? "中" + (line.hitIndex || "") :
-          (line.status === "miss" ? "错" : (attemptCount ? "进" + Math.min(3, attemptCount + 1) : "待"));
+        var outcome = rankingLineOutcome(line);
+        var hitClass = "is-" + outcome;
+        var hitText = outcome === "hit" ? "中" + (line.hitIndex || "") :
+          (outcome === "miss" ? "错" : (attemptCount ? "进" + Math.min(3, attemptCount + 1) : "待"));
         var forward = String(line.forward && line.forward.pattern || "").split("-").map(function (level) {
           return level === "safe" ? "安" : "险";
         }).join("→");
         var reverse = String(line.reverse && line.reverse.pattern || "").split("-").map(function (level) {
           return level === "safe" ? "安" : "险";
         }).join("→");
-        html += '<div class="daily-report-ranking-card__row' + (line.status === "hit" ? " is-hit" : "") + '" data-ranking-line="' + line.id + '">' +
+        html += '<div class="daily-report-ranking-card__row' + (outcome === "hit" ? " is-hit" : "") + '" data-ranking-line="' + line.id + '">' +
           '<b>#' + (index + 1) + ' ' + storedLineDisplayLabel(line.id, line.tail, line.label) + '</b>' +
-          '<span>' + (String(line.id).indexOf("tail") === 0 ? '尾' + line.tail + ' · ' : '') + (Number(line.predictedRate) * 100).toFixed(1) + '%</span>' +
+          '<span>' + (Number(line.predictedRate) * 100).toFixed(1) + '%</span>' +
           '<i class="daily-report-ranking-card__hit ' + hitClass + '" data-ranking-hit="' + hitClass + '">' + hitText + '</i>' +
           '<small>正 ' + forward + ' / 反 ' + reverse + '</small>' +
           '<em>' + line.cascadeDecision + '</em></div>';

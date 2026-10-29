@@ -657,6 +657,89 @@ test("13-line center provides per-line monitoring without multiplier or amount i
   expect(selectorLayout.rowCount).toBe(1);
   expect(selectorLayout.scrollWidth).toBeGreaterThan(selectorLayout.clientWidth);
   expect(await page.locator("[data-report-ranking-card]").count()).toBeGreaterThanOrEqual(2);
+  const historyRanking = await page.locator("[data-report-ranking-card]").evaluateAll((cards) => (
+    cards.map((card) => ({
+      target: Number(card.dataset.rankingTarget),
+      rows: [...card.querySelectorAll("[data-ranking-line]")].map((row) => ({
+        label: row.querySelector("b")?.textContent.trim() || "",
+      })),
+    }))
+  ));
+  expect(historyRanking.every((card) => card.rows.length === 13)).toBe(true);
+  expect(historyRanking.map((card) => card.target)).toEqual(
+    historyRanking.map((card) => card.target).slice().sort((a, b) => b - a),
+  );
+  for (const card of historyRanking) {
+    for (const row of card.rows) {
+      expect(row.label).toMatch(/^#(?:[1-9]|1[0-3]) (?:尾\d|[ABC]\d)$/);
+    }
+  }
+
+  const windowAccuracy = await page.evaluate(() => {
+    const outcome = (line) => {
+      if (line.status === "hit" || Number(line.hitIndex) > 0) return "hit";
+      if (line.status === "miss") return "miss";
+      return "pending";
+    };
+    const coverage = (lines, count) => {
+      const unique = [];
+      const seen = new Set();
+      for (const line of lines.slice(0, count)) {
+        const tail = Number(line.tail);
+        if (seen.has(tail)) continue;
+        seen.add(tail);
+        unique.push(line);
+      }
+      const states = unique.map(outcome);
+      if (states.includes("hit")) return "hit";
+      if (states.includes("pending")) return "pending";
+      return "miss";
+    };
+    const records = window.APP_PERSONALITY_SNAPSHOTS.records
+      .filter((record) => record.version === window.APP_PERSONALITY_MODEL.version &&
+        !record.superseded && Array.isArray(record.lines) && record.lines.length === 13)
+      .sort((a, b) => Number(b.target) - Number(a.target));
+    const expectedCards = records.map((record) => ({
+      target: Number(record.target),
+      top1: outcome(record.lines[0]),
+      top2: coverage(record.lines, 2),
+      top3: coverage(record.lines, 3),
+    }));
+    const actualCards = [...document.querySelectorAll("[data-report-ranking-card]")].map((card) => ({
+      target: Number(card.dataset.rankingTarget),
+      top1: card.querySelector("[data-ranking-window-summary]")?.dataset.rankingTop1State || null,
+      top2: card.querySelector("[data-ranking-window-summary]")?.dataset.rankingTop2State || null,
+      top3: card.querySelector("[data-ranking-window-summary]")?.dataset.rankingTop3State || null,
+    }));
+    const aggregate = (key) => {
+      const values = expectedCards.map((card) => card[key]).filter((state) => state !== "pending");
+      return {
+        hits: values.filter((state) => state === "hit").length,
+        samples: values.length,
+      };
+    };
+    const summary = document.querySelector("[data-ranking-accuracy-summary]");
+    const actualSummary = summary ? ["top1", "top2", "top3"].reduce((result, key) => {
+      const metric = summary.querySelector(`[data-ranking-accuracy-metric="${key}"]`);
+      result[key] = {
+        hits: Number(metric?.dataset.hits),
+        samples: Number(metric?.dataset.samples),
+      };
+      return result;
+    }, {}) : null;
+    return {
+      expectedCards,
+      actualCards,
+      expectedSummary: {
+        top1: aggregate("top1"),
+        top2: aggregate("top2"),
+        top3: aggregate("top3"),
+      },
+      actualSummary,
+    };
+  });
+  expect(windowAccuracy.actualCards).toEqual(windowAccuracy.expectedCards);
+  expect(windowAccuracy.actualSummary).toEqual(windowAccuracy.expectedSummary);
 });
 
 test("13-line selector scrolls horizontally and changes lines only by tapping", async ({ page }) => {
@@ -721,6 +804,44 @@ test("13-line selector scrolls horizontally and changes lines only by tapping", 
     pageAfterSwipe: "windowmult",
     after: { line: "tail2", view: "monitor" },
   });
+});
+
+test("ranking snapshot cards use one shared layout across monitor and overview", async ({ page }) => {
+  const cardStyle = (locator) => locator.evaluate((card) => {
+    const row = card.querySelector("[data-ranking-line]");
+    const head = card.querySelector(".daily-report-ranking-card__head");
+    const style = getComputedStyle(card);
+    const rowStyle = getComputedStyle(row);
+    return {
+      display: style.display,
+      width: style.width,
+      maxWidth: style.maxWidth,
+      padding: style.padding,
+      borderRadius: style.borderRadius,
+      background: style.backgroundColor,
+      headDisplay: getComputedStyle(head).display,
+      rowDisplay: rowStyle.display,
+      rowColumns: rowStyle.gridTemplateColumns,
+    };
+  });
+
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-report-ranking-card]").length >= 2);
+  const monitorCard = await cardStyle(page.locator("[data-report-ranking-card]").first());
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("overview"));
+    localStorage.setItem("v2_window_report_view", JSON.stringify("snapshot"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-report-ranking-card]").length >= 2);
+  const overviewCard = await cardStyle(page.locator("[data-report-ranking-card]").first());
+
+  expect(monitorCard).toEqual(overviewCard);
 });
 
 test("13-line center subtabs are fixed and clickable", async ({ page }) => {
