@@ -1813,6 +1813,33 @@ test("two and three period heatmaps separate heat view from chain history", asyn
   }
 });
 
+test("three period heatmap shows an amount only at the line formula's recommended stage", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmiss"));
+    localStorage.removeItem("v2_window_miss_view");
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.body.dataset.page === "windowmiss");
+
+  const liveCells = await page.locator('[data-window-state="live"]').evaluateAll((cells) => cells.map((cell) => ({
+    currentStage: Number(cell.dataset.windowCurrentStage),
+    formulaStage: Number(cell.dataset.windowFormulaStage),
+    amount: Number(cell.dataset.windowAmount),
+    text: cell.innerText.replace(/\s+/g, " ").trim(),
+  })));
+  expect(liveCells.length).toBeGreaterThan(0);
+  for (const cell of liveCells) {
+    expect([1, 2, 3]).toContain(cell.formulaStage);
+    if (cell.currentStage === cell.formulaStage) {
+      expect(cell.amount).toBeGreaterThanOrEqual(0);
+    } else {
+      expect(cell.amount).toBe(0);
+      expect(cell.text).toContain("0元");
+    }
+  }
+});
+
 test("heatmap task buttons never cover the number header", async ({ page }) => {
   for (const tabId of ["trend", "missorder", "windowmiss2", "windowmiss"]) {
     await page.goto("/");
