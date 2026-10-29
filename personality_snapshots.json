@@ -1515,10 +1515,15 @@
               "period": 301,
               "tail": 4,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 4,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 3
         },
         {
           "id": "tail9",
@@ -1594,10 +1599,15 @@
               "period": 301,
               "tail": 6,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 6,
+              "hit": false
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "miss",
+          "hitIndex": 0
         },
         {
           "id": "prob1",
@@ -1858,10 +1868,15 @@
               "period": 301,
               "tail": 5,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 5,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 3
         },
         {
           "id": "prob2",
@@ -1900,10 +1915,15 @@
               "period": 301,
               "tail": 0,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 0,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 3
         },
         {
           "id": "tail4",
@@ -1942,10 +1962,15 @@
               "period": 301,
               "tail": 4,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 4,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 3
         },
         {
           "id": "tail0",
@@ -1984,10 +2009,15 @@
               "period": 301,
               "tail": 0,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 0,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 3
         }
       ]
     },
@@ -2051,6 +2081,11 @@
               "period": 301,
               "tail": 6,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 6,
+              "hit": false
             }
           ],
           "status": "pending",
@@ -2088,10 +2123,15 @@
               "period": 301,
               "tail": 5,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 5,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 2
         },
         {
           "id": "tail9",
@@ -2123,6 +2163,11 @@
           "attempts": [
             {
               "period": 301,
+              "tail": 9,
+              "hit": false
+            },
+            {
+              "period": 302,
               "tail": 9,
               "hit": false
             }
@@ -2273,10 +2318,15 @@
               "period": 301,
               "tail": 5,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 5,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 2
         },
         {
           "id": "tail8",
@@ -2308,6 +2358,11 @@
           "attempts": [
             {
               "period": 301,
+              "tail": 8,
+              "hit": false
+            },
+            {
+              "period": 302,
               "tail": 8,
               "hit": false
             }
@@ -2384,10 +2439,15 @@
               "period": 301,
               "tail": 4,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 4,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 2
         },
         {
           "id": "tail1",
@@ -2495,10 +2555,15 @@
               "period": 301,
               "tail": 0,
               "hit": false
+            },
+            {
+              "period": 302,
+              "tail": 0,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 2
         }
       ]
     },
@@ -2557,7 +2622,13 @@
             "hits": 90,
             "samples": 95
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 6,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -2588,7 +2659,13 @@
             "hits": 442,
             "samples": 480
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 7,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -2619,9 +2696,15 @@
             "hits": 654,
             "samples": 713
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 2,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail5",
@@ -2650,9 +2733,15 @@
             "hits": 169,
             "samples": 185
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 5,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail8",
@@ -2681,7 +2770,13 @@
             "hits": 102,
             "samples": 112
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 8,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -2712,9 +2807,15 @@
             "hits": 121,
             "samples": 135
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 3,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail4",
@@ -2743,9 +2844,15 @@
             "hits": 189,
             "samples": 215
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 4,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail1",
@@ -2774,9 +2881,15 @@
             "hits": 18,
             "samples": 23
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 1,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "prob1",
@@ -2805,9 +2918,15 @@
             "hits": 224,
             "samples": 243
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 2,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail9",
@@ -2836,7 +2955,13 @@
             "hits": 118,
             "samples": 126
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 9,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -2867,7 +2992,13 @@
             "hits": 943,
             "samples": 1031
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 7,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -2898,9 +3029,15 @@
             "hits": 424,
             "samples": 468
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 3,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail0",
@@ -2929,6 +3066,445 @@
             "hits": 365,
             "samples": 452
           },
+          "attempts": [
+            {
+              "period": 302,
+              "tail": 0,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
+        }
+      ]
+    },
+    {
+      "version": "next-window-v7-20261026",
+      "generatedAt": "2026-10-29T13:38:22.696Z",
+      "year": 2026,
+      "basedOn": 302,
+      "target": 303,
+      "targetGlobal": 1468,
+      "candidates": [
+        "tail6",
+        "prob1",
+        "tail2",
+        "tail7",
+        "tail3",
+        "tail5",
+        "tail4",
+        "tail0",
+        "tail1",
+        "tail9",
+        "prob3",
+        "prob2",
+        "tail8"
+      ],
+      "top3": [
+        "tail6",
+        "prob1",
+        "tail2"
+      ],
+      "lines": [
+        {
+          "id": "tail6",
+          "label": "尾6",
+          "tail": 6,
+          "predictedRate": 0.9436961605113688,
+          "baseline": 0.9161863522150558,
+          "edge": 0.027509808296313,
+          "state": "after_three_plus_misses",
+          "riskPattern": "safe-safe-risk|risk-safe-safe",
+          "riskLevels": [
+            "safe",
+            "safe",
+            "risk"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "safe-safe-risk",
+            "predictedRate": 0.9436961605113688,
+            "hits": 90,
+            "samples": 95
+          },
+          "reverse": {
+            "pattern": "risk-safe-safe",
+            "predictedRate": 0.9436961605113688,
+            "hits": 90,
+            "samples": 95
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob1",
+          "label": "A",
+          "tail": 3,
+          "predictedRate": 0.9228940615436974,
+          "baseline": 0.9126118341623196,
+          "edge": 0.01028222738137774,
+          "state": "after_hit",
+          "riskPattern": "safe-safe-safe|safe-safe-safe",
+          "riskLevels": [
+            "safe",
+            "safe",
+            "safe"
+          ],
+          "cascadeDecision": "双向全安全·高分",
+          "forward": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.9228940615436974,
+            "hits": 552,
+            "samples": 598
+          },
+          "reverse": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.9228940615436974,
+            "hits": 552,
+            "samples": 598
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail2",
+          "label": "尾2",
+          "tail": 2,
+          "predictedRate": 0.9173392209973998,
+          "baseline": 0.9259624915929919,
+          "edge": -0.008623270595592092,
+          "state": "after_hit",
+          "riskPattern": "safe-risk-risk|risk-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "safe-risk-risk",
+            "predictedRate": 0.9173392209973998,
+            "hits": 655,
+            "samples": 714
+          },
+          "reverse": {
+            "pattern": "risk-risk-safe",
+            "predictedRate": 0.9173392209973998,
+            "hits": 655,
+            "samples": 714
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail7",
+          "label": "尾7",
+          "tail": 7,
+          "predictedRate": 0.913972297788578,
+          "baseline": 0.9097624408886552,
+          "edge": 0.004209856899922815,
+          "state": "after_one_miss",
+          "riskPattern": "risk-safe-risk|risk-safe-risk",
+          "riskLevels": [
+            "risk",
+            "safe",
+            "risk"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.913972297788578,
+            "hits": 297,
+            "samples": 325
+          },
+          "reverse": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.913972297788578,
+            "hits": 297,
+            "samples": 325
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail3",
+          "label": "尾3",
+          "tail": 3,
+          "predictedRate": 0.8977194182708694,
+          "baseline": 0.9126118341623196,
+          "edge": -0.014892415891450184,
+          "state": "after_hit",
+          "riskPattern": "safe-risk-safe|safe-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8977194182708694,
+            "hits": 121,
+            "samples": 135
+          },
+          "reverse": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8977194182708694,
+            "hits": 121,
+            "samples": 135
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail5",
+          "label": "尾5",
+          "tail": 5,
+          "predictedRate": 0.8956552885745034,
+          "baseline": 0.9105827772902393,
+          "edge": -0.014927488715735904,
+          "state": "after_hit",
+          "riskPattern": "safe-risk-safe|safe-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8956552885745034,
+            "hits": 100,
+            "samples": 112
+          },
+          "reverse": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8956552885745034,
+            "hits": 100,
+            "samples": 112
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail4",
+          "label": "尾4",
+          "tail": 4,
+          "predictedRate": 0.8939120556771786,
+          "baseline": 0.8972977709456659,
+          "edge": -0.0033857152684872993,
+          "state": "after_hit",
+          "riskPattern": "safe-risk-safe|safe-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8939120556771786,
+            "hits": 403,
+            "samples": 451
+          },
+          "reverse": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8939120556771786,
+            "hits": 403,
+            "samples": 451
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail0",
+          "label": "尾0",
+          "tail": 0,
+          "predictedRate": 0.8548313652056725,
+          "baseline": 0.8548313652056725,
+          "edge": 0,
+          "state": "after_hit",
+          "riskPattern": "safe-safe-safe|safe-safe-safe",
+          "riskLevels": [
+            "safe",
+            "safe",
+            "safe"
+          ],
+          "cascadeDecision": "双向全安全·高分",
+          "forward": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.852154342500342,
+            "hits": 463,
+            "samples": 543
+          },
+          "reverse": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.852154342500342,
+            "hits": 463,
+            "samples": 543
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail1",
+          "label": "尾1",
+          "tail": 1,
+          "predictedRate": 0.8424689916926348,
+          "baseline": 0.9097624408886552,
+          "edge": -0.06729344919602043,
+          "state": "after_hit",
+          "riskPattern": "risk-risk-safe|safe-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "双方向混合·观察",
+          "forward": {
+            "pattern": "risk-risk-safe",
+            "predictedRate": 0.8424689916926348,
+            "hits": 18,
+            "samples": 23
+          },
+          "reverse": {
+            "pattern": "safe-risk-risk",
+            "predictedRate": 0.8424689916926348,
+            "hits": 18,
+            "samples": 23
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail9",
+          "label": "尾9",
+          "tail": 9,
+          "predictedRate": 0.660216398159258,
+          "baseline": 0.9169672196656362,
+          "edge": -0.2567508215063782,
+          "state": "after_two_misses",
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "双向全风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9326146410765158,
+            "hits": 118,
+            "samples": 126
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9326146410765158,
+            "hits": 118,
+            "samples": 126
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob3",
+          "label": "C",
+          "tail": 1,
+          "predictedRate": 0.6550289574398317,
+          "baseline": 0.9097624408886552,
+          "edge": -0.2547334834488235,
+          "state": "after_hit",
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "双向全风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.914804481740429,
+            "hits": 944,
+            "samples": 1032
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.914804481740429,
+            "hits": 944,
+            "samples": 1032
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob2",
+          "label": "B",
+          "tail": 2,
+          "predictedRate": 0.6523944500166879,
+          "baseline": 0.9259624915929919,
+          "edge": -0.273568041576304,
+          "state": "after_hit",
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "双向全风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9061034028009555,
+            "hits": 425,
+            "samples": 469
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9061034028009555,
+            "hits": 425,
+            "samples": 469
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail8",
+          "label": "尾8",
+          "tail": 8,
+          "predictedRate": 0.6397610126059475,
+          "baseline": 0.9060088073845421,
+          "edge": -0.2662477947785946,
+          "state": "after_two_misses",
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "双向全风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.888556961952705,
+            "hits": 246,
+            "samples": 277
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.888556961952705,
+            "hits": 246,
+            "samples": 277
+          },
           "attempts": [],
           "status": "pending",
           "hitIndex": null
@@ -2936,6 +3512,6 @@
       ]
     }
   ],
-  "latestPeriod": 301,
-  "updatedAt": "2026-10-28T13:39:17.001Z"
+  "latestPeriod": 302,
+  "updatedAt": "2026-10-29T13:38:22.696Z"
 }
