@@ -6700,9 +6700,35 @@
         reverseSamples: Number(reverse.patternSamples || 0),
       };
     }
+    function wmMonitorRankingHTML() {
+      var rows = orderedLines.map(function (item) {
+        var forecast = wmCompositeForecast(item);
+        var personality = PERSONALITY_BY_ID[item.id];
+        return {
+          item: item,
+          forecast: forecast,
+          tail: personality && personality.current ? Number(personality.current.tail) : null,
+        };
+      }).filter(function (row) { return !!row.forecast; }).sort(function (a, b) {
+        return b.forecast.predictedRate - a.forecast.predictedRate;
+      });
+      var html = '<div class="wm-monitor-ranking-block" data-monitor-ranking-table>';
+      html += '<div class="wm-monitor-ranking-head"><div><b>13线三期窗口当前排名</b><span>只按双方向对撞后的三期窗口预测概率排序 · 第1名在最左</span></div><em>下一期新开三期窗口</em></div>';
+      html += '<div class="wm-hscroll wm-monitor-ranking-strip">';
+      rows.forEach(function (row, index) {
+        html += '<div class="wm-monitor-rank-card" data-monitor-ranking-item data-line-id="' + row.item.id +
+          '" data-third-window-rate="' + row.forecast.predictedRate.toFixed(6) + '">' +
+          '<span>#' + (index + 1) + '</span><b>' + lineDisplayLabel(row.item, row.tail) + '</b>' +
+          '<strong>' + (row.forecast.predictedRate * 100).toFixed(1) + '%</strong>' +
+          '<small>' + row.forecast.recommendation + '</small></div>';
+      });
+      html += '</div></div>';
+      return html;
+    }
     var html = '<div class="section"><div class="panel wm-card">';
     html += '<div class="wm-card__head"><div><b class="wm-card__title">13线三期窗口实时监控</b><span class="wm-card__hint">一期、两期作诊断，三期窗口为最终目标 · 真实窗口账本 · 记录尾号、命中或错误、等待重开和重开后的连续三窗表现；不预测未来开奖号码、不补造、不改历史。</span></div></div>';
     html += '<div class="wm-view-tabs">' + wmViewTabs + '</div>';
+    html += wmMonitorRankingHTML();
     html += '<div class="wm-line-selector">';
     orderedLines.forEach(function (item) {
       var itemData = lineBest[item.id] || {};
@@ -6765,6 +6791,7 @@
       html += '</article>';
     });
     html += '</div></div></div>';
+    html += '<div data-monitor-ranking-history>' + dailyReportRankingHistoryHTML() + '</div>';
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="formula">';
     html += '<div class="section"><div class="panel wm-card">';

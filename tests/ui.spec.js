@@ -624,9 +624,42 @@ test("13-line center provides per-line monitoring without multiplier or amount i
     expect(item.text).not.toContain("观察未来1期窗口");
     expect(item.text).not.toContain("观察未来2期窗口");
   }
+
+  const ranking = await page.locator("[data-monitor-ranking-item]").evaluateAll((items) => (
+    items.map((item) => Number(item.dataset.thirdWindowRate))
+  ));
+  expect(ranking).toHaveLength(13);
+  expect(ranking).toEqual(ranking.slice().sort((a, b) => b - a));
+  const rankingPosition = await page.evaluate(() => {
+    const rankingTable = document.querySelector("[data-monitor-ranking-table]");
+    const lineSelector = document.querySelector(".wm-line-selector");
+    const all = Array.from(document.querySelectorAll("*"));
+    return {
+      rankingBeforeSelector: Boolean(rankingTable && lineSelector) &&
+        all.indexOf(rankingTable) < all.indexOf(lineSelector),
+    };
+  });
+  expect(rankingPosition.rankingBeforeSelector).toBe(true);
+  const selectorLayout = await page.locator(".wm-line-selector").evaluate((selector) => {
+    const buttons = [...selector.querySelectorAll("[data-wm-line]")];
+    return {
+      display: getComputedStyle(selector).display,
+      flexWrap: getComputedStyle(selector).flexWrap,
+      buttonCount: buttons.length,
+      rowCount: new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top))).size,
+      clientWidth: selector.clientWidth,
+      scrollWidth: selector.scrollWidth,
+    };
+  });
+  expect(selectorLayout.display).toBe("flex");
+  expect(selectorLayout.flexWrap).toBe("nowrap");
+  expect(selectorLayout.buttonCount).toBe(13);
+  expect(selectorLayout.rowCount).toBe(1);
+  expect(selectorLayout.scrollWidth).toBeGreaterThan(selectorLayout.clientWidth);
+  expect(await page.locator("[data-report-ranking-card]").count()).toBeGreaterThanOrEqual(2);
 });
 
-test("13-line selector swipes flip main pages without changing the selected line", async ({ page }) => {
+test("13-line selector scrolls horizontally and changes lines only by tapping", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
@@ -637,7 +670,22 @@ test("13-line selector swipes flip main pages without changing the selected line
     return view instanceof HTMLElement && view.innerText.includes("13线三期窗口实时监控");
   });
 
-  const result = await page.evaluate(() => {
+  const scrollResult = await page.locator(".wm-line-selector").evaluate((selector) => {
+    selector.scrollLeft = 120;
+    return {
+      scrollLeft: selector.scrollLeft,
+      scrollWidth: selector.scrollWidth,
+      clientWidth: selector.clientWidth,
+    };
+  });
+  expect(scrollResult.scrollWidth).toBeGreaterThan(scrollResult.clientWidth);
+  expect(scrollResult.scrollLeft).toBeGreaterThan(0);
+
+  await page.locator('[data-wm-line="tail2"]').click();
+  await expect(page.locator("body")).toHaveAttribute("data-page", "windowmult");
+  await expect(page.locator('.wm-line-selector .chip[style*="2563eb"]')).toHaveAttribute("data-wm-line", "tail2");
+
+  const swipeResult = await page.evaluate(() => {
     const selected = () => ({
       line: document.querySelector(".wm-line-selector .chip[style*='2563eb']")?.getAttribute("data-wm-line") || null,
       view: document.querySelector(".wm-view-tab.is-active")?.getAttribute("data-wm-view") || null,
@@ -661,21 +709,17 @@ test("13-line selector swipes flip main pages without changing the selected line
       document.documentElement.dispatchEvent(pointer("pointerup", startX + distance));
     };
     const before = selected();
-    swipe(document.querySelector(".wm-line-selector .chip"), 103, -60);
-    const pageAfterSwipe = document.body.dataset.page;
-    swipe(document.querySelector("#view"), 104, 60);
+    swipe(document.querySelector(".wm-line-selector [data-wm-line='tail2']"), 103, -90);
     return {
       before,
-      pageAfterSwipe,
-      pageAfterReturn: document.body.dataset.page,
+      pageAfterSwipe: document.body.dataset.page,
       after: selected(),
     };
   });
-  expect(result).toEqual({
-    before: { line: "tail1", view: "monitor" },
-    pageAfterSwipe: "orderlog",
-    pageAfterReturn: "windowmult",
-    after: { line: "tail1", view: "monitor" },
+  expect(swipeResult).toEqual({
+    before: { line: "tail2", view: "monitor" },
+    pageAfterSwipe: "windowmult",
+    after: { line: "tail2", view: "monitor" },
   });
 });
 
