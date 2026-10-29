@@ -619,11 +619,13 @@ test("13-line center provides per-line monitoring without multiplier or amount i
     expect(Number.isFinite(item.samples)).toBe(true);
     expect([0, 1, 2, 3]).toContain(item.horizonWindows);
     expect(item.text).toContain("预测命中率");
-    expect(item.text).toMatch(/优先观察|正常观察|降级观察|样本不足/);
-    expect(item.text).toContain("未来1窗连续命中");
-    expect(item.text).toContain("未来2窗连续命中");
-    expect(item.text).toContain("未来3窗连续命中");
-    expect(item.text).toMatch(/建议连续观察[123]窗|暂不扩展观察/);
+    expect(item.text).toMatch(/双向全风险·低分|双向全安全·高分|方向分歧·中性|双方向混合·观察/);
+    expect(item.text).toContain("未来1期窗口命中");
+    expect(item.text).toContain("未来2期窗口命中");
+    expect(item.text).toContain("未来3期窗口命中");
+    expect(item.text).toContain("正向 ");
+    expect(item.text).toContain("反向 ");
+    expect(item.text).toMatch(/建议观察未来[123]期窗口|暂不扩展观察/);
   }
 });
 
