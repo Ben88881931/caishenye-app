@@ -266,7 +266,7 @@
     orderTail: lsGet("v2_order_tail", "all"),
     windowMultLine: "tail1",
     windowMultN: 2,
-    windowMultView: "overview",
+    windowMultView: "monitor",
     windowMultDetailYears: 1,
     probYear: lsGet("v2_prob_year", null),
     ultimateMode: "number",
@@ -1709,11 +1709,11 @@
         },
         {
           name: "13线规律中心",
-          summary: "13条线各自的数据规律与窗口性格：逐条列出每个窗口第1/2/3期的命中或全错，比较不同倍率的收益、风险和逐年表现，并给出窗口级性格与重投/倍投参考建议。",
-          look: ["系统本期建议线路", "今年最优、年度稳健最优", "逐年收益、全错窗口和连续全错概率"],
-          use: "研究公式有没有优化空间，比较不同年份是否稳定。",
-          source: "真实窗口、真实开奖结果、公式表正式线计划。",
-          note: "正式执行仓位只认公式表；倍投测试里的其他倍率只用于研究和对比。"
+          summary: "逐条监控13条线的窗口状态、长期性格、年度变化，以及遗漏重开后的连续三窗表现。",
+          look: ["逐线实时状态", "重开后连续三窗成功率", "本年转强、转弱和断窗位置"],
+          use: "观察哪条线当前值得继续跟踪，哪条线需要降级。",
+          source: "真实窗口、真实开奖结果和逐线独立统计。",
+          note: "每条线只与自己的历史表现比较，并独立给出实时关注等级。"
         },
         {
           name: "追三期下单",
@@ -6595,13 +6595,14 @@
     var selectedPlanText = wmPlanText(selected.n);
     var selectedPosition = wmPositionForPlan(line, line.plan);
     var selectedPositionPeriod = selectedPosition.period ? wmPeriodLabel(selectedPosition.period) : "-";
-    var wmView = state.windowMultView || "overview";
+    var wmView = state.windowMultView || "monitor";
+    if (wmView === "overview" || wmView === "years") wmView = "monitor";
+    state.windowMultView = wmView;
     var wmViewTabs = [
-      ["overview", "总览"],
-      ["windows", "窗口"],
-      ["personality", "13线性格"],
-      ["formula", "公式与仓位"],
-      ["years", "年度测试"]
+      ["monitor", "实时监控"],
+      ["windows", "窗口记录"],
+      ["personality", "逐线性格"],
+      ["formula", "下注期公式"]
     ].map(function (item) {
       return '<button class="chip wm-view-tab' + (wmView === item[0] ? " is-active" : "") + '" type="button" data-wm-view="' + item[0] + '">' + item[1] + '</button>';
     }).join("");
@@ -6611,8 +6612,51 @@
     function wmStat(label, value, color) {
       return '<div class="wm-stat"><div style="font-size:16px;font-weight:900' + (color ? ";color:" + color : "") + '">' + value + '</div><div style="font-size:11px;color:#64748b;margin-top:2px">' + label + '</div></div>';
     }
+    function wmMonitorStats(item) {
+      var rows = wmWindowsFor(item);
+      var total = rows.length;
+      var hits = rows.filter(function (window) { return Number(window.hitIndex) > 0; }).length;
+      var misses = total - hits;
+      var triple = { samples: 0, success: 0, fail1: 0, fail2: 0, fail3: 0 };
+      var yearly = {};
+      for (var i = 0; i < rows.length - 3; i++) {
+        if (Number(rows[i].hitIndex) !== 0) continue;
+        var year = wmYearOf(rows[i].start);
+        if (!year || wmYearOf(rows[i + 1].start) !== year ||
+            wmYearOf(rows[i + 2].start) !== year ||
+            wmYearOf(rows[i + 3].start) !== year) continue;
+        triple.samples++;
+        if (!yearly[year]) yearly[year] = { samples: 0, success: 0 };
+        yearly[year].samples++;
+        var seq = [rows[i + 1], rows[i + 2], rows[i + 3]].map(function (window) {
+          return Number(window.hitIndex) > 0;
+        });
+        if (!seq[0]) triple.fail1++;
+        else if (!seq[1]) triple.fail2++;
+        else if (!seq[2]) triple.fail3++;
+        else {
+          triple.success++;
+          yearly[year].success++;
+        }
+      }
+      var currentYear = Number((D[D.length - 1] || {}).y);
+      var ytd = yearly[currentYear] || { samples: 0, success: 0 };
+      var recent = rows.slice(-6);
+      var recentHits = recent.filter(function (window) { return Number(window.hitIndex) > 0; }).length;
+      return {
+        rows: rows,
+        total: total,
+        hitRate: total ? hits / total : 0,
+        misses: misses,
+        triple: triple,
+        tripleRate: triple.samples ? triple.success / triple.samples : 0,
+        ytd: ytd,
+        ytdRate: ytd.samples ? ytd.success / ytd.samples : 0,
+        recentRate: recent.length ? recentHits / recent.length : 0,
+      };
+    }
     var html = '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><div><b class="wm-card__title">13线规律中心</b><span class="wm-card__hint">真实窗口规律账本 · 100元起 · 逐期记录每条线每个窗口的第1/2/3期尾号、命中或错误、第几期中、三期全错、等待重开和下一窗口；按窗口给出性格与重投/倍投参考，只按真实开奖结算，不预测、不补造、不改历史。</span></div></div>';
+    html += '<div class="wm-card__head"><div><b class="wm-card__title">13线规律中心</b><span class="wm-card__hint">逐线实时监控 · 真实窗口账本 · 记录第1/2/3期尾号、命中或错误、三期全错、等待重开和重开后的连续三窗表现；不预测、不补造、不改历史。</span></div></div>';
     html += '<div class="wm-view-tabs">' + wmViewTabs + '</div>';
     html += '<div class="wm-line-selector">';
     orderedLines.forEach(function (item) {
@@ -6623,9 +6667,46 @@
     });
     html += '</div>';
     html += '</div></div>';
+    html += '<div class="wm-view-group" data-wm-group="monitor">';
+    html += '<div class="section"><div class="panel wm-card">';
+    html += '<div class="wm-card__head"><b class="wm-card__title">13线逐线实时性格监控</b><span class="wm-card__hint">每条线只跟自己的长期与本年表现比较；重点是遗漏结束、锁定尾号重新开出后的连续三窗状态</span></div>';
+    html += '<div class="wm-monitor-grid">';
+    orderedLines.forEach(function (item) {
+      var stats = wmMonitorStats(item);
+      var live = wmCurrentState(item);
+      var stateText = live.waiting ? "等尾" + live.waiting.tail + "重开" :
+        (live.active ? "窗口第" + Math.min(3, (live.active.attempts || []).length + 1) + "期" : "当前可开新窗");
+      var yearRateText = stats.ytd.samples ? (stats.ytdRate * 100).toFixed(1) + "%" : "样本不足";
+      var conclusion = "稳定观察";
+      var tone = "#475569";
+      if (stats.triple.samples < 20) {
+        conclusion = "样本不足";
+      } else if (stats.ytd.samples >= 5 && stats.ytdRate >= stats.tripleRate + 0.05) {
+        conclusion = "本年转强";
+        tone = "#15803d";
+      } else if (stats.ytd.samples >= 5 && stats.ytdRate <= stats.tripleRate - 0.05) {
+        conclusion = "本年转弱";
+        tone = "#b91c1c";
+      }
+      html += '<article class="wm-monitor-card" data-wm-monitor-card="' + item.id + '" data-monitor-triple-rate="' + stats.tripleRate.toFixed(6) + '">';
+      html += '<div class="wm-monitor-card__head"><b>' + lineDisplayLabel(item) + '</b><span style="color:' + tone + '">' + conclusion + '</span></div>';
+      html += '<div class="wm-monitor-card__state">' + stateText + '</div>';
+      html += '<div class="wm-monitor-card__grid">';
+      html += '<div><span>普通窗口命中</span><b>' + (stats.hitRate * 100).toFixed(1) + '%</b></div>';
+      html += '<div><span>重开后连续3窗</span><b>' + (stats.tripleRate * 100).toFixed(1) + '%</b></div>';
+      html += '<div><span>本年连续3窗</span><b>' + yearRateText + '</b></div>';
+      html += '<div><span>近6窗命中</span><b>' + (stats.recentRate * 100).toFixed(1) + '%</b></div>';
+      html += '</div>';
+      html += '<div class="wm-monitor-card__break">连续三窗在 第1/2/3窗断：' +
+        stats.triple.fail1 + ' / ' + stats.triple.fail2 + ' / ' + stats.triple.fail3 +
+        ' · 样本 ' + stats.triple.samples + '</div>';
+      html += '</article>';
+    });
+    html += '</div></div></div>';
+    html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="formula">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">13线下注期公式</b><span class="wm-card__hint">每条线只回答建议在第1期、第2期还是第3期下注，不决定金额 · 左右滑动</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">13线下注期公式</b><span class="wm-card__hint">每条线只回答建议在第1期、第2期还是第3期下注 · 左右滑动</span></div>';
     html += '<div class="wm-formula-panel wm-hscroll">';
     orderedLines.forEach(function (item) {
       var formulaMeta = item.formulaMeta || {};
@@ -6899,7 +6980,6 @@
         html += '<div style="flex:0 0 230px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:8px;padding:9px">';
         html += '<div style="font-size:15px;font-weight:900;color:#15803d">连续' + run.length + '窗命中</div>';
         html += '<div style="font-size:12px;color:#475569;margin-top:4px">' + wmPeriodLabel(run.start) + ' → ' + wmPeriodLabel(run.end) + '</div>';
-        html += '<div style="font-size:13px;font-weight:900;color:#16a34a;margin-top:4px">累计盈利 +' + Math.round(run.profit) + '</div>';
         html += '</div>';
       });
     }
@@ -6915,7 +6995,6 @@
         html += '<div style="font-size:15px;font-weight:900;color:#b91c1c">连续' + run.length + '窗全错</div>';
         html += '<div style="font-size:12px;color:#475569;margin-top:4px">' + wmPeriodLabel(run.start) + ' → ' + wmPeriodLabel(run.end) + '</div>';
         html += '<div style="font-size:12px;color:#475569">等待尾' + run.waitTail + '重新开出</div>';
-        html += '<div style="font-size:13px;font-weight:900;color:#dc2626;margin-top:4px">累计亏损 ' + Math.round(run.loss) + '</div>';
         html += '</div>';
       });
     }
@@ -6961,8 +7040,7 @@
       if (isLive) {
         foot = '<span>已检查' + w.attempts.length + '期</span><b>下期 ' + wmPeriodLabel(w.start + w.attempts.length) + '</b>';
       } else {
-        foot = '<span>' + (item.missStreak ? "第" + item.missStreak + "次连错" : "未连错") + '</span><b>本窗 ' +
-          (item.profit >= 0 ? "+" : "") + Math.round(item.profit) + '</b>';
+        foot = '<span>' + (item.missStreak ? "第" + item.missStreak + "次连错" : "未连错") + '</span><b>已结算</b>';
       }
       return windowRecordCardHTML({
         label: lineDisplayLabel(line, lockedTail),
@@ -6977,7 +7055,7 @@
       });
     }
     html += '<div class="wm-subhead">三期窗口 · ' + WINDOW_RECORD_FORMAT + ' · 每年从第1期重新开窗 · <span style="font-weight:400;color:#64748b">中=绿 错=红 进行中=蓝</span></div>';
-    html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px">当前选择：' + (selected.n === 1 ? "不倍投" : selected.n + "倍") + ' · 单窗金额：' + wmPlanText(selected.n) + ' · 共' + selected.records.length + '个窗口</div>';
+    html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px">共' + selected.records.length + '个真实窗口 · 只显示对错和等待重开</div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     var detailYears = Number(state.windowMultDetailYears) || 1;
     var allYears = [];
@@ -7020,7 +7098,7 @@
     html += '</div>';
     html += '<div class="wm-view-group" data-wm-group="personality">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">13线性格规律 · 当下建议</b><span class="wm-card__hint">按“上一窗状态 → 下一窗命中率”判断性格，再按当前窗口状态给重投/轻仓建议，并按上一窗亏损给出回本倍投参考；金额只认公式表 line.plan，这里只作研究参考 · 左右滑动</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">13线性格规律 · 当下建议</b><span class="wm-card__hint">按“上一窗状态 → 下一窗命中率”判断性格，再给出当前关注等级 · 左右滑动</span></div>';
     html += '<div class="wm-hscroll" style="display:flex;gap:6px">';
     orderedLines.forEach(function (item) {
       var itemSims = (lineBest[item.id] || {}).simulations;
@@ -7063,42 +7141,20 @@
       else if ((buckets.miss1.n >= 20 && natB1 <= natHit - 0.03) || (buckets.miss2.n >= 3 && bRate(buckets.miss2) <= natHit - 0.10)) nature = "连错走弱型";
       else if (buckets.hit.n >= 20 && bRate(buckets.hit) >= natHit + 0.04) nature = "连中延续型";
       else if (natHit >= 0.9 && sim.maxLossStreak <= 2) nature = "稳";
-      var natureNote = nature === "连错反弹型" ? "连错之后反而更容易命中，可以照追"
-        : nature === "连错走弱型" ? "连错之后命中率逐级下降，连错2次以上要减仓或停追"
-        : nature === "连中延续型" ? "命中之后容易接着命中，命中状态下正常追"
-        : nature === "稳" ? "很少连错，按公式稳定执行"
-        : "前后窗差别不大，按公式执行";
-      var natPlan = item.plan || [0, 0, 0];
-      var playStyle = (natPlan[0] === 0 && natPlan[1] === 0 && natPlan[2] === 0) ? "不配仓"
-        : (natPlan[0] > 0 && natPlan[1] > natPlan[0] && natPlan[2] > natPlan[1]) ? "倍投型"
-        : (natPlan[0] > 0 && natPlan[1] === 0 && natPlan[2] === 0) ? "首期一击"
-        : (natPlan[0] === 0 && natPlan[1] > 0 && natPlan[2] === 0) ? "第二期一击"
-        : (natPlan[0] === 0 && natPlan[1] === 0 && natPlan[2] > 0) ? "尾期一击"
-        : "分段型";
-      var natPos = wmPositionForPlan(item, natPlan);
-      // 窗口级回本：上一窗输了，下一窗用多倍把这窗补回来（靠窗口命中率高）
-      var avgNet = n ? sim.net / n : 0;
-      var lossPerWindow = (natPlan[0] || 0) + (natPlan[1] || 0) + (natPlan[2] || 0);
-      var lastWasMiss = lastRec ? lastRec.window.hitIndex === 0 : false;
-      var recoveryMult = 0;
-      var recoveryText = "";
-      if (lastWasMiss && lossPerWindow > 0 && avgNet > 0) {
-        recoveryMult = Math.ceil((lossPerWindow + 100) / avgNet);
-        if (recoveryMult < 1) recoveryMult = 1;
-        if (recoveryMult > 5) recoveryMult = 5;
-        var scaledPlan = natPlan.map(function (x) { return x * recoveryMult; });
-        recoveryText = (natPos.label === "等待重开" ? "等重新开窗后：" : "本窗：") + "上一窗全错亏 " + lossPerWindow + " 元 · 该线平均每窗 +" + avgNet.toFixed(0) + " 元 → 整体建议 ×" + recoveryMult + "（" + scaledPlan.join(" / ") + " 元），靠高命中率把上一窗补回来";
-      } else if (lastWasMiss && avgNet <= 0) {
-        recoveryText = "该线平均每窗不是正收益，不建议靠倍投回本，先维持公式";
-      } else if (!lastWasMiss) {
-        recoveryText = "上一窗是命中，没有亏损要补，本窗按公式标准走即可";
-      }
+      var natureNote = nature === "连错反弹型" ? "连错之后反而更容易命中，可以提高关注"
+        : nature === "连错走弱型" ? "连错之后命中率逐级下降，连错2次以上应降级观察"
+        : nature === "连中延续型" ? "命中之后容易接着命中，可以保持关注"
+        : nature === "稳" ? "很少连错，保持正常观察"
+        : "前后窗差别不大，保持标准观察";
+      var stage = Number(item.stageFormula && item.stageFormula.stage || 0);
+      var playStyle = stage ? "建议第" + stage + "期" : "下注期未计算";
+      var monitorLive = wmCurrentState(item);
       var stateText = curState === "hit" ? "上一窗命中" : curState === "miss1" ? "上一窗全错（1连错）" : curState === "miss2" ? "上一窗全错（2连错）" : "上一窗全错（3连错以上）";
       var advise = "不下";
       var adviseTone = "#6b7280";
       var adviseWhy = "";
-      if (natPos.label === "等待重开") {
-        advise = "不下";
+      if (monitorLive.waiting) {
+        advise = "等待重开";
         adviseTone = "#d97706";
         adviseWhy = "本线在等上次追的尾号重新开出，本窗先不下";
       } else if (!curBucket.n) {
@@ -7109,10 +7165,10 @@
         var pctText = (curRate * 100).toFixed(1) + "%（" + curBucket.n + " 个窗口样本）";
         // 按“比自己平时好还是差”判轻重，避免每个都判重投
         var natDiff = curRate - natHit;
-        if (natDiff >= 0.05) { advise = "可重投"; adviseTone = "#16a34a"; }
+        if (natDiff >= 0.05) { advise = "提高关注"; adviseTone = "#16a34a"; }
         else if (natDiff >= -0.05) { advise = "标准"; adviseTone = "#2563eb"; }
-        else if (natDiff >= -0.15) { advise = "轻仓"; adviseTone = "#d97706"; }
-        else { advise = "不下"; adviseTone = "#dc2626"; }
+        else if (natDiff >= -0.15) { advise = "降级观察"; adviseTone = "#d97706"; }
+        else { advise = "暂不关注"; adviseTone = "#dc2626"; }
         adviseWhy = "历史上“" + stateText + "”之后，下一窗命中 " + pctText + "；该线平均命中 " + (natHit * 100).toFixed(1) + "%";
       }
       html += '<div class="wm-nat-card">';
@@ -7131,19 +7187,17 @@
       html += '<div class="wm-nat-card__row"><span>当下前窗状态</span><b>' + stateText + '</b></div>';
       html += '<div class="wm-nat-card__row"><span>本窗建议</span><b style="color:' + adviseTone + '">' + advise + '</b></div>';
       html += '<div style="font-size:10px;color:#64748b;margin-top:3px;line-height:1.5">' + adviseWhy + '</div>';
-      html += '<div class="wm-nat-card__row"><span>回本倍投</span><b style="color:' + (recoveryMult > 1 ? "#b45309" : "#64748b") + '">' + (recoveryMult > 1 ? ("×" + recoveryMult) : "不加倍") + '</b></div>';
-      if (recoveryText) {
-        html += '<div style="font-size:10px;color:#b45309;margin-top:2px;line-height:1.5">' + recoveryText + '</div>';
-      }
-      html += '<div style="font-size:10px;color:#94a3b8;margin-top:2px">本期公式金额 ' + natPos.amount + ' 元（' + natPos.label + '）</div>';
       html += '</div></div>';
     });
     html += '</div>';
-    html += '<p class="disclaimer" style="margin-top:8px">性格规律按窗口统计：先看该线在不同“上一窗状态”（上窗命中 / 上窗全错1次 / 连错2次 / 连错3次以上）之后下一窗的命中率，再按当前所处的窗口状态给建议。回本倍投 = （上一窗全错亏损 + 100）÷ 该线平均每窗净收益，向上取整、封顶5倍，只在上一窗确实亏损且该线平均每窗为正收益时给出。建议等级和回本倍数都只作研究参考，正式下注金额只认公式表 line.plan。</p>';
+    html += '<p class="disclaimer" style="margin-top:8px">性格规律按窗口统计：先看该线在不同“上一窗状态”（上窗命中 / 上窗全错1次 / 连错2次 / 连错3次以上）之后下一窗的命中率，再按当前状态给出关注等级。</p>';
     html += '</div></div>';
     html += '</div>';
-    html += '<p class="disclaimer">本页是13线规律中心，只做历史窗口规律测试，不自动下单。每个窗口从第1期开始，三期按N倍递增；中了就停止；三期全错后等待最后尾号重新开出，下一期用基础金额重新开窗。</p>';
-    view.innerHTML = modelPairStrip(latest + 1) + html;
+    html += '<p class="disclaimer">本页是13线规律中心，只做逐线实时监控和历史窗口规律测试，不自动下单。三期全错后等待最后尾号重新开出，再从下一期开始新窗口。</p>';
+    view.innerHTML = html;
+    Array.prototype.forEach.call(view.querySelectorAll('[data-wm-group="overview"], [data-wm-group="years"]'), function (group) {
+      group.remove();
+    });
     Array.prototype.forEach.call(view.querySelectorAll(".wm-view-group"), function (group) {
       if (group.getAttribute("data-wm-group") !== wmView) group.style.display = "none";
     });

@@ -5542,6 +5542,91 @@ body[data-page="windowmiss2"] .task-tabs {
   line-height: 1.5;
 }
 
+.wm-monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.wm-monitor-card {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.wm-monitor-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.wm-monitor-card__head b {
+  color: #172334;
+  font-size: 14px;
+}
+
+.wm-monitor-card__head span {
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.wm-monitor-card__state {
+  margin-top: 5px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.wm-monitor-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.wm-monitor-card__grid > div {
+  min-width: 0;
+  padding: 5px;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.wm-monitor-card__grid span,
+.wm-monitor-card__grid b {
+  display: block;
+}
+
+.wm-monitor-card__grid span {
+  color: #64748b;
+  font-size: 9px;
+}
+
+.wm-monitor-card__grid b {
+  margin-top: 1px;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.wm-monitor-card__break {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+@media (max-width: 390px) {
+  .wm-monitor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ===== 左侧拇指抽屉导航 ===== */
 body.nav-drawer-open {
   overflow: hidden;

@@ -577,9 +577,30 @@ test("13-line center content swipes flip main navigation pages", async ({ page }
   });
 
   expect(result).toEqual({
-    before: { page: "windowmult", view: "overview" },
+    before: { page: "windowmult", view: "monitor" },
     after: { page: "orderlog", view: null },
   });
+});
+
+test("13-line center provides per-line monitoring without multiplier or amount information", async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-wm-monitor-card]").length === 13);
+
+  const tabs = page.locator("[data-wm-view]");
+  await expect(tabs).toHaveCount(4);
+  await expect(tabs).toHaveText(["实时监控", "窗口记录", "逐线性格", "下注期公式"]);
+
+  for (const view of ["monitor", "windows", "personality", "formula"]) {
+    await page.locator(`[data-wm-view="${view}"]`).click();
+    const group = page.locator(`[data-wm-group="${view}"]`);
+    await expect(group).toBeVisible();
+    await expect(group).not.toContainText(/倍投|倍率|金额/);
+  }
 });
 
 test("13-line selector swipes flip main pages without changing the selected line", async ({ page }) => {
@@ -628,10 +649,10 @@ test("13-line selector swipes flip main pages without changing the selected line
     };
   });
   expect(result).toEqual({
-    before: { line: "tail1", view: "overview" },
+    before: { line: "tail1", view: "monitor" },
     pageAfterSwipe: "orderlog",
     pageAfterReturn: "windowmult",
-    after: { line: "tail1", view: "overview" },
+    after: { line: "tail1", view: "monitor" },
   });
 });
 
