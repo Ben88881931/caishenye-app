@@ -601,6 +601,30 @@ test("13-line center provides per-line monitoring without multiplier or amount i
     await expect(group).toBeVisible();
     await expect(group).not.toContainText(/倍投|倍率|金额/);
   }
+
+  await page.locator('[data-wm-view="monitor"]').click();
+  const forecasts = await page.locator("[data-wm-monitor-card]").evaluateAll((cards) => (
+    cards.map((card) => ({
+      rate: Number(card.dataset.nextWindowRate),
+      samples: Number(card.dataset.nextWindowSamples),
+      horizonWindows: Number(card.dataset.horizonWindows),
+      text: card.innerText,
+    }))
+  ));
+  expect(forecasts).toHaveLength(13);
+  for (const item of forecasts) {
+    expect(Number.isFinite(item.rate)).toBe(true);
+    expect(item.rate).toBeGreaterThanOrEqual(0);
+    expect(item.rate).toBeLessThanOrEqual(1);
+    expect(Number.isFinite(item.samples)).toBe(true);
+    expect([0, 1, 2, 3]).toContain(item.horizonWindows);
+    expect(item.text).toContain("预测命中率");
+    expect(item.text).toMatch(/优先观察|正常观察|降级观察|样本不足/);
+    expect(item.text).toContain("未来1窗连续命中");
+    expect(item.text).toContain("未来2窗连续命中");
+    expect(item.text).toContain("未来3窗连续命中");
+    expect(item.text).toMatch(/建议连续观察[123]窗|暂不扩展观察/);
+  }
 });
 
 test("13-line selector swipes flip main pages without changing the selected line", async ({ page }) => {
