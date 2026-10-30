@@ -1500,6 +1500,93 @@ body[data-page="windowmult"] .wm-view-tabs > .wm-view-tab {
   color: #94a3b8;
 }
 
+.horizon-personality-strip {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.horizon-personality-card {
+  flex: 0 0 268px;
+  width: 268px;
+  min-width: 268px;
+  padding: 10px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.horizon-personality-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.horizon-personality-card__head b {
+  color: #172334;
+  font-size: 15px;
+}
+
+.horizon-personality-card__head span {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.horizon-personality-card__state {
+  margin-top: 3px;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.horizon-personality-card__prediction {
+  margin-top: 7px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.horizon-personality-card__prediction small {
+  display: block;
+  margin-top: 2px;
+  color: #475569;
+  font-size: 9px;
+}
+
+.horizon-personality-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.horizon-personality-card__metrics > div {
+  min-width: 0;
+  padding: 6px;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.horizon-personality-card__metrics span,
+.horizon-personality-card__metrics b {
+  display: block;
+}
+
+.horizon-personality-card__metrics span {
+  color: #64748b;
+  font-size: 9px;
+}
+
+.horizon-personality-card__metrics b {
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
 .heat-wait {
   display: inline-block;
   margin: 2px 0 0;
@@ -5760,9 +5847,529 @@ body[data-page="windowmiss2"] .task-tabs {
   line-height: 1.45;
 }
 
+body[data-page="personalityforecast"] .view {
+  overflow-x: clip;
+}
+
+body[data-page="personalityforecast"] .pf-hero {
+  padding: 12px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+body[data-page="personalityforecast"] .pf-cycle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 10px 0;
+  padding: 8px;
+  overflow-x: auto;
+  border: 1px solid #dbeafe;
+  border-radius: 7px;
+  background: #f8fbff;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+
+body[data-page="personalityforecast"] .pf-cycle span {
+  flex: 0 0 auto;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+body[data-page="personalityforecast"] .pf-cycle b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 11px;
+}
+
+body[data-page="personalityforecast"] .pf-cycle i {
+  color: #94a3b8;
+  font-style: normal;
+}
+
+body[data-page="personalityforecast"] .pf-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+body[data-page="personalityforecast"] .pf-metrics > div {
+  min-width: 0;
+  padding: 8px 6px;
+  border-radius: 7px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+body[data-page="personalityforecast"] .pf-metrics b,
+body[data-page="personalityforecast"] .pf-metrics span {
+  display: block;
+}
+
+body[data-page="personalityforecast"] .pf-metrics b {
+  color: #0f172a;
+  font-size: 20px;
+}
+
+body[data-page="personalityforecast"] .pf-metrics span {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+body[data-page="personalityforecast"] .pf-candidate-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+}
+
+body[data-page="personalityforecast"] .pf-candidate-head b,
+body[data-page="personalityforecast"] .pf-candidate-head span {
+  display: block;
+}
+
+body[data-page="personalityforecast"] .pf-candidate-head b {
+  color: #172334;
+  font-size: 15px;
+}
+
+body[data-page="personalityforecast"] .pf-candidate-head span {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+body[data-page="personalityforecast"] .pf-candidate-head em {
+  flex: 0 0 auto;
+  color: #1d4ed8;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+body[data-page="personalityforecast"] .pf-section {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+body[data-page="personalityforecast"] .pf-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+body[data-page="personalityforecast"] .pf-section__head h3 {
+  margin: 0;
+  color: #172334;
+  font-size: 16px;
+}
+
+body[data-page="personalityforecast"] .pf-section__head span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+body[data-page="personalityforecast"] .pf-section__head em {
+  flex: 0 0 auto;
+  color: #1d4ed8;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  text-align: right;
+}
+
+body[data-page="personalityforecast"] .pf-top-strip,
+body[data-page="personalityforecast"] .pf-rank-strip,
+body[data-page="personalityforecast"] .pf-line-strip,
+body[data-page="personalityforecast"] .pf-horizon-strip,
+body[data-page="personalityforecast"] .pf-snapshot-strip {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 9px;
+  padding-bottom: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+body[data-page="personalityforecast"] .pf-top-card {
+  flex: 0 0 184px;
+  width: 184px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #f8fbff;
+  scroll-snap-align: start;
+}
+
+body[data-page="personalityforecast"] .pf-top-card > span {
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+body[data-page="personalityforecast"] .pf-top-card b,
+body[data-page="personalityforecast"] .pf-top-card strong,
+body[data-page="personalityforecast"] .pf-top-card small,
+body[data-page="personalityforecast"] .pf-top-card em {
+  display: block;
+}
+
+body[data-page="personalityforecast"] .pf-top-card b {
+  margin-top: 2px;
+  color: #172334;
+  font-size: 18px;
+}
+
+body[data-page="personalityforecast"] .pf-top-card strong {
+  margin-top: 5px;
+  color: #0f172a;
+  font-size: 23px;
+}
+
+body[data-page="personalityforecast"] .pf-top-card small {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 10px;
+}
+
+body[data-page="personalityforecast"] .pf-top-card em {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid #dbeafe;
+  color: #334155;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card {
+  flex: 0 0 212px;
+  width: 212px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  background: #ffffff;
+  scroll-snap-align: start;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card__head span {
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card__head b {
+  color: #172334;
+  font-size: 16px;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card > strong,
+body[data-page="personalityforecast"] .pf-rank-card > small,
+body[data-page="personalityforecast"] .pf-rank-card > em {
+  display: block;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card > strong {
+  margin-top: 7px;
+  color: #0f172a;
+  font-size: 22px;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card > small {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 10px;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card__stages {
+  display: flex;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card__stages i {
+  min-width: 0;
+  padding: 3px 5px;
+  border: 1px solid;
+  border-radius: 5px;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+body[data-page="personalityforecast"] .pf-rank-card > em {
+  margin-top: 7px;
+  color: #475569;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+body[data-page="personalityforecast"] .pf-line-button {
+  flex: 0 0 72px;
+  min-height: 48px;
+  padding: 6px;
+  border: 1px solid #dbe4ee;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #334155;
+  scroll-snap-align: start;
+}
+
+body[data-page="personalityforecast"] .pf-line-button b,
+body[data-page="personalityforecast"] .pf-line-button span {
+  display: block;
+}
+
+body[data-page="personalityforecast"] .pf-line-button b {
+  font-size: 14px;
+}
+
+body[data-page="personalityforecast"] .pf-line-button span {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 9px;
+}
+
+body[data-page="personalityforecast"] .pf-line-button.is-active {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px #1d4ed8;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card {
+  flex: 0 0 306px;
+  width: 306px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  background: #ffffff;
+  scroll-snap-align: start;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__head b {
+  color: #172334;
+  font-size: 15px;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__head span {
+  padding: 3px 6px;
+  border: 1px solid;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__rate {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__rate strong {
+  color: #0f172a;
+  font-size: 25px;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__rate span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__actual,
+body[data-page="personalityforecast"] .pf-horizon-card__state {
+  margin-top: 6px;
+  padding: 6px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__actual {
+  background: #f8fafc;
+  color: #334155;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card__state {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+body[data-page="personalityforecast"] .pf-phase-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 7px;
+}
+
+body[data-page="personalityforecast"] .pf-phase-grid > div {
+  min-width: 0;
+  padding: 6px;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+body[data-page="personalityforecast"] .pf-phase-grid span,
+body[data-page="personalityforecast"] .pf-phase-grid b,
+body[data-page="personalityforecast"] .pf-phase-grid small {
+  display: block;
+}
+
+body[data-page="personalityforecast"] .pf-phase-grid span {
+  color: #64748b;
+  font-size: 9px;
+}
+
+body[data-page="personalityforecast"] .pf-phase-grid b {
+  margin-top: 1px;
+  font-size: 13px;
+}
+
+body[data-page="personalityforecast"] .pf-phase-grid small {
+  margin-top: 1px;
+  color: #94a3b8;
+  font-size: 9px;
+}
+
+body[data-page="personalityforecast"] .pf-horizon-card > p {
+  margin: 7px 0 0;
+  color: #475569;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+body[data-page="personalityforecast"] .pf-snapshot-card {
+  flex: 0 0 222px;
+  width: 222px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  background: #ffffff;
+  scroll-snap-align: start;
+}
+
+body[data-page="personalityforecast"] .pf-snapshot-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+body[data-page="personalityforecast"] .pf-snapshot-card__head b {
+  color: #172334;
+  font-size: 15px;
+}
+
+body[data-page="personalityforecast"] .pf-snapshot-card__head span {
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+body[data-page="personalityforecast"] .pf-snapshot-card__top3 {
+  margin-top: 7px;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+body[data-page="personalityforecast"] .pf-snapshot-card__meta {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+body[data-page="personalityforecast"] .pf-snapshot-card__counts {
+  display: flex;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+body[data-page="personalityforecast"] .pf-snapshot-card__counts span {
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+body[data-page="personalityforecast"] .pf-empty {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+}
+
 @media (max-width: 390px) {
   .wm-monitor-grid {
     grid-template-columns: 1fr;
+  }
+
+  body[data-page="personalityforecast"] .pf-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-page="personalityforecast"] .pf-horizon-card {
+    flex-basis: calc(100vw - 42px);
+    width: calc(100vw - 42px);
   }
 }
 

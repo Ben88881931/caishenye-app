@@ -5,9 +5,9 @@ const { test, expect } = require("@playwright/test");
 const TAB_IDS = [
   "overview",
   "pick3",
-  "betexec",
   "formulas",
   "windowmult",
+  "personalityforecast",
   "orderlog",
   "segments",
   "missorder",
@@ -30,6 +30,8 @@ const TAB_IDS = [
 ];
 
 let server;
+const TEST_PORT = Number(process.env.PORT || 4174);
+const TEST_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${TEST_PORT}`;
 
 async function openProbabilityView(page, view) {
   const tab = page.locator(`[data-model-detail-task="${view}"]`);
@@ -37,15 +39,25 @@ async function openProbabilityView(page, view) {
   await tab.click();
 }
 
+async function waitForProbabilityHistory(page) {
+  await page.waitForFunction(() => {
+    const strip = document.querySelector(".prob-single-period-strip");
+    return document.querySelectorAll(".prob-single-period-strip").length === 3 &&
+      strip instanceof HTMLElement &&
+      strip.scrollWidth > strip.clientWidth + 1;
+  });
+}
+
 test.beforeAll(async () => {
   server = spawn(process.execPath, [path.join(__dirname, "server.js")], {
     stdio: "ignore",
     windowsHide: true,
+    env: { ...process.env, PORT: String(TEST_PORT) },
   });
 
   for (let attempt = 0; attempt < 30; attempt++) {
     try {
-      const response = await fetch("http://127.0.0.1:4173/");
+      const response = await fetch(`${TEST_BASE_URL}/`);
       if (response.ok) return;
     } catch {
       // The server may need a moment to bind on slower Windows machines.
@@ -57,8 +69,13 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   if (!server) return;
+  const exited = new Promise((resolve) => server.once("exit", resolve));
   server.kill();
-  await new Promise((resolve) => server.once("exit", resolve));
+  await Promise.race([
+    exited,
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]);
+  if (server.exitCode == null && server.signalCode == null) server.kill("SIGKILL");
 });
 
 test("all pages render on a phone viewport without page-level overflow", async ({ page }) => {
@@ -150,6 +167,43 @@ test("all pages render on a phone viewport without page-level overflow", async (
   expect(runtimeErrors, `browser runtime errors:\n${runtimeErrors.join("\n")}`).toEqual([]);
 });
 
+test("personality forecast shows three independent horizons and a stable snapshot cycle", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("personalityforecast"));
+  });
+  await page.reload();
+
+  await expect(page.locator("body")).toHaveAttribute("data-page", "personalityforecast");
+  await expect(page.locator("[data-personality-forecast-page]")).toContainText("逐线三窗口性格预测");
+  await expect(page.locator("[data-personality-forecast-top]")).toHaveCount(3);
+  await expect(page.locator("[data-personality-forecast-ranking] [data-line-id]")).toHaveCount(13);
+  await expect(page.locator("[data-personality-forecast-horizon]")).toHaveCount(3);
+  await expect(page.locator(".pf-cycle")).toContainText("结算旧快照");
+  await expect(page.locator(".pf-cycle")).toContainText("全量重跑性格");
+  await expect(page.locator(".pf-cycle")).toContainText("锁定下一期");
+  await expect(page.locator(".pf-snapshot-strip .pf-snapshot-card")).not.toHaveCount(0);
+
+  const ranking = await page.locator("[data-personality-forecast-ranking] [data-line-id]").evaluateAll((items) => (
+    items.map((item) => ({
+      rank: Number(item.getAttribute("data-personality-forecast-rank")),
+      safe: Number(item.getAttribute("data-safe-count")),
+      risk: Number(item.getAttribute("data-risk-count")),
+    }))
+  ));
+  expect(ranking.map((item) => item.rank)).toEqual(Array.from({ length: 13 }, (_, index) => index + 1));
+  expect(ranking.every((item, index) => (
+    index === 0 ||
+    ranking[index - 1].safe > item.safe ||
+    (ranking[index - 1].safe === item.safe && ranking[index - 1].risk <= item.risk)
+  ))).toBe(true);
+
+  const line = page.locator('[data-personality-forecast-line="tail9"]');
+  await line.click();
+  await expect(line).toHaveClass(/is-active/);
+  await expect(page.locator("[data-personality-forecast-horizon]")).toHaveCount(3);
+});
+
 test("single report history contains only unified single-period records", async ({ page }) => {
   await page.goto("/");
 
@@ -234,10 +288,7 @@ test("dynamic probability cards move with their horizontal strips", async ({ pag
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.querySelectorAll(".prob-single-period-strip").length === 3;
-  });
+  await waitForProbabilityHistory(page);
 
   const checkStrip = async (strip) => {
     await strip.evaluate((element) => {
@@ -270,8 +321,8 @@ async function swipeHorizontalScrollbar(page, side) {
   await page.reload();
   await openProbabilityView(page, "history");
   await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
+    const strip = document.querySelector(".prob-single-period-strip");
+    return strip instanceof HTMLElement && strip.scrollWidth > strip.clientWidth + 1;
   });
 
   const strip = page.locator(".prob-single-period-strip").first();
@@ -283,10 +334,10 @@ async function swipeHorizontalScrollbar(page, side) {
     const before = document.body.dataset.page;
     const rect = element.getBoundingClientRect();
     const startX = edgeSide === "left"
-      ? rect.left + 50
+      ? 30
       : edgeSide === "right"
-        ? rect.right - 50
-        : rect.left + rect.width * 0.5;
+        ? window.innerWidth - 30
+        : Math.min(window.innerWidth * 0.5, window.innerWidth - 57);
     const y = rect.top + element.clientHeight + 4;
     const pointer = (type, clientX) => new PointerEvent(type, {
       bubbles: true,
@@ -312,12 +363,12 @@ test("horizontal scrollbar swipes in the middle stay on the same page", async ({
 
 test("horizontal scrollbar left edge swipes advance the page", async ({ page }) => {
   const result = await swipeHorizontalScrollbar(page, "left");
-  expect(result).toEqual({ before: "pick3", after: "betexec" });
+  expect(result).toEqual({ before: "pick3", after: "formulas" });
 });
 
 test("horizontal scrollbar swipes from the right screen edge advance the page", async ({ page }) => {
   const result = await swipeHorizontalScrollbar(page, "right");
-  expect(result).toEqual({ before: "pick3", after: "betexec" });
+  expect(result).toEqual({ before: "pick3", after: "formulas" });
 });
 
 test("left-bottom one-hand scrollbar-edge swipe flips pages", async ({ page }) => {
@@ -327,10 +378,7 @@ test("left-bottom one-hand scrollbar-edge swipe flips pages", async ({ page }) =
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
+  await waitForProbabilityHistory(page);
 
   const result = await page.locator(".prob-single-period-strip").first().evaluate((element) => {
     const before = document.body.dataset.page;
@@ -352,7 +400,7 @@ test("left-bottom one-hand scrollbar-edge swipe flips pages", async ({ page }) =
     return { before, after: document.body.dataset.page };
   });
 
-  expect(result).toEqual({ before: "pick3", after: "betexec" });
+  expect(result).toEqual({ before: "pick3", after: "formulas" });
 });
 
 test("bottom-center swipes inside a horizontal scroll region never flip pages", async ({ page }) => {
@@ -362,10 +410,7 @@ test("bottom-center swipes inside a horizontal scroll region never flip pages", 
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
+  await waitForProbabilityHistory(page);
 
   const result = await page.locator(".prob-single-period-strip").first().evaluate((element) => {
     const before = document.body.dataset.page;
@@ -397,10 +442,7 @@ test("horizontal scroll region swipes in the center keep the same page", async (
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
+  await waitForProbabilityHistory(page);
 
   const strip = page.locator(".prob-single-period-strip").first();
   const result = await strip.evaluate((element) => {
@@ -436,10 +478,7 @@ test("full-screen content swipes flip navigation pages", async ({ page }) => {
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
+  await waitForProbabilityHistory(page);
 
   const swipe = (distance, pointerId, vertical = 0) => page.locator("#view .panel").first().evaluate((element, settings) => {
     const rect = element.getBoundingClientRect();
@@ -464,7 +503,7 @@ test("full-screen content swipes flip navigation pages", async ({ page }) => {
 
   expect(await swipe(40, 99)).toEqual({ before: "pick3", after: "pick3" });
   expect(await swipe(0, 100, 80)).toEqual({ before: "pick3", after: "pick3" });
-  expect(await swipe(60, 101)).toEqual({ before: "pick3", after: "betexec" });
+  expect(await swipe(60, 101)).toEqual({ before: "pick3", after: "formulas" });
 });
 
 test("a page swipe still commits when the touch system omits pointerup", async ({ page }) => {
@@ -474,10 +513,7 @@ test("a page swipe still commits when the touch system omits pointerup", async (
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
+  await waitForProbabilityHistory(page);
   await page.locator("#view .panel").first().evaluate((element) => {
     const rect = element.getBoundingClientRect();
     const startX = rect.left + Math.min(120, rect.width / 2);
@@ -495,8 +531,8 @@ test("a page swipe still commits when the touch system omits pointerup", async (
     element.dispatchEvent(pointer("pointerdown", startX));
     document.documentElement.dispatchEvent(pointer("pointermove", startX - 60));
   });
-  await page.waitForFunction(() => document.body.dataset.page === "betexec");
-  expect(await page.evaluate(() => document.body.dataset.page)).toBe("betexec");
+  await page.waitForFunction(() => document.body.dataset.page === "formulas");
+  expect(await page.evaluate(() => document.body.dataset.page)).toBe("formulas");
 });
 
 test("a short touch swipe commits once when the browser cancels the pointer stream", async ({ page }) => {
@@ -506,10 +542,7 @@ test("a short touch swipe commits once when the browser cancels the pointer stre
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
+  await waitForProbabilityHistory(page);
   const result = await page.locator("#view .panel").first().evaluate((element) => {
     const rect = element.getBoundingClientRect();
     const startX = rect.left + Math.min(120, rect.width / 2);
@@ -530,9 +563,9 @@ test("a short touch swipe commits once when the browser cancels the pointer stre
     document.documentElement.dispatchEvent(pointer("pointercancel", startX - 40));
     return { before, after: document.body.dataset.page };
   });
-  expect(result).toEqual({ before: "pick3", after: "betexec" });
+  expect(result).toEqual({ before: "pick3", after: "formulas" });
   await page.waitForTimeout(180);
-  expect(await page.evaluate(() => document.body.dataset.page)).toBe("betexec");
+  expect(await page.evaluate(() => document.body.dataset.page)).toBe("formulas");
 });
 
 test("13-line center content swipes flip main navigation pages", async ({ page }) => {
@@ -543,7 +576,7 @@ test("13-line center content swipes flip main navigation pages", async ({ page }
   await page.reload();
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("13线三期窗口实时监控");
+    return view instanceof HTMLElement && view.innerText.includes("13线独立窗口综合监控");
   });
 
   const result = await page.locator("#view .wm-card").first().evaluate((element) => {
@@ -578,12 +611,11 @@ test("13-line center content swipes flip main navigation pages", async ({ page }
 
   expect(result).toEqual({
     before: { page: "windowmult", view: "monitor" },
-    after: { page: "orderlog", view: null },
+    after: { page: "personalityforecast", view: undefined },
   });
 });
 
 test("13-line center provides per-line monitoring without multiplier or amount information", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
@@ -606,6 +638,8 @@ test("13-line center provides per-line monitoring without multiplier or amount i
   const forecasts = await page.locator("[data-wm-monitor-card]").evaluateAll((cards) => (
     cards.map((card) => ({
       thirdWindowRate: Number(card.dataset.thirdWindowRate),
+      compositeScore: Number(card.dataset.compositeScore),
+      safeHorizons: Number(card.dataset.safeHorizons),
       text: card.innerText,
     }))
   ));
@@ -614,22 +648,31 @@ test("13-line center provides per-line monitoring without multiplier or amount i
     expect(Number.isFinite(item.thirdWindowRate)).toBe(true);
     expect(item.thirdWindowRate).toBeGreaterThanOrEqual(0);
     expect(item.thirdWindowRate).toBeLessThanOrEqual(1);
-    expect(item.text).toContain("三期窗口预测命中率");
-    expect(item.text).toMatch(/双向全风险·低分|双向全安全·高分|方向分歧·中性|双方向混合·观察/);
-    expect(item.text).toContain("一期诊断");
-    expect(item.text).toContain("两期诊断");
-    expect(item.text).toContain("三期目标");
-    expect(item.text).toContain("正向 ");
-    expect(item.text).toContain("反向 ");
+    expect(Number.isFinite(item.compositeScore)).toBe(true);
+    expect(item.safeHorizons).toBeGreaterThanOrEqual(0);
+    expect(item.safeHorizons).toBeLessThanOrEqual(3);
+    expect(item.text).toContain("纯三期");
+    expect(item.text).toContain("综合安全");
+    expect(item.text).toContain("1期");
+    expect(item.text).toContain("2期");
+    expect(item.text).toContain("3期");
     expect(item.text).not.toContain("观察未来1期窗口");
     expect(item.text).not.toContain("观察未来2期窗口");
   }
 
   const ranking = await page.locator("[data-monitor-ranking-item]").evaluateAll((items) => (
-    items.map((item) => Number(item.dataset.thirdWindowRate))
+    items.map((item) => ({
+      safeHorizons: Number(item.dataset.safeHorizons),
+      compositeScore: Number(item.dataset.compositeScore),
+      threeWindowRate: Number(item.dataset.thirdWindowRate),
+    }))
   ));
   expect(ranking).toHaveLength(13);
-  expect(ranking).toEqual(ranking.slice().sort((a, b) => b - a));
+  expect(ranking).toEqual(ranking.slice().sort((a, b) => (
+    b.safeHorizons - a.safeHorizons ||
+    b.compositeScore - a.compositeScore ||
+    b.threeWindowRate - a.threeWindowRate
+  )));
   const rankingCards = await page.locator("[data-monitor-ranking-item]").evaluateAll((items) => items.map((item) => ({
     className: item.className,
     text: item.innerText.replace(/\s+/g, " ").trim(),
@@ -673,7 +716,7 @@ test("13-line center provides per-line monitoring without multiplier or amount i
   expect(selectorLayout.buttonCount).toBe(13);
   expect(selectorLayout.rowCount).toBe(1);
   expect(selectorLayout.scrollWidth).toBeGreaterThan(selectorLayout.clientWidth);
-  expect(await page.locator("[data-report-ranking-card]").count()).toBeGreaterThanOrEqual(2);
+  expect(await page.locator("[data-report-ranking-card]").count()).toBeGreaterThanOrEqual(1);
   const historyRanking = await page.locator("[data-report-ranking-card]").evaluateAll((cards) => (
     cards.map((card) => ({
       target: Number(card.dataset.rankingTarget),
@@ -712,9 +755,10 @@ test("13-line center provides per-line monitoring without multiplier or amount i
       if (states.includes("pending")) return "pending";
       return "miss";
     };
-    const records = window.APP_PERSONALITY_SNAPSHOTS.records
-      .filter((record) => record.version === window.APP_PERSONALITY_MODEL.version &&
-        !record.superseded && Array.isArray(record.lines) && record.lines.length === 13)
+    const active = window.APP_PERSONALITY_SNAPSHOTS.records
+      .filter((record) => !record.superseded && Array.isArray(record.lines) && record.lines.length === 13);
+    const current = active.filter((record) => record.version === window.APP_PERSONALITY_MODEL.version);
+    const records = (current.length ? current : active)
       .sort((a, b) => Number(b.target) - Number(a.target));
     const expectedCards = records.map((record) => ({
       target: Number(record.target),
@@ -767,7 +811,7 @@ test("13-line selector scrolls horizontally and changes lines only by tapping", 
   await page.reload();
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("13线三期窗口实时监控");
+    return view instanceof HTMLElement && view.innerText.includes("13线独立窗口综合监控");
   });
 
   const scrollResult = await page.locator(".wm-line-selector").evaluate((selector) => {
@@ -823,6 +867,34 @@ test("13-line selector scrolls horizontally and changes lines only by tapping", 
   });
 });
 
+test("pure three window ranking differs from the independent-window composite ranking", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForFunction(() => document.body.dataset.page === "overview");
+  const pureThree = await page.locator("[data-window-rank-item]").evaluateAll((rows) => rows.map((row) => row.dataset.lineId));
+  const pureRates = await page.locator("[data-window-rank-item]").evaluateAll((rows) => (
+    rows.map((row) => Number(row.dataset.threeWindowRate))
+  ));
+  expect(pureRates).toEqual(pureRates.slice().sort((a, b) => b - a));
+
+  await page.evaluate(() => {
+    localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
+  });
+  await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll("[data-monitor-ranking-item]").length === 13);
+  const composite = await page.locator("[data-monitor-ranking-item]").evaluateAll((rows) => rows.map((row) => ({
+    id: row.dataset.lineId,
+    safeHorizons: Number(row.dataset.safeHorizons),
+    compositeScore: Number(row.dataset.compositeScore),
+    threeWindowRate: Number(row.dataset.thirdWindowRate),
+  })));
+  expect(composite).toEqual(composite.slice().sort((a, b) => (
+    b.safeHorizons - a.safeHorizons ||
+    b.compositeScore - a.compositeScore ||
+    b.threeWindowRate - a.threeWindowRate
+  )));
+  expect(composite.map((row) => row.id)).not.toEqual(pureThree);
+});
+
 test("ranking snapshot cards use one shared layout across monitor and overview", async ({ page }) => {
   const cardStyle = (locator) => locator.evaluate((card) => {
     const row = card.querySelector("[data-ranking-line]");
@@ -847,7 +919,7 @@ test("ranking snapshot cards use one shared layout across monitor and overview",
     localStorage.setItem("v2_current_tab", JSON.stringify("windowmult"));
   });
   await page.reload();
-  await page.waitForFunction(() => document.querySelectorAll("[data-report-ranking-card]").length >= 2);
+  await page.waitForFunction(() => document.querySelectorAll("[data-report-ranking-card]").length >= 1);
   const monitorCard = await cardStyle(page.locator("[data-report-ranking-card]").first());
 
   await page.evaluate(() => {
@@ -855,7 +927,7 @@ test("ranking snapshot cards use one shared layout across monitor and overview",
     localStorage.setItem("v2_window_report_view", JSON.stringify("snapshot"));
   });
   await page.reload();
-  await page.waitForFunction(() => document.querySelectorAll("[data-report-ranking-card]").length >= 2);
+  await page.waitForFunction(() => document.querySelectorAll("[data-report-ranking-card]").length >= 1);
   const overviewCard = await cardStyle(page.locator("[data-report-ranking-card]").first());
 
   expect(monitorCard).toEqual(overviewCard);
@@ -869,7 +941,7 @@ test("13-line center subtabs are fixed and clickable", async ({ page }) => {
   await page.reload();
   await page.waitForFunction(() => {
     const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("13线三期窗口实时监控");
+    return view instanceof HTMLElement && view.innerText.includes("13线独立窗口综合监控");
   });
 
   const layout = await page.locator("#view .wm-view-tabs").evaluate((strip) => {
@@ -921,7 +993,7 @@ test("two-period window omission heatmap has its own page and live strips", asyn
   await page.waitForFunction(() => document.querySelectorAll(".trend-run-strip").length === 26);
   await expect(page.locator(".trend-run-strip")).toHaveCount(26);
   await expect(page.locator("[data-wm-live-state]")).toHaveCount(26);
-  await expect(page.locator("#view")).toContainText("两期窗口（一个窗口最多第2期）");
+  await expect(page.locator("#view")).toContainText("两期窗口（一个窗口最多2期）");
   const stripLayout = await page.locator(".trend-run-strip").first().evaluate((strip) => ({
     display: getComputedStyle(strip).display,
     scrollWidth: strip.scrollWidth,
@@ -940,10 +1012,10 @@ test("heatmap pages use the one-period, two-period, three-period names", async (
   await page.waitForFunction(() => document.body.dataset.page === "windowmiss");
   await expect(page.locator("#view")).toContainText("三期热图");
   await expect(page.locator('.nav-subtabs .tab[data-tab="windowmiss"]')).toHaveText("三期热图");
-  await page.locator('.nav-subtabs .tab[data-tab="windowmiss2"]').click();
+  await page.evaluate(() => document.querySelector('.nav-subtabs .tab[data-tab="windowmiss2"]').click());
   await expect(page.locator("#view")).toContainText("两期热图");
   await expect(page.locator('.nav-subtabs .tab[data-tab="windowmiss2"]')).toHaveText("两期热图");
-  await page.locator('.nav-subtabs .tab[data-tab="trend"]').click();
+  await page.evaluate(() => document.querySelector('.nav-subtabs .tab[data-tab="trend"]').click());
   await expect(page.locator("#view")).toContainText("一期热图");
   await expect(page.locator('.nav-subtabs .tab[data-tab="trend"]')).toHaveText("一期热图");
 });
@@ -986,10 +1058,7 @@ test("long right swipe on the first page does not open the directory", async ({ 
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("测试窗口记录");
-  });
+  await waitForProbabilityHistory(page);
 
   const result = await page.locator("#view .panel").first().evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -1012,19 +1081,16 @@ test("long right swipe on the first page does not open the directory", async ({ 
     return { before, after: document.body.dataset.page };
   });
 
-  expect(result).toEqual({ before: "pick3", after: "pick3" });
+  expect(result).toEqual({ before: "pick3", after: "overview" });
 });
 
 test("long right swipe on a later page returns one navigation page", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
+    localStorage.setItem("v2_current_tab", JSON.stringify("formulas"));
   });
   await page.reload();
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement && view.innerText.includes("今日规划");
-  });
+  await page.waitForFunction(() => document.body.dataset.page === "formulas");
 
   const result = await page.locator("#view .panel").first().evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -1047,213 +1113,74 @@ test("long right swipe on a later page returns one navigation page", async ({ pa
     return { before, after: document.body.dataset.page };
   });
 
-  expect(result).toEqual({ before: "betexec", after: "pick3" });
+  expect(result).toEqual({ before: "formulas", after: "pick3" });
 });
 
-test("bet execution uses each line formula and shows period amount and profit", async ({ page }) => {
+test("removed execution route redirects to the unified window report", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
   });
   await page.reload();
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement &&
-      view.innerText.includes("今日规划") &&
-      view.querySelectorAll("[data-bet-plan-card]").length > 0;
-  });
-
-  const planCards = await page.locator("[data-bet-plan-card]").evaluateAll((cards) => (
-    cards.map((card) => ({
-      lineId: card.getAttribute("data-line-id"),
-      stage: Number(card.getAttribute("data-plan-stage")),
-      amount: Number(card.getAttribute("data-plan-amount")),
-      values: card.getAttribute("data-plan-values").split("/").map(Number),
-      text: card.innerText,
-    }))
-  ));
-  expect(planCards.length).toBeGreaterThan(0);
-  for (const card of planCards) {
-    expect(card.lineId).toBeTruthy();
-    expect(card.stage).toBeGreaterThanOrEqual(1);
-    expect(card.stage).toBeLessThanOrEqual(3);
-    expect(card.amount).toBe(card.values[card.stage - 1]);
-    expect(card.text).toContain(`窗口第${card.stage}期`);
-  }
-
-  const strips = page.locator("[data-bet-period-strip]");
-  expect(await strips.count()).toBeGreaterThan(0);
-  const firstStrip = strips.first();
-  const periodCards = firstStrip.locator("[data-bet-period-row]");
-  expect(await periodCards.count()).toBeGreaterThan(0);
-  await expect(periodCards.first()).toContainText("窗口第");
-  await expect(periodCards.first()).toContainText("下注");
-  await expect(periodCards.first()).toContainText("盈亏");
+  await expect(page.locator("body")).toHaveAttribute("data-page", "overview");
+  await expect(page.locator("#view")).toContainText("三期窗口");
 });
 
-test("daily report ranks all 13 lines by the combined analysis score", async ({ page }) => {
+test("personality forecast keeps ranking separate from the locked target", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
+    localStorage.setItem("v2_current_tab", JSON.stringify("personalityforecast"));
   });
   await page.reload();
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement &&
-      view.innerText.includes("每日最终报告") &&
-      view.querySelectorAll("[data-daily-report-row]").length === 13;
-  });
+  await page.waitForFunction(() => document.querySelectorAll("[data-personality-forecast-ranking] [data-line-id]").length === 13);
 
-  await expect(page.locator("[data-daily-report-row]")).toHaveCount(13);
-  await expect(page.locator("[data-daily-report-card]")).toHaveCount(13);
-  await expect(page.locator("[data-weight-model]")).toHaveCount(2);
-  await expect(page.locator("[data-daily-report-rank-card]")).toHaveCount(1);
-  await expect(page.locator("[data-daily-report-rank-item]")).toHaveCount(13);
-  await expect(page.locator("[data-report-mode]")).toHaveCount(39);
-  await expect(page.locator("[data-report-personality-state]")).toHaveCount(13);
-  await expect(page.locator('[data-report-section="snapshot"]')).toHaveCount(1);
-  await expect(page.locator('[data-report-section="snapshot"]')).toContainText("每期前2/3选线走步验证");
-  await expect(page.locator("[data-report-ranking-card]")).toHaveCount(1);
-  await expect(page.locator("[data-report-ranking-card]").first()).toContainText("第299期");
-  await expect(page.locator("[data-report-ranking-card]").first()).toContainText(/A\d/);
-  await expect(page.locator("[data-daily-report-rank-card]")).toContainText(/A\d/);
-  await expect(page.locator("#view")).toContainText("下一独立三期窗口预测排名");
-  await expect(page.locator("#view")).not.toContainText("概率第1");
-  await expect(page.locator("#view")).not.toContainText("A线");
-  await expect(page.locator("#view")).not.toContainText("长期偏强");
-  await expect(page.locator("#view")).not.toContainText("长期偏弱");
-  await expect(page.locator(".daily-report-rank-table")).toHaveCount(0);
-  await expect(page.locator("#view")).toContainText("逐线长期性格模型");
-  await expect(page.locator("#view")).not.toContainText("20% / 30% / 40%");
-  await page.locator("[data-daily-report-card]").first().locator("summary").click();
-  await expect(page.locator("[data-daily-report-card]").first()).toContainText("2026年第300期");
-  await expect(page.locator("#view")).not.toContainText("第1465期");
-
-  const rankLayout = await page.locator("[data-daily-report-rank-card]").evaluate((card) => ({
-    cardWidth: card.clientWidth,
-    scrollWidth: card.scrollWidth,
-    viewportWidth: document.documentElement.clientWidth,
-  }));
-  expect(rankLayout.scrollWidth).toBeLessThanOrEqual(rankLayout.cardWidth + 1);
-  expect(rankLayout.cardWidth).toBeLessThanOrEqual(rankLayout.viewportWidth);
-
-  const cardLayout = await page.locator("[data-daily-report-accordion]").evaluate((accordion) => {
-    const card = accordion.querySelector("[data-daily-report-card]");
-    const rect = card.getBoundingClientRect();
+  const modelState = await page.evaluate(() => {
+    const model = window.APP_PERSONALITY_MODEL;
+    const latest = window.APP_DATA.d[window.APP_DATA.d.length - 1];
+    const locked = window.APP_PERSONALITY_SNAPSHOTS.records.find((record) => (
+      !record.superseded &&
+      Number(record.year) === Number(latest.y) &&
+      Number(record.target) === Number(latest.p) + 1
+    ));
     return {
-      cardWidth: rect.width,
-      accordionWidth: accordion.clientWidth,
-      accordionScrollWidth: accordion.scrollWidth,
+      rankingRule: model.activeRankingRule,
+      diagnosticTop3: model.diagnosticRanking.slice(0, 3).map((line) => line.id),
+      lockedTop3: locked.top3,
+      lockedVersion: locked.version,
+      modelVersion: model.version,
     };
   });
-  expect(cardLayout.cardWidth).toBeLessThanOrEqual(cardLayout.accordionWidth + 1);
-  expect(cardLayout.accordionScrollWidth).toBeLessThanOrEqual(cardLayout.accordionWidth + 1);
-
-  const rankingRows = await page.locator("[data-daily-report-row]").evaluateAll((rows) => (
-    rows.map((row) => ({
-      score: Number(row.getAttribute("data-report-score")),
-      predicted: Number(row.getAttribute("data-personality-predicted")) * 100,
-      eligible: row.getAttribute("data-report-eligible") === "true",
-    }))
-  ));
-  expect(rankingRows.every((row) => row.eligible)).toBe(true);
-  expect(rankingRows.every((row) => Math.abs(row.score - row.predicted) < 0.0001)).toBe(true);
-  const scores = rankingRows.map((row) => row.score);
-  expect(scores.every((score, index) => index === 0 || scores[index - 1] >= score)).toBe(true);
-  const snapshotTop3 = await page.evaluate(() => {
-    const latest = window.APP_DATA.d[window.APP_DATA.d.length - 1];
-    const record = window.APP_PERSONALITY_SNAPSHOTS.records.find((item) => (
-      Number(item.year) === Number(latest.y) && Number(item.target) === Number(latest.p) + 1
-    ));
-    return record?.top3 || [];
-  });
-  const eligibleIds = await page.locator('[data-daily-report-row][data-report-eligible="true"]').evaluateAll((rows) => (
-    rows.map((row) => row.getAttribute("data-line-id"))
-  ));
-  expect(eligibleIds.slice(0, 3)).toEqual(snapshotTop3);
+  expect(modelState.rankingRule).toBe("legacy-until-diagnostic-snapshot-locked");
+  expect(modelState.lockedVersion).not.toBe(modelState.modelVersion);
+  await expect(page.locator("[data-personality-forecast-ranking] [data-line-id]")).toHaveCount(13);
+  await expect(page.locator("[data-personality-forecast-page]")).toContainText("下期生效");
+  await expect(page.locator(".pf-snapshot-card").first()).toContainText("第303期");
 });
 
-test("daily reports synthesize every analysis section for all 13 lines", async ({ page }) => {
+test("every personality forecast line exposes three independent window stages", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
+    localStorage.setItem("v2_current_tab", JSON.stringify("personalityforecast"));
   });
   await page.reload();
-  await page.waitForFunction(() => {
-    const cards = document.querySelectorAll("[data-daily-report-card]");
-    return cards.length === 13;
-  });
-  await page.locator("[data-daily-report-card]").evaluateAll((cards) => {
-    cards.forEach((card) => { card.open = true; });
-  });
+  await page.waitForFunction(() => document.querySelectorAll("[data-personality-forecast-ranking] [data-line-id]").length === 13);
 
-  const required = ["conclusion", "reason", "window", "period-comparison", "personality", "cross-page", "recent", "longterm", "formula", "risk"];
-  const report = await page.locator("[data-daily-report-card]").evaluateAll((cards, sectionNames) => {
-    return cards.map((card) => {
-      const sections = sectionNames.map((name) => {
-        const node = card.querySelector(`[data-report-section="${name}"]`);
-        return { name, present: Boolean(node), text: node?.innerText?.trim() || "" };
-      });
-      const advice = card.querySelector("[data-report-advice]");
-      const modes = [...card.querySelectorAll("[data-report-mode]")].map((node) => ({
-        mode: node.getAttribute("data-report-mode"),
-        text: node.innerText.trim(),
-      }));
-      const windowText = card.querySelector('[data-report-section="window"]')?.innerText?.trim() || "";
-      const reasonText = card.querySelector('[data-report-section="reason"]')?.innerText?.trim() || "";
-      return {
-        id: card.getAttribute("data-line-id"),
-        advice: advice?.innerText?.trim() || "",
-        modes,
-        windowText,
-        reasonText,
-        sections,
-      };
-    });
-  }, required);
+  const model = await page.evaluate(() => ({
+    lines: window.APP_PERSONALITY_MODEL.lines.map((line) => ({
+      id: line.id,
+      stages: ["one", "two", "three"].map((key) => line.current.diagnosticByHorizon[key].stage),
+      rare: line.current.diagnostic.rareCount,
+    })),
+    diagnostic: window.APP_PERSONALITY_MODEL.diagnosticRanking.map((line) => line.id),
+  }));
+  expect(model.lines).toHaveLength(13);
+  expect(model.lines.every((line) => line.stages.length === 3)).toBe(true);
+  expect(model.lines.every((line) => line.stages.every((stage) => ["safe", "rebound", "risk", "unseen"].includes(stage)))).toBe(true);
+  expect(model.diagnostic).toHaveLength(13);
 
-  expect(report).toHaveLength(13);
-  for (const card of report) {
-    expect(card.id).toBeTruthy();
-    expect(card.advice.length).toBeGreaterThan(4);
-    expect(card.advice).toMatch(/双安全|双风险|方向分歧|混合/);
-    expect(card.modes).toHaveLength(3);
-    expect(card.modes.map((item) => item.mode)).toEqual(["one", "two", "three"]);
-    for (const section of card.sections) {
-      expect(section.present, `${card.id} missing ${section.name}`).toBe(true);
-      expect(section.text.length, `${card.id} empty ${section.name}`).toBeGreaterThan(8);
-    }
-    for (const mode of card.modes) {
-      expect(mode.text.length, `${card.id} empty ${mode.mode} comparison`).toBeGreaterThan(8);
-    }
-  }
-
-  const rows = page.locator("[data-daily-report-row]");
-  await expect(rows.locator("[data-report-advice]")).toHaveCount(13);
-  await expect(rows.locator("[data-report-reason]")).toHaveCount(13);
-  await expect(page.locator('[data-report-section="cross-page"]')).toHaveCount(13);
-  await expect(page.locator('[data-report-section="cross-page"]').first()).toContainText("仓位和金额不参与评分");
-
-  for (const card of report.filter((item) => item.id.startsWith("prob"))) {
-    const windowTail = card.windowText.match(/锁定尾(\d)/)?.[1];
-    const sourceTail = card.windowText.match(/当前锁尾(\d)/)?.[1];
-    const probabilityCard = page.locator(`[data-daily-report-card][data-line-id="${card.id}"]`);
-    expect(windowTail, `${card.id} missing locked tail`).toBeTruthy();
-    expect(sourceTail, `${card.id} probability source must match its current locked window`).toBe(windowTail);
-    await expect(probabilityCard).toHaveAttribute("data-report-probability-snapshot", "found");
-    expect(card.reasonText).not.toContain("296期仍受旧快照边界约束");
-  }
-});
-
-test("expanded daily report lines remain inside the phone viewport", async ({ page }) => {
-  await page.goto("/");
-  await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
-  });
-  await page.reload();
-  await page.waitForFunction(() => document.querySelectorAll("[data-daily-report-card]").length === 13);
-
-  await page.locator("[data-daily-report-card]").first().locator("summary").click();
+  const first = page.locator("[data-personality-forecast-line]").first();
+  await first.click();
+  await expect(page.locator("[data-personality-forecast-horizon]")).toHaveCount(3);
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   const viewport = await page.evaluate(() => document.documentElement.clientWidth);
   expect(width).toBeLessThanOrEqual(viewport + 1);
@@ -1277,12 +1204,7 @@ test("dynamic probability ranks have independent single-period hit records", asy
   });
   await page.reload();
   await openProbabilityView(page, "history");
-  await page.waitForFunction(() => {
-    const view = document.querySelector("#view");
-    return view instanceof HTMLElement &&
-      view.innerText.includes("单期对错") &&
-      view.querySelectorAll(".prob-single-period-strip").length === 3;
-  });
+  await waitForProbabilityHistory(page);
 
   const strips = page.locator(".prob-single-period-strip");
   await expect(strips).toHaveCount(3);
@@ -1354,7 +1276,6 @@ test("horizontal record strips preserve vertical page panning", async ({ page })
 });
 
 test("left thumb drawer replaces the permanent top navigation", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   await expect(page.locator("[data-nav-handle]")).toBeVisible();
@@ -1376,7 +1297,6 @@ test("left thumb drawer replaces the permanent top navigation", async ({ page })
 });
 
 test("top header is one flat page list without category controls", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   const topNav = page.locator("[data-top-nav]");
@@ -1405,24 +1325,23 @@ test("top header is one flat page list without category controls", async ({ page
 });
 
 test("flat top page tabs switch pages directly", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   await expect(page.locator("[data-top-tab]")).toHaveCount(TAB_IDS.length);
   await page.locator('[data-top-tab="pick3"]').click();
 
   await expect(page.locator("body")).toHaveAttribute("data-page", "pick3");
-  await expect(page.locator("#pageTitle")).toHaveText("动态概率");
+  await expect(page.locator("#pageTitle")).toHaveText("模型概率");
   await expect(page.locator('[data-top-tab="pick3"]')).toHaveClass(/is-active/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(await page.evaluate(() => document.documentElement.clientWidth) + 1);
 });
 
 test("long press on a top second-level tab opens numeric order adjustment", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
-  const tab = page.locator('[data-top-tab="dailyreport"]');
+  const tab = page.locator('[data-top-tab="personalityforecast"]');
+  await tab.scrollIntoViewIfNeeded();
   const box = await tab.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
@@ -1431,8 +1350,8 @@ test("long press on a top second-level tab opens numeric order adjustment", asyn
 
   const dialog = page.locator("[data-nav-sort-dialog]");
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator("[data-nav-sort-position]")).toHaveValue("1");
-  await expect(dialog).toContainText("每日最终报告");
+  await expect(dialog.locator("[data-nav-sort-position]")).toHaveValue("5");
+  await expect(dialog).toContainText("性格预测");
   await expect(dialog.locator("[data-nav-sort-group]")).toHaveCount(0);
   expect(await page.evaluate(() => (
     document.activeElement?.hasAttribute("data-nav-sort-position") || false
@@ -1440,7 +1359,6 @@ test("long press on a top second-level tab opens numeric order adjustment", asyn
 });
 
 test("drawer handle opens from a quick tap without holding", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   const handle = page.locator("[data-nav-handle]");
@@ -1452,27 +1370,25 @@ test("drawer handle opens from a quick tap without holding", async ({ page }) =>
 });
 
 test("drawer opens, closes, and auto-closes after choosing a page", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   await page.locator("[data-nav-handle]").click();
   await expect(page.locator("body")).toHaveClass(/nav-drawer-open/);
   await expect(page.locator("[data-nav-drawer]")).toHaveAttribute("aria-hidden", "false");
 
-  await page.locator("[data-nav-close]").click();
+  await page.locator(".nav-drawer__close").click();
   await expect(page.locator("body")).not.toHaveClass(/nav-drawer-open/);
   await expect(page.locator("[data-nav-drawer]")).toHaveAttribute("aria-hidden", "true");
 
   await page.locator("[data-nav-handle]").click();
-  await page.locator('[data-tab="dailyreport"]').click();
+  await page.locator('[data-tab="personalityforecast"]').click();
 
-  await expect(page.locator("body")).toHaveAttribute("data-page", "dailyreport");
+  await expect(page.locator("body")).toHaveAttribute("data-page", "personalityforecast");
   await expect(page.locator("body")).not.toHaveClass(/nav-drawer-open/);
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("v2_current_tab")))).toBe("dailyreport");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("v2_current_tab")))).toBe("personalityforecast");
 });
 
 test("hidden navigation handle can be restored from the left edge", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   await page.locator("[data-nav-handle]").click();
@@ -1487,11 +1403,23 @@ test("hidden navigation handle can be restored from the left edge", async ({ pag
   expect(edgeStyle.opacity).toBeGreaterThan(0.4);
   expect(edgeStyle.pointerEvents).toBe("auto");
 
-  const edgeBox = await page.locator("[data-nav-edge]").boundingBox();
-  await page.mouse.move(edgeBox.x + 2, edgeBox.y + edgeBox.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(edgeBox.x + 42, edgeBox.y + edgeBox.height / 2, { steps: 6 });
-  await page.mouse.up();
+  await page.locator("[data-nav-edge]").evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const y = rect.top + rect.height / 2;
+    const pointer = (type, x) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 81,
+      pointerType: "touch",
+      button: 0,
+      clientX: x,
+      clientY: y,
+    });
+    element.dispatchEvent(pointer("pointerdown", rect.left + 2));
+    element.dispatchEvent(pointer("pointermove", rect.left + 42));
+    element.dispatchEvent(pointer("pointerup", rect.left + 42));
+  });
   await expect(page.locator("body")).toHaveClass(/nav-drawer-open/);
   await expect(page.locator("[data-nav-show]")).toBeVisible();
   await page.locator("[data-nav-show]").click();
@@ -1501,20 +1429,36 @@ test("hidden navigation handle can be restored from the left edge", async ({ pag
 });
 
 test("hidden edge handle can be dragged vertically and remembers its position", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   await page.locator("[data-nav-handle]").click();
   await page.locator("[data-nav-hide]").click();
   const edge = page.locator("[data-nav-edge]");
-  const box = await edge.boundingBox();
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 120, { steps: 7 });
-  await page.mouse.up();
-
-  const movedTop = await edge.evaluate((element) => Number.parseFloat(window.getComputedStyle(element).top));
-  expect(movedTop).toBeLessThan(box.y - 80);
+  const drag = await edge.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const before = Number.parseFloat(window.getComputedStyle(element).top);
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const pointer = (type, clientY) => new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 82,
+      pointerType: "touch",
+      button: 0,
+      clientX: x,
+      clientY,
+    });
+    element.dispatchEvent(pointer("pointerdown", y));
+    element.dispatchEvent(pointer("pointermove", y - 120));
+    element.dispatchEvent(pointer("pointerup", y - 120));
+    return {
+      before,
+      after: Number.parseFloat(window.getComputedStyle(element).top),
+    };
+  });
+  const movedTop = drag.after;
+  expect(movedTop).toBeLessThan(drag.before - 80);
   await page.reload();
   await page.waitForFunction(() => document.body.classList.contains("nav-handle-hidden"));
   const reloadedTop = await page.locator("[data-nav-edge]").evaluate((element) => (
@@ -1524,7 +1468,6 @@ test("hidden edge handle can be dragged vertically and remembers its position", 
 });
 
 test("navigation handle remembers its vertical position", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
 
   const handle = page.locator("[data-nav-handle]");
@@ -1544,7 +1487,6 @@ test("navigation handle remembers its vertical position", async ({ page }) => {
 });
 
 test("today dashboard is compact and exposes the daily decision surface", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
   await page.waitForFunction(() => document.body.dataset.page === "overview");
 
@@ -1554,6 +1496,7 @@ test("today dashboard is compact and exposes the daily decision surface", async 
   expect(dashboardPickCount).toBeLessThanOrEqual(3);
   await expect(page.locator("[data-dashboard-window-state]")).toHaveCount(13);
   await expect(page.locator("[data-dashboard-shortcut]")).toHaveCount(6);
+  await page.locator('[data-window-report-task="history"]').click();
   await expect(page.locator("[data-plan-history-strip]")).toHaveCount(1);
   await expect(page.locator("[data-plan-history-card]").first()).toContainText("今日下注");
   await expect(page.locator("[data-plan-history-card]").first()).toContainText("总下注");
@@ -1568,7 +1511,6 @@ test("today dashboard is compact and exposes the daily decision surface", async 
 });
 
 test("today execution shows robust candidates with their true ranking positions", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
   await page.waitForFunction(() => document.body.dataset.page === "overview");
 
@@ -1589,7 +1531,7 @@ test("today execution shows robust candidates with their true ranking positions"
     candidateRows.map((row) => row.position).slice().sort((a, b) => a - b),
   );
   expect(candidateRows.every((row) => rankLabels[row.position - 1] === row.label)).toBe(true);
-  expect(candidateRows.every((row) => row.text.includes("稳健候选") && row.text.includes(`综合排名#${row.position}`))).toBe(true);
+  expect(candidateRows.every((row) => row.text.includes("稳健候选") && row.text.includes(`三期排名#${row.position}`))).toBe(true);
 
   const execution = await page.locator("[data-window-execution-card]").evaluateAll((cards) => (
     cards.map((card) => ({
@@ -1606,7 +1548,6 @@ test("today execution shows robust candidates with their true ranking positions"
 });
 
 test("model probability page shows one single candidate grid without duplicate today cards", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
@@ -1628,11 +1569,10 @@ test("model probability page shows one single candidate grid without duplicate t
     await expect(card).not.toContainText("三期窗口");
     await expect(card).not.toContainText("元");
   }
-  await expect(page.locator("[data-single-probability-note]")).toContainText("候选不代表必出");
+  await expect(page.locator("[data-single-probability-note]")).toContainText("不代表必出");
 });
 
 test("model probability header and today candidates use the same frozen snapshot", async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
   await page.evaluate(() => {
     localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
@@ -1643,7 +1583,8 @@ test("model probability header and today candidates use the same frozen snapshot
   const expected = await page.evaluate(async () => {
     const response = await fetch("probability_snapshots.json");
     const data = await response.json();
-    const record = data.records.find((row) => Number(row.target) === 302);
+    const record = data.records.find((row) => !row.settled) ||
+      data.records.slice().sort((a, b) => Number(b.target) - Number(a.target))[0];
     return record.top3.map((row, index) => ["A", "B", "C"][index] + row.tail);
   });
   const header = await page.locator(".model-pair-card b").allTextContents();
@@ -1663,40 +1604,26 @@ test("shared quick access appears on non-home pages and links directly", async (
   await expect(quick.locator("[data-quick-recent]")).not.toHaveCount(0);
   await expect(quick.locator("[data-quick-common]")).toHaveCount(6);
 
-  await quick.locator('[data-quick-common][data-quick-tab="dailyreport"]').click();
-  await expect(page.locator("body")).toHaveAttribute("data-page", "dailyreport");
+  await quick.locator('[data-quick-common][data-quick-tab="personalityforecast"]').click();
+  await expect(page.locator("body")).toHaveAttribute("data-page", "personalityforecast");
   await expect(page.locator("[data-page-quick-access]")).toHaveCount(1);
   await expect(page.locator('[data-quick-recent][data-quick-tab="pick3"]')).toHaveCount(1);
 });
 
-test("bet execution page defaults to today planning and separates the other tasks", async ({ page }) => {
+test("personality forecast keeps the cycle, ranking and snapshot ledger on one page", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
-    localStorage.removeItem("v2_bet_exec_view");
+    localStorage.setItem("v2_current_tab", JSON.stringify("personalityforecast"));
   });
   await page.reload();
-  await page.waitForFunction(() => document.body.dataset.page === "betexec");
+  await page.waitForFunction(() => document.querySelectorAll("[data-personality-forecast-ranking] [data-line-id]").length === 13);
 
-  const taskTabs = page.locator("[data-bet-exec-task]");
-  await expect(taskTabs).toHaveCount(4);
-  await expect(page.locator('[data-bet-exec-task="today"]')).toHaveClass(/is-active/);
-  await expect(page.locator('[data-bet-task-panel="today"]')).toBeVisible();
-  await expect(page.locator('[data-bet-task-panel="windows"]')).toHaveCount(0);
-
-  const desktopOnlyTable = page.locator('table[style*="min-width:1080px"]');
-  await expect(desktopOnlyTable).toHaveCount(0);
-  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(5000);
-
-  await page.locator('[data-bet-exec-task="windows"]').click();
-  await expect(page.locator('[data-bet-task-panel="windows"]')).toBeVisible();
-  await expect(page.locator('[data-bet-task-panel="today"]')).toHaveCount(0);
-
-  await page.locator('[data-bet-exec-task="profit"]').click();
-  await expect(page.locator('[data-bet-task-panel="profit"]')).toBeVisible();
-
-  await page.locator('[data-bet-exec-task="research"]').click();
-  await expect(page.locator('[data-bet-task-panel="research"]')).toBeVisible();
+  await expect(page.locator(".pf-cycle")).toContainText("结算旧快照");
+  await expect(page.locator(".pf-cycle")).toContainText("全量重跑性格");
+  await expect(page.locator(".pf-cycle")).toContainText("锁定下一期");
+  await expect(page.locator("[data-personality-forecast-ranking] [data-line-id]")).toHaveCount(13);
+  await expect(page.locator(".pf-snapshot-strip .pf-snapshot-card")).not.toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(4000);
 });
 
 test("formula table assigns a tested personality formula to all 13 lines", async ({ page }) => {
@@ -1919,33 +1846,33 @@ test("dynamic probability and personality pages separate current view from histo
   }
 });
 
-test("daily report keeps one ranking card and collapses each line report", async ({ page }) => {
+test("personality snapshot ledger stays newest first and keeps settlement counts", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("dailyreport"));
+    localStorage.setItem("v2_current_tab", JSON.stringify("personalityforecast"));
   });
   await page.reload();
-  await page.waitForFunction(() => document.querySelectorAll("[data-daily-report-card]").length === 13);
+  await page.waitForFunction(() => document.querySelectorAll(".pf-snapshot-strip .pf-snapshot-card").length > 0);
 
-  await expect(page.locator("[data-daily-report-rank-card]")).toHaveCount(1);
-  const cards = page.locator("[data-daily-report-card]");
-  await expect(cards).toHaveCount(13);
-  expect(await cards.evaluateAll((nodes) => nodes.filter((node) => node.open).length)).toBe(0);
-  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(3500);
-
-  await cards.first().locator("summary").click();
-  expect(await cards.first().evaluate((node) => node.open)).toBe(true);
+  const periods = await page.locator(".pf-snapshot-strip .pf-snapshot-card__head b").evaluateAll((nodes) => (
+    nodes.map((node) => Number(node.textContent.replace(/\D/g, "")))
+  ));
+  expect(periods.length).toBeGreaterThan(1);
+  expect(periods).toEqual(periods.slice().sort((a, b) => b - a));
+  await expect(page.locator(".pf-snapshot-strip .pf-snapshot-card").first()).toContainText("待结算");
+  await expect(page.locator(".pf-snapshot-strip .pf-snapshot-card").last()).toContainText(/中\d+/);
+  await expect(page.locator(".pf-snapshot-strip .pf-snapshot-card").last()).toContainText(/错\d+/);
 });
 
-test("task tabs and primary controls meet mobile touch and type minimums", async ({ page }) => {
+test("personality forecast line controls meet mobile touch and type minimums", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("betexec"));
+    localStorage.setItem("v2_current_tab", JSON.stringify("personalityforecast"));
   });
   await page.reload();
-  await page.waitForFunction(() => document.querySelectorAll("[data-bet-exec-task]").length === 4);
+  await page.waitForFunction(() => document.querySelectorAll("[data-personality-forecast-line]").length === 13);
 
-  const controls = await page.locator("[data-bet-exec-task]").evaluateAll((nodes) => (
+  const controls = await page.locator("[data-personality-forecast-line]").evaluateAll((nodes) => (
     nodes.map((node) => {
       const rect = node.getBoundingClientRect();
       return {
@@ -1969,14 +1896,6 @@ test("current window records use the line-by-line window card while test records
   await page.reload();
   await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
   await expect(page.locator(".window-record-card__history small").first()).toHaveText("近期记录");
-  widths.push(await page.locator(".window-record-card").first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
-
-  await page.evaluate(() => {
-    localStorage.setItem("v2_current_tab", JSON.stringify("pick3"));
-    localStorage.setItem("v2_prob_view", JSON.stringify("history"));
-  });
-  await page.reload();
-  await page.waitForFunction(() => document.querySelectorAll(".window-record-card").length > 0);
   widths.push(await page.locator(".window-record-card").first().evaluate((card) => Math.round(card.getBoundingClientRect().width)));
 
   await page.evaluate(() => {

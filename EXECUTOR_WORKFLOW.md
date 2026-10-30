@@ -1,6 +1,6 @@
 # 财神爷小程序执行端工作流
 
-版本：`executor-v4-20261026`
+版本：`executor-v5-20261030`
 
 本文件只定义执行端。执行端只更新开奖数据、生成派生文件、同步快照、提交推送和回报最小执行结果，不做审计、不签收、不做模型判断、不改模型或页面。
 
@@ -93,7 +93,25 @@ node build_personality_model.js
 python sync.py
 ```
 
-该命令生成 `data.js`，自动重建 `personality_model.json`、`personality_model_data.js`、`personality_snapshots.json`、`personality_snapshots.js`，并重建本地训练数据库与 `training/manifest.json`。生成后必须确认最新期等于本次期号。
+该命令生成 `data.js`，自动重建 `personality_model.json`、`personality_model_data.js`、`personality_snapshots.json`、`personality_snapshots.js`，并重建本地训练数据库与 `training/manifest.json`。
+
+逐线性格必须严格按以下顺序循环，不能只给旧预测补一个开奖结果：
+
+1. 保留开奖前旧快照的尾号、概率、状态和 top3。
+2. 用本次真实开奖结算旧快照的对应尝试。
+3. 从完整历史重新计算每条线的一期、两期、三期窗口、连中连错、遗漏、月度、半月和近7日状态。
+4. 用重算结果调整下一期13线预估。
+5. 锁定下一期新快照；同一目标期只能存在一张有效快照。
+
+生成后必须同时满足：
+
+- 最新期等于本次输入期号。
+- `personality_model.asOfPeriod` 使用全部现有开奖记录。
+- 模型目标是当前最新期的下一期。
+- 当前目标期只有一张未作废快照，且13线全部为待开奖。
+- 当前模型版本与目标快照版本一致时，快照 top3 必须等于模型 top3。
+
+`build_personality_model.js` 会在上述任一条件不满足时直接停止。禁止为了继续推送而手工改快照绕过检查。
 
 ### 第 4 步：结算旧快照并生成下一期快照
 

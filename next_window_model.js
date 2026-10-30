@@ -7,8 +7,8 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var METHOD = "per-line-dual-direction-risk-cascade-v6";
-  var VERSION = "next-window-v7-20261026";
+  var METHOD = "per-line-independent-window-personality-v8.1";
+  var VERSION = "next-window-v8.1-20261030";
   var LINE_PRIOR = 30;
   var STATE_PRIOR = 20;
   var PATTERN_PRIOR = 20;
@@ -95,27 +95,74 @@
     return 1 - Math.pow(1 - frequency, cap || 3);
   }
 
-  function stateAt(rows, localIndex, tail) {
-    if (localIndex <= 0) return "year_start";
-    if (hasTail(rows[localIndex - 1].row, tail)) return "after_hit";
-    var misses = 0;
-    for (var i = localIndex - 1; i >= 0; i--) {
-      if (hasTail(rows[i].row, tail)) break;
-      misses++;
-    }
-    if (misses <= 1) return "after_one_miss";
-    if (misses === 2) return "after_two_misses";
-    return "after_three_plus_misses";
+  function outcomeKey(candidate) {
+    return candidate && Number(candidate.hitIndex) > 0
+      ? "hit" + Number(candidate.hitIndex)
+      : "miss";
+  }
+
+  function streakCategory(streak) {
+    var count = Number(streak) || 1;
+    if (count >= 3) return "three_plus";
+    if (count === 2) return "two";
+    return "one";
+  }
+
+  function previousWindowState(candidate) {
+    if (!candidate) return "year_start";
+    return outcomeKey(candidate) + "|" + streakCategory(candidate.outcomeStreak);
+  }
+
+  function annotateWindowStates(candidates) {
+    var byYear = {};
+    candidates.forEach(function (candidate) {
+      if (!byYear[candidate.year]) byYear[candidate.year] = [];
+      byYear[candidate.year].push(candidate);
+    });
+    Object.keys(byYear).forEach(function (year) {
+      var rows = byYear[year].slice().sort(function (a, b) { return a.start - b.start; });
+      var completed = [];
+      var hitStreak = 0;
+      var missStreak = 0;
+      var pointer = 0;
+      rows.forEach(function (candidate, index) {
+        while (pointer < index && Number(rows[pointer].end) < Number(candidate.start)) {
+          var finished = rows[pointer];
+          if (finished.hitIndex > 0) {
+            hitStreak++;
+            missStreak = 0;
+          } else {
+            missStreak++;
+            hitStreak = 0;
+          }
+          finished.outcomeStreak = finished.hitIndex > 0 ? hitStreak : missStreak;
+          completed.push(finished);
+          pointer++;
+        }
+        var previous = completed.length ? completed[completed.length - 1] : null;
+        candidate.state = previousWindowState(previous);
+        candidate.prevOutcome = previous ? outcomeKey(previous) : "year_start";
+        candidate.prevOutcomeStreak = previous ? Number(previous.outcomeStreak) || 1 : 0;
+      });
+    });
+    return candidates;
   }
 
   function stateLabel(state) {
-    return {
-      year_start: "年初开始",
-      after_hit: "上一期开出",
-      after_one_miss: "连续遗漏1期",
-      after_two_misses: "连续遗漏2期",
-      after_three_plus_misses: "连续遗漏3期以上"
-    }[state] || state;
+    if (state === "year_start") return "年初开始";
+    var parts = String(state).split("|");
+    var outcome = {
+      hit1: "上一窗第1期命中",
+      hit2: "上一窗第2期命中",
+      hit3: "上一窗第3期命中",
+      miss: "上一窗全错"
+    }[parts[0]] || parts[0];
+    var streak = {
+      one: "首次",
+      two: "连续第2窗",
+      three_plus: "连续3窗以上"
+    }[parts[1]] || parts[1];
+    return outcome + " · " + streak;
   }
 
   function buildCandidates(d, line, grouped, probabilityCache, cap) {
@@ -123,38 +170,68 @@
     var candidates = [];
     Object.keys(grouped).map(Number).sort(function (a, b) { return a - b; }).forEach(function (year) {
       var rows = grouped[year];
-      for (var localIndex = 0; localIndex + width - 1 < rows.length; localIndex++) {
-        var tail = line.kind === "tail"
+      function tailAt(localIndex) {
+        return line.kind === "tail"
           ? Number(line.tail)
           : Number((probabilityCache[year][localIndex] || [])[line.rank || 0]);
-        if (!Number.isFinite(tail)) continue;
-        var start = rows[localIndex].index;
-        var attempts = [];
-        var hitIndex = 0;
-        for (var offset = 0; offset < width; offset++) {
-          var item = rows[localIndex + offset];
-          var hit = hasTail(item.row, tail);
-          attempts.push({ period: item.index, tail: tail, hit: hit });
-          if (hit) {
-            hitIndex = offset + 1;
-            break;
-          }
-        }
-        if (!hitIndex && attempts.length < width) continue;
+      }
+      function pushCandidate(startIndex, tail, attempts, hitIndex) {
+        if (!Number.isFinite(tail) || !attempts.length) return;
+        var start = rows[startIndex].index;
         candidates.push({
           start: start,
           end: attempts[attempts.length - 1].period,
           year: year,
-          localStart: localIndex + 1,
+          localStart: startIndex + 1,
           tail: tail,
           attempts: attempts,
           hitIndex: hitIndex,
-          state: stateAt(rows, localIndex, tail),
           baseline: windowBaseline(d, tail, start, width)
         });
       }
+      if (width === 1) {
+        // 一期热图：每一期都是一个独立的一期窗口，不锁尾、不等待。
+        rows.forEach(function (item, localIndex) {
+          var tail = tailAt(localIndex);
+          var hit = hasTail(item.row, tail);
+          pushCandidate(localIndex, tail, [{ period: item.index, tail: tail, hit: hit }], hit ? 1 : 0);
+        });
+        return;
+      }
+      // 两期/三期热图：锁尾到上限；全错后等该尾重新开出，再于下一期开新窗。
+      var localIndex = 0;
+      var active = null;
+      var waitingTail = null;
+      while (localIndex < rows.length) {
+        var item = rows[localIndex];
+        if (waitingTail != null) {
+          if (hasTail(item.row, waitingTail)) waitingTail = null;
+          localIndex++;
+          continue;
+        }
+        if (!active) {
+          var startTail = tailAt(localIndex);
+          if (!Number.isFinite(startTail)) {
+            localIndex++;
+            continue;
+          }
+          active = { startIndex: localIndex, tail: startTail, attempts: [], hitIndex: 0 };
+        }
+        var hit = hasTail(item.row, active.tail);
+        active.attempts.push({ period: item.index, tail: active.tail, hit: hit });
+        if (hit) {
+          active.hitIndex = active.attempts.length;
+          pushCandidate(active.startIndex, active.tail, active.attempts, active.hitIndex);
+          active = null;
+        } else if (active.attempts.length >= width) {
+          pushCandidate(active.startIndex, active.tail, active.attempts, 0);
+          waitingTail = active.tail;
+          active = null;
+        }
+        localIndex++;
+      }
     });
-    return candidates;
+    return annotateWindowStates(candidates);
   }
 
   function summarizeRate(rows) {
@@ -203,6 +280,139 @@
       var stats = summarizeRate(byYear[year]);
       return { year: Number(year), windows: stats.n, hits: stats.hits, rate: stats.rate };
     }).sort(function (a, b) { return a.year - b.year; });
+  }
+
+  function drawDate(year, localPeriod) {
+    return new Date(Date.UTC(Number(year), 0, 1) + (Number(localPeriod) - 1) * DAY_MS);
+  }
+
+  function temporalStats(rows, longRate, minSamples) {
+    var stats = summarizeRate(rows);
+    var delta = stats.n ? stats.rate - longRate : 0;
+    var standardError = stats.n
+      ? Math.sqrt(Math.max(0.0001, longRate * (1 - longRate)) / stats.n)
+      : 1;
+    var z = stats.n ? delta / standardError : 0;
+    return {
+      windows: stats.n,
+      hits: stats.hits,
+      rate: stats.rate,
+      longRate: longRate,
+      delta: delta,
+      z: z,
+      trend: stats.n < minSamples ? "样本不足" : (z >= 1 ? "转强" : (z <= -1 ? "转弱" : "稳定"))
+    };
+  }
+
+  function realtimeProfile(candidates, latestRow, asOfPeriod, longRate) {
+    var latestYear = Number(latestRow.y);
+    var latestLocal = Number(latestRow.p);
+    var latestDate = drawDate(latestYear, latestLocal);
+    var latestMonth = latestDate.getUTCMonth();
+    var latestHalf = latestDate.getUTCDate() <= 15 ? 1 : 2;
+    var weekStart = latestDate.getTime() - 6 * DAY_MS;
+    var rows = candidates.filter(function (row) {
+      return Number(row.end) <= Number(asOfPeriod);
+    }).sort(function (a, b) { return a.end - b.end; });
+    var yearRows = rows.filter(function (row) { return Number(row.year) === latestYear; });
+    var monthRows = yearRows.filter(function (row) {
+      var date = drawDate(row.year, row.localStart);
+      return date.getUTCMonth() === latestMonth;
+    });
+    var halfRows = monthRows.filter(function (row) {
+      var date = drawDate(row.year, row.localStart);
+      var half = date.getUTCDate() <= 15 ? 1 : 2;
+      return half === latestHalf;
+    });
+    var weekRows = rows.filter(function (row) {
+      var time = drawDate(row.year, row.localStart).getTime();
+      return time >= weekStart && time <= latestDate.getTime();
+    });
+    var recent12 = rows.slice(-12);
+    var last = rows.length ? rows[rows.length - 1] : null;
+    return {
+      latestDate: latestDate.toISOString().slice(0, 10),
+      year: temporalStats(yearRows, longRate, 20),
+      month: temporalStats(monthRows, longRate, 8),
+      halfMonth: temporalStats(halfRows, longRate, 5),
+      week: temporalStats(weekRows, longRate, 3),
+      recent12: temporalStats(recent12, longRate, 8),
+      lastWindow: last ? {
+        start: Number(last.start),
+        end: Number(last.end),
+        outcome: outcomeKey(last),
+        streak: Number(last.outcomeStreak) || 1
+      } : null
+    };
+  }
+
+  var PHASE_FLAT_MARGIN = 0.005;
+
+  function phaseDiagnostic(metric, label) {
+    var windows = Number(metric && metric.windows || 0);
+    var delta = Number(metric && metric.delta || 0);
+    var direction = "flat";
+    if (windows > 0 && delta >= PHASE_FLAT_MARGIN) direction = "up";
+    else if (windows > 0 && delta <= -PHASE_FLAT_MARGIN) direction = "down";
+    return {
+      label: label,
+      windows: windows,
+      hits: Number(metric && metric.hits || 0),
+      rate: windows ? Number(metric.rate || 0) : null,
+      delta: windows ? delta : null,
+      direction: direction,
+    };
+  }
+
+  function horizonDiagnostic(submodel, realtime, label) {
+    var phases = [
+      phaseDiagnostic(realtime && realtime.year, "本年"),
+      phaseDiagnostic(realtime && realtime.month, "本月"),
+      phaseDiagnostic(realtime && realtime.halfMonth, "本半月"),
+      phaseDiagnostic(realtime && realtime.week, "近7日")
+    ];
+    var samples = Number(submodel && submodel.samples || 0);
+    var hits = Number(submodel && submodel.hits || 0);
+    var edge = Number(submodel && submodel.edge || 0);
+    var upCount = phases.filter(function (item) { return item.direction === "up"; }).length;
+    var downCount = phases.filter(function (item) { return item.direction === "down"; }).length;
+    var flatCount = phases.filter(function (item) { return item.direction === "flat" && item.windows > 0; }).length;
+    var stage = "rebound";
+    if (!samples) stage = "unseen";
+    else if (edge < 0 && downCount >= upCount) stage = "risk";
+    else if (edge > 0 && upCount > 0 && upCount >= downCount) stage = "safe";
+    return {
+      label: label,
+      stage: stage,
+      edge: edge,
+      samples: samples,
+      hits: hits,
+      actualRate: samples ? hits / samples : null,
+      rare: samples > 0 && samples <= 5,
+      upCount: upCount,
+      downCount: downCount,
+      flatCount: flatCount,
+      phases: phases,
+    };
+  }
+
+  function combineHorizonDiagnostics(diagnostics) {
+    var safeCount = diagnostics.filter(function (item) { return item.stage === "safe"; }).length;
+    var reboundCount = diagnostics.filter(function (item) { return item.stage === "rebound"; }).length;
+    var riskCount = diagnostics.filter(function (item) { return item.stage === "risk"; }).length;
+    var unseenCount = diagnostics.filter(function (item) { return item.stage === "unseen"; }).length;
+    return {
+      safeCount: safeCount,
+      reboundCount: reboundCount,
+      riskCount: riskCount,
+      unseenCount: unseenCount,
+      rareCount: diagnostics.filter(function (item) { return item.rare; }).length,
+      upCount: diagnostics.reduce(function (sum, item) { return sum + item.upCount; }, 0),
+      downCount: diagnostics.reduce(function (sum, item) { return sum + item.downCount; }, 0),
+      worstEdge: diagnostics.length
+        ? Math.min.apply(null, diagnostics.map(function (item) { return item.edge; }))
+        : 0,
+    };
   }
 
   function predict(history, state, baseline) {
@@ -308,7 +518,8 @@
     var reverse = directionalCascade(aligned, "reverse");
     return forward.map(function (row, index) {
       var reverseRow = reverse[index];
-      var combined = combineDirectionalPredictions(row, reverseRow, row.baseline, row.lineRate);
+      var alignedRow = aligned[index];
+      var combined = combineIndependentHorizons(alignedRow);
       return {
         start: row.start,
         year: row.year,
@@ -317,35 +528,40 @@
         baseline: row.baseline,
         predictedRate: combined.predictedRate,
         cascadeDecision: combined.label,
+        compositeScore: combined.compositeScore,
+        safeHorizons: combined.safeHorizons,
+        horizonEdges: combined.horizonEdges,
         forward: row,
         reverse: reverseRow
       };
     });
   }
 
-  function combineDirectionalPredictions(forward, reverse, baseline, lineRate) {
-    var forwardAllRisk = forward.riskLevels.every(function (level) { return level === "risk"; });
-    var reverseAllRisk = reverse.riskLevels.every(function (level) { return level === "risk"; });
-    var forwardAllSafe = forward.riskLevels.every(function (level) { return level === "safe"; });
-    var reverseAllSafe = reverse.riskLevels.every(function (level) { return level === "safe"; });
-    if (forwardAllRisk && reverseAllRisk) {
-      return {
-        label: "双向全风险·低分",
-        predictedRate: Math.min(forward.predictedRate, reverse.predictedRate, baseline) * 0.72
-      };
-    }
-    if (forwardAllSafe && reverseAllSafe) {
-      return {
-        label: "双向全安全·高分",
-        predictedRate: Math.max(forward.predictedRate, reverse.predictedRate, baseline)
-      };
-    }
-    if (forwardAllSafe !== reverseAllSafe) {
-      return { label: "方向分歧·中性", predictedRate: lineRate };
-    }
+  function horizonRisk(horizon) {
+    if (!horizon) return "risk";
+    return Number(horizon.predictedRate) >= Math.max(Number(horizon.baseline), Number(horizon.lineRate))
+      ? "safe"
+      : "risk";
+  }
+
+  function combineIndependentHorizons(submodels) {
+    var horizons = [submodels.one, submodels.two, submodels.three];
+    var levels = horizons.map(horizonRisk);
+    var edges = horizons.map(function (horizon) {
+      return horizon ? Number(horizon.predictedRate) - Number(horizon.baseline) : -1;
+    });
+    var safeHorizons = levels.filter(function (level) { return level === "safe"; }).length;
+    var worstEdge = Math.min.apply(null, edges);
+    var label = safeHorizons === 3 ? "三窗独立一致安全·高分" :
+      safeHorizons === 2 ? "两窗独立安全·观察" :
+        safeHorizons === 1 ? "仅一窗安全·低分" : "三窗独立一致风险·低分";
     return {
-      label: "双方向混合·观察",
-      predictedRate: (forward.predictedRate + reverse.predictedRate) / 2
+      label: label,
+      safeHorizons: safeHorizons,
+      riskLevels: levels,
+      horizonEdges: edges,
+      compositeScore: worstEdge,
+      predictedRate: submodels.three ? Number(submodels.three.predictedRate) : 0
     };
   }
 
@@ -402,7 +618,13 @@
         item.predictions.forEach(function (row) {
           if (row.year !== year) return;
           if (!groups[row.start]) groups[row.start] = [];
-          groups[row.start].push({ lineId: item.id, hit: row.hit, predictedRate: row.predictedRate });
+          groups[row.start].push({
+            lineId: item.id,
+            hit: row.hit,
+            predictedRate: row.predictedRate,
+            compositeScore: row.compositeScore,
+            safeHorizons: row.safeHorizons,
+          });
         });
       });
       var periods = Object.keys(groups).map(Number).filter(function (start) {
@@ -412,7 +634,9 @@
         var selected = [];
         periods.forEach(function (start) {
           groups[start].slice().sort(function (a, b) {
-            return b.predictedRate - a.predictedRate;
+            return b.safeHorizons - a.safeHorizons ||
+              b.compositeScore - a.compositeScore ||
+              b.predictedRate - a.predictedRate;
           }).slice(0, count).forEach(function (row) { selected.push(row); });
         });
         var hits = selected.filter(function (row) { return row.hit; }).length;
@@ -445,13 +669,19 @@
     return Number((cache[year][localBefore] || [])[line.rank || 0]);
   }
 
-  function currentState(d, line, tail, target) {
-    var year = Number((d[target - 1] || d[d.length - 1] || {}).y);
-    var current = [];
-    d.forEach(function (row, index) {
-      if (Number(row.y) === year && index + 1 < target) current.push({ row: row, index: index + 1 });
-    });
-    return stateAt(current, current.length, tail);
+  function currentWindowState(candidates, target) {
+    var completed = candidates.filter(function (candidate) {
+      return Number(candidate.end) < Number(target);
+    }).sort(function (a, b) { return a.end - b.end || a.start - b.start; });
+    var previous = completed.length ? completed[completed.length - 1] : null;
+    return {
+      state: previousWindowState(previous),
+      prevOutcome: previous ? outcomeKey(previous) : "year_start",
+      prevOutcomeStreak: previous ? Number(previous.outcomeStreak) || 1 : 0,
+      previousStart: previous ? Number(previous.start) : null,
+      previousEnd: previous ? Number(previous.end) : null,
+      previousHitIndex: previous ? Number(previous.hitIndex) : null,
+    };
   }
 
   function wilson(hits, total, z) {
@@ -582,12 +812,16 @@
     var lines = details.map(function (detail) {
       var line = detail.line;
       var tail = currentTail(line, grouped, cache, asOfPeriod, latest);
-      var state = currentState(available, line, tail, target);
+      var states = {
+        one: currentWindowState(detail.candidates.one, target),
+        two: currentWindowState(detail.candidates.two, target),
+        three: currentWindowState(detail.candidates.three, target)
+      };
       var submodels = {};
       ["one", "two", "three"].forEach(function (key) {
         var cap = key === "one" ? 1 : (key === "two" ? 2 : 3);
         var baseline = windowBaseline(available, tail, target, cap);
-        var prediction = predict(detail.candidates[key], state, baseline);
+        var prediction = predict(detail.candidates[key], states[key].state, baseline);
         submodels[key] = {
           cap: cap,
           predictedRate: prediction.predictedRate,
@@ -595,74 +829,145 @@
           edge: prediction.predictedRate - baseline,
           samples: prediction.stateSamples,
           hits: prediction.stateHits,
-          lineRate: prediction.lineRate
+          lineRate: prediction.lineRate,
+          state: states[key].state,
+          stateLabel: stateLabel(states[key].state),
+          prevOutcome: states[key].prevOutcome,
+          prevOutcomeStreak: states[key].prevOutcomeStreak,
+          previousStart: states[key].previousStart,
+          previousEnd: states[key].previousEnd,
+          previousHitIndex: states[key].previousHitIndex
         };
       });
       var baseline = submodels.three.baseline;
       var forwardCascade = currentDirectionPrediction(submodels, detail.aligned, "forward");
       var reverseCascade = currentDirectionPrediction(submodels, detail.aligned, "reverse");
-      var combinedCascade = combineDirectionalPredictions(
-        forwardCascade,
-        reverseCascade,
-        baseline,
-        submodels.three.lineRate
-      );
-      var predictedRate = combinedCascade.predictedRate;
+      var combinedCascade = combineIndependentHorizons(submodels);
+      var predictedRate = submodels.three.predictedRate;
       var interval = wilson(submodels.three.hits, submodels.three.samples, 1.28);
       var confidence = submodels.three.samples >= 20
         ? (interval.lower > baseline ? "高于基准" : (interval.upper < baseline ? "低于基准" : "接近基准"))
         : "样本不足";
-      var profile = longTermProfile(detail.candidates.three);
+      var profiles = {
+        one: longTermProfile(detail.candidates.one),
+        two: longTermProfile(detail.candidates.two),
+        three: longTermProfile(detail.candidates.three)
+      };
+      var profile = profiles.three;
+      var realtimeByHorizon = {
+        one: realtimeProfile(detail.candidates.one, latest, asOfPeriod, profiles.one.rate),
+        two: realtimeProfile(detail.candidates.two, latest, asOfPeriod, profiles.two.rate),
+        three: realtimeProfile(detail.candidates.three, latest, asOfPeriod, profiles.three.rate)
+      };
+      var diagnosticByHorizon = {
+        one: horizonDiagnostic(submodels.one, realtimeByHorizon.one, "一期窗口"),
+        two: horizonDiagnostic(submodels.two, realtimeByHorizon.two, "两期窗口"),
+        three: horizonDiagnostic(submodels.three, realtimeByHorizon.three, "三期窗口")
+      };
+      var diagnostic = combineHorizonDiagnostics([
+        diagnosticByHorizon.one,
+        diagnosticByHorizon.two,
+        diagnosticByHorizon.three
+      ]);
+      var validationByHorizon = {
+        one: VALIDATION_YEARS.map(function (year) { return validate(detail.predictions.one, year); }),
+        two: VALIDATION_YEARS.map(function (year) { return validate(detail.predictions.two, year); }),
+        three: VALIDATION_YEARS.map(function (year) { return validate(detail.predictions.three, year); })
+      };
       return {
         id: line.id,
         label: line.label,
         kind: line.kind,
         longTerm: profile,
+        longTermByHorizon: profiles,
         yearly: yearlyStats(detail.candidates.three),
-        validation: VALIDATION_YEARS.map(function (year) { return validate(detail.cascade, year); }),
+        yearlyByHorizon: {
+          one: yearlyStats(detail.candidates.one),
+          two: yearlyStats(detail.candidates.two),
+          three: yearlyStats(detail.candidates.three)
+        },
+        validation: validationByHorizon.three,
+        validationByHorizon: validationByHorizon,
         current: {
           target: target,
           tail: tail,
-          state: state,
-          stateLabel: stateLabel(state),
+          state: submodels.three.state,
+          stateLabel: submodels.three.stateLabel,
+          stateByHorizon: {
+            one: submodels.one.state,
+            two: submodels.two.state,
+            three: submodels.three.state
+          },
+          stateLabelByHorizon: {
+            one: submodels.one.stateLabel,
+            two: submodels.two.stateLabel,
+            three: submodels.three.stateLabel
+          },
+          realtimeByHorizon: realtimeByHorizon,
+          diagnosticByHorizon: diagnosticByHorizon,
+          diagnostic: diagnostic,
           samples: submodels.three.samples,
           hits: submodels.three.hits,
           lineRate: submodels.three.lineRate,
           predictedRate: predictedRate,
+          threeWindowRate: predictedRate,
+          threeWindowBaseline: baseline,
+          threeWindowEdge: predictedRate - baseline,
+          compositeScore: combinedCascade.compositeScore,
+          safeHorizons: combinedCascade.safeHorizons,
+          horizonEdges: combinedCascade.horizonEdges,
           baseline: baseline,
           edge: predictedRate - baseline,
           lower: interval.lower,
           upper: interval.upper,
           confidence: confidence,
           submodels: submodels,
-          riskLevels: forwardCascade.riskLevels,
+          riskLevels: combinedCascade.riskLevels,
           riskPattern: forwardCascade.riskPattern + "|" + reverseCascade.riskPattern,
           directionPredictions: {
             forward: forwardCascade,
             reverse: reverseCascade
           },
           cascadeDecision: combinedCascade.label,
-          reason: "长期新三期窗口 " + (profile.rate * 100).toFixed(1) + "%（" +
+          reason: "三期窗口长期 " + (profile.rate * 100).toFixed(1) + "%（" +
             profile.hits + "/" + profile.windows + "），第1/2/3期结束 " +
             (profile.stageShare.first * 100).toFixed(0) + "/" +
             (profile.stageShare.second * 100).toFixed(0) + "/" +
-            (profile.stageShare.third * 100).toFixed(0) + "%，当前" + stateLabel(state) +
-            "状态。综合：一期" + (submodels.one.predictedRate * 100).toFixed(1) +
-            "% / 两期" + (submodels.two.predictedRate * 100).toFixed(1) +
-            "% / 三期" + (submodels.three.predictedRate * 100).toFixed(1) +
-            "%，正向 1→2→3 " + forwardCascade.riskLevels.map(function (level) {
-              return level === "safe" ? "安全" : "风险";
-            }).join("→") + "（" + forwardCascade.patternHits + "/" + forwardCascade.patternSamples +
-            "）；反向 3→2→1 " + reverseCascade.riskLevels.map(function (level) {
-              return level === "safe" ? "安全" : "风险";
-            }).join("→") + "（" + reverseCascade.patternHits + "/" + reverseCascade.patternSamples +
-            "），最终判定：" + combinedCascade.label + "。"
+            (profile.stageShare.third * 100).toFixed(0) + "%。独立性格：一期" +
+            submodels.one.stateLabel + " → " + (submodels.one.predictedRate * 100).toFixed(1) +
+            "%，两期" + submodels.two.stateLabel + " → " + (submodels.two.predictedRate * 100).toFixed(1) +
+            "%，三期" + submodels.three.stateLabel + " → " + (submodels.three.predictedRate * 100).toFixed(1) +
+            "%。综合安全窗 " + combinedCascade.safeHorizons + "/3，" +
+            "最差窗口增量 " + (combinedCascade.compositeScore >= 0 ? "+" : "") +
+            (combinedCascade.compositeScore * 100).toFixed(1) + "pp；判定：" +
+            combinedCascade.label + "。"
         }
       };
     });
     var ranking = lines.slice().sort(function (a, b) {
-      return b.current.predictedRate - a.current.predictedRate ||
-        b.current.edge - a.current.edge ||
+      return b.current.safeHorizons - a.current.safeHorizons ||
+        b.current.compositeScore - a.current.compositeScore ||
+        b.current.threeWindowEdge - a.current.threeWindowEdge ||
+        b.current.threeWindowRate - a.current.threeWindowRate ||
+        a.id.localeCompare(b.id);
+    }).map(function (line, index) {
+      return Object.assign({ rank: index + 1 }, line);
+    });
+    var diagnosticRanking = lines.slice().sort(function (a, b) {
+      return b.current.diagnostic.safeCount - a.current.diagnostic.safeCount ||
+        a.current.diagnostic.riskCount - b.current.diagnostic.riskCount ||
+        (b.current.diagnostic.upCount - b.current.diagnostic.downCount) -
+          (a.current.diagnostic.upCount - a.current.diagnostic.downCount) ||
+        b.current.diagnostic.worstEdge - a.current.diagnostic.worstEdge ||
+        b.current.threeWindowEdge - a.current.threeWindowEdge ||
+        b.current.threeWindowRate - a.current.threeWindowRate ||
+        a.id.localeCompare(b.id);
+    }).map(function (line, index) {
+      return Object.assign({ rank: index + 1 }, line);
+    });
+    var threeWindowRanking = lines.slice().sort(function (a, b) {
+      return b.current.threeWindowRate - a.current.threeWindowRate ||
+        b.current.threeWindowEdge - a.current.threeWindowEdge ||
         a.id.localeCompare(b.id);
     }).map(function (line, index) {
       return Object.assign({ rank: index + 1 }, line);
@@ -682,12 +987,20 @@
       statePrior: STATE_PRIOR,
       uniformWeightsUsed: false,
       oneTwoThreeWeightMix: false,
-      riskCascade: true,
-      bidirectionalRiskCascade: true,
+      independentHorizons: true,
+      riskCascade: false,
+      bidirectionalRiskCascade: false,
+      stateDefinition: "previous-completed-window",
+      compositeRule: "safe-horizons-then-worst-edge",
+      diagnosticRule: "three-stage-cycle-then-risk-count",
+      activeRankingRule: "legacy-until-diagnostic-snapshot-locked",
       lookAheadUsed: false,
       overlappingWindows: true,
       lines: lines,
       ranking: ranking,
+      legacyRanking: ranking,
+      diagnosticRanking: diagnosticRanking,
+      threeWindowRanking: threeWindowRanking,
       selectionValidation: selection,
       review: reviewSchedule(options, asOfPeriod, lines, selection),
     };

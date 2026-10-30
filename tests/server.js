@@ -3,7 +3,7 @@ const http = require("http");
 const path = require("path");
 
 const root = path.resolve(__dirname, "..");
-const port = 4173;
+const port = Number(process.env.PORT || 4173);
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",

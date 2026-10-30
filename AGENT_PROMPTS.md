@@ -34,14 +34,14 @@ https://github.com/Ben88881931/caishenye-app.git
 收到新号码后，你必须按 EXECUTOR_WORKFLOW.md 的7个步骤执行：
 1. 保存开奖前动态概率快照、D1/D2诊断快照和逐线性格快照。
 2. 追加 lottery_data.json 和 号码走势图.html 的 var D。
-3. 运行 python sync.py 生成 data.js 和逐线性格派生文件。
+3. 运行 python sync.py：先用真实开奖结算旧快照，再从完整历史重跑一期、两期、三期性格、月度/半月/近7日起伏，最后锁定下一期预测快照。
 4. 结算旧快照并生成下一期待开奖记录，同步 snapshots.js。
 5. 统一更新 index.html 十二处缓存版本。
 6. 只用 git status、git diff --stat、git diff 核对许可文件范围。
 7. 只提交指定文件并推送 main。
 
 成功后只按 EXECUTOR_WORKFLOW.md 回报“状态、期号、commit、修改文件、推送、异常”六项，不得超过六行。
-遇到冲突、缺文件、脚本失败、快照目标期不一致或任何异常，立即停止并原样报告，不得自行修代码绕过。
+遇到冲突、缺文件、脚本失败、快照目标期不一致、旧快照被改写、下一期快照不是13线待开奖，或任何异常，立即停止并原样报告，不得自行修代码绕过。
 ```
 
 ## 2. 研究工作台

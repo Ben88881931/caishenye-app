@@ -54,27 +54,34 @@ function appendCurrentSnapshot(snapshots, model, appData) {
   const latest = appData.d[appData.d.length - 1];
   const targetGlobal = appData.d.length + 1;
   const targetLocal = Number(latest.p) + 1;
-  const sameVersion = snapshots.records.some((record) => (
+  const activeTargetSnapshot = snapshots.records.some((record) => (
     Number(record.year) === Number(latest.y) &&
     Number(record.target) === targetLocal &&
-    record.version === model.version
+    !record.superseded
   ));
-  if (sameVersion) return false;
-  snapshots.records.forEach((record) => {
-    if (Number(record.year) === Number(latest.y) && Number(record.target) === targetLocal) {
-      record.superseded = true;
-      record.supersededBy = model.version;
-    }
-  });
+  // 同一目标期只能锁定一张开奖前快照。即使模型升级，也必须等该期开奖后再从下一期启用新版本。
+  if (activeTargetSnapshot) return false;
 
-  const candidates = model.ranking.map((line) => ({
+  const lockedRanking = model.diagnosticRanking || model.ranking;
+  const candidates = lockedRanking.map((line) => ({
     id: line.id,
     label: line.label,
     tail: line.current.tail,
     predictedRate: line.current.predictedRate,
+    threeWindowRate: line.current.threeWindowRate,
+    threeWindowBaseline: line.current.threeWindowBaseline,
+    threeWindowEdge: line.current.threeWindowEdge,
+    compositeScore: line.current.compositeScore,
+    safeHorizons: line.current.safeHorizons,
+    horizonEdges: line.current.horizonEdges,
     baseline: line.current.baseline,
     edge: line.current.edge,
     state: line.current.state,
+    stateByHorizon: line.current.stateByHorizon,
+    stateLabelByHorizon: line.current.stateLabelByHorizon,
+    realtimeByHorizon: line.current.realtimeByHorizon,
+    diagnosticByHorizon: line.current.diagnosticByHorizon,
+    diagnostic: line.current.diagnostic,
     riskPattern: line.current.riskPattern,
     riskLevels: line.current.riskLevels,
     cascadeDecision: line.current.cascadeDecision,
@@ -108,6 +115,61 @@ function appendCurrentSnapshot(snapshots, model, appData) {
   return true;
 }
 
+function activateRankingForLockedSnapshot(model, snapshots) {
+  const active = snapshots.records.filter((record) => (
+    !record.superseded &&
+    Number(record.targetGlobal) === Number(model.target)
+  ))[0];
+  if (active && active.version === model.version) {
+    model.ranking = model.diagnosticRanking;
+    model.activeRankingRule = "diagnostic-cycle";
+  } else {
+    model.ranking = model.legacyRanking || model.ranking;
+    model.activeRankingRule = "legacy-until-diagnostic-snapshot-locked";
+  }
+  return active;
+}
+
+function validateSnapshotCycle(model, snapshots, appData, appended) {
+  const latest = appData.d[appData.d.length - 1];
+  const active = snapshots.records.filter((record) => (
+    !record.superseded &&
+    Number(record.targetGlobal) === Number(model.target)
+  ));
+  if (active.length !== 1) {
+    throw new Error(`personality snapshot cycle expected 1 active target, got ${active.length}`);
+  }
+  const locked = active[0];
+  if (Number(model.asOfPeriod) !== appData.d.length) {
+    throw new Error("personality model did not use the full available draw history");
+  }
+  if (Number(locked.year) !== Number(latest.y) || Number(locked.basedOn) !== Number(latest.p)) {
+    throw new Error("personality snapshot does not start from the latest draw");
+  }
+  if (Number(locked.target) !== Number(latest.p) + 1) {
+    throw new Error("personality snapshot target is not the next local period");
+  }
+  if (!Array.isArray(locked.lines) || locked.lines.length !== model.lines.length) {
+    throw new Error("personality snapshot line count does not match the model");
+  }
+  if (locked.lines.some((line) => line.status !== "pending")) {
+    throw new Error("next-period personality snapshot must remain pending until draw");
+  }
+  const expectedTop3 = model.diagnosticRanking.slice(0, 3).map((line) => line.id);
+  if (locked.version === model.version &&
+      JSON.stringify(locked.top3) !== JSON.stringify(expectedTop3)) {
+    throw new Error("personality snapshot top3 does not match the current model");
+  }
+  return {
+    appended,
+    targetGlobal: Number(model.target),
+    targetLocal: Number(locked.target),
+    version: locked.version,
+    currentVersion: model.version,
+    sameVersion: locked.version === model.version,
+  };
+}
+
 const dataSandbox = { window: {} };
 vm.runInNewContext(fs.readFileSync("data.js", "utf8"), dataSandbox, { filename: "data.js" });
 const appData = dataSandbox.window.APP_DATA;
@@ -126,8 +188,10 @@ model.generatedAt = reviewedAt;
 const settled = settleSnapshots(readSnapshots(), appData.d);
 const snapshots = settled.snapshots;
 const appended = appendCurrentSnapshot(snapshots, model, appData);
+activateRankingForLockedSnapshot(model, snapshots);
 snapshots.latestPeriod = Number(appData.d[appData.d.length - 1].p);
 if (settled.changed || appended || !snapshots.updatedAt) snapshots.updatedAt = model.generatedAt;
+const cycle = validateSnapshotCycle(model, snapshots, appData, appended);
 
 fs.writeFileSync("personality_model.json", JSON.stringify(model, null, 2) + "\n", "utf8");
 fs.writeFileSync(
@@ -146,4 +210,9 @@ console.log(
   `built per-line personality model: latest ${appData.d[appData.d.length - 1].p}, ` +
   `${model.lines.length} lines, top ${model.ranking[0].label} ` +
   `${(model.ranking[0].current.predictedRate * 100).toFixed(1)}%`
+);
+console.log(
+  `snapshot cycle: ${cycle.appended ? "locked new target" : "kept locked target"} ` +
+  `${cycle.targetLocal}, top3 ${cycle.sameVersion ? "matches" : "held from prior version"}, ` +
+  `ranking ${model.activeRankingRule}`
 );

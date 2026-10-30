@@ -287,6 +287,7 @@
     missOrderView: lsGet("v2_miss_order_view", "heat"),
     probView: lsGet("v2_prob_view", "overview"),
     personalityView: lsGet("v2_personality_view", "overview"),
+    personalityForecastLine: lsGet("v2_personality_forecast_line", "tail0"),
     navSearch: "",
   };
 
@@ -295,6 +296,7 @@
     { id: "pick3", label: "模型概率" },
     { id: "formulas", label: "公式表" },
     { id: "windowmult", label: "13线三期监控" },
+    { id: "personalityforecast", label: "性格预测" },
     { id: "orderlog", label: "追三期下单" },
     { id: "segments", label: "分段对比" },
     { id: "missorder", label: "遗漏排序" },
@@ -325,6 +327,7 @@
     { tab: "overview", label: "三期窗口", note: "看三期窗口和下注" },
     { tab: "formulas", label: "公式表", note: "核对每条线建议第几期下注" },
     { tab: "windowmiss", label: "三期热图", note: "看窗口与等待状态" },
+    { tab: "personalityforecast", label: "性格预测", note: "看三窗口阶段、稀有状态和下一期预估" },
     { tab: "notes", label: "我的笔记", note: "记录当天观察" },
   ];
 
@@ -1649,6 +1652,7 @@
     else if (state.tab === "betexec") renderBetExec();
     else if (state.tab === "formulas") renderFormulaTable();
     else if (state.tab === "windowmult") renderWindowMultiplierTest();
+    else if (state.tab === "personalityforecast") renderPersonalityForecast();
     else if (state.tab === "orderlog") renderOrderLog();
     else if (state.tab === "personality") renderPersonality();
     else if (state.tab === "datarecord") renderDataRecord();
@@ -1714,6 +1718,14 @@
           use: "观察哪条线当前值得继续跟踪，哪条线需要降级。",
           source: "真实窗口、真实开奖结果和逐线独立统计。",
           note: "每条线只与自己的历史表现比较，并独立给出实时关注等级。"
+        },
+        {
+          name: "性格预测",
+          summary: "分别展示一期、两期、三期的当前性格、时段起伏、稀有状态和下一期综合候选。",
+          look: ["风险 / 反弹观察 / 安全三级状态", "本年、本月、本半月、近7日方向", "每期锁定快照和综合排名"],
+          use: "判断当前优势是延续、反弹还是转弱，不只看已经发生的历史命中率。",
+          source: "每次开奖后从完整历史重跑的逐线三窗口模型和开奖前快照。",
+          note: "样本少只标为稀有，不直接判无用；旧快照只结算，不改预测。"
         },
         {
           name: "追三期下单",
@@ -1890,7 +1902,7 @@
     {
       title: "每日操作",
       desc: "每天按这个顺序走：先选号，再看窗口和执行，最后记录下单。",
-      names: ["三期窗口", "单期", "公式表", "13线三期监控", "追三期下单"]
+      names: ["三期窗口", "单期", "公式表", "13线三期监控", "性格预测", "追三期下单"]
     },
     {
       title: "公式验证",
@@ -1968,6 +1980,7 @@
     "单期": "pick3",
     "公式表": "formulas",
     "13线三期监控": "windowmult",
+    "性格预测": "personalityforecast",
     "追三期下单": "orderlog",
     "总览": "overview",
     "分段对比": "segments",
@@ -2174,7 +2187,7 @@
           source: "逐线下一窗口模型",
           text: wmPeriodLabel(personality.current.target) + "独立新窗口锁定尾" +
             personality.current.tail + "，预测三期命中" +
-            (personality.current.predictedRate * 100).toFixed(1) + "%。"
+            (Number(personality.current.threeWindowRate || personality.current.predictedRate || 0) * 100).toFixed(1) + "%。"
         };
       }
       var signal = probabilitySignal || dailyReportProbabilitySignal(line, live);
@@ -2230,10 +2243,13 @@
 
   function dailyReportRankingSnapshots() {
     if (!PERSONALITY_SNAPSHOTS || !Array.isArray(PERSONALITY_SNAPSHOTS.records) || !PERSONALITY_MODEL) return [];
-    return PERSONALITY_SNAPSHOTS.records.filter(function (record) {
-      return record.version === PERSONALITY_MODEL.version && !record.superseded &&
-        Array.isArray(record.lines) && record.lines.length === 13;
-    }).sort(function (a, b) {
+    var active = PERSONALITY_SNAPSHOTS.records.filter(function (record) {
+      return !record.superseded && Array.isArray(record.lines) && record.lines.length === 13;
+    });
+    var current = active.filter(function (record) {
+      return record.version === PERSONALITY_MODEL.version;
+    });
+    return (current.length ? current : active).sort(function (a, b) {
       return Number(b.target) - Number(a.target);
     });
   }
@@ -2302,7 +2318,7 @@
   function dailyReportRankingHistoryHTML() {
     var records = dailyReportRankingSnapshots();
     var html = '<div class="daily-report-block daily-report-ranking-history"><div class="daily-report-block__head"><h3>每期排名快照卡</h3>' +
-      '<span>开奖前冻结 · 新→旧 · 每期完整13线排名 · 左右滑动对比</span></div>';
+      '<span>开奖前冻结 · 13线独立窗口综合排名 · 每行保留纯三期概率与安全窗口数</span></div>';
     html += rankingAccuracySummaryHTML(records);
     html += '<div class="daily-report-ranking-strip record-scroll" data-ranking-history-strip data-window-ranking-strip>';
     records.forEach(function (record) {
@@ -2324,17 +2340,16 @@
         var hitClass = "is-" + outcome;
         var hitText = outcome === "hit" ? "中" + (line.hitIndex || "") :
           (outcome === "miss" ? "错" : (attemptCount ? "进" + Math.min(3, attemptCount + 1) : "待"));
-        var forward = String(line.forward && line.forward.pattern || "").split("-").map(function (level) {
-          return level === "safe" ? "安" : "险";
-        }).join("→");
-        var reverse = String(line.reverse && line.reverse.pattern || "").split("-").map(function (level) {
-          return level === "safe" ? "安" : "险";
-        }).join("→");
-        html += '<div class="daily-report-ranking-card__row' + (outcome === "hit" ? " is-hit" : "") + '" data-ranking-line="' + line.id + '">' +
+        var stateText = ["one", "two", "three"].map(function (key) {
+          return key.charAt(0).toUpperCase() + ":" + String(line.stateByHorizon && line.stateByHorizon[key] || "").replace("|", "/");
+        }).join(" · ");
+        html += '<div class="daily-report-ranking-card__row' + (outcome === "hit" ? " is-hit" : "") +
+          '" data-ranking-line="' + line.id + '" data-composite-score="' + Number(line.compositeScore || 0).toFixed(6) +
+          '" data-safe-horizons="' + Number(line.safeHorizons || 0) + '">' +
           '<b>#' + (index + 1) + ' ' + storedLineDisplayLabel(line.id, line.tail, line.label) + '</b>' +
-          '<span>' + (Number(line.predictedRate) * 100).toFixed(1) + '%</span>' +
+          '<span>三期' + (Number(line.threeWindowRate || line.predictedRate || 0) * 100).toFixed(1) + '%</span>' +
           '<i class="daily-report-ranking-card__hit ' + hitClass + '" data-ranking-hit="' + hitClass + '">' + hitText + '</i>' +
-          '<small>正 ' + forward + ' / 反 ' + reverse + '</small>' +
+          '<small>安全' + Number(line.safeHorizons || 0) + '/3 · ' + stateText + '</small>' +
           '<em>' + line.cascadeDecision + '</em></div>';
       });
       html += '</div></article>';
@@ -2352,7 +2367,8 @@
     var top3 = (snapshot.top3 || []).map(function (id, index) {
       var line = byId[id] || {};
       return "#" + (index + 1) + " " + storedLineDisplayLabel(id, line && line.tail, line && line.label) +
-        " " + (Number(line.predictedRate || 0) * 100).toFixed(1) + "%";
+        " 三期" + (Number(line.threeWindowRate || line.predictedRate || 0) * 100).toFixed(1) +
+        "% · 安全" + Number(line.safeHorizons || 0) + "/3";
     }).join(" · ");
     return '<div class="daily-report-section" data-report-section="snapshot" data-personality-snapshot-top3="' +
       (snapshot.top3 || []).join("|") + '"><b>真实开奖前快照</b>' +
@@ -2371,30 +2387,27 @@
     var longTerm = personality.longTerm;
     return '<div class="daily-report-section" data-report-section="personality"><b>逐线长期性格模型</b>' +
       '<div class="daily-report-recent-metrics">' +
-        '<span>预测三期 ' + (current.predictedRate * 100).toFixed(1) + '%</span>' +
-        '<span>自身基准 ' + (current.baseline * 100).toFixed(1) + '%</span>' +
-        '<span>模型增量 ' + (current.edge >= 0 ? "+" : "") + (current.edge * 100).toFixed(1) + 'pp</span>' +
+        '<span>纯三期 ' + (Number(current.threeWindowRate || 0) * 100).toFixed(1) + '%</span>' +
+        '<span>三期基准 ' + (Number(current.threeWindowBaseline || current.baseline || 0) * 100).toFixed(1) + '%</span>' +
+        '<span>三期增量 ' + (Number(current.threeWindowEdge || 0) >= 0 ? "+" : "") +
+          (Number(current.threeWindowEdge || 0) * 100).toFixed(1) + 'pp</span>' +
         '<span>' + current.confidence + '</span>' +
       '</div>' +
       '<div class="daily-report-recent-metrics" data-report-submodels>' +
         '<span>一期 ' + (current.riskLevels[0] === "safe" ? "安全" : "风险") +
-          ' ' + (current.submodels.one.predictedRate * 100).toFixed(1) + '%</span>' +
+          ' ' + (current.submodels.one.predictedRate * 100).toFixed(1) + '% · ' +
+          current.submodels.one.stateLabel + '</span>' +
         '<span>两期 ' + (current.riskLevels[1] === "safe" ? "安全" : "风险") +
-          ' ' + (current.submodels.two.predictedRate * 100).toFixed(1) + '%</span>' +
+          ' ' + (current.submodels.two.predictedRate * 100).toFixed(1) + '% · ' +
+          current.submodels.two.stateLabel + '</span>' +
         '<span>三期 ' + (current.riskLevels[2] === "safe" ? "安全" : "风险") +
-          ' ' + (current.submodels.three.predictedRate * 100).toFixed(1) + '%</span>' +
-        '<span>正向组合 ' + current.directionPredictions.forward.patternHits + '/' +
-          current.directionPredictions.forward.patternSamples + '</span>' +
-        '<span>反向组合 ' + current.directionPredictions.reverse.patternHits + '/' +
-          current.directionPredictions.reverse.patternSamples + '</span>' +
+          ' ' + (current.submodels.three.predictedRate * 100).toFixed(1) + '% · ' +
+          current.submodels.three.stateLabel + '</span>' +
       '</div>' +
       '<div class="daily-report-recent-metrics" data-report-cascade>' +
-        '<span>1→2→3 ' + current.directionPredictions.forward.riskLevels.map(function (level) {
-          return level === "safe" ? "安" : "险";
-        }).join("→") + '</span>' +
-        '<span>3→2→1 ' + current.directionPredictions.reverse.riskLevels.map(function (level) {
-          return level === "safe" ? "安" : "险";
-        }).join("→") + '</span>' +
+        '<span>安全窗口 ' + Number(current.safeHorizons || 0) + '/3</span>' +
+        '<span>最差窗口增量 ' + (Number(current.compositeScore || 0) >= 0 ? "+" : "") +
+          (Number(current.compositeScore || 0) * 100).toFixed(1) + 'pp</span>' +
         '<span>' + current.cascadeDecision + '</span>' +
       '</div>' +
       '<p>' + current.reason + '</p>' +
@@ -2416,26 +2429,26 @@
       };
     }
     var current = row.personality.current;
-    var forward = current.directionPredictions.forward.riskLevels.map(function (level) {
-      return level === "safe" ? "安" : "险";
-    }).join("→");
-    var reverse = current.directionPredictions.reverse.riskLevels.map(function (level) {
-      return level === "safe" ? "安" : "险";
-    }).join("→");
-    var detail = "最终分" + (current.predictedRate * 100).toFixed(1) +
-      "%，自身基准" + (current.baseline * 100).toFixed(1) +
-      "%，增量" + (current.edge >= 0 ? "+" : "") + (current.edge * 100).toFixed(1) +
-      "个百分点；正向" + forward + "，反向" + reverse + "。";
-    if (current.cascadeDecision === "双向全安全·高分") {
-      return { label: "双安全·高分", tier: "strong", color: "#15803d", reason: detail };
+    var horizonText = ["one", "two", "three"].map(function (key) {
+      var horizon = current.submodels[key];
+      return key.replace("one", "1").replace("two", "2").replace("three", "3") +
+        "期" + (Number(horizon.edge) >= 0 ? "安全" : "风险");
+    }).join(" / ");
+    var detail = "纯三期" + (Number(current.threeWindowRate || 0) * 100).toFixed(1) +
+      "%，三期基准" + (Number(current.threeWindowBaseline || current.baseline || 0) * 100).toFixed(1) +
+      "%；独立窗口：" + horizonText + "；安全" + Number(current.safeHorizons || 0) +
+      "/3，最差窗口增量" + (Number(current.compositeScore || 0) >= 0 ? "+" : "") +
+      (Number(current.compositeScore || 0) * 100).toFixed(1) + "pp。";
+    if (Number(current.safeHorizons || 0) === 3) {
+      return { label: "三窗一致安全", tier: "strong", color: "#15803d", reason: detail };
     }
-    if (current.cascadeDecision === "双向全风险·低分") {
-      return { label: "双风险·低分", tier: "risk", color: "#b91c1c", reason: detail };
+    if (Number(current.safeHorizons || 0) === 2) {
+      return { label: "两窗安全·观察", tier: "watch", color: "#1d4ed8", reason: detail };
     }
-    if (current.cascadeDecision === "方向分歧·中性") {
-      return { label: "方向分歧·中性", tier: "watch", color: "#1d4ed8", reason: detail };
+    if (Number(current.safeHorizons || 0) === 0) {
+      return { label: "三窗一致风险", tier: "risk", color: "#b91c1c", reason: detail };
     }
-    return { label: "混合·观察", tier: "watch", color: "#b45309", reason: detail };
+    return { label: "仅一窗安全·低分", tier: "risk", color: "#b45309", reason: detail };
   }
 
   function dailyReportReason(row) {
@@ -2460,7 +2473,10 @@
       var longTerm = row.personality.longTerm;
       parts.push("长期三期命中" + (longTerm.rate * 100).toFixed(1) + "%，自身随机基准" +
         (longTerm.baseline * 100).toFixed(1) + "%");
-      parts.push("当前状态“" + current.stateLabel + "”预测" + (current.predictedRate * 100).toFixed(1) + "%");
+      parts.push("独立状态 1期“" + current.submodels.one.stateLabel + "”/2期“" +
+        current.submodels.two.stateLabel + "”/3期“" + current.submodels.three.stateLabel + "”");
+      parts.push("纯三期预测" + (Number(current.threeWindowRate || 0) * 100).toFixed(1) +
+        "%，综合安全" + Number(current.safeHorizons || 0) + "/3");
       parts.push(dailyReportPersonalityValidationText(row.personality));
     }
     parts.push(String(row.underlying.text || "").replace(/。$/, ""));
@@ -2472,7 +2488,8 @@
     if (row.personality) {
       if (row.personality.longTerm.windows < 400) risks.push("长期窗口不足400个");
       if (row.personality.current.samples < 20) risks.push("当前性格状态样本不足20窗");
-      if (row.personality.current.edge < 0) risks.push("当前状态预测低于自身随机基准");
+      if (Number(row.personality.current.safeHorizons || 0) < 2) risks.push("1期/2期/3期独立窗口未形成安全共识");
+      if (Number(row.personality.current.compositeScore || 0) < 0) risks.push("最差独立窗口预测低于自身基准");
       if (row.personality.validation.every(function (item) { return item.brierSkill <= 0; })) {
         risks.push("2025/2026走步验证均未改善Brier分数");
       }
@@ -2575,7 +2592,12 @@
       live: live,
     };
     result.signals = dailyReportSignalSummary(result);
-    result.score = personality ? personality.current.predictedRate * 100 : 0;
+    result.score = personality
+      ? Number(personality.current.threeWindowRate || personality.current.predictedRate || 0) * 100
+      : 0;
+    result.compositeScore = personality ? Number(personality.current.compositeScore || 0) * 100 : -100;
+    result.safeHorizons = personality ? Number(personality.current.safeHorizons || 0) : 0;
+    result.threeWindowEdge = personality ? Number(personality.current.threeWindowEdge || 0) * 100 : 0;
     result.entryEligible = !!personality;
     result.advice = dailyReportAdviceFor(result);
     result.reason = dailyReportReason(result);
@@ -2690,10 +2712,9 @@
     });
     rows.sort(function (a, b) {
       if (a.entryEligible !== b.entryEligible) return a.entryEligible ? -1 : 1;
-      var aPersonality = a.personality && a.personality.current || {};
-      var bPersonality = b.personality && b.personality.current || {};
-      return Number(bPersonality.predictedRate || 0) - Number(aPersonality.predictedRate || 0) ||
-        Number(bPersonality.edge || 0) - Number(aPersonality.edge || 0) ||
+      return b.safeHorizons - a.safeHorizons ||
+        b.compositeScore - a.compositeScore ||
+        b.score - a.score ||
         a.order - b.order;
     });
 
@@ -2709,27 +2730,30 @@
     var totalWindows = rows.reduce(function (sum, row) { return sum + row.recent.length; }, 0);
     var averagePrediction = rows.reduce(function (sum, row) { return sum + row.score; }, 0) / Math.max(1, rows.length);
     html += '<div class="daily-report-metrics">' +
-      '<div><b>' + averagePrediction.toFixed(1) + '%</b><span>13线平均三期预测</span></div>' +
+      '<div><b>' + averagePrediction.toFixed(1) + '%</b><span>13线平均纯三期预测</span></div>' +
       '<div><b>' + totalHits + ' / ' + totalWindows + '</b><span>近期历史窗口命中 / 样本</span></div>' +
       '<div><b>13 / 13</b><span>每期全部独立候选</span></div>' +
-      '<div><b>' + rows.filter(function (row) { return row.personality && row.personality.current.edge > 0; }).length + '</b><span>预测高于自身基准</span></div>' +
+      '<div><b>' + rows.filter(function (row) { return row.safeHorizons === 3; }).length + '</b><span>1/2/3期三窗一致安全</span></div>' +
       '</div>';
     html += '<div data-personality-review style="margin:0 0 10px;padding:9px 11px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:800;line-height:1.7">' +
       personalityReviewText() + '</div>';
     html += dailyReportPersonalitySnapshotHTML();
 
-    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>下一独立三期窗口预测排名</h3><span>每条线按自身一期 / 两期 / 三期性格独立预测新窗口命中概率 · 不追号</span></div>';
+    html += '<div class="daily-report-block"><div class="daily-report-block__head"><h3>13线独立窗口综合安全排名</h3><span>先比较1期、2期、3期各自是否高于自身基准，再按安全窗口数和最差窗口增量排序 · 每期重新评分</span></div>';
     html += '<div class="daily-report-rank-card" data-daily-report-rank-card>';
     rows.forEach(function (row, index) {
       var personality = row.personality;
       var current = personality && personality.current ? personality.current : {};
       html += '<div class="daily-report-rank-item" data-daily-report-row data-daily-report-rank-item data-report-rate="' +
-        Number(current.predictedRate || 0).toFixed(6) + '" data-report-score="' + row.score.toFixed(6) +
+        Number(current.threeWindowRate || current.predictedRate || 0).toFixed(6) +
+        '" data-report-composite-score="' + Number(current.compositeScore || 0).toFixed(6) +
+        '" data-report-safe-horizons="' + Number(current.safeHorizons || 0) +
+        '" data-report-score="' + row.score.toFixed(6) +
         '" data-line-id="' + row.line.id +
         '" data-report-eligible="' + (row.entryEligible ? "true" : "false") +
         '" data-report-personality-state="' + String(current.state || "") +
-        '" data-personality-predicted="' + Number(current.predictedRate || 0).toFixed(6) +
-        '" data-personality-edge="' + Number(current.edge || 0).toFixed(6) +
+        '" data-personality-predicted="' + Number(current.threeWindowRate || current.predictedRate || 0).toFixed(6) +
+        '" data-personality-edge="' + Number(current.threeWindowEdge || 0).toFixed(6) +
         '" data-report-mode-rates="' + [row.modes.one.recentRate, row.modes.two.recentRate, row.modes.three.recentRate].map(function (rate) {
           return Math.round(rate * 1000) / 10;
         }).join("/") + '">' +
@@ -2737,13 +2761,15 @@
         '<div class="daily-report-rank-item__main">' +
           '<div class="daily-report-rank-item__top"><b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
             '<strong style="color:' + row.advice.color + '">' + row.score.toFixed(1) + '%</strong>' +
-            '<em data-report-advice style="color:' + row.advice.color + '">' + row.advice.label + '</em></div>' +
+            '<em data-report-advice style="color:' + row.advice.color + '">安全' + Number(current.safeHorizons || 0) + '/3</em></div>' +
           '<div class="daily-report-rank-item__reason" data-report-reason title="' + row.reason + '">' + row.reason + '</div>' +
         '</div>' +
-        '<div class="daily-report-rank-item__side"><b style="color:' + row.advice.color + '">本期候选</b>' +
-          '<small title="预测三期命中率 / 自身随机基准 / 模型增量">模型 ' +
-          (Number(current.predictedRate || 0) * 100).toFixed(1) + '% / 基准 ' +
-          (Number(current.baseline || 0) * 100).toFixed(1) + '%</small></div></div>';
+        '<div class="daily-report-rank-item__side"><b style="color:' + row.advice.color + '">' + row.advice.label + '</b>' +
+          '<small title="纯三期命中率 / 三期基准 / 最差独立窗口增量">纯三期 ' +
+          (Number(current.threeWindowRate || current.predictedRate || 0) * 100).toFixed(1) + '% / 基准 ' +
+          (Number(current.threeWindowBaseline || current.baseline || 0) * 100).toFixed(1) +
+          '% · 最差' + (Number(current.compositeScore || 0) >= 0 ? '+' : '') +
+          (Number(current.compositeScore || 0) * 100).toFixed(1) + 'pp</small></div></div>';
     });
     html += '</div></div>';
     html += '<details class="daily-report-history"><summary>历史排名快照 · 点开按期对比</summary>' +
@@ -2980,15 +3006,18 @@
 
   function windowReportRankingHTML(rows, windowStates, liveCount, waitingCount) {
     var html = '<section class="today-section" data-window-ranking-panel>' +
-      '<div class="today-section__head"><h2>13条独立线路 · 窗口预测排名</h2><span>排名顺序固定 · 不按金额调整</span></div>' +
+      '<div class="today-section__head"><h2>13条独立线路 · 纯三期窗口排名</h2><span>只使用三期窗口自己的性格规律 · 不混入1期/2期安全分</span></div>' +
       '<div class="window-report-ranking-list">';
     rows.forEach(function (row, index) {
       var current = row.personality && row.personality.current || {};
-      html += '<div class="window-report-rank-row" data-window-rank-item>' +
+      var threeRate = Number(current.threeWindowRate || current.predictedRate || 0);
+      var threeEdge = Number(current.threeWindowEdge || 0);
+      html += '<div class="window-report-rank-row" data-window-rank-item data-line-id="' + row.line.id +
+        '" data-three-window-rate="' + threeRate.toFixed(6) + '" data-three-window-edge="' + threeEdge.toFixed(6) + '">' +
         '<span>#' + (index + 1) + '</span>' +
         '<b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
-        '<strong>' + (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</strong>' +
-        '<small>' + row.advice.label + '</small></div>';
+        '<strong>' + (threeRate * 100).toFixed(1) + '%</strong>' +
+        '<small>三期增量' + (threeEdge >= 0 ? '+' : '') + (threeEdge * 100).toFixed(1) + 'pp</small></div>';
     });
     html += '</div><div class="window-report-actions">' +
       '<button type="button" class="chip" data-overview-tab="formulas">查看公式与仓位</button></div></section>';
@@ -3199,8 +3228,9 @@
       if (a.entryEligible !== b.entryEligible) return a.entryEligible ? -1 : 1;
       var aCurrent = a.personality && a.personality.current || {};
       var bCurrent = b.personality && b.personality.current || {};
-      return Number(bCurrent.predictedRate || 0) - Number(aCurrent.predictedRate || 0) ||
-        Number(bCurrent.edge || 0) - Number(aCurrent.edge || 0) ||
+      return Number(bCurrent.threeWindowRate || bCurrent.predictedRate || 0) -
+        Number(aCurrent.threeWindowRate || aCurrent.predictedRate || 0) ||
+        Number(bCurrent.threeWindowEdge || 0) - Number(aCurrent.threeWindowEdge || 0) ||
         a.order - b.order;
     });
   }
@@ -3210,8 +3240,8 @@
     var qualified = ranked.filter(function (row) {
       var current = row.personality && row.personality.current || {};
       var formulaMeta = row.line.formulaMeta || {};
-      return Number(current.edge || 0) > 0 &&
-        Number(current.predictedRate || 0) >= 0.88 &&
+      return Number(current.threeWindowEdge || 0) > 0 &&
+        Number(current.threeWindowRate || 0) >= 0.88 &&
         formulaMeta.adjustment !== "月度与半月同时偏弱·降到平投";
     });
     var robust = qualified.filter(function (row) {
@@ -3307,12 +3337,13 @@
       '<div class="today-picks">';
     topPicks.forEach(function (row, index) {
       var current = row.personality && row.personality.current || {};
+      var threeRate = Number(current.threeWindowRate || current.predictedRate || 0);
       html += '<div class="today-pick" data-dashboard-pick data-execution-basis="robust" data-line-id="' + row.line.id +
         '" data-ranking-position="' + rankingPositions[row.line.id] + '">' +
-        '<span>稳健候选' + (index + 1) + ' · 综合排名#' + rankingPositions[row.line.id] + '</span>' +
+        '<span>稳健候选' + (index + 1) + ' · 三期排名#' + rankingPositions[row.line.id] + '</span>' +
         '<b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
-        '<small>' + row.advice.label + ' · 建议第' + Number(row.line.stageFormula && row.line.stageFormula.stage || 0) + '期 · ' +
-          (Number(current.predictedRate || 0) * 100).toFixed(1) + '%</small></div>';
+        '<small>纯三期 ' + (threeRate * 100).toFixed(1) + '% · 建议第' +
+          Number(row.line.stageFormula && row.line.stageFormula.stage || 0) + '期</small></div>';
     });
     html += '</div></section>';
     html += '<div class="panel" data-window-observation-note style="margin:0 0 8px;padding:9px 11px;color:#475569;font-size:12px;font-weight:800;line-height:1.65">' +
@@ -4012,6 +4043,7 @@
       html += "</tr>";
     }
     html += "</tbody></table></div></div></div>";
+    html += horizonPersonalityHTML(maxStage);
     html += perfMoreBtn("windowMiss", maxN, showRows, "行");
     html += '</div>';
     } else {
@@ -4024,6 +4056,45 @@
 
   function renderWindowMiss2() {
     renderWindowMiss(2);
+  }
+
+  function horizonPersonalityHTML(cap) {
+    var key = cap === 1 ? "one" : (cap === 2 ? "two" : "three");
+    var title = cap === 1 ? "一期窗口性格实时监控" : (cap === 2 ? "两期窗口性格实时监控" : "三期窗口性格实时监控");
+    function metricText(metric) {
+      return (Number(metric.rate || 0) * 100).toFixed(1) + "% · " +
+        (metric.hits || 0) + "/" + (metric.windows || 0) + " · " + metric.trend;
+    }
+    function trendTone(metric) {
+      return metric.trend === "转强" ? "#15803d" : (metric.trend === "转弱" ? "#b91c1c" : "#64748b");
+    }
+    var html = '<div class="section" data-horizon-personality="' + cap + '"><div class="section__head">' +
+      '<h2 class="section__title">' + title + '</h2>' +
+      '<span class="section__hint">年度 / 本月 / 本半月 / 最近7日实时性格 · 每条线独立计算</span></div>' +
+      '<div class="wm-hscroll horizon-personality-strip">';
+    EXEC_LINES.forEach(function (line) {
+      var personality = PERSONALITY_BY_ID[line.id];
+      var current = personality && personality.current;
+      var realtime = current && current.realtimeByHorizon && current.realtimeByHorizon[key];
+      var horizon = current && current.submodels && current.submodels[key];
+      if (!realtime || !horizon) return;
+      var tone = horizon.edge >= 0 ? "#15803d" : "#b91c1c";
+      html += '<article class="horizon-personality-card" data-horizon-personality-card="' + line.id + '"' +
+        ' data-horizon-state="' + horizon.state + '">' +
+        '<div class="horizon-personality-card__head"><b>' + lineDisplayLabel(line, current.tail) + '</b>' +
+        '<span style="color:' + tone + '">' + (horizon.edge >= 0 ? "安全" : "风险") + '</span></div>' +
+        '<div class="horizon-personality-card__state">' + horizon.stateLabel + '</div>' +
+        '<div class="horizon-personality-card__prediction">下一窗 ' + (horizon.predictedRate * 100).toFixed(1) +
+        '% <small>增量' + (horizon.edge >= 0 ? "+" : "") + (horizon.edge * 100).toFixed(1) + 'pp</small></div>' +
+        '<div class="horizon-personality-card__metrics">' +
+          '<div><span>本年</span><b style="color:' + trendTone(realtime.year) + '">' + metricText(realtime.year) + '</b></div>' +
+          '<div><span>本月</span><b style="color:' + trendTone(realtime.month) + '">' + metricText(realtime.month) + '</b></div>' +
+          '<div><span>本半月</span><b style="color:' + trendTone(realtime.halfMonth) + '">' + metricText(realtime.halfMonth) + '</b></div>' +
+          '<div><span>最近7日</span><b style="color:' + trendTone(realtime.week) + '">' + metricText(realtime.week) + '</b></div>' +
+        '</div></article>';
+    });
+    html += '</div></div>';
+    return html;
   }
 
   function renderTrendImpl() {
@@ -4056,6 +4127,7 @@
       html += "</tr>";
     });
     html += "</tbody></table></div></div></div>";
+    html += horizonPersonalityHTML(1);
     html += perfMoreBtn("trend", periods.length, heatPeriods.length);
     html += '</div>';
     } else if (activeView === "chain") {
@@ -6768,15 +6840,24 @@
           predictedRate: Number(model.predictedRate || 0),
           baseline: Number(model.baseline || 0),
           edge: Number(model.edge || 0),
+          state: String(model.state || ""),
+          stateLabel: String(model.stateLabel || ""),
         };
       });
-      var allRisk = current.cascadeDecision.indexOf("全风险") >= 0;
-      var anySafe = forward.riskLevels.indexOf("safe") >= 0 || reverse.riskLevels.indexOf("safe") >= 0;
-      var recommendation = allRisk || current.edge <= -0.03 ? "暂不关注三期窗口" :
-        (current.edge >= 0.03 && anySafe ? "优先关注三期窗口" : "正常关注三期窗口");
+      var safeHorizons = Number(current.safeHorizons || 0);
+      var compositeScore = Number(current.compositeScore || 0);
+      var threeWindowRate = Number(current.threeWindowRate || current.predictedRate || 0);
+      var threeWindowEdge = Number(current.threeWindowEdge || 0);
+      var recommendation = safeHorizons >= 3 ? "三窗独立一致安全" :
+        safeHorizons === 2 ? "两窗安全·观察" :
+          safeHorizons === 1 ? "仅一窗安全·低分" : "三窗风险·暂不关注";
       return {
         stateLabel: current.stateLabel,
-        predictedRate: Number(current.predictedRate || 0),
+        predictedRate: threeWindowRate,
+        threeWindowRate: threeWindowRate,
+        threeWindowEdge: threeWindowEdge,
+        compositeScore: compositeScore,
+        safeHorizons: safeHorizons,
         baseline: Number(current.baseline || 0),
         edge: Number(current.edge || 0),
         suggestion: current.cascadeDecision,
@@ -6800,24 +6881,29 @@
           tail: personality && personality.current ? Number(personality.current.tail) : null,
         };
       }).filter(function (row) { return !!row.forecast; }).sort(function (a, b) {
-        return b.forecast.predictedRate - a.forecast.predictedRate;
+        return b.forecast.safeHorizons - a.forecast.safeHorizons ||
+          b.forecast.compositeScore - a.forecast.compositeScore ||
+          b.forecast.threeWindowEdge - a.forecast.threeWindowEdge;
       });
       var html = '<div class="wm-monitor-ranking-block" data-monitor-ranking-table>';
-      html += '<div class="wm-monitor-ranking-head"><div><b>13线三期窗口当前排名</b><span>只按双方向对撞后的三期窗口预测概率排序 · 第1名在最左</span></div><em>下一期新开三期窗口</em></div>';
+      html += '<div class="wm-monitor-ranking-head"><div><b>13线独立窗口综合安全排名</b><span>分别计算1期、2期、3期独立性格，再按安全窗口数→最差窗口增量排序 · 第1名在最左</span></div><em>综合排名</em></div>';
       html += '<div class="wm-hscroll wm-monitor-ranking-strip">';
       rows.forEach(function (row, index) {
         var stage = Number(row.item.stageFormula && row.item.stageFormula.stage || 0);
         html += '<div class="today-pick wm-monitor-rank-card" data-monitor-ranking-item data-line-id="' + row.item.id +
-          '" data-third-window-rate="' + row.forecast.predictedRate.toFixed(6) + '">' +
+          '" data-composite-score="' + row.forecast.compositeScore.toFixed(6) +
+          '" data-safe-horizons="' + row.forecast.safeHorizons +
+          '" data-third-window-rate="' + row.forecast.threeWindowRate.toFixed(6) + '">' +
           '<span>排名#' + (index + 1) + '</span><b>' + lineDisplayLabel(row.item, row.tail) + '</b>' +
-          '<small>' + row.forecast.recommendation + (stage ? ' · 建议第' + stage + '期' : '') +
-          ' · ' + (row.forecast.predictedRate * 100).toFixed(1) + '%</small></div>';
+          '<small>安全' + row.forecast.safeHorizons + '/3 · 三期' +
+          (row.forecast.threeWindowRate * 100).toFixed(1) + '%' +
+          (stage ? ' · 第' + stage + '期' : '') + '</small></div>';
       });
       html += '</div></div>';
       return html;
     }
     var html = '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><div><b class="wm-card__title">13线三期窗口实时监控</b><span class="wm-card__hint">一期、两期作诊断，三期窗口为最终目标 · 真实窗口账本 · 记录尾号、命中或错误、等待重开和重开后的连续三窗表现；不预测未来开奖号码、不补造、不改历史。</span></div></div>';
+    html += '<div class="wm-card__head"><div><b class="wm-card__title">13线独立窗口综合监控</b><span class="wm-card__hint">1期、2期、3期各自使用独立窗口账本和独立性格；三套安全结果综合排序，纯三期页仍只按三期窗口自身排序。</span></div></div>';
     html += '<div class="wm-view-tabs">' + wmViewTabs + '</div>';
     html += wmMonitorRankingHTML();
     html += '<div class="wm-line-selector">';
@@ -6831,7 +6917,7 @@
     html += '</div></div>';
     html += '<div class="wm-view-group" data-wm-group="monitor">';
     html += '<div class="section"><div class="panel wm-card">';
-    html += '<div class="wm-card__head"><b class="wm-card__title">13线三期窗口实时监控</b><span class="wm-card__hint">一期、两期作诊断，三期窗口为最终目标；再做正向1→2→3与反向3→2→1性格对撞</span></div>';
+    html += '<div class="wm-card__head"><b class="wm-card__title">13线独立窗口性格综合</b><span class="wm-card__hint">三套窗口模型分别读取自己的上一窗结果、连中连错和命中率，再按安全窗口数综合排名</span></div>';
     html += '<div class="wm-monitor-grid">';
     orderedLines.forEach(function (item) {
       var stats = wmMonitorStats(item);
@@ -6852,22 +6938,25 @@
       }
       var forecast = wmCompositeForecast(item);
       if (!forecast) return;
-      var forecastTone = forecast.suggestion.indexOf("全风险") >= 0 ? "#b91c1c" :
-        (forecast.suggestion.indexOf("全安全") >= 0 ? "#15803d" : "#1d4ed8");
-      var forecastLabel = "一期 / 两期 / 三期性格对撞";
+      var forecastTone = forecast.safeHorizons === 3 ? "#15803d" :
+        (forecast.safeHorizons === 0 ? "#b91c1c" : "#1d4ed8");
+      var forecastLabel = "独立1期 / 2期 / 3期窗口性格";
       html += '<article class="wm-monitor-card" data-wm-monitor-card="' + item.id + '" data-monitor-triple-rate="' + stats.tripleRate.toFixed(6) + '"' +
-        ' data-third-window-rate="' + forecast.predictedRate.toFixed(6) + '" data-third-window-samples="' + forecast.horizons[2].samples + '">';
+        ' data-third-window-rate="' + forecast.threeWindowRate.toFixed(6) +
+        '" data-composite-score="' + forecast.compositeScore.toFixed(6) +
+        '" data-safe-horizons="' + forecast.safeHorizons +
+        '" data-third-window-samples="' + forecast.horizons[2].samples + '">';
       html += '<div class="wm-monitor-card__head"><b>' + lineDisplayLabel(item) + '</b><span style="color:' + tone + '">' + conclusion + '</span></div>';
       html += '<div class="wm-monitor-card__state">' + stateText + '</div>';
-      html += '<div class="wm-monitor-card__forecast"><div><b>三期窗口预测命中率 ' + (forecast.predictedRate * 100).toFixed(1) +
-        '%</b><span style="color:' + forecastTone + '">' + forecast.suggestion + '</span></div>' +
-        '<small>' + forecastLabel + ' · 当前状态 ' + forecast.stateLabel +
-        ' · 正向 ' + forecast.forwardText + '（' + forecast.forwardHits + '/' + forecast.forwardSamples +
-        '） · 反向 ' + forecast.reverseText + '（' + forecast.reverseHits + '/' + forecast.reverseSamples +
-        '） · 自身基准 ' + (stats.hitRate * 100).toFixed(1) + '%</small>' +
+      html += '<div class="wm-monitor-card__forecast"><div><b>纯三期 ' + (forecast.threeWindowRate * 100).toFixed(1) +
+        '%</b><span style="color:' + forecastTone + '">综合安全 ' + forecast.safeHorizons + '/3</span></div>' +
+        '<small>' + forecastLabel + ' · 最差窗口增量 ' +
+        (forecast.compositeScore >= 0 ? "+" : "") + (forecast.compositeScore * 100).toFixed(1) + 'pp' +
+        ' · 三期自身基准 ' + (forecast.baseline * 100).toFixed(1) + '%</small>' +
         '<div class="wm-monitor-card__horizons">' + forecast.horizons.map(function (horizon) {
-          return '<span>' + (horizon.windows === 1 ? "一期诊断" : horizon.windows === 2 ? "两期诊断" : "三期目标") + ' ' +
-            (horizon.predictedRate * 100).toFixed(1) + '%<small>' + horizon.samples + '个样本</small></span>';
+          return '<span>' + (horizon.windows === 1 ? "1期" : horizon.windows === 2 ? "2期" : "3期") + ' ' +
+            (horizon.predictedRate * 100).toFixed(1) + '%<small>' + horizon.stateLabel +
+            ' · ' + horizon.samples + '窗</small></span>';
         }).join("") + '</div>' +
         '<strong>' + forecast.recommendation + '</strong></div>';
       html += '<div class="wm-monitor-card__grid">';
@@ -7381,6 +7470,324 @@
     Array.prototype.forEach.call(view.querySelectorAll(".wm-view-group"), function (group) {
       if (group.getAttribute("data-wm-group") !== wmView) group.style.display = "none";
     });
+  }
+
+  var PERSONALITY_FORECAST_HORIZONS = [
+    { key: "one", label: "一期窗口" },
+    { key: "two", label: "两期窗口" },
+    { key: "three", label: "三期窗口" },
+  ];
+
+  function personalityForecastPct(value) {
+    return (Number(value || 0) * 100).toFixed(1) + "%";
+  }
+
+  function personalityForecastPP(value) {
+    var number = Number(value || 0) * 100;
+    return (number >= 0 ? "+" : "") + number.toFixed(1) + "pp";
+  }
+
+  function personalityForecastStageMeta(stage) {
+    return {
+      safe: { label: "安全", color: "#166534", background: "#f0fdf4", border: "#86efac" },
+      rebound: { label: "反弹观察", color: "#1d4ed8", background: "#eff6ff", border: "#93c5fd" },
+      risk: { label: "风险", color: "#b91c1c", background: "#fef2f2", border: "#fca5a5" },
+      unseen: { label: "未出现", color: "#475569", background: "#f8fafc", border: "#cbd5e1" },
+    }[stage] || { label: "观察", color: "#475569", background: "#f8fafc", border: "#cbd5e1" };
+  }
+
+  function personalityForecastMetric(metric, label) {
+    var windows = Number(metric && metric.windows || 0);
+    var delta = Number(metric && metric.delta || 0);
+    var mark = "·";
+    var tone = "#64748b";
+    if (windows > 0 && delta >= 0.005) {
+      mark = "↑";
+      tone = "#15803d";
+    } else if (windows > 0 && delta <= -0.005) {
+      mark = "↓";
+      tone = "#b91c1c";
+    } else if (windows > 0) {
+      mark = "→";
+      tone = "#475569";
+    }
+    return {
+      label: label,
+      marker: mark,
+      tone: tone,
+      windows: windows,
+      hits: Number(metric && metric.hits || 0),
+      rate: windows ? Number(metric.rate || 0) : null,
+      delta: windows ? delta : null,
+      direction: mark === "↑" ? "up" : (mark === "↓" ? "down" : "flat"),
+    };
+  }
+
+  function personalityForecastHorizon(line, key) {
+    var current = line && line.current;
+    var submodel = current && current.submodels && current.submodels[key];
+    var realtime = current && current.realtimeByHorizon && current.realtimeByHorizon[key];
+    if (!submodel || !realtime) return null;
+    var phases = [
+      personalityForecastMetric(realtime.year, "本年"),
+      personalityForecastMetric(realtime.month, "本月"),
+      personalityForecastMetric(realtime.halfMonth, "本半月"),
+      personalityForecastMetric(realtime.week, "近7日"),
+    ];
+    var upCount = phases.filter(function (item) { return item.direction === "up"; }).length;
+    var downCount = phases.filter(function (item) { return item.direction === "down"; }).length;
+    var flatCount = phases.filter(function (item) { return item.direction === "flat" && item.windows > 0; }).length;
+    var samples = Number(submodel.samples || 0);
+    var hits = Number(submodel.hits || 0);
+    var edge = Number(submodel.edge || 0);
+    var stage = "rebound";
+    if (!samples) {
+      stage = "unseen";
+    } else if (edge < 0 && downCount >= upCount) {
+      stage = "risk";
+    } else if (edge > 0 && upCount > 0 && upCount >= downCount) {
+      stage = "safe";
+    }
+    var reason = samples
+      ? "同类状态实测 " + hits + "/" + samples + "，预测" + personalityForecastPct(submodel.predictedRate) +
+        "，自身基准" + personalityForecastPct(submodel.baseline) + "；时段" +
+        upCount + "升/" + downCount + "降/" + flatCount + "平。"
+      : "这种状态此前未出现，不判无用；这里显示全历史参考概率，等待实际走势补充。";
+    return {
+      key: key,
+      label: (PERSONALITY_FORECAST_HORIZONS.filter(function (item) { return item.key === key; })[0] || {}).label || key,
+      predictedRate: Number(submodel.predictedRate || 0),
+      baseline: Number(submodel.baseline || 0),
+      lineRate: Number(submodel.lineRate || 0),
+      edge: edge,
+      samples: samples,
+      hits: hits,
+      actualRate: samples ? hits / samples : null,
+      state: submodel.state,
+      stateLabel: submodel.stateLabel,
+      stage: stage,
+      stageMeta: personalityForecastStageMeta(stage),
+      rare: samples > 0 && samples <= 5,
+      phases: phases,
+      upCount: upCount,
+      downCount: downCount,
+      flatCount: flatCount,
+      reason: reason,
+    };
+  }
+
+  function personalityForecastComposite(line) {
+    var horizons = PERSONALITY_FORECAST_HORIZONS.map(function (item) {
+      return personalityForecastHorizon(line, item.key);
+    }).filter(Boolean);
+    var shared = line && line.current && line.current.diagnostic;
+    var safeCount = horizons.filter(function (item) { return item.stage === "safe"; }).length;
+    var reboundCount = horizons.filter(function (item) { return item.stage === "rebound"; }).length;
+    var riskCount = horizons.filter(function (item) { return item.stage === "risk"; }).length;
+    var unseenCount = horizons.filter(function (item) { return item.stage === "unseen"; }).length;
+    var upCount = horizons.reduce(function (sum, item) { return sum + item.upCount; }, 0);
+    var downCount = horizons.reduce(function (sum, item) { return sum + item.downCount; }, 0);
+    var rareCount = horizons.filter(function (item) { return item.rare; }).length;
+    var worstEdge = horizons.length
+      ? Math.min.apply(null, horizons.map(function (item) { return item.edge; }))
+      : 0;
+    return {
+      horizons: horizons,
+      safeCount: shared ? Number(shared.safeCount || 0) : safeCount,
+      reboundCount: shared ? Number(shared.reboundCount || 0) : reboundCount,
+      riskCount: shared ? Number(shared.riskCount || 0) : riskCount,
+      unseenCount: shared ? Number(shared.unseenCount || 0) : unseenCount,
+      upCount: shared ? Number(shared.upCount || 0) : upCount,
+      downCount: shared ? Number(shared.downCount || 0) : downCount,
+      rareCount: shared ? Number(shared.rareCount || 0) : rareCount,
+      worstEdge: shared ? Number(shared.worstEdge || 0) : worstEdge,
+      summary: "安全" + (shared ? Number(shared.safeCount || 0) : safeCount) +
+        " · 反弹" + (shared ? Number(shared.reboundCount || 0) : reboundCount) +
+        " · 风险" + (shared ? Number(shared.riskCount || 0) : riskCount),
+    };
+  }
+
+  function personalityForecastRows() {
+    if (!PERSONALITY_MODEL || !Array.isArray(PERSONALITY_MODEL.lines)) return [];
+    return PERSONALITY_MODEL.lines.map(function (line) {
+      return { line: line, diagnostic: personalityForecastComposite(line) };
+    }).sort(function (a, b) {
+      return b.diagnostic.safeCount - a.diagnostic.safeCount ||
+        a.diagnostic.riskCount - b.diagnostic.riskCount ||
+        (b.diagnostic.upCount - b.diagnostic.downCount) -
+          (a.diagnostic.upCount - a.diagnostic.downCount) ||
+        b.diagnostic.worstEdge - a.diagnostic.worstEdge ||
+        Number(b.line.current.threeWindowEdge || 0) - Number(a.line.current.threeWindowEdge || 0) ||
+        a.line.id.localeCompare(b.line.id);
+    }).map(function (row, index) {
+      row.rank = index + 1;
+      return row;
+    });
+  }
+
+  function personalityForecastSnapshots() {
+    if (!PERSONALITY_SNAPSHOTS || !Array.isArray(PERSONALITY_SNAPSHOTS.records)) return [];
+    return PERSONALITY_SNAPSHOTS.records.filter(function (record) {
+      return record && !record.superseded;
+    }).sort(function (a, b) {
+      return Number(b.targetGlobal || 0) - Number(a.targetGlobal || 0);
+    });
+  }
+
+  function personalityForecastActiveSnapshot() {
+    var records = personalityForecastSnapshots();
+    var targetGlobal = Number(PERSONALITY_MODEL && PERSONALITY_MODEL.target || 0);
+    return records.filter(function (record) {
+      return Number(record.targetGlobal || 0) === targetGlobal;
+    })[0] || records[0] || null;
+  }
+
+  function personalityForecastSnapshotCard(record) {
+    if (!record) {
+      return '<div class="pf-empty">暂无开奖前性格快照</div>';
+    }
+    var linesById = {};
+    (record.lines || []).forEach(function (line) { linesById[line.id] = line; });
+    var hit = (record.lines || []).filter(function (line) { return line.status === "hit"; }).length;
+    var miss = (record.lines || []).filter(function (line) { return line.status === "miss"; }).length;
+    var pending = (record.lines || []).filter(function (line) { return line.status === "pending"; }).length;
+    var top3 = (record.top3 || []).map(function (id) {
+      var line = linesById[id] || {};
+      return storedLineDisplayLabel(id, line.tail, line.label || id);
+    }).join(" / ");
+    return '<article class="pf-snapshot-card">' +
+      '<div class="pf-snapshot-card__head"><b>第' + record.target + '期</b><span>' +
+        (pending ? "待结算" : "已结算") + '</span></div>' +
+      '<div class="pf-snapshot-card__top3">' + top3 + '</div>' +
+      '<div class="pf-snapshot-card__meta">基于第' + record.basedOn + '期 · ' + record.version + '</div>' +
+      '<div class="pf-snapshot-card__counts"><span>中' + hit + '</span><span>错' + miss + '</span>' +
+        '<span>待' + pending + '</span></div></article>';
+  }
+
+  function renderPersonalityForecast() {
+    var rows = personalityForecastRows();
+    if (!rows.length) {
+      view.innerHTML = '<div class="section"><div class="panel" style="padding:18px">性格预测模型未加载。</div></div>';
+      return;
+    }
+    var selectedId = state.personalityForecastLine;
+    var selected = rows.filter(function (row) { return row.line.id === selectedId; })[0] || rows[0];
+    state.personalityForecastLine = selected.line.id;
+    var snapshot = personalityForecastActiveSnapshot();
+    var snapshotLines = {};
+    if (snapshot) {
+      (snapshot.lines || []).forEach(function (line) { snapshotLines[line.id] = line; });
+    }
+    var totalSafe = rows.reduce(function (sum, row) { return sum + row.diagnostic.safeCount; }, 0);
+    var totalRebound = rows.reduce(function (sum, row) { return sum + row.diagnostic.reboundCount; }, 0);
+    var totalRisk = rows.reduce(function (sum, row) { return sum + row.diagnostic.riskCount; }, 0);
+    var rareCount = rows.reduce(function (sum, row) { return sum + row.diagnostic.rareCount; }, 0);
+    var top3 = rows.slice(0, 3);
+    var diagnosticIsLocked = !!(
+      snapshot && snapshot.version === PERSONALITY_MODEL.version
+    );
+    var html = '<section class="section pf-hero" data-personality-forecast-page>' +
+      '<div class="section__head"><h2 class="section__title">逐线三窗口性格预测</h2>' +
+        '<span class="section__hint">第' + latest + '期开奖后全量重算 · 预判第' + (latest + 1) + '期</span></div>' +
+      '<div class="pf-cycle" aria-label="每期快照循环">' +
+        '<span><b>1</b>结算旧快照</span><i>→</i><span><b>2</b>全量重跑性格</span><i>→</i>' +
+        '<span><b>3</b>锁定下一期</span></div>' +
+      '<div class="pf-metrics">' +
+        '<div><b>' + totalSafe + '</b><span>安全窗口</span></div>' +
+        '<div><b>' + totalRebound + '</b><span>反弹观察</span></div>' +
+        '<div><b>' + totalRisk + '</b><span>风险窗口</span></div>' +
+        '<div><b>' + rareCount + '</b><span>稀有状态，不判无用</span></div>' +
+      '</div>' +
+      '<div class="pf-candidate-head"><div><b>' +
+        (diagnosticIsLocked ? "本期正式锁定候选 · 前三名" : "全量重算候选 · 前三名") +
+        '</b><span>' + (diagnosticIsLocked ? "当前目标期已锁定" : "下期生效 · 当前目标期旧快照不改写") +
+        '</span></div><em>' + PERSONALITY_MODEL.version + '</em></div>' +
+      '<div class="pf-top-strip">';
+    top3.forEach(function (row, index) {
+      var current = row.line.current;
+      html += '<article class="pf-top-card" data-personality-forecast-top="' + row.line.id + '">' +
+        '<span>#' + (index + 1) + '</span><b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
+        '<strong>' + personalityForecastPct(current.threeWindowRate || current.predictedRate) + '</strong>' +
+        '<small>三期增量 ' + personalityForecastPP(current.threeWindowEdge) + '</small>' +
+        '<em>' + row.diagnostic.summary + '</em></article>';
+    });
+    html += '</div></section>';
+
+    if (snapshot) {
+      html += '<section class="section pf-section"><div class="pf-section__head"><div><h3>开奖前正式锁定</h3>' +
+        '<span>锁定后不改尾号、概率和top3；开奖后只追加结算</span></div>' +
+        '<em>' + (snapshot.version === PERSONALITY_MODEL.version ? "版本一致" : "待下期切换") + '</em></div>' +
+        personalityForecastSnapshotCard(snapshot) + '</section>';
+    }
+
+    html += '<section class="section pf-section"><div class="pf-section__head"><div><h3>13线综合性格排名</h3>' +
+      '<span>横向滚动查看全部线路 · 第1名在最左</span></div><em>共' + rows.length + '线</em></div>' +
+      '<div class="pf-rank-strip" data-personality-forecast-ranking>';
+    rows.forEach(function (row) {
+      var current = row.line.current;
+      var stages = row.diagnostic.horizons.map(function (item) {
+        return '<i style="color:' + item.stageMeta.color + ';background:' + item.stageMeta.background +
+          ';border-color:' + item.stageMeta.border + '">' + item.label.charAt(0) + item.stageMeta.label + '</i>';
+      }).join("");
+      html += '<article class="pf-rank-card" data-personality-forecast-rank="' + row.rank +
+        '" data-line-id="' + row.line.id + '" data-safe-count="' + row.diagnostic.safeCount +
+        '" data-risk-count="' + row.diagnostic.riskCount + '">' +
+        '<div class="pf-rank-card__head"><span>#' + row.rank + '</span><b>' +
+          lineDisplayLabel(row.line, current.tail) + '</b></div>' +
+        '<strong>' + personalityForecastPct(current.threeWindowRate || current.predictedRate) + '</strong>' +
+        '<small>三期基准 ' + personalityForecastPct(current.threeWindowBaseline || current.baseline) + '</small>' +
+        '<div class="pf-rank-card__stages">' + stages + '</div>' +
+        '<em>' + row.diagnostic.summary + ' · 最差' + personalityForecastPP(row.diagnostic.worstEdge) + '</em>' +
+        '</article>';
+    });
+    html += '</div></section>';
+
+    html += '<section class="section pf-section"><div class="pf-section__head"><div><h3>' +
+      lineDisplayLabel(selected.line, selected.line.current.tail) + ' · 三窗口对照</h3>' +
+      '<span>每一期分别读取自己的窗口账本，不共用统一权重</span></div>' +
+      '<em>#' + selected.rank + ' · ' + selected.diagnostic.summary + '</em></div>' +
+      '<div class="pf-line-strip">';
+    rows.forEach(function (row) {
+      var current = row.line.current;
+      html += '<button type="button" class="pf-line-button' + (row.line.id === selected.line.id ? " is-active" : "") +
+        '" data-personality-forecast-line="' + row.line.id + '"><b>' +
+        lineDisplayLabel(row.line, current.tail) + '</b><span>#' + row.rank + ' · ' +
+        row.diagnostic.safeCount + '安</span></button>';
+    });
+    html += '</div><div class="pf-horizon-strip">';
+    selected.diagnostic.horizons.forEach(function (horizon) {
+      html += '<article class="pf-horizon-card" data-personality-forecast-horizon="' + horizon.key + '" data-stage="' +
+        horizon.stage + '"><div class="pf-horizon-card__head"><b>' + horizon.label + '</b>' +
+        '<span style="color:' + horizon.stageMeta.color + ';background:' + horizon.stageMeta.background +
+        ';border-color:' + horizon.stageMeta.border + '">' + horizon.stageMeta.label +
+        (horizon.rare ? " · 稀有" : "") + '</span></div>' +
+        '<div class="pf-horizon-card__rate"><strong>' + personalityForecastPct(horizon.predictedRate) + '</strong>' +
+        '<span>基准 ' + personalityForecastPct(horizon.baseline) + '</span></div>' +
+        '<div class="pf-horizon-card__actual">同态实测 ' +
+          (horizon.samples ? (horizon.hits + "/" + horizon.samples + " · " +
+            personalityForecastPct(horizon.actualRate)) : "此前未出现") + '</div>' +
+        '<div class="pf-horizon-card__state">' + horizon.stateLabel + '</div>' +
+        '<div class="pf-phase-grid">';
+      horizon.phases.forEach(function (phase) {
+        html += '<div><span>' + phase.label + '</span><b style="color:' + phase.tone + '">' +
+          phase.marker + (phase.rate == null ? "无记录" : personalityForecastPct(phase.rate)) +
+          '</b><small>' + phase.windows + '窗 · ' +
+          (phase.delta == null ? "无数据" : (phase.delta >= 0 ? "+" : "") +
+            (phase.delta * 100).toFixed(1) + "pp") + '</small></div>';
+      });
+      html += '</div><p>' + horizon.reason + '</p></article>';
+    });
+    html += '</div></section>';
+
+    html += '<section class="section pf-section"><div class="pf-section__head"><div><h3>每期快照循环</h3>' +
+      '<span>最近记录优先 · 每张卡保留目标期、基于期、版本和结算状态</span></div></div>' +
+      '<div class="pf-snapshot-strip">';
+    personalityForecastSnapshots().slice(0, 8).forEach(function (record) {
+      html += personalityForecastSnapshotCard(record);
+    });
+    html += '</div></section>';
+    html += '<p class="disclaimer">本页用于逐线性格规律和下一期风险观察。历史比例代表已发生状态，不保证未来；稀有状态照常参与判断。</p>';
+    view.innerHTML = html;
   }
 
   function renderOrderLog() {
@@ -9379,6 +9786,13 @@
     if (wmViewBtn) {
       state.windowMultView = wmViewBtn.dataset.wmView;
       renderWindowMultiplierTest();
+      return;
+    }
+    var personalityForecastLine = e.target.closest("[data-personality-forecast-line]");
+    if (personalityForecastLine) {
+      state.personalityForecastLine = personalityForecastLine.dataset.personalityForecastLine;
+      lsSet("v2_personality_forecast_line", state.personalityForecastLine);
+      renderPersonalityForecast();
       return;
     }
     var wmMoreBtn = e.target.closest("[data-wm-detail-more]");

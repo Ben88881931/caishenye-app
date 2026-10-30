@@ -17,6 +17,30 @@ const model = personality.build({
   asOfPeriod: appData.d.length,
   reviewedAt,
 });
+const repeatModel = personality.build({
+  raw: appData.raw,
+  d: appData.d,
+  probabilityModel,
+  asOfPeriod: appData.d.length,
+  reviewedAt,
+});
+const rankingSnapshot = (value) => value.ranking.map((line) => ({
+  id: line.id,
+  rank: line.rank,
+  predictedRate: line.current.predictedRate,
+  threeWindowRate: line.current.threeWindowRate,
+  compositeScore: line.current.compositeScore,
+  safeHorizons: line.current.safeHorizons,
+}));
+assert.deepEqual(rankingSnapshot(repeatModel), rankingSnapshot(model));
+const personalitySnapshots = JSON.parse(fs.readFileSync("personality_snapshots.json", "utf8"));
+const activeSnapshot = personalitySnapshots.records.find((record) => (
+  !record.superseded && Number(record.targetGlobal) === Number(model.target)
+));
+assert.ok(activeSnapshot, "active target snapshot missing");
+if (activeSnapshot.version === model.version) {
+  assert.deepEqual(activeSnapshot.top3, model.diagnosticRanking.slice(0, 3).map((line) => line.id));
+}
 
 const expectedLines = [
   ...Array.from({ length: 10 }, (_, tail) => `tail${tail}`),
@@ -25,16 +49,35 @@ const expectedLines = [
   "prob3",
 ];
 
-assert.equal(model.method, "per-line-dual-direction-risk-cascade-v6");
-assert.equal(model.riskCascade, true);
-assert.equal(model.bidirectionalRiskCascade, true);
+assert.equal(model.method, "per-line-independent-window-personality-v8.1");
+assert.equal(model.independentHorizons, true);
+assert.equal(model.riskCascade, false);
+assert.equal(model.bidirectionalRiskCascade, false);
 assert.equal(model.overlappingWindows, true);
 assert.equal(model.lines.length, 13);
 assert.deepEqual(model.lines.map((line) => line.id), expectedLines);
 assert.deepEqual(model.lines.filter((line) => line.kind === "probability").map((line) => line.label), ["A", "B", "C"]);
 assert.equal(model.ranking.length, 13);
 assert.ok(model.ranking.every((line, index, rows) => (
-  index === 0 || rows[index - 1].current.predictedRate >= line.current.predictedRate
+  index === 0 ||
+  rows[index - 1].current.safeHorizons > line.current.safeHorizons ||
+  (
+    rows[index - 1].current.safeHorizons === line.current.safeHorizons &&
+    rows[index - 1].current.compositeScore >= line.current.compositeScore
+  )
+)));
+assert.equal(model.threeWindowRanking.length, 13);
+assert.ok(model.threeWindowRanking.every((line, index, rows) => (
+  index === 0 || rows[index - 1].current.threeWindowRate >= line.current.threeWindowRate
+)));
+assert.equal(model.diagnosticRanking.length, 13);
+assert.ok(model.diagnosticRanking.every((line, index, rows) => (
+  index === 0 ||
+  rows[index - 1].current.diagnostic.safeCount > line.current.diagnostic.safeCount ||
+  (
+    rows[index - 1].current.diagnostic.safeCount === line.current.diagnostic.safeCount &&
+    rows[index - 1].current.diagnostic.riskCount <= line.current.diagnostic.riskCount
+  )
 )));
 
 for (const line of model.lines) {
@@ -59,9 +102,39 @@ for (const line of model.lines) {
   assert.ok(line.current.reason);
   assert.equal(line.current.target, model.target);
   assert.ok(line.current.tail >= 0 && line.current.tail <= 9);
+  assert.ok(Number.isFinite(line.current.threeWindowRate));
+  assert.ok(Number.isFinite(line.current.threeWindowBaseline));
+  assert.ok(Number.isFinite(line.current.threeWindowEdge));
+  assert.ok(Number.isFinite(line.current.compositeScore));
+  assert.ok(Number.isInteger(line.current.safeHorizons));
+  assert.ok(line.current.safeHorizons >= 0 && line.current.safeHorizons <= 3);
+  assert.ok(line.current.diagnostic);
+  assert.ok(Number.isInteger(line.current.diagnostic.safeCount));
+  assert.ok(Number.isInteger(line.current.diagnostic.reboundCount));
+  assert.ok(Number.isInteger(line.current.diagnostic.riskCount));
+  assert.ok(Number.isInteger(line.current.diagnostic.rareCount));
+  for (const key of ["one", "two", "three"]) {
+    assert.ok(["safe", "rebound", "risk", "unseen"].includes(line.current.diagnosticByHorizon[key].stage));
+    assert.equal(line.current.diagnosticByHorizon[key].phases.length, 4);
+  }
+  assert.equal(line.current.predictedRate, line.current.threeWindowRate);
   assert.ok(Number.isFinite(line.current.submodels.one.predictedRate));
   assert.ok(Number.isFinite(line.current.submodels.two.predictedRate));
   assert.ok(Number.isFinite(line.current.submodels.three.predictedRate));
+  assert.ok(line.current.submodels.one.state);
+  assert.ok(line.current.submodels.two.state);
+  assert.ok(line.current.submodels.three.state);
+  assert.ok(Number.isFinite(line.current.submodels.one.edge));
+  assert.ok(Number.isFinite(line.current.submodels.two.edge));
+  assert.ok(Number.isFinite(line.current.submodels.three.edge));
+  for (const key of ["one", "two", "three"]) {
+    const realtime = line.current.realtimeByHorizon[key];
+    for (const period of ["year", "month", "halfMonth", "week", "recent12"]) {
+      assert.ok(Number.isFinite(realtime[period].rate), `${line.id}/${key}/${period} missing`);
+      assert.ok(Number.isFinite(realtime[period].delta), `${line.id}/${key}/${period} delta missing`);
+      assert.ok(["样本不足", "转强", "转弱", "稳定"].includes(realtime[period].trend));
+    }
+  }
   assert.match(line.current.riskPattern, /^(safe|risk)-(safe|risk)-(safe|risk)\|(safe|risk)-(safe|risk)-(safe|risk)$/);
   assert.equal(line.current.riskLevels.length, 3);
   assert.ok(Number.isFinite(line.current.directionPredictions.forward.predictedRate));
