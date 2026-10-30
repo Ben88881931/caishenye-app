@@ -198,9 +198,12 @@ def main():
         else:
             fail("app.js 缺少目录长按排序、导航拖动排序或表头长按排序")
 
-        for func in ["renderUltimateMode", "renderChaseNumber", "renderOrderLog"]:
-            if f"function {func}" not in app_text:
-                fail(f"app.js 缺少终极模型函数 {func}")
+        missing_functions = [
+            func for func in ["renderUltimateMode", "renderChaseNumber", "renderOrderLog"]
+            if f"function {func}" not in app_text
+        ]
+        if missing_functions:
+            fail("app.js 缺少终极模型函数 " + ", ".join(missing_functions))
         else:
             pass_("追号/追推荐/追三期下单页面函数存在")
         if (
@@ -259,7 +262,7 @@ def main():
             pass_("顶部用工具类型标签加可排序的二级页面表头，左侧抽屉支持轻触、搜索、最近访问、拖动和隐藏恢复")
         else:
             fail("顶部分类表头缺失，或左侧抽屉缺少轻触、页面搜索、最近访问、自动收起、拖动或隐藏恢复逻辑")
-        flow_ids = ["overview", "pick3", "formulas", "windowmult", "orderlog"]
+        flow_ids = ["overview", "pick3", "formulas", "personalityforecast", "orderlog"]
         flow_pos = [app_text.find("{ id: " + chr(34) + fid + chr(34)) for fid in flow_ids]
         if all(pos >= 0 for pos in flow_pos) and flow_pos == sorted(flow_pos):
             pass_("导航按模型流程排序")
@@ -301,26 +304,10 @@ def main():
             pass_("除今日外的每个页面都显示最近访问和六个常用入口")
         else:
             fail("页面底部缺少统一的最近访问和常用入口快捷区")
-        if "function wmStageFormulaForSimulation" in app_text and "13线下注期公式" in app_text and "建议第" in app_text and "期下注" in app_text and "stageRates" in app_text:
-            pass_("13线分别按测试数据给出第1/2/3期下注公式")
-        else:
-            fail("13线下注期公式未按各线测试数据生成")
         if "function personalityExecutionSelection" in app_text and "系统下注期建议" in app_text and "系统建议第" in app_text and "金额由你决定" in app_text:
             pass_("系统每期只建议2至3条线路、下注期和建议号，金额由用户决定")
         else:
             fail("系统建议未按线路、窗口、下注期和建议号收口")
-        if "function wmYearStats" in app_text and "13线逐年测试对比" in app_text and "年度稳健最优" in app_text and "全周期收益最高" in app_text and "正收益年" in app_text and "最近3年" in app_text:
-            pass_("窗口倍投测试逐年对比13线并区分年度稳健与全周期最优")
-        else:
-            fail("窗口倍投测试缺少逐年对比或最优公式口径不完整")
-        if "var orderedLines = EXEC_LINES.slice();" in app_text and "wm-formula-panel" in app_text and "wm-formula-row" in app_text and "orderedLines.forEach" in app_text and "stageFormula" in app_text and "建议第" in app_text:
-            pass_("13线下注期公式按固定线路顺序统一显示")
-        else:
-            fail("13线下注期公式未按固定线路顺序统一显示")
-        if "function wmYearBest" in app_text and "年最优规律排名" in app_text and "今年最优" in app_text and "今年测试仓位" in app_text and "全周期验证" in app_text and "13线三期监控" in app_text:
-            pass_("窗口倍投测试标注今年最优规律、测试仓位和正式版候选状态")
-        else:
-            fail("窗口倍投测试缺少今年最优规律或正式版候选标注")
         if "function modelPairStrip" in app_text and "probabilityTopPicksForTarget" in app_text and 'var lineNames = ["A", "B", "C"]' in app_text and 'return lineNames[index] + row.tail;' in app_text and 'source.source === "snapshot" ? "开奖前快照"' in app_text and "model-pair-card--p3" in app_text and "前三名概率接近" in app_text and "modelPairStrip(latest + 1)" in app_text and "今日单期概率候选" in app_text and "font-size: 30px" in styles_text:
             pass_("所有页面顶部把A/B/C加当期尾号作为主标题，并保留296期锁定快照")
         else:
@@ -348,22 +335,10 @@ def main():
             pass_("旧D1/D2四条推荐线已从正式执行线路移除")
         else:
             fail("当下窗口D1/D2仓位缺少尾号或仍重复显示来源标签")
-        if "MODEL.bounceCritical " in app_text and "BOUNCE[" not in app_text:
-            pass_("页面运行使用MODEL.bounceCritical，无未定义BOUNCE引用")
-        else:
-            fail("页面仍引用未定义BOUNCE或未使用MODEL.bounceCritical")
         if "position-card-grid" in app_text and "position-card--execution" in app_text and "position-card--funds" not in app_text:
             pass_("当前仓位卡片使用统一尺寸样式")
         else:
             fail("当前仓位卡片未使用统一尺寸样式")
-        if "wm-line-selector" in app_text:
-            pass_("窗口倍投测试13线按钮使用响应式网格容器")
-        else:
-            fail("窗口倍投测试13线按钮未使用响应式网格容器")
-        if "background:#2563eb;color:#fff;border-color:#1d4ed8" in app_text and "box-shadow:0 0 0 2px #bfdbfe" in app_text:
-            pass_("窗口倍投测试13线按钮选中态使用蓝色高亮")
-        else:
-            fail("窗口倍投测试13线按钮选中态仍为黑色或缺少高亮")
         if "function autoSettleSimpleOrders" in app_text and "settleSimpleOrder" in app_text:
             pass_("下单记录表含自动结算")
         else:
