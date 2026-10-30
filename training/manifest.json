@@ -1,29 +1,29 @@
 {
   "schemaVersion": "training-schema-v1",
-  "generatedAt": "2026-10-30T06:46:20.258385Z",
-  "database": "caishenye_training.sqlite",
-  "latestPeriod": 302,
+  "generatedAt": "2026-10-30T15:08:57.655197Z",
+  "database": "training.sqlite",
+  "latestPeriod": 303,
   "latestYear": 2026,
   "personalityModelVersion": "next-window-v8.1-20261030",
   "counts": {
-    "periods": 1467,
+    "periods": 1468,
     "lines": 13,
-    "personality_snapshots": 11,
-    "personality_predictions": 139,
-    "probability_snapshots": 10,
-    "probability_predictions": 100,
-    "core_snapshots": 42,
-    "core_picks": 84,
+    "personality_snapshots": 12,
+    "personality_predictions": 152,
+    "probability_snapshots": 11,
+    "probability_predictions": 110,
+    "core_snapshots": 43,
+    "core_picks": 86,
     "model_line_features": 13,
     "model_reviews": 1,
-    "training_examples": 139,
-    "historical_windows": 14650
+    "training_examples": 152,
+    "historical_windows": 14660
   },
   "sourceHashes": {
-    "data.js": "8702e59a4379d0fbfcc548926dbe389f444dfdbeb58b6918a9661f967e75e74b",
-    "personality_snapshots.json": "8fa44f0c4860a1bdf890fd4acd3fae341c68d2ce37120925ba2f8f07e60be13a",
-    "probability_snapshots.json": "1bcc6144a227a2f63716a8d18ab3499ec7fb7f5ce126bf4faa87349caffc0895",
-    "prediction_snapshots.json": "0a2460ec0fd8311b5b2a7c5ed98416b42d783adf64b2d1732557b1b9579f42a3",
-    "personality_model.json": "4bf641fd7baa29d1e145fde82e3ad95152c8d01a452a81f08f82cfdfad84a05c"
+    "data.js": "abc500a676b0e5b3c54b4c559c24100f1402cf83753196629ea394db757bdf8a",
+    "personality_snapshots.json": "24c2c2d09592ac77b0761fb1e54c679e08375c259f6664346bd900b288245ec3",
+    "probability_snapshots.json": "b7e1fde6094fe7fd33d2de06f0ac286279f750aea1595ca22a54de794937da4b",
+    "prediction_snapshots.json": "796863d113b7ab1eb26d4405692c7dd69daf6f17be09e99ec26429f92f0ed03f",
+    "personality_model.json": "8f8a5f96566f8a16d2d8a7b374c6c6286b328292cf185959afc2f60967a8ec41"
   }
 }
