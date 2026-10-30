@@ -7702,14 +7702,15 @@
         (diagnosticIsLocked ? "本期正式锁定候选 · 前三名" : "全量重算候选 · 前三名") +
         '</b><span>' + (diagnosticIsLocked ? "当前目标期已锁定" : "下期生效 · 当前目标期旧快照不改写") +
         '</span></div><em>' + PERSONALITY_MODEL.version + '</em></div>' +
-      '<div class="pf-top-strip">';
+      '<div class="today-picks" data-personality-forecast-top-strip>';
     top3.forEach(function (row, index) {
       var current = row.line.current;
-      html += '<article class="pf-top-card" data-personality-forecast-top="' + row.line.id + '">' +
-        '<span>#' + (index + 1) + '</span><b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
-        '<strong>' + personalityForecastPct(current.threeWindowRate || current.predictedRate) + '</strong>' +
-        '<small>三期增量 ' + personalityForecastPP(current.threeWindowEdge) + '</small>' +
-        '<em>' + row.diagnostic.summary + '</em></article>';
+      html += '<article class="today-pick" data-personality-forecast-top="' + row.line.id + '">' +
+        '<span>排名#' + (index + 1) + ' · ' + row.diagnostic.safeCount + '安/' +
+        row.diagnostic.reboundCount + '反/' + row.diagnostic.riskCount + '险</span>' +
+        '<b>' + lineDisplayLabel(row.line, current.tail) + '</b>' +
+        '<small>三期 ' + personalityForecastPct(current.threeWindowRate || current.predictedRate) +
+        ' · ' + personalityForecastPP(current.threeWindowEdge) + '</small></article>';
     });
     html += '</div></section>';
 

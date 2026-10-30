@@ -177,6 +177,22 @@ test("personality forecast shows three independent horizons and a stable snapsho
   await expect(page.locator("body")).toHaveAttribute("data-page", "personalityforecast");
   await expect(page.locator("[data-personality-forecast-page]")).toContainText("逐线三窗口性格预测");
   await expect(page.locator("[data-personality-forecast-top]")).toHaveCount(3);
+  await expect(page.locator(".today-picks [data-personality-forecast-top].today-pick")).toHaveCount(3);
+  const topCardStyles = await page.locator("[data-personality-forecast-top]").evaluateAll((cards) => (
+    cards.map((card) => {
+      const labelStyle = getComputedStyle(card.querySelector("b"));
+      return {
+        textAlign: getComputedStyle(card).textAlign,
+        color: labelStyle.color,
+        fontSize: Number.parseFloat(labelStyle.fontSize),
+        top: card.getBoundingClientRect().top,
+      };
+    })
+  ));
+  expect(topCardStyles.every((item) => item.textAlign === "center")).toBe(true);
+  expect(topCardStyles.every((item) => item.color === "rgb(29, 78, 216)")).toBe(true);
+  expect(topCardStyles.every((item) => item.fontSize >= 21)).toBe(true);
+  expect(new Set(topCardStyles.map((item) => Math.round(item.top))).size).toBe(1);
   await expect(page.locator("[data-personality-forecast-ranking] [data-line-id]")).toHaveCount(13);
   await expect(page.locator("[data-personality-forecast-horizon]")).toHaveCount(3);
   await expect(page.locator(".pf-cycle")).toContainText("结算旧快照");
