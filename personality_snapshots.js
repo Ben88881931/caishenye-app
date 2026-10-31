@@ -2647,10 +2647,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
               "period": 303,
               "tail": 6,
               "hit": false
+            },
+            {
+              "period": 304,
+              "tail": 6,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 3
         },
         {
           "id": "tail7",
@@ -3797,10 +3802,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
               "period": 303,
               "tail": 1,
               "hit": false
+            },
+            {
+              "period": 304,
+              "tail": 1,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 2
         },
         {
           "id": "tail1",
@@ -4018,10 +4028,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
               "period": 303,
               "tail": 1,
               "hit": false
+            },
+            {
+              "period": 304,
+              "tail": 1,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 2
         },
         {
           "id": "tail0",
@@ -4902,10 +4917,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
               "period": 303,
               "tail": 4,
               "hit": false
+            },
+            {
+              "period": 304,
+              "tail": 4,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 2
         },
         {
           "id": "prob1",
@@ -5565,6 +5585,11 @@ window.APP_PERSONALITY_SNAPSHOTS = {
               "period": 303,
               "tail": 2,
               "hit": false
+            },
+            {
+              "period": 304,
+              "tail": 2,
+              "hit": false
             }
           ],
           "status": "pending",
@@ -5784,6 +5809,11 @@ window.APP_PERSONALITY_SNAPSHOTS = {
           "attempts": [
             {
               "period": 303,
+              "tail": 2,
+              "hit": false
+            },
+            {
+              "period": 304,
               "tail": 2,
               "hit": false
             }
@@ -6228,10 +6258,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
               "period": 303,
               "tail": 6,
               "hit": false
+            },
+            {
+              "period": 304,
+              "tail": 6,
+              "hit": true
             }
           ],
-          "status": "pending",
-          "hitIndex": null
+          "status": "hit",
+          "hitIndex": 2
         },
         {
           "id": "tail5",
@@ -6447,6 +6482,11 @@ window.APP_PERSONALITY_SNAPSHOTS = {
           "attempts": [
             {
               "period": 303,
+              "tail": 5,
+              "hit": false
+            },
+            {
+              "period": 304,
               "tail": 5,
               "hit": false
             }
@@ -6845,7 +6885,13 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 44,
             "samples": 46
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 7,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -7210,9 +7256,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 49,
             "samples": 58
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 3,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail0",
@@ -7575,9 +7627,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 213,
             "samples": 246
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 0,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail1",
@@ -7940,9 +7998,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 150,
             "samples": 163
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 1,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "prob1",
@@ -8305,9 +8369,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 186,
             "samples": 208
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 3,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail8",
@@ -8670,7 +8740,13 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 141,
             "samples": 155
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 8,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -9035,7 +9111,13 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 236,
             "samples": 261
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 9,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -9400,9 +9482,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 68,
             "samples": 77
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 1,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail5",
@@ -9765,7 +9853,13 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 117,
             "samples": 129
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 5,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -10130,9 +10224,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 117,
             "samples": 127
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 4,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "tail2",
@@ -10495,7 +10595,13 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 203,
             "samples": 221
           },
-          "attempts": [],
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 2,
+              "hit": false
+            }
+          ],
           "status": "pending",
           "hitIndex": null
         },
@@ -10860,9 +10966,15 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 147,
             "samples": 156
           },
-          "attempts": [],
-          "status": "pending",
-          "hitIndex": null
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 6,
+              "hit": true
+            }
+          ],
+          "status": "hit",
+          "hitIndex": 1
         },
         {
           "id": "prob3",
@@ -11225,6 +11337,4787 @@ window.APP_PERSONALITY_SNAPSHOTS = {
             "hits": 235,
             "samples": 255
           },
+          "attempts": [
+            {
+              "period": 304,
+              "tail": 2,
+              "hit": false
+            }
+          ],
+          "status": "pending",
+          "hitIndex": null
+        }
+      ]
+    },
+    {
+      "version": "next-window-v8.1-20261030",
+      "generatedAt": "2026-10-31T13:56:28.343Z",
+      "year": 2026,
+      "basedOn": 304,
+      "target": 305,
+      "targetGlobal": 1470,
+      "candidates": [
+        "tail0",
+        "tail7",
+        "tail3",
+        "prob1",
+        "tail8",
+        "prob2",
+        "tail9",
+        "tail1",
+        "tail6",
+        "tail5",
+        "tail2",
+        "tail4",
+        "prob3"
+      ],
+      "top3": [
+        "tail0",
+        "tail7",
+        "tail3"
+      ],
+      "lines": [
+        {
+          "id": "tail0",
+          "label": "尾0",
+          "tail": 0,
+          "predictedRate": 0.8924123654149768,
+          "threeWindowRate": 0.8924123654149768,
+          "threeWindowBaseline": 0.8554234867101996,
+          "threeWindowEdge": 0.036988878704777184,
+          "compositeScore": 0.030131962044073535,
+          "safeHorizons": 3,
+          "horizonEdges": [
+            0.030131962044073535,
+            0.06619803581602013,
+            0.036988878704777184
+          ],
+          "baseline": 0.8554234867101996,
+          "edge": 0.036988878704777184,
+          "state": "hit1|one",
+          "stateByHorizon": {
+            "one": "hit1|one",
+            "two": "hit1|one",
+            "three": "hit1|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗第1期命中 · 首次",
+            "two": "上一窗第1期命中 · 首次",
+            "three": "上一窗第1期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 158,
+                "rate": 0.5197368421052632,
+                "longRate": 0.47515316541865216,
+                "delta": 0.04458367668661101,
+                "z": 1.5566091102602941,
+                "trend": "转强"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 16,
+                "rate": 0.5161290322580645,
+                "longRate": 0.47515316541865216,
+                "delta": 0.040975866839412345,
+                "z": 0.4568523804411137,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 10,
+                "rate": 0.625,
+                "longRate": 0.47515316541865216,
+                "delta": 0.14984683458134784,
+                "z": 1.2002575872177133,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 4,
+                "rate": 0.5714285714285714,
+                "longRate": 0.47515316541865216,
+                "delta": 0.09627540600991924,
+                "z": 0.5100717537351377,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 7,
+                "rate": 0.5833333333333334,
+                "longRate": 0.47515316541865216,
+                "delta": 0.10818016791468121,
+                "z": 0.7504213295479335,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 158,
+                "hits": 125,
+                "rate": 0.7911392405063291,
+                "longRate": 0.7525035765379113,
+                "delta": 0.03863566396841778,
+                "z": 1.1253255404170466,
+                "trend": "转强"
+              },
+              "month": {
+                "windows": 16,
+                "hits": 11,
+                "rate": 0.6875,
+                "longRate": 0.7525035765379113,
+                "delta": -0.06500357653791133,
+                "z": -0.6025020041672935,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 9,
+                "hits": 7,
+                "rate": 0.7777777777777778,
+                "longRate": 0.7525035765379113,
+                "delta": 0.025274201239866456,
+                "z": 0.1756952199222367,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 4,
+                "hits": 3,
+                "rate": 0.75,
+                "longRate": 0.7525035765379113,
+                "delta": -0.002503576537911334,
+                "z": -0.011602514523166732,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 8,
+                "rate": 0.6666666666666666,
+                "longRate": 0.7525035765379113,
+                "delta": -0.0858369098712447,
+                "z": -0.6890106737033252,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 158,
+                "hits": 144,
+                "rate": 0.9113924050632911,
+                "longRate": 0.8669527896995708,
+                "delta": 0.04443961536372032,
+                "z": 1.6447436722017856,
+                "trend": "转强"
+              },
+              "month": {
+                "windows": 16,
+                "hits": 14,
+                "rate": 0.875,
+                "longRate": 0.8669527896995708,
+                "delta": 0.008047210300429208,
+                "z": 0.09477738714493628,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 9,
+                "hits": 8,
+                "rate": 0.8888888888888888,
+                "longRate": 0.8669527896995708,
+                "delta": 0.021936099189318048,
+                "z": 0.19376710260742447,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 4,
+                "hits": 3,
+                "rate": 0.75,
+                "longRate": 0.8669527896995708,
+                "delta": -0.11695278969957079,
+                "z": -0.688715679919868,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 10,
+                "rate": 0.8333333333333334,
+                "longRate": 0.8669527896995708,
+                "delta": -0.03361945636623742,
+                "z": -0.34291043321563325,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "safe",
+              "edge": 0.030131962044073535,
+              "samples": 359,
+              "hits": 182,
+              "actualRate": 0.5069637883008357,
+              "rare": false,
+              "upCount": 4,
+              "downCount": 0,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 158,
+                  "rate": 0.5197368421052632,
+                  "delta": 0.04458367668661101,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 16,
+                  "rate": 0.5161290322580645,
+                  "delta": 0.040975866839412345,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 10,
+                  "rate": 0.625,
+                  "delta": 0.14984683458134784,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 4,
+                  "rate": 0.5714285714285714,
+                  "delta": 0.09627540600991924,
+                  "direction": "up"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "safe",
+              "edge": 0.06619803581602013,
+              "samples": 85,
+              "hits": 68,
+              "actualRate": 0.8,
+              "rare": false,
+              "upCount": 2,
+              "downCount": 1,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 158,
+                  "hits": 125,
+                  "rate": 0.7911392405063291,
+                  "delta": 0.03863566396841778,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 16,
+                  "hits": 11,
+                  "rate": 0.6875,
+                  "delta": -0.06500357653791133,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 9,
+                  "hits": 7,
+                  "rate": 0.7777777777777778,
+                  "delta": 0.025274201239866456,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 4,
+                  "hits": 3,
+                  "rate": 0.75,
+                  "delta": -0.002503576537911334,
+                  "direction": "flat"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "safe",
+              "edge": 0.036988878704777184,
+              "samples": 42,
+              "hits": 38,
+              "actualRate": 0.9047619047619048,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 158,
+                  "hits": 144,
+                  "rate": 0.9113924050632911,
+                  "delta": 0.04443961536372032,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 16,
+                  "hits": 14,
+                  "rate": 0.875,
+                  "delta": 0.008047210300429208,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 9,
+                  "hits": 8,
+                  "rate": 0.8888888888888888,
+                  "delta": 0.021936099189318048,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 4,
+                  "hits": 3,
+                  "rate": 0.75,
+                  "delta": -0.11695278969957079,
+                  "direction": "down"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 3,
+            "reboundCount": 0,
+            "riskCount": 0,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 9,
+            "downCount": 2,
+            "worstEdge": 0.030131962044073535
+          },
+          "riskPattern": "safe-safe-safe|safe-safe-safe",
+          "riskLevels": [
+            "safe",
+            "safe",
+            "safe"
+          ],
+          "cascadeDecision": "三窗独立一致安全·高分",
+          "forward": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.8664028713697699,
+            "hits": 214,
+            "samples": 247
+          },
+          "reverse": {
+            "pattern": "safe-safe-safe",
+            "predictedRate": 0.8664028713697699,
+            "hits": 214,
+            "samples": 247
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail7",
+          "label": "尾7",
+          "tail": 7,
+          "predictedRate": 0.9107384461834896,
+          "threeWindowRate": 0.9107384461834896,
+          "threeWindowBaseline": 0.9097201442656373,
+          "threeWindowEdge": 0.001018301917852349,
+          "compositeScore": -0.013660675607578221,
+          "safeHorizons": 1,
+          "horizonEdges": [
+            -0.013660675607578221,
+            0.04482204238812437,
+            0.001018301917852349
+          ],
+          "baseline": 0.9097201442656373,
+          "edge": 0.001018301917852349,
+          "state": "hit2|one",
+          "stateByHorizon": {
+            "one": "miss|one",
+            "two": "hit2|one",
+            "three": "hit2|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗全错 · 首次",
+            "two": "上一窗第2期命中 · 首次",
+            "three": "上一窗第2期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 172,
+                "rate": 0.5657894736842105,
+                "longRate": 0.5513955071477196,
+                "delta": 0.014393966536490943,
+                "z": 0.5046076840290789,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 17,
+                "rate": 0.5483870967741935,
+                "longRate": 0.5513955071477196,
+                "delta": -0.0030084103735260603,
+                "z": -0.033678636732225466,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 10,
+                "rate": 0.625,
+                "longRate": 0.5513955071477196,
+                "delta": 0.07360449285228043,
+                "z": 0.5919716316759762,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 4,
+                "rate": 0.5714285714285714,
+                "longRate": 0.5513955071477196,
+                "delta": 0.02003306428085183,
+                "z": 0.10656951360781816,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 7,
+                "rate": 0.5833333333333334,
+                "longRate": 0.5513955071477196,
+                "delta": 0.031937826185613805,
+                "z": 0.22245007427412783,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 172,
+                "hits": 137,
+                "rate": 0.7965116279069767,
+                "longRate": 0.7913580246913581,
+                "delta": 0.005153603215618641,
+                "z": 0.16633661289651452,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 17,
+                "hits": 13,
+                "rate": 0.7647058823529411,
+                "longRate": 0.7913580246913581,
+                "delta": -0.02665214233841695,
+                "z": -0.2704389471424184,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 10,
+                "hits": 9,
+                "rate": 0.9,
+                "longRate": 0.7913580246913581,
+                "delta": 0.10864197530864195,
+                "z": 0.8454935621312046,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 4,
+                "hits": 4,
+                "rate": 1,
+                "longRate": 0.7913580246913581,
+                "delta": 0.20864197530864192,
+                "z": 1.0269382571933734,
+                "trend": "转强"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 11,
+                "rate": 0.9166666666666666,
+                "longRate": 0.7913580246913581,
+                "delta": 0.12530864197530855,
+                "z": 1.0682780332902866,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1467,
+                "end": 1468,
+                "outcome": "hit2",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 172,
+                "hits": 158,
+                "rate": 0.9186046511627907,
+                "longRate": 0.917283950617284,
+                "delta": 0.0013207005455067033,
+                "z": 0.06288134049069728,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 17,
+                "hits": 16,
+                "rate": 0.9411764705882353,
+                "longRate": 0.917283950617284,
+                "delta": 0.02389251997095132,
+                "z": 0.3576346825757385,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 10,
+                "hits": 10,
+                "rate": 1,
+                "longRate": 0.917283950617284,
+                "delta": 0.08271604938271604,
+                "z": 0.9496050039496658,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 4,
+                "hits": 4,
+                "rate": 1,
+                "longRate": 0.917283950617284,
+                "delta": 0.08271604938271604,
+                "z": 0.6005829379948268,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.917283950617284,
+                "delta": 0.08271604938271604,
+                "z": 1.0402401627660287,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1467,
+                "end": 1468,
+                "outcome": "hit2",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "rebound",
+              "edge": -0.013660675607578221,
+              "samples": 365,
+              "hits": 196,
+              "actualRate": 0.536986301369863,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 0,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 172,
+                  "rate": 0.5657894736842105,
+                  "delta": 0.014393966536490943,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 17,
+                  "rate": 0.5483870967741935,
+                  "delta": -0.0030084103735260603,
+                  "direction": "flat"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 10,
+                  "rate": 0.625,
+                  "delta": 0.07360449285228043,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 4,
+                  "rate": 0.5714285714285714,
+                  "delta": 0.02003306428085183,
+                  "direction": "up"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "safe",
+              "edge": 0.04482204238812437,
+              "samples": 45,
+              "hits": 39,
+              "actualRate": 0.8666666666666667,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 172,
+                  "hits": 137,
+                  "rate": 0.7965116279069767,
+                  "delta": 0.005153603215618641,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 17,
+                  "hits": 13,
+                  "rate": 0.7647058823529411,
+                  "delta": -0.02665214233841695,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 10,
+                  "hits": 9,
+                  "rate": 0.9,
+                  "delta": 0.10864197530864195,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 4,
+                  "hits": 4,
+                  "rate": 1,
+                  "delta": 0.20864197530864192,
+                  "direction": "up"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "safe",
+              "edge": 0.001018301917852349,
+              "samples": 21,
+              "hits": 19,
+              "actualRate": 0.9047619047619048,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 0,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 172,
+                  "hits": 158,
+                  "rate": 0.9186046511627907,
+                  "delta": 0.0013207005455067033,
+                  "direction": "flat"
+                },
+                {
+                  "label": "本月",
+                  "windows": 17,
+                  "hits": 16,
+                  "rate": 0.9411764705882353,
+                  "delta": 0.02389251997095132,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 10,
+                  "hits": 10,
+                  "rate": 1,
+                  "delta": 0.08271604938271604,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 4,
+                  "hits": 4,
+                  "rate": 1,
+                  "delta": 0.08271604938271604,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 2,
+            "reboundCount": 1,
+            "riskCount": 0,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 9,
+            "downCount": 1,
+            "worstEdge": -0.013660675607578221
+          },
+          "riskPattern": "risk-safe-risk|risk-safe-risk",
+          "riskLevels": [
+            "risk",
+            "safe",
+            "risk"
+          ],
+          "cascadeDecision": "仅一窗安全·低分",
+          "forward": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.9007066016407557,
+            "hits": 33,
+            "samples": 37
+          },
+          "reverse": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.9007066016407557,
+            "hits": 33,
+            "samples": 37
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail3",
+          "label": "尾3",
+          "tail": 3,
+          "predictedRate": 0.9207827945384817,
+          "threeWindowRate": 0.9207827945384817,
+          "threeWindowBaseline": 0.9129682776344717,
+          "threeWindowEdge": 0.007814516904009916,
+          "compositeScore": -0.06347456908833005,
+          "safeHorizons": 2,
+          "horizonEdges": [
+            0.004367150384849472,
+            -0.06347456908833005,
+            0.007814516904009916
+          ],
+          "baseline": 0.9129682776344717,
+          "edge": 0.007814516904009916,
+          "state": "hit1|one",
+          "stateByHorizon": {
+            "one": "hit1|one",
+            "two": "hit1|one",
+            "three": "hit1|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗第1期命中 · 首次",
+            "two": "上一窗第1期命中 · 首次",
+            "three": "上一窗第1期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 154,
+                "rate": 0.506578947368421,
+                "longRate": 0.5568413886997958,
+                "delta": -0.05026244133137481,
+                "z": -1.7641480161869472,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 20,
+                "rate": 0.6451612903225806,
+                "longRate": 0.5568413886997958,
+                "delta": 0.0883199016227848,
+                "z": 0.9899062658301898,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 13,
+                "rate": 0.8125,
+                "longRate": 0.5568413886997958,
+                "delta": 0.2556586113002042,
+                "z": 2.058614685483201,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 7,
+                "rate": 1,
+                "longRate": 0.5568413886997958,
+                "delta": 0.4431586113002042,
+                "z": 2.360276391755163,
+                "trend": "转强"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.5568413886997958,
+                "delta": 0.4431586113002042,
+                "z": 3.090327207495794,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 154,
+                "hits": 119,
+                "rate": 0.7727272727272727,
+                "longRate": 0.8058608058608059,
+                "delta": -0.03313353313353318,
+                "z": -1.0395406601150516,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 20,
+                "hits": 18,
+                "rate": 0.9,
+                "longRate": 0.8058608058608059,
+                "delta": 0.09413919413919414,
+                "z": 1.0643852460329182,
+                "trend": "转强"
+              },
+              "halfMonth": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.8058608058608059,
+                "delta": 0.19413919413919412,
+                "z": 1.7002673586554236,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 7,
+                "rate": 1,
+                "longRate": 0.8058608058608059,
+                "delta": 0.19413919413919412,
+                "z": 1.2986006454501846,
+                "trend": "转强"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.8058608058608059,
+                "delta": 0.19413919413919412,
+                "z": 1.7002673586554236,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 154,
+                "hits": 137,
+                "rate": 0.8896103896103896,
+                "longRate": 0.9205378973105135,
+                "delta": -0.03092750770012387,
+                "z": -1.4190719685809698,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 20,
+                "hits": 19,
+                "rate": 0.95,
+                "longRate": 0.9205378973105135,
+                "delta": 0.029462102689486458,
+                "z": 0.4871670132979466,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.9205378973105135,
+                "delta": 0.0794621026894865,
+                "z": 1.017770393411588,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 7,
+                "rate": 1,
+                "longRate": 0.9205378973105135,
+                "delta": 0.0794621026894865,
+                "z": 0.7773349779822645,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.9205378973105135,
+                "delta": 0.0794621026894865,
+                "z": 1.017770393411588,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "safe",
+              "edge": 0.004367150384849472,
+              "samples": 358,
+              "hits": 201,
+              "actualRate": 0.5614525139664804,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 154,
+                  "rate": 0.506578947368421,
+                  "delta": -0.05026244133137481,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 20,
+                  "rate": 0.6451612903225806,
+                  "delta": 0.0883199016227848,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 13,
+                  "rate": 0.8125,
+                  "delta": 0.2556586113002042,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 7,
+                  "rate": 1,
+                  "delta": 0.4431586113002042,
+                  "direction": "up"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "rebound",
+              "edge": -0.06347456908833005,
+              "samples": 95,
+              "hits": 69,
+              "actualRate": 0.7263157894736842,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 154,
+                  "hits": 119,
+                  "rate": 0.7727272727272727,
+                  "delta": -0.03313353313353318,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 20,
+                  "hits": 18,
+                  "rate": 0.9,
+                  "delta": 0.09413919413919414,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 12,
+                  "hits": 12,
+                  "rate": 1,
+                  "delta": 0.19413919413919412,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 7,
+                  "rate": 1,
+                  "delta": 0.19413919413919412,
+                  "direction": "up"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "safe",
+              "edge": 0.007814516904009916,
+              "samples": 38,
+              "hits": 35,
+              "actualRate": 0.9210526315789473,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 154,
+                  "hits": 137,
+                  "rate": 0.8896103896103896,
+                  "delta": -0.03092750770012387,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 20,
+                  "hits": 19,
+                  "rate": 0.95,
+                  "delta": 0.029462102689486458,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 12,
+                  "hits": 12,
+                  "rate": 1,
+                  "delta": 0.0794621026894865,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 7,
+                  "rate": 1,
+                  "delta": 0.0794621026894865,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 2,
+            "reboundCount": 1,
+            "riskCount": 0,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 9,
+            "downCount": 3,
+            "worstEdge": -0.06347456908833005
+          },
+          "riskPattern": "safe-risk-safe|safe-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "两窗独立安全·观察",
+          "forward": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8641718215798966,
+            "hits": 49,
+            "samples": 58
+          },
+          "reverse": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8641718215798966,
+            "hits": 49,
+            "samples": 58
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob1",
+          "label": "A",
+          "tail": 3,
+          "predictedRate": 0.9079369240060752,
+          "threeWindowRate": 0.9079369240060752,
+          "threeWindowBaseline": 0.9129682776344717,
+          "threeWindowEdge": -0.005031353628396573,
+          "compositeScore": -0.04528425778520495,
+          "safeHorizons": 1,
+          "horizonEdges": [
+            0.019889233216111912,
+            -0.04528425778520495,
+            -0.005031353628396573
+          ],
+          "baseline": 0.9129682776344717,
+          "edge": -0.005031353628396573,
+          "state": "hit1|one",
+          "stateByHorizon": {
+            "one": "hit1|one",
+            "two": "hit1|one",
+            "three": "hit1|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗第1期命中 · 首次",
+            "two": "上一窗第1期命中 · 首次",
+            "three": "上一窗第1期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 170,
+                "rate": 0.5592105263157895,
+                "longRate": 0.5697753573859768,
+                "delta": -0.010564831070187353,
+                "z": -0.3720487730128246,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 21,
+                "rate": 0.6774193548387096,
+                "longRate": 0.5697753573859768,
+                "delta": 0.10764399745273279,
+                "z": 1.210517833376351,
+                "trend": "转强"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 15,
+                "rate": 0.9375,
+                "longRate": 0.5697753573859768,
+                "delta": 0.36772464261402316,
+                "z": 2.9708672997847696,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 7,
+                "rate": 1,
+                "longRate": 0.5697753573859768,
+                "delta": 0.43022464261402316,
+                "z": 2.299031015041827,
+                "trend": "转强"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 11,
+                "rate": 0.9166666666666666,
+                "longRate": 0.5697753573859768,
+                "delta": 0.3468913092806898,
+                "z": 2.4270826751357077,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 178,
+                "hits": 146,
+                "rate": 0.8202247191011236,
+                "longRate": 0.8088942307692307,
+                "delta": 0.011330488331892874,
+                "z": 0.38448186586390276,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 22,
+                "hits": 20,
+                "rate": 0.9090909090909091,
+                "longRate": 0.8088942307692307,
+                "delta": 0.10019667832167833,
+                "z": 1.1953136985786401,
+                "trend": "转强"
+              },
+              "halfMonth": {
+                "windows": 14,
+                "hits": 13,
+                "rate": 0.9285714285714286,
+                "longRate": 0.8088942307692307,
+                "delta": 0.11967719780219788,
+                "z": 1.138918537208647,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 6,
+                "hits": 6,
+                "rate": 1,
+                "longRate": 0.8088942307692307,
+                "delta": 0.19110576923076927,
+                "z": 1.1906021301813103,
+                "trend": "转强"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 11,
+                "rate": 0.9166666666666666,
+                "longRate": 0.8088942307692307,
+                "delta": 0.1077724358974359,
+                "z": 0.9495450060610858,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 178,
+                "hits": 164,
+                "rate": 0.9213483146067416,
+                "longRate": 0.9146634615384616,
+                "delta": 0.006684853068280039,
+                "z": 0.31922999469806235,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 22,
+                "hits": 21,
+                "rate": 0.9545454545454546,
+                "longRate": 0.9146634615384616,
+                "delta": 0.03988199300699302,
+                "z": 0.6695607959462816,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 14,
+                "hits": 14,
+                "rate": 1,
+                "longRate": 0.9146634615384616,
+                "delta": 0.08533653846153844,
+                "z": 1.1428806079813711,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 6,
+                "hits": 6,
+                "rate": 1,
+                "longRate": 0.9146634615384616,
+                "delta": 0.08533653846153844,
+                "z": 0.7481909851959692,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.9146634615384616,
+                "delta": 0.08533653846153844,
+                "z": 1.0581018385094272,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "safe",
+              "edge": 0.019889233216111912,
+              "samples": 350,
+              "hits": 202,
+              "actualRate": 0.5771428571428572,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 170,
+                  "rate": 0.5592105263157895,
+                  "delta": -0.010564831070187353,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 21,
+                  "rate": 0.6774193548387096,
+                  "delta": 0.10764399745273279,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 15,
+                  "rate": 0.9375,
+                  "delta": 0.36772464261402316,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 7,
+                  "rate": 1,
+                  "delta": 0.43022464261402316,
+                  "direction": "up"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "rebound",
+              "edge": -0.04528425778520495,
+              "samples": 91,
+              "hits": 68,
+              "actualRate": 0.7472527472527473,
+              "rare": false,
+              "upCount": 4,
+              "downCount": 0,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 178,
+                  "hits": 146,
+                  "rate": 0.8202247191011236,
+                  "delta": 0.011330488331892874,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 22,
+                  "hits": 20,
+                  "rate": 0.9090909090909091,
+                  "delta": 0.10019667832167833,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 14,
+                  "hits": 13,
+                  "rate": 0.9285714285714286,
+                  "delta": 0.11967719780219788,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 6,
+                  "hits": 6,
+                  "rate": 1,
+                  "delta": 0.19110576923076927,
+                  "direction": "up"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "rebound",
+              "edge": -0.005031353628396573,
+              "samples": 42,
+              "hits": 38,
+              "actualRate": 0.9047619047619048,
+              "rare": false,
+              "upCount": 4,
+              "downCount": 0,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 178,
+                  "hits": 164,
+                  "rate": 0.9213483146067416,
+                  "delta": 0.006684853068280039,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 22,
+                  "hits": 21,
+                  "rate": 0.9545454545454546,
+                  "delta": 0.03988199300699302,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 14,
+                  "hits": 14,
+                  "rate": 1,
+                  "delta": 0.08533653846153844,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 6,
+                  "hits": 6,
+                  "rate": 1,
+                  "delta": 0.08533653846153844,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 1,
+            "reboundCount": 2,
+            "riskCount": 0,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 11,
+            "downCount": 1,
+            "worstEdge": -0.04528425778520495
+          },
+          "riskPattern": "safe-risk-risk|risk-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "仅一窗安全·低分",
+          "forward": {
+            "pattern": "safe-risk-risk",
+            "predictedRate": 0.8960179354753363,
+            "hits": 186,
+            "samples": 208
+          },
+          "reverse": {
+            "pattern": "risk-risk-safe",
+            "predictedRate": 0.8960179354753363,
+            "hits": 186,
+            "samples": 208
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail8",
+          "label": "尾8",
+          "tail": 8,
+          "predictedRate": 0.8617609167436472,
+          "threeWindowRate": 0.8617609167436472,
+          "threeWindowBaseline": 0.9059705274333404,
+          "threeWindowEdge": -0.0442096106896932,
+          "compositeScore": -0.0442096106896932,
+          "safeHorizons": 1,
+          "horizonEdges": [
+            0.011812117086453466,
+            -0.007963777195058586,
+            -0.0442096106896932
+          ],
+          "baseline": 0.9059705274333404,
+          "edge": -0.0442096106896932,
+          "state": "hit3|one",
+          "stateByHorizon": {
+            "one": "miss|one",
+            "two": "miss|one",
+            "three": "hit3|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗全错 · 首次",
+            "two": "上一窗全错 · 首次",
+            "three": "上一窗第3期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 171,
+                "rate": 0.5625,
+                "longRate": 0.5452688904016337,
+                "delta": 0.017231109598366268,
+                "z": 0.6033472576175148,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 19,
+                "rate": 0.6129032258064516,
+                "longRate": 0.5452688904016337,
+                "delta": 0.06763433540481789,
+                "z": 0.7562499871888461,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 11,
+                "rate": 0.6875,
+                "longRate": 0.5452688904016337,
+                "delta": 0.14223110959836627,
+                "z": 1.1425412692294623,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 4,
+                "rate": 0.5714285714285714,
+                "longRate": 0.5452688904016337,
+                "delta": 0.026159681026937665,
+                "z": 0.13899486969129324,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 7,
+                "rate": 0.5833333333333334,
+                "longRate": 0.5452688904016337,
+                "delta": 0.03806444293169964,
+                "z": 0.26480574799507905,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 171,
+                "hits": 141,
+                "rate": 0.8245614035087719,
+                "longRate": 0.8042394014962594,
+                "delta": 0.020322002012512552,
+                "z": 0.6697446143716919,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 19,
+                "hits": 16,
+                "rate": 0.8421052631578947,
+                "longRate": 0.8042394014962594,
+                "delta": 0.0378658616616353,
+                "z": 0.4159770102179396,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 11,
+                "hits": 9,
+                "rate": 0.8181818181818182,
+                "longRate": 0.8042394014962594,
+                "delta": 0.013942416685558845,
+                "z": 0.11654109258724715,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 3,
+                "hits": 2,
+                "rate": 0.6666666666666666,
+                "longRate": 0.8042394014962594,
+                "delta": -0.13757273482959276,
+                "z": -0.6005341138325073,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 10,
+                "rate": 0.8333333333333334,
+                "longRate": 0.8042394014962594,
+                "delta": 0.029093931837073983,
+                "z": 0.25400234421918727,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1466,
+                "end": 1467,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 171,
+                "hits": 154,
+                "rate": 0.9005847953216374,
+                "longRate": 0.9064837905236908,
+                "delta": -0.005898995202053392,
+                "z": -0.26494310961857204,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 19,
+                "hits": 18,
+                "rate": 0.9473684210526315,
+                "longRate": 0.9064837905236908,
+                "delta": 0.04088463052894076,
+                "z": 0.612087357079242,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 11,
+                "hits": 11,
+                "rate": 1,
+                "longRate": 0.9064837905236908,
+                "delta": 0.09351620947630923,
+                "z": 1.065270177094209,
+                "trend": "转强"
+              },
+              "week": {
+                "windows": 3,
+                "hits": 3,
+                "rate": 1,
+                "longRate": 0.9064837905236908,
+                "delta": 0.09351620947630923,
+                "z": 0.556319206164213,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.9064837905236908,
+                "delta": 0.09351620947630923,
+                "z": 1.112638412328426,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1466,
+                "end": 1468,
+                "outcome": "hit3",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "safe",
+              "edge": 0.011812117086453466,
+              "samples": 355,
+              "hits": 198,
+              "actualRate": 0.5577464788732395,
+              "rare": false,
+              "upCount": 4,
+              "downCount": 0,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 171,
+                  "rate": 0.5625,
+                  "delta": 0.017231109598366268,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 19,
+                  "rate": 0.6129032258064516,
+                  "delta": 0.06763433540481789,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 11,
+                  "rate": 0.6875,
+                  "delta": 0.14223110959836627,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 4,
+                  "rate": 0.5714285714285714,
+                  "delta": 0.026159681026937665,
+                  "direction": "up"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "rebound",
+              "edge": -0.007963777195058586,
+              "samples": 124,
+              "hits": 97,
+              "actualRate": 0.782258064516129,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 171,
+                  "hits": 141,
+                  "rate": 0.8245614035087719,
+                  "delta": 0.020322002012512552,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 19,
+                  "hits": 16,
+                  "rate": 0.8421052631578947,
+                  "delta": 0.0378658616616353,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 11,
+                  "hits": 9,
+                  "rate": 0.8181818181818182,
+                  "delta": 0.013942416685558845,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 3,
+                  "hits": 2,
+                  "rate": 0.6666666666666666,
+                  "delta": -0.13757273482959276,
+                  "direction": "down"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "rebound",
+              "edge": -0.0442096106896932,
+              "samples": 8,
+              "hits": 6,
+              "actualRate": 0.75,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 171,
+                  "hits": 154,
+                  "rate": 0.9005847953216374,
+                  "delta": -0.005898995202053392,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 19,
+                  "hits": 18,
+                  "rate": 0.9473684210526315,
+                  "delta": 0.04088463052894076,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 11,
+                  "hits": 11,
+                  "rate": 1,
+                  "delta": 0.09351620947630923,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 3,
+                  "hits": 3,
+                  "rate": 1,
+                  "delta": 0.09351620947630923,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 1,
+            "reboundCount": 2,
+            "riskCount": 0,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 10,
+            "downCount": 2,
+            "worstEdge": -0.0442096106896932
+          },
+          "riskPattern": "safe-risk-risk|risk-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "仅一窗安全·低分",
+          "forward": {
+            "pattern": "safe-risk-risk",
+            "predictedRate": 0.909310318107555,
+            "hits": 141,
+            "samples": 155
+          },
+          "reverse": {
+            "pattern": "risk-risk-safe",
+            "predictedRate": 0.909310318107555,
+            "hits": 141,
+            "samples": 155
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob2",
+          "label": "B",
+          "tail": 0,
+          "predictedRate": 0.9143965199701377,
+          "threeWindowRate": 0.9143965199701377,
+          "threeWindowBaseline": 0.8554234867101996,
+          "threeWindowEdge": 0.05897303325993808,
+          "compositeScore": 0.05897303325993808,
+          "safeHorizons": 2,
+          "horizonEdges": [
+            0.09083871588568126,
+            0.06115628480120494,
+            0.05897303325993808
+          ],
+          "baseline": 0.8554234867101996,
+          "edge": 0.05897303325993808,
+          "state": "hit2|one",
+          "stateByHorizon": {
+            "one": "hit1|one",
+            "two": "hit2|one",
+            "three": "hit2|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗第1期命中 · 首次",
+            "two": "上一窗第2期命中 · 首次",
+            "three": "上一窗第2期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 161,
+                "rate": 0.5296052631578947,
+                "longRate": 0.5602450646698435,
+                "delta": -0.030639801511948783,
+                "z": -1.076287654004373,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 17,
+                "rate": 0.5483870967741935,
+                "longRate": 0.5602450646698435,
+                "delta": -0.011857967895649968,
+                "z": -0.13301381088457814,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 9,
+                "rate": 0.5625,
+                "longRate": 0.5602450646698435,
+                "delta": 0.0022549353301565267,
+                "z": 0.01817187336499509,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 5,
+                "rate": 0.7142857142857143,
+                "longRate": 0.5602450646698435,
+                "delta": 0.15404064961587083,
+                "z": 0.8210885210072152,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 8,
+                "rate": 0.6666666666666666,
+                "longRate": 0.5602450646698435,
+                "delta": 0.10642160199682316,
+                "z": 0.7427215659067458,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 162,
+                "hits": 126,
+                "rate": 0.7777777777777778,
+                "longRate": 0.7916152897657214,
+                "delta": -0.013837511987943585,
+                "z": -0.43363617531369875,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 16,
+                "hits": 13,
+                "rate": 0.8125,
+                "longRate": 0.7916152897657214,
+                "delta": 0.020884710234278625,
+                "z": 0.20568301662327423,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 7,
+                "hits": 6,
+                "rate": 0.8571428571428571,
+                "longRate": 0.7916152897657214,
+                "delta": 0.06552756737713572,
+                "z": 0.42685763469234855,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 3,
+                "hits": 2,
+                "rate": 0.6666666666666666,
+                "longRate": 0.7916152897657214,
+                "delta": -0.12494862309905475,
+                "z": -0.5328464661935841,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 9,
+                "rate": 0.75,
+                "longRate": 0.7916152897657214,
+                "delta": -0.041615289765721375,
+                "z": -0.3549388467243448,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "hit2",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 162,
+                "hits": 144,
+                "rate": 0.8888888888888888,
+                "longRate": 0.906288532675709,
+                "delta": -0.01739964378682013,
+                "z": -0.7599206621863625,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 16,
+                "hits": 14,
+                "rate": 0.875,
+                "longRate": 0.906288532675709,
+                "delta": -0.03128853267570897,
+                "z": -0.42945293637534143,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 7,
+                "hits": 6,
+                "rate": 0.8571428571428571,
+                "longRate": 0.906288532675709,
+                "delta": -0.049145675532851874,
+                "z": -0.4461744711866463,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 3,
+                "hits": 2,
+                "rate": 0.6666666666666666,
+                "longRate": 0.906288532675709,
+                "delta": -0.23962186600904234,
+                "z": -1.424155664918202,
+                "trend": "转弱"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 10,
+                "rate": 0.8333333333333334,
+                "longRate": 0.906288532675709,
+                "delta": -0.0729551993423756,
+                "z": -0.8671959880719745,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "hit2",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "rebound",
+              "edge": 0.09083871588568126,
+              "samples": 369,
+              "hits": 209,
+              "actualRate": 0.5663956639566395,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 2,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 161,
+                  "rate": 0.5296052631578947,
+                  "delta": -0.030639801511948783,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 17,
+                  "rate": 0.5483870967741935,
+                  "delta": -0.011857967895649968,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 9,
+                  "rate": 0.5625,
+                  "delta": 0.0022549353301565267,
+                  "direction": "flat"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 5,
+                  "rate": 0.7142857142857143,
+                  "delta": 0.15404064961587083,
+                  "direction": "up"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "safe",
+              "edge": 0.06115628480120494,
+              "samples": 37,
+              "hits": 29,
+              "actualRate": 0.7837837837837838,
+              "rare": false,
+              "upCount": 2,
+              "downCount": 2,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 162,
+                  "hits": 126,
+                  "rate": 0.7777777777777778,
+                  "delta": -0.013837511987943585,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 16,
+                  "hits": 13,
+                  "rate": 0.8125,
+                  "delta": 0.020884710234278625,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 7,
+                  "hits": 6,
+                  "rate": 0.8571428571428571,
+                  "delta": 0.06552756737713572,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 3,
+                  "hits": 2,
+                  "rate": 0.6666666666666666,
+                  "delta": -0.12494862309905475,
+                  "direction": "down"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "rebound",
+              "edge": 0.05897303325993808,
+              "samples": 14,
+              "hits": 13,
+              "actualRate": 0.9285714285714286,
+              "rare": false,
+              "upCount": 0,
+              "downCount": 4,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 162,
+                  "hits": 144,
+                  "rate": 0.8888888888888888,
+                  "delta": -0.01739964378682013,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 16,
+                  "hits": 14,
+                  "rate": 0.875,
+                  "delta": -0.03128853267570897,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 7,
+                  "hits": 6,
+                  "rate": 0.8571428571428571,
+                  "delta": -0.049145675532851874,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 3,
+                  "hits": 2,
+                  "rate": 0.6666666666666666,
+                  "delta": -0.23962186600904234,
+                  "direction": "down"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 1,
+            "reboundCount": 2,
+            "riskCount": 0,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 3,
+            "downCount": 8,
+            "worstEdge": 0.05897303325993808
+          },
+          "riskPattern": "safe-risk-safe|safe-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "safe"
+          ],
+          "cascadeDecision": "两窗独立安全·观察",
+          "forward": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8763981512341357,
+            "hits": 38,
+            "samples": 44
+          },
+          "reverse": {
+            "pattern": "safe-risk-safe",
+            "predictedRate": 0.8763981512341357,
+            "hits": 38,
+            "samples": 44
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail9",
+          "label": "尾9",
+          "tail": 9,
+          "predictedRate": 0.9042829470931742,
+          "threeWindowRate": 0.9042829470931742,
+          "threeWindowBaseline": 0.9169176635735582,
+          "threeWindowEdge": -0.012634716480383945,
+          "compositeScore": -0.012634716480383945,
+          "safeHorizons": 1,
+          "horizonEdges": [
+            -0.0022660592037784255,
+            0.004856878820027721,
+            -0.012634716480383945
+          ],
+          "baseline": 0.9169176635735582,
+          "edge": -0.012634716480383945,
+          "state": "hit3|one",
+          "stateByHorizon": {
+            "one": "miss|one",
+            "two": "miss|one",
+            "three": "hit3|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗全错 · 首次",
+            "two": "上一窗全错 · 首次",
+            "three": "上一窗第3期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 181,
+                "rate": 0.5953947368421053,
+                "longRate": 0.5636487406398911,
+                "delta": 0.03174599620221419,
+                "z": 1.1161006585907411,
+                "trend": "转强"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 19,
+                "rate": 0.6129032258064516,
+                "longRate": 0.5636487406398911,
+                "delta": 0.0492544851665605,
+                "z": 0.5529734035983073,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 9,
+                "rate": 0.5625,
+                "longRate": 0.5636487406398911,
+                "delta": -0.0011487406398911215,
+                "z": -0.009265302215111992,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 3,
+                "rate": 0.42857142857142855,
+                "longRate": 0.5636487406398911,
+                "delta": -0.13507731206846257,
+                "z": -0.720624531977661,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 6,
+                "rate": 0.5,
+                "longRate": 0.5636487406398911,
+                "delta": -0.06364874063989112,
+                "z": -0.44458832183971525,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 181,
+                "hits": 157,
+                "rate": 0.8674033149171271,
+                "longRate": 0.8142340168878166,
+                "delta": 0.053169298029310474,
+                "z": 1.8392573392826614,
+                "trend": "转强"
+              },
+              "month": {
+                "windows": 18,
+                "hits": 14,
+                "rate": 0.7777777777777778,
+                "longRate": 0.8142340168878166,
+                "delta": -0.03645623911003881,
+                "z": -0.3976952467312376,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 8,
+                "hits": 6,
+                "rate": 0.75,
+                "longRate": 0.8142340168878166,
+                "delta": -0.0642340168878166,
+                "z": -0.46714570342143563,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 3,
+                "hits": 2,
+                "rate": 0.6666666666666666,
+                "longRate": 0.8142340168878166,
+                "delta": -0.14756735022114997,
+                "z": -0.6571933951051435,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 9,
+                "rate": 0.75,
+                "longRate": 0.8142340168878166,
+                "delta": -0.0642340168878166,
+                "z": -0.5721343044580196,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1466,
+                "end": 1467,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 181,
+                "hits": 168,
+                "rate": 0.9281767955801105,
+                "longRate": 0.9010856453558505,
+                "delta": 0.027091150224260008,
+                "z": 1.2208267463148021,
+                "trend": "转强"
+              },
+              "month": {
+                "windows": 18,
+                "hits": 18,
+                "rate": 1,
+                "longRate": 0.9010856453558505,
+                "delta": 0.09891435464414955,
+                "z": 1.4056683870877338,
+                "trend": "转强"
+              },
+              "halfMonth": {
+                "windows": 8,
+                "hits": 8,
+                "rate": 1,
+                "longRate": 0.9010856453558505,
+                "delta": 0.09891435464414955,
+                "z": 0.9371122580584891,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 3,
+                "hits": 3,
+                "rate": 1,
+                "longRate": 0.9010856453558505,
+                "delta": 0.09891435464414955,
+                "z": 0.5738617159876629,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.9010856453558505,
+                "delta": 0.09891435464414955,
+                "z": 1.1477234319753258,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1466,
+                "end": 1468,
+                "outcome": "hit3",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "rebound",
+              "edge": -0.0022660592037784255,
+              "samples": 351,
+              "hits": 197,
+              "actualRate": 0.5612535612535613,
+              "rare": false,
+              "upCount": 2,
+              "downCount": 1,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 181,
+                  "rate": 0.5953947368421053,
+                  "delta": 0.03174599620221419,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 19,
+                  "rate": 0.6129032258064516,
+                  "delta": 0.0492544851665605,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 9,
+                  "rate": 0.5625,
+                  "delta": -0.0011487406398911215,
+                  "direction": "flat"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 3,
+                  "rate": 0.42857142857142855,
+                  "delta": -0.13507731206846257,
+                  "direction": "down"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "rebound",
+              "edge": 0.004856878820027721,
+              "samples": 124,
+              "hits": 101,
+              "actualRate": 0.8145161290322581,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 3,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 181,
+                  "hits": 157,
+                  "rate": 0.8674033149171271,
+                  "delta": 0.053169298029310474,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 18,
+                  "hits": 14,
+                  "rate": 0.7777777777777778,
+                  "delta": -0.03645623911003881,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 8,
+                  "hits": 6,
+                  "rate": 0.75,
+                  "delta": -0.0642340168878166,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 3,
+                  "hits": 2,
+                  "rate": 0.6666666666666666,
+                  "delta": -0.14756735022114997,
+                  "direction": "down"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "rebound",
+              "edge": -0.012634716480383945,
+              "samples": 11,
+              "hits": 10,
+              "actualRate": 0.9090909090909091,
+              "rare": false,
+              "upCount": 4,
+              "downCount": 0,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 181,
+                  "hits": 168,
+                  "rate": 0.9281767955801105,
+                  "delta": 0.027091150224260008,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 18,
+                  "hits": 18,
+                  "rate": 1,
+                  "delta": 0.09891435464414955,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 8,
+                  "hits": 8,
+                  "rate": 1,
+                  "delta": 0.09891435464414955,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 3,
+                  "hits": 3,
+                  "rate": 1,
+                  "delta": 0.09891435464414955,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 0,
+            "reboundCount": 3,
+            "riskCount": 0,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 7,
+            "downCount": 4,
+            "worstEdge": -0.012634716480383945
+          },
+          "riskPattern": "risk-safe-risk|risk-safe-risk",
+          "riskLevels": [
+            "risk",
+            "safe",
+            "risk"
+          ],
+          "cascadeDecision": "仅一窗安全·低分",
+          "forward": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.8575329923796238,
+            "hits": 54,
+            "samples": 64
+          },
+          "reverse": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.8575329923796238,
+            "hits": 54,
+            "samples": 64
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail1",
+          "label": "尾1",
+          "tail": 1,
+          "predictedRate": 0.853566168125294,
+          "threeWindowRate": 0.853566168125294,
+          "threeWindowBaseline": 0.9097201442656373,
+          "threeWindowEdge": -0.05615397614034334,
+          "compositeScore": -0.05615397614034334,
+          "safeHorizons": 1,
+          "horizonEdges": [
+            -0.013855687656881277,
+            0.011208665929314465,
+            -0.05615397614034334
+          ],
+          "baseline": 0.9097201442656373,
+          "edge": -0.05615397614034334,
+          "state": "hit2|one",
+          "stateByHorizon": {
+            "one": "hit1|one",
+            "two": "hit2|one",
+            "three": "hit2|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗第1期命中 · 首次",
+            "two": "上一窗第2期命中 · 首次",
+            "three": "上一窗第2期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 170,
+                "rate": 0.5592105263157895,
+                "longRate": 0.5513955071477196,
+                "delta": 0.007815019168069925,
+                "z": 0.27397025781914874,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 15,
+                "rate": 0.4838709677419355,
+                "longRate": 0.5513955071477196,
+                "delta": -0.06752453940578407,
+                "z": -0.7559256054860647,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 7,
+                "rate": 0.4375,
+                "longRate": 0.5513955071477196,
+                "delta": -0.11389550714771957,
+                "z": -0.9160162184951383,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 5,
+                "rate": 0.7142857142857143,
+                "longRate": 0.5513955071477196,
+                "delta": 0.16289020713799474,
+                "z": 0.8665239577334755,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 6,
+                "rate": 0.5,
+                "longRate": 0.5513955071477196,
+                "delta": -0.051395507147719566,
+                "z": -0.3579747198798577,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 170,
+                "hits": 136,
+                "rate": 0.8,
+                "longRate": 0.8014796547472256,
+                "delta": -0.0014796547472255561,
+                "z": -0.048365545498832284,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 14,
+                "hits": 11,
+                "rate": 0.7857142857142857,
+                "longRate": 0.8014796547472256,
+                "delta": -0.015765369032939902,
+                "z": -0.14788338974565254,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 7,
+                "hits": 5,
+                "rate": 0.7142857142857143,
+                "longRate": 0.8014796547472256,
+                "delta": -0.0871939404615113,
+                "z": -0.5783444370774534,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 4,
+                "hits": 4,
+                "rate": 1,
+                "longRate": 0.8014796547472256,
+                "delta": 0.1985203452527744,
+                "z": 0.9953739150536501,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 9,
+                "rate": 0.75,
+                "longRate": 0.8014796547472256,
+                "delta": -0.0514796547472256,
+                "z": -0.4470720159908052,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "hit2",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 170,
+                "hits": 158,
+                "rate": 0.9294117647058824,
+                "longRate": 0.9222222222222223,
+                "delta": 0.007189542483660105,
+                "z": 0.3500097628051595,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 14,
+                "hits": 13,
+                "rate": 0.9285714285714286,
+                "longRate": 0.9222222222222223,
+                "delta": 0.006349206349206327,
+                "z": 0.08870291722358062,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 7,
+                "hits": 6,
+                "rate": 0.8571428571428571,
+                "longRate": 0.9222222222222223,
+                "delta": -0.06507936507936518,
+                "z": -0.6429049513681876,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 4,
+                "hits": 4,
+                "rate": 1,
+                "longRate": 0.9222222222222223,
+                "delta": 0.07777777777777772,
+                "z": 0.5808178695515155,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 11,
+                "rate": 0.9166666666666666,
+                "longRate": 0.9222222222222223,
+                "delta": -0.005555555555555647,
+                "z": -0.07185757571479674,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "hit2",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "risk",
+              "edge": -0.013855687656881277,
+              "samples": 367,
+              "hits": 197,
+              "actualRate": 0.5367847411444142,
+              "rare": false,
+              "upCount": 2,
+              "downCount": 2,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 170,
+                  "rate": 0.5592105263157895,
+                  "delta": 0.007815019168069925,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 15,
+                  "rate": 0.4838709677419355,
+                  "delta": -0.06752453940578407,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 7,
+                  "rate": 0.4375,
+                  "delta": -0.11389550714771957,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 5,
+                  "rate": 0.7142857142857143,
+                  "delta": 0.16289020713799474,
+                  "direction": "up"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "rebound",
+              "edge": 0.011208665929314465,
+              "samples": 43,
+              "hits": 35,
+              "actualRate": 0.813953488372093,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 2,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 170,
+                  "hits": 136,
+                  "rate": 0.8,
+                  "delta": -0.0014796547472255561,
+                  "direction": "flat"
+                },
+                {
+                  "label": "本月",
+                  "windows": 14,
+                  "hits": 11,
+                  "rate": 0.7857142857142857,
+                  "delta": -0.015765369032939902,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 7,
+                  "hits": 5,
+                  "rate": 0.7142857142857143,
+                  "delta": -0.0871939404615113,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 4,
+                  "hits": 4,
+                  "rate": 1,
+                  "delta": 0.1985203452527744,
+                  "direction": "up"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "rebound",
+              "edge": -0.05615397614034334,
+              "samples": 18,
+              "hits": 14,
+              "actualRate": 0.7777777777777778,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 170,
+                  "hits": 158,
+                  "rate": 0.9294117647058824,
+                  "delta": 0.007189542483660105,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 14,
+                  "hits": 13,
+                  "rate": 0.9285714285714286,
+                  "delta": 0.006349206349206327,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 7,
+                  "hits": 6,
+                  "rate": 0.8571428571428571,
+                  "delta": -0.06507936507936518,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 4,
+                  "hits": 4,
+                  "rate": 1,
+                  "delta": 0.07777777777777772,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 0,
+            "reboundCount": 2,
+            "riskCount": 1,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 6,
+            "downCount": 5,
+            "worstEdge": -0.05615397614034334
+          },
+          "riskPattern": "risk-safe-risk|risk-safe-risk",
+          "riskLevels": [
+            "risk",
+            "safe",
+            "risk"
+          ],
+          "cascadeDecision": "仅一窗安全·低分",
+          "forward": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.9405919064793529,
+            "hits": 38,
+            "samples": 40
+          },
+          "reverse": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.9405919064793529,
+            "hits": 38,
+            "samples": 40
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail6",
+          "label": "尾6",
+          "tail": 6,
+          "predictedRate": 0.9149052498399083,
+          "threeWindowRate": 0.9149052498399083,
+          "threeWindowBaseline": 0.9161375528095115,
+          "threeWindowEdge": -0.001232302969603194,
+          "compositeScore": -0.01048545393682887,
+          "safeHorizons": 1,
+          "horizonEdges": [
+            0.002323031066763681,
+            -0.01048545393682887,
+            -0.001232302969603194
+          ],
+          "baseline": 0.9161375528095115,
+          "edge": -0.001232302969603194,
+          "state": "miss|one",
+          "stateByHorizon": {
+            "one": "hit1|one",
+            "two": "miss|one",
+            "three": "miss|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗第1期命中 · 首次",
+            "two": "上一窗全错 · 首次",
+            "three": "上一窗全错 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 181,
+                "rate": 0.5953947368421053,
+                "longRate": 0.562287270251872,
+                "delta": 0.033107466590233336,
+                "z": 1.1635606536071896,
+                "trend": "转强"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 14,
+                "rate": 0.45161290322580644,
+                "longRate": 0.562287270251872,
+                "delta": -0.11067436702606553,
+                "z": -1.242093186324536,
+                "trend": "转弱"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 5,
+                "rate": 0.3125,
+                "longRate": 0.562287270251872,
+                "delta": -0.24978727025187197,
+                "z": -2.0139866105065205,
+                "trend": "转弱"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 2,
+                "rate": 0.2857142857142857,
+                "longRate": 0.562287270251872,
+                "delta": -0.2765729845375863,
+                "z": -1.4749763673328045,
+                "trend": "转弱"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 4,
+                "rate": 0.3333333333333333,
+                "longRate": 0.562287270251872,
+                "delta": -0.22895393691853866,
+                "z": -1.5986928197931853,
+                "trend": "转弱"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 181,
+                "hits": 148,
+                "rate": 0.8176795580110497,
+                "longRate": 0.7934782608695652,
+                "delta": 0.024201297141484557,
+                "z": 0.8043175188328486,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 14,
+                "hits": 10,
+                "rate": 0.7142857142857143,
+                "longRate": 0.7934782608695652,
+                "delta": -0.07919254658385089,
+                "z": -0.7319778231808607,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 5,
+                "hits": 2,
+                "rate": 0.4,
+                "longRate": 0.7934782608695652,
+                "delta": -0.39347826086956517,
+                "z": -2.1734784682085997,
+                "trend": "转弱"
+              },
+              "week": {
+                "windows": 2,
+                "hits": 1,
+                "rate": 0.5,
+                "longRate": 0.7934782608695652,
+                "delta": -0.2934782608695652,
+                "z": -1.0252753863622772,
+                "trend": "样本不足"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 9,
+                "rate": 0.75,
+                "longRate": 0.7934782608695652,
+                "delta": -0.04347826086956519,
+                "z": -0.3720594877662899,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1464,
+                "end": 1465,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 181,
+                "hits": 168,
+                "rate": 0.9281767955801105,
+                "longRate": 0.9226118500604595,
+                "delta": 0.005564945519650921,
+                "z": 0.28019053340427963,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 14,
+                "hits": 10,
+                "rate": 0.7142857142857143,
+                "longRate": 0.9226118500604595,
+                "delta": -0.20832613577474524,
+                "z": -2.9171652376542414,
+                "trend": "转弱"
+              },
+              "halfMonth": {
+                "windows": 5,
+                "hits": 2,
+                "rate": 0.4,
+                "longRate": 0.9226118500604595,
+                "delta": -0.5226118500604595,
+                "z": -4.37338296272613,
+                "trend": "转弱"
+              },
+              "week": {
+                "windows": 2,
+                "hits": 1,
+                "rate": 0.5,
+                "longRate": 0.9226118500604595,
+                "delta": -0.42261185006045954,
+                "z": -2.236711249058422,
+                "trend": "样本不足"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 9,
+                "rate": 0.75,
+                "longRate": 0.9226118500604595,
+                "delta": -0.17261185006045954,
+                "z": -2.2377650362516874,
+                "trend": "转弱"
+              },
+              "lastWindow": {
+                "start": 1464,
+                "end": 1466,
+                "outcome": "miss",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "rebound",
+              "edge": 0.002323031066763681,
+              "samples": 363,
+              "hits": 205,
+              "actualRate": 0.5647382920110193,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 3,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 181,
+                  "rate": 0.5953947368421053,
+                  "delta": 0.033107466590233336,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 14,
+                  "rate": 0.45161290322580644,
+                  "delta": -0.11067436702606553,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 5,
+                  "rate": 0.3125,
+                  "delta": -0.24978727025187197,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 2,
+                  "rate": 0.2857142857142857,
+                  "delta": -0.2765729845375863,
+                  "direction": "down"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "risk",
+              "edge": -0.01048545393682887,
+              "samples": 134,
+              "hits": 107,
+              "actualRate": 0.7985074626865671,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 3,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 181,
+                  "hits": 148,
+                  "rate": 0.8176795580110497,
+                  "delta": 0.024201297141484557,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 14,
+                  "hits": 10,
+                  "rate": 0.7142857142857143,
+                  "delta": -0.07919254658385089,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 5,
+                  "hits": 2,
+                  "rate": 0.4,
+                  "delta": -0.39347826086956517,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 2,
+                  "hits": 1,
+                  "rate": 0.5,
+                  "delta": -0.2934782608695652,
+                  "direction": "down"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "risk",
+              "edge": -0.001232302969603194,
+              "samples": 57,
+              "hits": 52,
+              "actualRate": 0.9122807017543859,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 3,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 181,
+                  "hits": 168,
+                  "rate": 0.9281767955801105,
+                  "delta": 0.005564945519650921,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 14,
+                  "hits": 10,
+                  "rate": 0.7142857142857143,
+                  "delta": -0.20832613577474524,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 5,
+                  "hits": 2,
+                  "rate": 0.4,
+                  "delta": -0.5226118500604595,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 2,
+                  "hits": 1,
+                  "rate": 0.5,
+                  "delta": -0.42261185006045954,
+                  "direction": "down"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 0,
+            "reboundCount": 1,
+            "riskCount": 2,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 3,
+            "downCount": 9,
+            "worstEdge": -0.01048545393682887
+          },
+          "riskPattern": "safe-risk-risk|risk-risk-safe",
+          "riskLevels": [
+            "safe",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "仅一窗安全·低分",
+          "forward": {
+            "pattern": "safe-risk-risk",
+            "predictedRate": 0.8932250814937104,
+            "hits": 28,
+            "samples": 32
+          },
+          "reverse": {
+            "pattern": "risk-risk-safe",
+            "predictedRate": 0.8932250814937104,
+            "hits": 28,
+            "samples": 32
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail5",
+          "label": "尾5",
+          "tail": 5,
+          "predictedRate": 0.8618962568357804,
+          "threeWindowRate": 0.8618962568357804,
+          "threeWindowBaseline": 0.9101305066167759,
+          "threeWindowEdge": -0.04823424978099544,
+          "compositeScore": -0.04823424978099544,
+          "safeHorizons": 0,
+          "horizonEdges": [
+            -0.021623670186492694,
+            -0.024923644630421737,
+            -0.04823424978099544
+          ],
+          "baseline": 0.9101305066167759,
+          "edge": -0.04823424978099544,
+          "state": "hit3|one",
+          "stateByHorizon": {
+            "one": "miss|one",
+            "two": "miss|one",
+            "three": "hit3|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗全错 · 首次",
+            "two": "上一窗全错 · 首次",
+            "three": "上一窗第3期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 153,
+                "rate": 0.5032894736842105,
+                "longRate": 0.552076242341729,
+                "delta": -0.04878676865751852,
+                "z": -1.7105558859709686,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 14,
+                "rate": 0.45161290322580644,
+                "longRate": 0.552076242341729,
+                "delta": -0.10046333911592259,
+                "z": -1.1248299658274912,
+                "trend": "转弱"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 7,
+                "rate": 0.4375,
+                "longRate": 0.552076242341729,
+                "delta": -0.11457624234172903,
+                "z": -0.9216223288062141,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 2,
+                "rate": 0.2857142857142857,
+                "longRate": 0.552076242341729,
+                "delta": -0.26636195662744333,
+                "z": -1.4171624560432374,
+                "trend": "转弱"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 6,
+                "rate": 0.5,
+                "longRate": 0.552076242341729,
+                "delta": -0.05207624234172903,
+                "z": -0.3627677607560248,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 154,
+                "hits": 113,
+                "rate": 0.7337662337662337,
+                "longRate": 0.791871921182266,
+                "delta": -0.05810568741603228,
+                "z": -1.7761768050251354,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 15,
+                "hits": 10,
+                "rate": 0.6666666666666666,
+                "longRate": 0.791871921182266,
+                "delta": -0.12520525451559938,
+                "z": -1.1944703542232944,
+                "trend": "转弱"
+              },
+              "halfMonth": {
+                "windows": 8,
+                "hits": 5,
+                "rate": 0.625,
+                "longRate": 0.791871921182266,
+                "delta": -0.16687192118226601,
+                "z": -1.1626137365422036,
+                "trend": "转弱"
+              },
+              "week": {
+                "windows": 3,
+                "hits": 1,
+                "rate": 0.3333333333333333,
+                "longRate": 0.791871921182266,
+                "delta": -0.4585385878489327,
+                "z": -1.95633717214575,
+                "trend": "转弱"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 9,
+                "rate": 0.75,
+                "longRate": 0.791871921182266,
+                "delta": -0.041871921182266014,
+                "z": -0.3572898685028944,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 153,
+                "hits": 136,
+                "rate": 0.8888888888888888,
+                "longRate": 0.9136868064118372,
+                "delta": -0.024797917522948354,
+                "z": -1.092254032707703,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 14,
+                "hits": 13,
+                "rate": 0.9285714285714286,
+                "longRate": 0.9136868064118372,
+                "delta": 0.01488462215959141,
+                "z": 0.19831910908865424,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 7,
+                "hits": 7,
+                "rate": 1,
+                "longRate": 0.9136868064118372,
+                "delta": 0.0863131935881628,
+                "z": 0.8131842079168768,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 2,
+                "hits": 2,
+                "rate": 1,
+                "longRate": 0.9136868064118372,
+                "delta": 0.0863131935881628,
+                "z": 0.4346652426228713,
+                "trend": "样本不足"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 12,
+                "rate": 1,
+                "longRate": 0.9136868064118372,
+                "delta": 0.0863131935881628,
+                "z": 1.0647080533490847,
+                "trend": "转强"
+              },
+              "lastWindow": {
+                "start": 1465,
+                "end": 1467,
+                "outcome": "hit3",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "risk",
+              "edge": -0.021623670186492694,
+              "samples": 359,
+              "hits": 190,
+              "actualRate": 0.5292479108635098,
+              "rare": false,
+              "upCount": 0,
+              "downCount": 4,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 153,
+                  "rate": 0.5032894736842105,
+                  "delta": -0.04878676865751852,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 14,
+                  "rate": 0.45161290322580644,
+                  "delta": -0.10046333911592259,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 7,
+                  "rate": 0.4375,
+                  "delta": -0.11457624234172903,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 2,
+                  "rate": 0.2857142857142857,
+                  "delta": -0.26636195662744333,
+                  "direction": "down"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "risk",
+              "edge": -0.024923644630421737,
+              "samples": 127,
+              "hits": 98,
+              "actualRate": 0.7716535433070866,
+              "rare": false,
+              "upCount": 0,
+              "downCount": 4,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 154,
+                  "hits": 113,
+                  "rate": 0.7337662337662337,
+                  "delta": -0.05810568741603228,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 15,
+                  "hits": 10,
+                  "rate": 0.6666666666666666,
+                  "delta": -0.12520525451559938,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 8,
+                  "hits": 5,
+                  "rate": 0.625,
+                  "delta": -0.16687192118226601,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 3,
+                  "hits": 1,
+                  "rate": 0.3333333333333333,
+                  "delta": -0.4585385878489327,
+                  "direction": "down"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "rebound",
+              "edge": -0.04823424978099544,
+              "samples": 7,
+              "hits": 5,
+              "actualRate": 0.7142857142857143,
+              "rare": false,
+              "upCount": 3,
+              "downCount": 1,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 153,
+                  "hits": 136,
+                  "rate": 0.8888888888888888,
+                  "delta": -0.024797917522948354,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 14,
+                  "hits": 13,
+                  "rate": 0.9285714285714286,
+                  "delta": 0.01488462215959141,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 7,
+                  "hits": 7,
+                  "rate": 1,
+                  "delta": 0.0863131935881628,
+                  "direction": "up"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 2,
+                  "hits": 2,
+                  "rate": 1,
+                  "delta": 0.0863131935881628,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 0,
+            "reboundCount": 1,
+            "riskCount": 2,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 3,
+            "downCount": 9,
+            "worstEdge": -0.04823424978099544
+          },
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "三窗独立一致风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9078603955340006,
+            "hits": 117,
+            "samples": 129
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9078603955340006,
+            "hits": 117,
+            "samples": 129
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail2",
+          "label": "尾2",
+          "tail": 2,
+          "predictedRate": 0.8962529505770342,
+          "threeWindowRate": 0.8962529505770342,
+          "threeWindowBaseline": 0.9255439422258319,
+          "threeWindowEdge": -0.02929099164879767,
+          "compositeScore": -0.02929099164879767,
+          "safeHorizons": 1,
+          "horizonEdges": [
+            -0.026435530982879873,
+            0.001711237032951396,
+            -0.02929099164879767
+          ],
+          "baseline": 0.9255439422258319,
+          "edge": -0.02929099164879767,
+          "state": "hit1|one",
+          "stateByHorizon": {
+            "one": "miss|one",
+            "two": "miss|one",
+            "three": "hit1|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗全错 · 首次",
+            "two": "上一窗全错 · 首次",
+            "three": "上一窗第1期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 162,
+                "rate": 0.5328947368421053,
+                "longRate": 0.5793056501021103,
+                "delta": -0.046410913260005016,
+                "z": -1.6391537228948474,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 17,
+                "rate": 0.5483870967741935,
+                "longRate": 0.5793056501021103,
+                "delta": -0.03091855332791682,
+                "z": -0.34870870601803733,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 9,
+                "rate": 0.5625,
+                "longRate": 0.5793056501021103,
+                "delta": -0.016805650102110326,
+                "z": -0.13616894939958107,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 4,
+                "rate": 0.5714285714285714,
+                "longRate": 0.5793056501021103,
+                "delta": -0.007877078673538929,
+                "z": -0.04221599029066011,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 6,
+                "rate": 0.5,
+                "longRate": 0.5793056501021103,
+                "delta": -0.07930565010211033,
+                "z": -0.5564902130044599,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 163,
+                "hits": 128,
+                "rate": 0.7852760736196319,
+                "longRate": 0.8204225352112676,
+                "delta": -0.0351464615916357,
+                "z": -1.169043582512651,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 17,
+                "hits": 12,
+                "rate": 0.7058823529411765,
+                "longRate": 0.8204225352112676,
+                "delta": -0.1145401822700911,
+                "z": -1.2303753511268976,
+                "trend": "转弱"
+              },
+              "halfMonth": {
+                "windows": 9,
+                "hits": 6,
+                "rate": 0.6666666666666666,
+                "longRate": 0.8204225352112676,
+                "delta": -0.153755868544601,
+                "z": -1.201733719118794,
+                "trend": "转弱"
+              },
+              "week": {
+                "windows": 4,
+                "hits": 3,
+                "rate": 0.75,
+                "longRate": 0.8204225352112676,
+                "delta": -0.07042253521126762,
+                "z": -0.3669415936240592,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 7,
+                "rate": 0.5833333333333334,
+                "longRate": 0.8204225352112676,
+                "delta": -0.23708920187793425,
+                "z": -2.1397236613427797,
+                "trend": "转弱"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 162,
+                "hits": 142,
+                "rate": 0.8765432098765432,
+                "longRate": 0.917743830787309,
+                "delta": -0.04120062091076582,
+                "z": -1.9086060295698286,
+                "trend": "转弱"
+              },
+              "month": {
+                "windows": 16,
+                "hits": 14,
+                "rate": 0.875,
+                "longRate": 0.917743830787309,
+                "delta": -0.042743830787309034,
+                "z": -0.6222837445377564,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 8,
+                "hits": 7,
+                "rate": 0.875,
+                "longRate": 0.917743830787309,
+                "delta": -0.042743830787309034,
+                "z": -0.44002105558480475,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 3,
+                "hits": 3,
+                "rate": 1,
+                "longRate": 0.917743830787309,
+                "delta": 0.08225616921269097,
+                "z": 0.5185422292677144,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 10,
+                "rate": 0.8333333333333334,
+                "longRate": 0.917743830787309,
+                "delta": -0.08441049745397566,
+                "z": -1.0642461943542132,
+                "trend": "转弱"
+              },
+              "lastWindow": {
+                "start": 1467,
+                "end": 1467,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "risk",
+              "edge": -0.026435530982879873,
+              "samples": 341,
+              "hits": 188,
+              "actualRate": 0.5513196480938416,
+              "rare": false,
+              "upCount": 0,
+              "downCount": 4,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 162,
+                  "rate": 0.5328947368421053,
+                  "delta": -0.046410913260005016,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 17,
+                  "rate": 0.5483870967741935,
+                  "delta": -0.03091855332791682,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 9,
+                  "rate": 0.5625,
+                  "delta": -0.016805650102110326,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 4,
+                  "rate": 0.5714285714285714,
+                  "delta": -0.007877078673538929,
+                  "direction": "down"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "rebound",
+              "edge": 0.001711237032951396,
+              "samples": 126,
+              "hits": 104,
+              "actualRate": 0.8253968253968254,
+              "rare": false,
+              "upCount": 0,
+              "downCount": 4,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 163,
+                  "hits": 128,
+                  "rate": 0.7852760736196319,
+                  "delta": -0.0351464615916357,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 17,
+                  "hits": 12,
+                  "rate": 0.7058823529411765,
+                  "delta": -0.1145401822700911,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 9,
+                  "hits": 6,
+                  "rate": 0.6666666666666666,
+                  "delta": -0.153755868544601,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 4,
+                  "hits": 3,
+                  "rate": 0.75,
+                  "delta": -0.07042253521126762,
+                  "direction": "down"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "risk",
+              "edge": -0.02929099164879767,
+              "samples": 44,
+              "hits": 39,
+              "actualRate": 0.8863636363636364,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 3,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 162,
+                  "hits": 142,
+                  "rate": 0.8765432098765432,
+                  "delta": -0.04120062091076582,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 16,
+                  "hits": 14,
+                  "rate": 0.875,
+                  "delta": -0.042743830787309034,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 8,
+                  "hits": 7,
+                  "rate": 0.875,
+                  "delta": -0.042743830787309034,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 3,
+                  "hits": 3,
+                  "rate": 1,
+                  "delta": 0.08225616921269097,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 0,
+            "reboundCount": 1,
+            "riskCount": 2,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 1,
+            "downCount": 11,
+            "worstEdge": -0.02929099164879767
+          },
+          "riskPattern": "risk-safe-risk|risk-safe-risk",
+          "riskLevels": [
+            "risk",
+            "safe",
+            "risk"
+          ],
+          "cascadeDecision": "仅一窗安全·低分",
+          "forward": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.9051455548132884,
+            "hits": 45,
+            "samples": 50
+          },
+          "reverse": {
+            "pattern": "risk-safe-risk",
+            "predictedRate": 0.9051455548132884,
+            "hits": 45,
+            "samples": 50
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "tail4",
+          "label": "尾4",
+          "tail": 4,
+          "predictedRate": 0.8810670844613016,
+          "threeWindowRate": 0.8810670844613016,
+          "threeWindowBaseline": 0.8972693757045683,
+          "threeWindowEdge": -0.016202291243266775,
+          "compositeScore": -0.08324900541985725,
+          "safeHorizons": 0,
+          "horizonEdges": [
+            -0.027423399655047143,
+            -0.08324900541985725,
+            -0.016202291243266775
+          ],
+          "baseline": 0.8972693757045683,
+          "edge": -0.016202291243266775,
+          "state": "hit2|one",
+          "stateByHorizon": {
+            "one": "hit1|one",
+            "two": "hit2|one",
+            "three": "hit2|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗第1期命中 · 首次",
+            "two": "上一窗第2期命中 · 首次",
+            "three": "上一窗第2期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 163,
+                "rate": 0.5361842105263158,
+                "longRate": 0.5316541865214431,
+                "delta": 0.004530024004872679,
+                "z": 0.15828485215458413,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 15,
+                "rate": 0.4838709677419355,
+                "longRate": 0.5316541865214431,
+                "delta": -0.04778321877950764,
+                "z": -0.5331609192182506,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 7,
+                "rate": 0.4375,
+                "longRate": 0.5316541865214431,
+                "delta": -0.09415418652144314,
+                "z": -0.7547475058873349,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 3,
+                "rate": 0.42857142857142855,
+                "longRate": 0.5316541865214431,
+                "delta": -0.10308275795001459,
+                "z": -0.5465590744090363,
+                "trend": "稳定"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 5,
+                "rate": 0.4166666666666667,
+                "longRate": 0.5316541865214431,
+                "delta": -0.11498751985477645,
+                "z": -0.79825820210777,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "hit1",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 163,
+                "hits": 126,
+                "rate": 0.7730061349693251,
+                "longRate": 0.7708066581306018,
+                "delta": 0.0021994768387233465,
+                "z": 0.06680969175512655,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 14,
+                "hits": 11,
+                "rate": 0.7857142857142857,
+                "longRate": 0.7708066581306018,
+                "delta": 0.014907627583683913,
+                "z": 0.13270852599255237,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 7,
+                "hits": 5,
+                "rate": 0.7142857142857143,
+                "longRate": 0.7708066581306018,
+                "delta": -0.05652094384488748,
+                "z": -0.35578259488388886,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 2,
+                "hits": 1,
+                "rate": 0.5,
+                "longRate": 0.7708066581306018,
+                "delta": -0.2708066581306018,
+                "z": -0.9111725095477644,
+                "trend": "样本不足"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 9,
+                "rate": 0.75,
+                "longRate": 0.7708066581306018,
+                "delta": -0.020806658130601785,
+                "z": -0.17148227132720048,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "hit2",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 163,
+                "hits": 149,
+                "rate": 0.9141104294478528,
+                "longRate": 0.9065300896286812,
+                "delta": 0.007580339819171611,
+                "z": 0.33247228807813695,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 14,
+                "hits": 12,
+                "rate": 0.8571428571428571,
+                "longRate": 0.9065300896286812,
+                "delta": -0.049387232485824106,
+                "z": -0.6348215820811314,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 7,
+                "hits": 6,
+                "rate": 0.8571428571428571,
+                "longRate": 0.9065300896286812,
+                "delta": -0.049387232485824106,
+                "z": -0.44888664553314045,
+                "trend": "稳定"
+              },
+              "week": {
+                "windows": 2,
+                "hits": 1,
+                "rate": 0.5,
+                "longRate": 0.9065300896286812,
+                "delta": -0.4065300896286812,
+                "z": -1.9750617055701163,
+                "trend": "样本不足"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 10,
+                "rate": 0.8333333333333334,
+                "longRate": 0.9065300896286812,
+                "delta": -0.07319675629534783,
+                "z": -0.8710747677066362,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "hit2",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "risk",
+              "edge": -0.027423399655047143,
+              "samples": 366,
+              "hits": 184,
+              "actualRate": 0.5027322404371585,
+              "rare": false,
+              "upCount": 0,
+              "downCount": 3,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 163,
+                  "rate": 0.5361842105263158,
+                  "delta": 0.004530024004872679,
+                  "direction": "flat"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 15,
+                  "rate": 0.4838709677419355,
+                  "delta": -0.04778321877950764,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 7,
+                  "rate": 0.4375,
+                  "delta": -0.09415418652144314,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 3,
+                  "rate": 0.42857142857142855,
+                  "delta": -0.10308275795001459,
+                  "direction": "down"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "risk",
+              "edge": -0.08324900541985725,
+              "samples": 48,
+              "hits": 32,
+              "actualRate": 0.6666666666666666,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 2,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 163,
+                  "hits": 126,
+                  "rate": 0.7730061349693251,
+                  "delta": 0.0021994768387233465,
+                  "direction": "flat"
+                },
+                {
+                  "label": "本月",
+                  "windows": 14,
+                  "hits": 11,
+                  "rate": 0.7857142857142857,
+                  "delta": 0.014907627583683913,
+                  "direction": "up"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 7,
+                  "hits": 5,
+                  "rate": 0.7142857142857143,
+                  "delta": -0.05652094384488748,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 2,
+                  "hits": 1,
+                  "rate": 0.5,
+                  "delta": -0.2708066581306018,
+                  "direction": "down"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "risk",
+              "edge": -0.016202291243266775,
+              "samples": 21,
+              "hits": 18,
+              "actualRate": 0.8571428571428571,
+              "rare": false,
+              "upCount": 1,
+              "downCount": 3,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 163,
+                  "hits": 149,
+                  "rate": 0.9141104294478528,
+                  "delta": 0.007580339819171611,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 14,
+                  "hits": 12,
+                  "rate": 0.8571428571428571,
+                  "delta": -0.049387232485824106,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 7,
+                  "hits": 6,
+                  "rate": 0.8571428571428571,
+                  "delta": -0.049387232485824106,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 2,
+                  "hits": 1,
+                  "rate": 0.5,
+                  "delta": -0.4065300896286812,
+                  "direction": "down"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 0,
+            "reboundCount": 0,
+            "riskCount": 3,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 2,
+            "downCount": 8,
+            "worstEdge": -0.08324900541985725
+          },
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "三窗独立一致风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.8707872618409296,
+            "hits": 163,
+            "samples": 188
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.8707872618409296,
+            "hits": 163,
+            "samples": 188
+          },
+          "attempts": [],
+          "status": "pending",
+          "hitIndex": null
+        },
+        {
+          "id": "prob3",
+          "label": "C",
+          "tail": 2,
+          "predictedRate": 0.9150454751709702,
+          "threeWindowRate": 0.9150454751709702,
+          "threeWindowBaseline": 0.9255439422258319,
+          "threeWindowEdge": -0.010498467054861682,
+          "compositeScore": -0.028359443335786994,
+          "safeHorizons": 0,
+          "horizonEdges": [
+            -0.028359443335786994,
+            -0.00942050238751102,
+            -0.010498467054861682
+          ],
+          "baseline": 0.9255439422258319,
+          "edge": -0.010498467054861682,
+          "state": "hit3|one",
+          "stateByHorizon": {
+            "one": "miss|one",
+            "two": "miss|one",
+            "three": "hit3|one"
+          },
+          "stateLabelByHorizon": {
+            "one": "上一窗全错 · 首次",
+            "two": "上一窗全错 · 首次",
+            "three": "上一窗第3期命中 · 首次"
+          },
+          "realtimeByHorizon": {
+            "one": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 304,
+                "hits": 168,
+                "rate": 0.5526315789473685,
+                "longRate": 0.5500340367597005,
+                "delta": 0.002597542187667945,
+                "z": 0.09103633961146733,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 31,
+                "hits": 14,
+                "rate": 0.45161290322580644,
+                "longRate": 0.5500340367597005,
+                "delta": -0.09842113353389409,
+                "z": -1.1015002375623462,
+                "trend": "转弱"
+              },
+              "halfMonth": {
+                "windows": 16,
+                "hits": 6,
+                "rate": 0.375,
+                "longRate": 0.5500340367597005,
+                "delta": -0.17503403675970053,
+                "z": -1.4073362875382334,
+                "trend": "转弱"
+              },
+              "week": {
+                "windows": 7,
+                "hits": 2,
+                "rate": 0.2857142857142857,
+                "longRate": 0.5500340367597005,
+                "delta": -0.26431975104541483,
+                "z": -1.4057044583834686,
+                "trend": "转弱"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 5,
+                "rate": 0.4166666666666667,
+                "longRate": 0.5500340367597005,
+                "delta": -0.13336737009303384,
+                "z": -0.9286575544206079,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1469,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "two": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 171,
+                "hits": 132,
+                "rate": 0.7719298245614035,
+                "longRate": 0.7915106117353309,
+                "delta": -0.019580787173927416,
+                "z": -0.6303153067858668,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 15,
+                "hits": 10,
+                "rate": 0.6666666666666666,
+                "longRate": 0.7915106117353309,
+                "delta": -0.12484394506866425,
+                "z": -1.190262538183005,
+                "trend": "转弱"
+              },
+              "halfMonth": {
+                "windows": 6,
+                "hits": 2,
+                "rate": 0.3333333333333333,
+                "longRate": 0.7915106117353309,
+                "delta": -0.45817727840199757,
+                "z": -2.762732425525868,
+                "trend": "转弱"
+              },
+              "week": {
+                "windows": 2,
+                "hits": 0,
+                "rate": 0,
+                "longRate": 0.7915106117353309,
+                "delta": -0.7915106117353309,
+                "z": -2.7555061914750776,
+                "trend": "样本不足"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 8,
+                "rate": 0.6666666666666666,
+                "longRate": 0.7915106117353309,
+                "delta": -0.12484394506866425,
+                "z": -1.0646031785794552,
+                "trend": "转弱"
+              },
+              "lastWindow": {
+                "start": 1468,
+                "end": 1469,
+                "outcome": "miss",
+                "streak": 1
+              }
+            },
+            "three": {
+              "latestDate": "2026-10-31",
+              "year": {
+                "windows": 170,
+                "hits": 158,
+                "rate": 0.9294117647058824,
+                "longRate": 0.9136420525657072,
+                "delta": 0.015769712140175196,
+                "z": 0.7319965436019112,
+                "trend": "稳定"
+              },
+              "month": {
+                "windows": 14,
+                "hits": 12,
+                "rate": 0.8571428571428571,
+                "longRate": 0.9136420525657072,
+                "delta": -0.05649919542285009,
+                "z": -0.7526049752986416,
+                "trend": "稳定"
+              },
+              "halfMonth": {
+                "windows": 5,
+                "hits": 3,
+                "rate": 0.6,
+                "longRate": 0.9136420525657072,
+                "delta": -0.3136420525657072,
+                "z": -2.496778945410147,
+                "trend": "转弱"
+              },
+              "week": {
+                "windows": 1,
+                "hits": 1,
+                "rate": 1,
+                "longRate": 0.9136420525657072,
+                "delta": 0.08635794743429281,
+                "z": 0.30744194239759387,
+                "trend": "样本不足"
+              },
+              "recent12": {
+                "windows": 12,
+                "hits": 10,
+                "rate": 0.8333333333333334,
+                "longRate": 0.9136420525657072,
+                "delta": -0.08030871923237382,
+                "z": -0.990407970410456,
+                "trend": "稳定"
+              },
+              "lastWindow": {
+                "start": 1465,
+                "end": 1467,
+                "outcome": "hit3",
+                "streak": 1
+              }
+            }
+          },
+          "diagnosticByHorizon": {
+            "one": {
+              "label": "一期窗口",
+              "stage": "risk",
+              "edge": -0.028359443335786994,
+              "samples": 363,
+              "hits": 200,
+              "actualRate": 0.5509641873278237,
+              "rare": false,
+              "upCount": 0,
+              "downCount": 3,
+              "flatCount": 1,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 304,
+                  "hits": 168,
+                  "rate": 0.5526315789473685,
+                  "delta": 0.002597542187667945,
+                  "direction": "flat"
+                },
+                {
+                  "label": "本月",
+                  "windows": 31,
+                  "hits": 14,
+                  "rate": 0.45161290322580644,
+                  "delta": -0.09842113353389409,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 16,
+                  "hits": 6,
+                  "rate": 0.375,
+                  "delta": -0.17503403675970053,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 7,
+                  "hits": 2,
+                  "rate": 0.2857142857142857,
+                  "delta": -0.26431975104541483,
+                  "direction": "down"
+                }
+              ]
+            },
+            "two": {
+              "label": "两期窗口",
+              "stage": "risk",
+              "edge": -0.00942050238751102,
+              "samples": 131,
+              "hits": 107,
+              "actualRate": 0.816793893129771,
+              "rare": false,
+              "upCount": 0,
+              "downCount": 4,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 171,
+                  "hits": 132,
+                  "rate": 0.7719298245614035,
+                  "delta": -0.019580787173927416,
+                  "direction": "down"
+                },
+                {
+                  "label": "本月",
+                  "windows": 15,
+                  "hits": 10,
+                  "rate": 0.6666666666666666,
+                  "delta": -0.12484394506866425,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 6,
+                  "hits": 2,
+                  "rate": 0.3333333333333333,
+                  "delta": -0.45817727840199757,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 2,
+                  "hits": 0,
+                  "rate": 0,
+                  "delta": -0.7915106117353309,
+                  "direction": "down"
+                }
+              ]
+            },
+            "three": {
+              "label": "三期窗口",
+              "stage": "risk",
+              "edge": -0.010498467054861682,
+              "samples": 12,
+              "hits": 11,
+              "actualRate": 0.9166666666666666,
+              "rare": false,
+              "upCount": 2,
+              "downCount": 2,
+              "flatCount": 0,
+              "phases": [
+                {
+                  "label": "本年",
+                  "windows": 170,
+                  "hits": 158,
+                  "rate": 0.9294117647058824,
+                  "delta": 0.015769712140175196,
+                  "direction": "up"
+                },
+                {
+                  "label": "本月",
+                  "windows": 14,
+                  "hits": 12,
+                  "rate": 0.8571428571428571,
+                  "delta": -0.05649919542285009,
+                  "direction": "down"
+                },
+                {
+                  "label": "本半月",
+                  "windows": 5,
+                  "hits": 3,
+                  "rate": 0.6,
+                  "delta": -0.3136420525657072,
+                  "direction": "down"
+                },
+                {
+                  "label": "近7日",
+                  "windows": 1,
+                  "hits": 1,
+                  "rate": 1,
+                  "delta": 0.08635794743429281,
+                  "direction": "up"
+                }
+              ]
+            }
+          },
+          "diagnostic": {
+            "safeCount": 0,
+            "reboundCount": 0,
+            "riskCount": 3,
+            "unseenCount": 0,
+            "rareCount": 0,
+            "upCount": 2,
+            "downCount": 9,
+            "worstEdge": -0.028359443335786994
+          },
+          "riskPattern": "risk-risk-risk|risk-risk-risk",
+          "riskLevels": [
+            "risk",
+            "risk",
+            "risk"
+          ],
+          "cascadeDecision": "三窗独立一致风险·低分",
+          "forward": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9210234734744401,
+            "hits": 235,
+            "samples": 255
+          },
+          "reverse": {
+            "pattern": "risk-risk-risk",
+            "predictedRate": 0.9210234734744401,
+            "hits": 235,
+            "samples": 255
+          },
           "attempts": [],
           "status": "pending",
           "hitIndex": null
@@ -11232,6 +16125,6 @@ window.APP_PERSONALITY_SNAPSHOTS = {
       ]
     }
   ],
-  "latestPeriod": 303,
-  "updatedAt": "2026-10-30T13:48:25.239Z"
+  "latestPeriod": 304,
+  "updatedAt": "2026-10-31T13:56:28.343Z"
 };
