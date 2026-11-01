@@ -30,6 +30,15 @@ def main():
         cwd=HERE,
         check=True,
     )
+    manifest_path = os.path.join(HERE, "training", "manifest.json")
+    with open(manifest_path, encoding="utf-8") as manifest_file:
+        manifest = json.load(manifest_file)
+    latest_period = max(int(k) for k in raw)
+    if int(manifest.get("latestPeriod") or 0) != latest_period:
+        raise SystemExit(
+            "training/manifest.json latestPeriod %s != data latestPeriod %s"
+            % (manifest.get("latestPeriod"), latest_period)
+        )
     print("synced %d periods, latest %d, %d records" % (len(raw), max(int(k) for k in raw), len(d)))
 
 
